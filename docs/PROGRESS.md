@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-24 Toolbar, theme, shortcuts, help, branch `feat/wi-24-toolbar` (WI-25 and WI-28 are also unblocked).
-- **Last session:** 2026-10-26 · Claude Code · finished and merged WI-23.
+- **Active WI:** none — next is WI-25 Styles & tokens (WI-28 is also unblocked).
+- **Last session:** 2026-10-26 · Claude Code · finished and merged WI-23 and WI-24.
 - **Gate status on `main`:** green (typecheck, lint, test; also test:dst, test:coverage, build).
 
 ## Work items
@@ -71,8 +71,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-26 · Claude Code · branch `feat/wi-22-replan-dialog` · done: `ReplanDialog` (from/to dates defaulting to the visible week, "to" inclusive, buffer override, two plan cards with metrics, moves, unplaced, Apply this plan / No changes needed) mounted in App; store `computeReplan` / `applyReplan`; move and plan sentences in `format/explain.ts`; tests: the §5 Replan UI case (default week, T22 cards, Apply calls `applyReplan`, empty case) plus bad range, buffer override, ER7 recompute · next: WI-23 · note: **nothing opens the dialog yet except `openDialog({kind: 'replan'})`**: the toolbar's Replan button is WI-24
 - [x] **WI-23** Settings dialog + data section — owner S — depends on 18
   - 2026-10-26 · Claude Code · branch `feat/wi-23-settings` · done: `forms/settingsForm.ts` (converters + resolver; an end time of 00:00 means 24:00), store `updateSettings` / `exportFile` / `checkImport` / `importData` / `clearAllData` (every replace-all, samples included, goes through one `replaceAll` helper that also closes the picker and clears the task selection), `SettingsDialog` (settings form with barred-slot rows + Data section: Export JSON, Import JSON with ER6 check then confirm, Load sample calendar, Clear all data) mounted in App; tests: §5 SettingsDialog cases (end ≤ start inline, add/remove barred slot, export download via `URL.createObjectURL`), import/sample/clear via UI, store and form unit tests · next: WI-24 · note: **nothing opens the dialog yet except `openDialog({kind: 'settings'})`**: the toolbar's ⚙ is WI-24. `toClockTime` moved to `format/time.ts`, the criterion labels (`CRITERIA`) to `format/explain.ts`, and `toDateInput`/`fromDateInput` to `forms/eventForm.ts`. **The "spinner overlay for loading a sample or importing > 1,000 records" (PROJECT_SCHEMA §7.4) is not built yet**; WI-26 should add it around `replaceAll`
-- [~] **WI-24** Toolbar, theme, shortcuts, help — owner Dv — depends on 19
-  - 2026-10-26 · Claude Code · branch `feat/wi-24-toolbar` · started
+- [x] **WI-24** Toolbar, theme, shortcuts, help — owner Dv — depends on 19
+  - 2026-10-26 · Claude Code · branch `feat/wi-24-toolbar` · done: `hooks/preferences.ts` (guarded localStorage; `storedView` / `rememberView` for the last view), `hooks/useTheme.ts`, `hooks/useShortcuts.ts` (pure `shortcutFor` + the window listener), `ShortcutHelp`, `Toolbar` (◀ Today ▶, period title, view switch, H/M/L filter chips, + Event, + Task, Replan, ↶/↷ with label tooltips, ◐, ⚙); store `setView` / `toggleEventPriority` / `initialView`; `onDatesSet` records the view and period start; App mounts it all and passes a FullCalendar ref to `CalendarView`; tests: T32 (a)–(e) (`useShortcuts.test.tsx`, `ShortcutHelp.test.tsx`, `useTheme.test.tsx`, App), Toolbar and preferences tests · next: WI-25 · note: **no CSS yet** — the toolbar is unstyled buttons until WI-25 (`.toolbar`, `.toolbar-title`, `.chip.prio-*` class names are in place). The theme is applied after React mounts, so a dark choice may flash light on load; WI-25 can add a tiny inline script in `index.html` if it shows. The drawer toggle (< 1024 px) is WI-26
 - [ ] **WI-25** Styles & tokens — owner Dv — depends on 19
 - [ ] **WI-26** Responsive drawer + a11y pass (+ optional drag preview) — owner S — depends on 21–25
 
@@ -119,3 +119,5 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 - 2026-10-26 (WI-23, Claude Code): "Clear all data" replaces everything with an empty calendar and `DEFAULT_SETTINGS` (through `engine.importData`, so the undo history is cleared as for any import). "All data" includes the settings, and D5's Export → Clear → Import round trip then restores them too.
 - 2026-10-26 (WI-23, Claude Code): loading a sample from Settings asks for confirmation ("This replaces all your events, tasks and settings.") unless the calendar is empty, because a sample replaces everything just like an import. The empty-state button still loads at once.
 - 2026-10-26 (WI-23, Claude Code): `bufferMinSchema` gives a non-number the buffer range message (TECH_SPEC v1.13), so a blank buffer field reads "Buffer must be between 0 and 120 minutes." instead of Zod's generic type error.
+- 2026-10-26 (WI-24, Claude Code): the slot picker counts as an open dialog for shortcuts (it is a modal `<dialog>`), so letters do nothing while it is open; Esc closes the dialog if one is open, else stops the picker.
+- 2026-10-26 (WI-24, Claude Code): Esc closes the top dialog even when focus is in one of its fields, matching the native `<dialog>` behaviour; every other shortcut is off in text fields.
