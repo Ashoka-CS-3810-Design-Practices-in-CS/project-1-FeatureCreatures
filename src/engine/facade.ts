@@ -2,12 +2,20 @@
 // interface, which hides the state, the pipelines, the algorithms and the repository behind it.
 
 import type { Repository } from '@/data/repository';
-import { DEFAULT_SETTINGS } from '@/shared/constants';
+import { DEFAULT_SETTINGS, EXPORT_FORMAT, EXPORT_VERSION } from '@/shared/constants';
 import type { EngineError } from '@/shared/errors';
 import { err, ok, type Result } from '@/shared/result';
-import { parseInput, settingsSchema, storedDataSchema } from '@/shared/schemas';
+import {
+  linkIssues,
+  parseExportFile,
+  parseInput,
+  settingsSchema,
+  storedDataSchema,
+} from '@/shared/schemas';
+import { fromMinute } from '@/shared/time';
 import type {
   EventInput,
+  ExportFile,
   Interval,
   Minute,
   MutationResult,
@@ -39,6 +47,8 @@ import {
   type PipelineContext,
   type PipelineOutcome,
 } from './state';
+
+const EXPORT_INDENT = 2; // pretty-printed JSON (§9.4)
 
 export interface EngineDeps {
   repo: Repository;
@@ -98,12 +108,6 @@ export interface Engine {
   redo(): Promise<Result<MutationResult>>;
   exportData(): string; // JSON of ExportFile
   importData(json: string): Promise<Result<Snapshot>>; // replace-all; clears history
-}
-
-// PRE:  workItem names the WI that implements the method, e.g. 'WI-14'
-// POST: never returns; throws so a call to an unfinished method fails loudly instead of silently
-function notImplementedUntil(workItem: string): never {
-  throw new Error(`Not implemented until ${workItem}`);
 }
 
 // PRE:  error is any value thrown by a repository
@@ -185,7 +189,7 @@ class CalendarEngine implements Engine {
         return storageError(error);
       }
       const parsed = parseInput(storedDataSchema, loaded);
-      if (!parsed.ok) {
+      if (!parsed.ok || linkIssues(parsed.value.events, parsed.value.tasks).length > 0) {
         return storageError(new Error('Saved data is damaged.'));
       }
       const settings = parsed.value.settings ?? DEFAULT_SETTINGS;
@@ -367,15 +371,42 @@ class CalendarEngine implements Engine {
   }
 
   // PRE:  none
-  // POST: not implemented until WI-17
+  // POST: returns the current events, tasks and settings as pretty-printed ExportFile JSON (§9.4),
+  //       stamped with now
   exportData(): string {
-    return notImplementedUntil('WI-17');
+    const { events, tasks, settings } = this.state;
+    const file: ExportFile = {
+      format: EXPORT_FORMAT,
+      version: EXPORT_VERSION,
+      exportedAt: fromMinute(this.deps.now()).toISOString(),
+      events,
+      tasks,
+      settings,
+    };
+    return JSON.stringify(file, null, EXPORT_INDENT);
   }
 
-  // PRE:  none
-  // POST: not implemented until WI-17
-  importData(): Promise<Result<Snapshot>> {
-    return notImplementedUntil('WI-17');
+  // PRE:  json is untrusted text (validated here)
+  // POST: on a valid export, replaces everything stored and in memory with it (events sorted,
+  //       conflicts detected, history and lastReplan cleared, version + 1, §7.4.6); err
+  //       InvalidImport (ER6) or StorageError, leaving the state and the repository unchanged
+  importData(json: string): Promise<Result<Snapshot>> {
+    return this.run(async () => {
+      const parsed = parseExportFile(json);
+      if (!parsed.ok) {
+        return parsed;
+      }
+      const { events, tasks, settings } = parsed.value;
+      try {
+        await this.deps.repo.replaceAll({ events: [...events], tasks: [...tasks], settings });
+      } catch (error) {
+        return storageError(error);
+      }
+      const fresh = createState({ events, tasks, settings });
+      this.state = { ...fresh, version: this.state.version + 1 };
+      this.lastReplan = null;
+      return ok(this.snapshot());
+    });
   }
 }
 

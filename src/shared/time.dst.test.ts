@@ -1,5 +1,12 @@
 import { DEFAULT_SETTINGS } from './constants';
-import { addLocalDays, atLocal, buildDayFrames, localMinuteOfDay, startOfLocalDay } from './time';
+import {
+  addLocalDays,
+  atLocal,
+  buildDayFrames,
+  localMinuteOfDay,
+  onLocalDay,
+  startOfLocalDay,
+} from './time';
 import type { Settings } from './types';
 
 // Runs under TZ=America/New_York (npm run test:dst). DST ends Sun 1 Nov 2026 at 02:00 → 01:00,
@@ -31,6 +38,12 @@ describe('time across the end of DST (T29)', () => {
     expect(frame.dayEnd - frame.dayStart).toBe(DST_END_DAY_MIN);
     expect(frame.work.start - frame.dayStart).toBe(10 * HOUR);
     expect(frame.work.end - frame.work.start).toBe(9 * HOUR);
+  });
+
+  it('onLocalDay keeps the wall-clock time on the 25-hour day', () => {
+    expect(onLocalDay(atLocal('2026-11-01', '00:00'), 9 * HOUR)).toBe(
+      atLocal('2026-11-01', '09:00'),
+    );
   });
 
   it('round-trips atLocal and localMinuteOfDay at 09:00', () => {

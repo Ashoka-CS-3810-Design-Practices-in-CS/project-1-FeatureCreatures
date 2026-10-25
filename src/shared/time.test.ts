@@ -6,7 +6,9 @@ import {
   ceilTo,
   fromMinute,
   localMinuteOfDay,
+  onLocalDay,
   startOfLocalDay,
+  startOfLocalWeek,
   toMinute,
 } from './time';
 import type { BarredSlot, Settings } from './types';
@@ -57,6 +59,16 @@ describe('local calendar helpers', () => {
 
   it('addLocalDays moves by whole local days', () => {
     expect(addLocalDays(at(0, 9), 3)).toBe(at(3, 9));
+  });
+
+  it('onLocalDay places a wall-clock minute on a day, 1440 meaning the next midnight', () => {
+    expect(onLocalDay(at(2, 0), 9 * HOUR)).toBe(at(2, 9));
+    expect(onLocalDay(at(2, 0), MINUTES_PER_DAY)).toBe(at(3, 0));
+  });
+
+  it('startOfLocalWeek goes back to Monday 00:00', () => {
+    expect(startOfLocalWeek(at(6, 23.5))).toBe(at(0, 0)); // Sunday belongs to the week before
+    expect(startOfLocalWeek(at(0, 0))).toBe(at(0, 0));
   });
 });
 
