@@ -633,6 +633,8 @@ It returns the new `{events, tasks}`.
 
 **`changedEventIds`** are the IDs of records whose image in that direction is non-null.
 
+`commit` resolves to `Result<CommitOutcome, EngineError>`, where `CommitOutcome = {state, label, changedEventIds, introducedConflicts, resolvedConflicts}`. The facade adds the `snapshot` and `suggestion` to make the `MutationResult`. **`createState({events, tasks, settings})`** builds version 0: it sorts the events, detects their conflicts and starts with empty history. `engine.init()` uses it after `load()`.
+
 ### 7.2 Engine interface (`src/engine/facade.ts`) — frozen contract
 
 ```ts
@@ -1657,3 +1659,4 @@ Production URL: https://…vercel.app
 | 2026-10-25 | v1.3 (WI-03): §6 gains `toFieldIssues` / `parseInput`, the shape/refine split, the stored-task link check, the integer-duration message and the settings messages; §5 constants gain the schema limits (`MINUTES_PER_DAY`, `MAX_TITLE_LENGTH`, …). |
 | 2026-10-26 | v1.4 (WI-08): §8.4 gives `countOverlaps` its typed signature (`Interval` candidate and events, returns a count). |
 | 2026-10-26 | v1.5 (WI-09): §8.7 pseudocode builds no-working-hours segments as the window minus barred slots in one pass (as BR-5 says), replacing the per-day pieces plus merge, whose "none yet" edge could survive next to a barred slot ending at 24:00; work edges win ties with the window. §8.8 says where `bufferMin` comes from. |
+| 2026-10-26 | v1.6 (WI-12): §7.1 names `commit`'s result (`CommitOutcome`) and adds `createState` for `engine.init()`. |
