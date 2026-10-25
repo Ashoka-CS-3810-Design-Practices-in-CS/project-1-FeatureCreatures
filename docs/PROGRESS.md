@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** none — next is WI-07 Test helpers & oracles (then WI-08 and WI-09).
-- **Last session:** 2026-10-25 · Claude Code · finished and merged WI-01–06.
+- **Active WI:** WI-07 Test helpers & oracles (branch `feat/wi-07-test-helpers`).
+- **Last session:** 2026-10-25 · Claude Code · finished WI-01–06, claimed WI-07.
 - **Gate status on `main`:** green (typecheck, lint, test; also test:dst, test:coverage, build).
 
 ## Work items
@@ -31,7 +31,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-25 · Claude Code · branch `feat/wi-05-structures` · done: `algorithms/{interval,sortedArray,minHeap}.ts` with TEST_PLAN §4.3 unit tests, 100% coverage · next: WI-06 · note: `sortedArray.test.ts` has a local `event()` builder; WI-07 should swap it for the shared `ev()` helper; `insertSorted` places a new event after equal ones
 - [x] **WI-06** Repositories — owner Dv — depends on 02
   - 2026-10-25 · Claude Code · branch `feat/wi-06-repositories` · done: `src/data/{repository,memoryRepository,dexieRepository}.ts`; `repository.test.ts` runs the same round-trip/no-aliasing contract on both adapters plus Dexie atomicity (apply and replaceAll roll back) and reopen persistence under fake-indexeddb · next: WI-07 · note: `DexieRepository.close()` was added for tests (not on the interface); `repository.test.ts` has local `event()`/`task()` builders that WI-07 should replace
-- [ ] **WI-07** Test helpers & oracles — owner S — depends on 02, 04
+- [~] **WI-07** Test helpers & oracles — owner S — depends on 02, 04
+  - 2026-10-25 · Claude Code · branch `feat/wi-07-test-helpers` · done: claimed · next: `tests/helpers/{time,builders,oracle,failingRepository}.ts` + self-test; `engine.ts` (makeEngine) waits for WI-13
 
 ### Phase 3 — Algorithms and engine
 
