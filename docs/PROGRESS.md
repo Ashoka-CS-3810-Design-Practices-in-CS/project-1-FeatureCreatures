@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-02 Shared types, result, errors, constants (branch `feat/wi-02-shared-types`).
-- **Last session:** 2026-10-25 · Claude Code · finished WI-01, claimed WI-02.
+- **Active WI:** none — next is WI-03 Schemas (WI-04, 05, 06 are also unblocked).
+- **Last session:** 2026-10-25 · Claude Code · finished and merged WI-01 and WI-02.
 - **Gate status on `main`:** green (typecheck, lint, test; also test:dst, test:coverage, build).
 
 ## Work items
@@ -21,8 +21,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 ### Phase 2 — Core types and data
 
-- [~] **WI-02** Shared types, result, errors, constants — owner S — depends on 01
-  - 2026-10-25 · Claude Code · branch `feat/wi-02-shared-types` · done: claimed · next: write `src/shared/{types,result,errors,constants}.ts` from TECH_SPEC §5
+- [x] **WI-02** Shared types, result, errors, constants — owner S — depends on 01
+  - 2026-10-25 · Claude Code · branch `feat/wi-02-shared-types` · done: `src/shared/{types,result,errors,constants}.ts` match §5; `result.test.ts` and `constants.test.ts` green · next: WI-03 · note: `ok`/`err` are function declarations (same exported names and signatures) so they carry PRE/POST
 - [ ] **WI-03** Schemas — owner Dv — depends on 02
 - [ ] **WI-04** Local-time module — owner S — depends on 02
 - [ ] **WI-05** Interval / sortedArray / minHeap — owner S — depends on 02
@@ -79,3 +79,4 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 - 2026-10-25 (WI-01, Claude Code): CI e2e runs with `--pass-with-no-tests` until WI-27, otherwise every push to `main` fails on "no tests found". WI-27 must remove the flag. TECH_SPEC v1.2.
 - 2026-10-25 (WI-01, Claude Code): `.prettierignore` excludes `docs/`, `AGENTS.md`, `CLAUDE.md` and the skill folders so `npm run format` never reflows the hand-written specs.
 - 2026-10-25 (WI-01, Claude Code): `vitest.dst.config.ts` spreads the base config instead of using `mergeConfig`, because `mergeConfig` concatenates arrays and would keep the base include/exclude lists.
+- 2026-10-25 (WI-02, Claude Code): CI runs `test:coverage` with global thresholds (70%, and 90% for algorithms), so any `src/` file with runtime code and no test makes CI red. Every WI must ship tests that import each new runtime file, even when its "Done when" asks only for "compiles".

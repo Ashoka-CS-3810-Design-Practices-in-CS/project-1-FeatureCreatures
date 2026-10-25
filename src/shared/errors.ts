@@ -1,0 +1,24 @@
+// Typed engine errors (ER1–ER7) — frozen contract (TECH_SPEC §5).
+
+import type { Interval } from './types';
+
+export interface FieldIssue {
+  readonly path: string; // path like 'end', 'window.end'
+  readonly message: string;
+}
+
+export type EngineError =
+  | { code: 'InvalidInput'; issues: FieldIssue[] } // ER1 (shape)
+  | { code: 'InvalidTime'; issues: FieldIssue[] } // ER1 (ordering)
+  | { code: 'TaskLongerThanWindow'; durationMin: number; longestStretchMin: number } // ER2
+  | {
+      code: 'NoSlotFound';
+      durationMin: number;
+      largestGapMin: number;
+      largestGap: Interval | null;
+      bufferMin: number;
+    } // ER3
+  | { code: 'StorageError'; message: string } // ER5
+  | { code: 'InvalidImport'; issues: FieldIssue[] } // ER6
+  | { code: 'StaleResult' } // ER7
+  | { code: 'NotFound'; entity: 'event' | 'task'; id: string };
