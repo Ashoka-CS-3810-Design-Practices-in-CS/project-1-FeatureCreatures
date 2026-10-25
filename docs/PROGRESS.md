@@ -6,9 +6,9 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** none; next WI-30 README & demo scripts.
-- **Last session:** 2026-10-26 · Codex · completed WI-29 coverage, full properties and browser bug bash.
-- **Gate status on `main`:** green after WI-28; WI-29 coverage passes (508 tests, T15 opt-in), 5 full-property tests, 6 DST cases, build and 6 Chromium checks pass.
+- **Active WI:** WI-30 README & demo scripts, branch `docs/wi-30-demo`.
+- **Last session:** 2026-10-26 · Codex · finished and merged WI-25–29; started WI-30.
+- **Gate status on `main`:** verified green after WI-29 merge (typecheck, lint, 508 tests; T15 opt-in); coverage, 5 full-property tests, 6 DST cases, build and 6 Chromium checks pass.
 
 ## Work items
 
@@ -101,7 +101,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 ### Phase 6 — Docs and demo
 
-- [ ] **WI-30** README & demo scripts — owner S + Dv — depends on 29
+- [~] **WI-30** README & demo scripts — owner S + Dv — depends on 29
+  - 2026-10-26 · Codex · branch `docs/wi-30-demo` · done: verified WI-29 main gate and read D1–D5/release requirements · next: complete README, reproducible six-sample JSON exports and rehearsal guide; production rehearsal needs the human deployment step
 - [ ] **WI-31** Final docs sync — owner S + Dv — depends on 30
 
 ## Milestones
