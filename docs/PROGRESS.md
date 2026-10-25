@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** none — next is WI-13 Facade + Event CRUD (its dependencies 10 and 12 are done).
-- **Last session:** 2026-10-26 · Claude Code · finished and merged WI-08–WI-12.
+- **Active WI:** WI-13 Facade + Event CRUD (branch `feat/wi-13-facade`).
+- **Last session:** 2026-10-26 · Claude Code · finished and merged WI-08–WI-12; started WI-13.
 - **Gate status on `main`:** green (typecheck, lint, test; also test:dst, test:coverage, build).
 
 ## Work items
@@ -46,7 +46,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-26 · Claude Code · branch `feat/wi-11-replan` · done: `algorithms/{taskOrder,replanHeuristics}.ts`; unit tests cover all 5 BR-11 keys, every BR-12 move reason and their order, unplaced events staying busy, notBefore, and T22/T23 with TEST_PLAN's exact values at algorithm level; T35 in `replanHeuristics.props.test.ts` (green at 10,000 runs; a dropped buffer check is caught) · next: WI-12 · note: WI-16 can build `ReplanInput` the way `replanHeuristics.test.ts` does (`segmentsFor` = `allowedSegments(…, useWorkingHours: true, notBefore)`); `compareIds` is now exported from `sortedArray.ts`
 - [x] **WI-12** Engine state & commit & history — owner Dv — depends on 06, 08
   - 2026-10-26 · Claude Code · branch `feat/wi-12-state` · done: `src/engine/state.ts` (`createState`, `applyChange`, `commit`, history) + `state.test.ts` (forward/backward, StorageError leaves state and repo untouched, 50-step limit, redo cleared on do) · next: WI-13 · note: `commit` returns a `CommitOutcome`; the facade must add `snapshot` and `suggestion` (TECH_SPEC v1.6). For 'undo'/'redo' the caller passes the top of that stack, and `commit` pops it. **WI-13 must also add `tests/helpers/engine.ts` (`makeEngine`)**
-- [ ] **WI-13** Facade + Event CRUD — owner Dv — depends on 12, 10
+- [~] **WI-13** Facade + Event CRUD — owner Dv — depends on 12, 10
+  - 2026-10-26 · Claude Code · branch `feat/wi-13-facade` · done: claimed · next: buffer-override schema, `search.ts`, `suggestAlternatives` (needed for T21's ER4 suggestion), `eventCrud.ts`, `facade.ts`/`index.ts`, `makeEngine`, T5/T13/T21/T26
 - [ ] **WI-14** Task Scheduler pipeline — owner Dv — depends on 13
 - [ ] **WI-15** Conflict Resolution pipeline — owner Dv — depends on 13
 - [ ] **WI-16** Replan pipeline — owner S — depends on 11, 13
