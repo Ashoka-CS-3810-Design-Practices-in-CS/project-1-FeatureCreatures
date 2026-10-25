@@ -6,9 +6,9 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** none; next WI-29 Coverage & bug bash.
-- **Last session:** 2026-10-26 · Codex · completed WI-28 benchmark and gated T15 assertion.
-- **Gate status on `main`:** green after WI-27; WI-28 branch gate green (508 tests + T15 skipped by default), T15 enabled and benchmark both pass.
+- **Active WI:** WI-29 Coverage & bug bash, branch `test/wi-29-coverage`.
+- **Last session:** 2026-10-26 · Codex · finished and merged WI-25–28; started WI-29.
+- **Gate status on `main`:** verified green after WI-28 merge (typecheck, lint, 508 tests; T15 intentionally skipped by default); T15 enabled and benchmark pass.
 
 ## Work items
 
@@ -95,7 +95,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-26 · Codex · branch `feat/wi-28-benchmarks` · done: read T15 and verified main gate · next: seed-7 stress fixture, gated eleven-run median assertion and Vitest benchmark report including k
   - 2026-10-26 · Codex · branch `feat/wi-28-benchmarks` · done: shared seed-7 fixture/query, gated eleven-run T15 assertion (N=5000, k=183, median 1.201 ms), benchmark and portable verbose scripts; README records measurement · next: final gate and merge · note: installed Vitest 5 uses context.bench inside a test; default reporter hides successful logs, so perf/bench scripts use verbose
   - 2026-10-26 · Codex · branch `feat/wi-28-benchmarks` · done: typecheck/lint and 508 tests pass (T15 separately enabled and green); benchmark prints k=183 and mean 0.2665 ms; default seed-42 sample unchanged · next: WI-29 · note: Vitest warns of module-export getter overhead in benchmark runs; numbers describe the local test runner, not production latency
-- [ ] **WI-29** Coverage & bug bash — owner S + Dv — depends on 27, 28
+- [~] **WI-29** Coverage & bug bash — owner S + Dv — depends on 27, 28
+  - 2026-10-26 · Codex · branch `test/wi-29-coverage` · done: verified WI-28 main gate · next: coverage thresholds, 10,000-run random-seed properties, DST/build/browser checks and remaining UI bug bash
 
 ### Phase 6 — Docs and demo
 
