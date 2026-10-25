@@ -7,8 +7,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 ## Current state
 
 - **Active WI:** WI-30 README & demo scripts, branch `docs/wi-30-demo`.
-- **Last session:** 2026-10-26 · Codex · finished and merged WI-25–29; started WI-30.
-- **Gate status on `main`:** verified green after WI-29 merge (typecheck, lint, 508 tests; T15 opt-in); coverage, 5 full-property tests, 6 DST cases, build and 6 Chromium checks pass.
+- **Last session:** 2026-10-26 · Codex · finished and merged WI-25–29; prepared WI-30 README and all sample deliverables; production rehearsal pending.
+- **Gate status:** `main` verified green after WI-29; WI-30 branch also green (typecheck, lint, 508 tests; T15 opt-in). Coverage, 5 full-property tests, 6 DST cases, build and 6 Chromium checks pass; sample exports validate and regenerate identically.
 
 ## Work items
 
@@ -104,6 +104,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 - [~] **WI-30** README & demo scripts — owner S + Dv — depends on 29
   - 2026-10-26 · Codex · branch `docs/wi-30-demo` · done: verified WI-29 main gate and read D1–D5/release requirements · next: complete README, reproducible six-sample JSON exports and rehearsal guide; production rehearsal needs the human deployment step
   - 2026-10-26 · Codex · branch `docs/wi-30-demo` · done: generated and schema-validated all six JSON sample deliverables for 2026-11-02 UTC using an existing-Vite-module-loader script · next: README, sample guide, repeat-generation check and local gate; keep WI-30 open until production D1–D5 rehearsal
+  - 2026-10-26 · Codex · branch `docs/wi-30-demo` · done: README covers production URL/setup/tests/architecture/deployment/limits; six exports validated and repeat generation is byte-identical; D1–D5 preflight and production record prepared · next: human deploys latest tested main and rehearses D1–D5, records outcomes in TEST_PLAN §8; then finish/merge WI-30 and take WI-31 · note: Node URL import corrected after the export script's first lint pass; no push/account/deploy action taken
+  - 2026-10-26 · Codex · branch `docs/wi-30-demo` · done: final typecheck/lint/test gate green (508 pass, T15 intentionally skipped), sample regeneration diff and whitespace checks clean; all local preparation committed · next: production D1–D5 rehearsal; WI-30 remains in progress and unmerged until its production done-when condition is met
 - [ ] **WI-31** Final docs sync — owner S + Dv — depends on 30
 
 ## Milestones
@@ -116,6 +118,7 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 ## Human-only steps
 
+- [ ] **WI-30 blocker:** deploy the latest tested `main` (WI-25–29) to the existing production URL, then rehearse D1–D5 and record tester/date/outcome in TEST_PLAN §8 on `docs/wi-30-demo`. README and sample exports are ready on that branch; do not mark WI-30 complete until rehearsal passes. WI-31 depends on WI-30.
 - [ ] Before presenting the release, run TEST_PLAN §7 on production, including the devtools contrast picker and an NVDA/VoiceOver announcement check. Local Chromium layout/focus/semantic-name checks and both-theme contrast-token tests pass; live screen-reader control is unavailable in this environment.
 - [ ] Connect the GitHub Classroom repo as `origin` and push `main`.
 - [ ] Push the WI branches and milestone tags too: `git push origin --all` and `git push origin --tags` (tags `m1`–`m5` exist locally).

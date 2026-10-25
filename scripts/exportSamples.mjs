@@ -1,7 +1,7 @@
 import { log } from 'node:console';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, URL } from 'node:url';
 import { createServer } from 'vite';
 
 const BASE_MONDAY_ISO = '2026-11-02T00:00:00Z';
