@@ -93,6 +93,7 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-26 · Codex · branch `feat/wi-27-playwright` · done: exact E1–E3 and 3 accessibility tests green together, full gate 507 tests and build green; CI now fails if browser tests are absent · next: WI-28 · note: E2's fresh context reconstructs E1, then moves B to 13:00, resizes to 14:30 and verifies reload; E3 keeps the scheduled row visible with All filter
 - [~] **WI-28** Benchmarks — owner S — depends on 17
   - 2026-10-26 · Codex · branch `feat/wi-28-benchmarks` · done: read T15 and verified main gate · next: seed-7 stress fixture, gated eleven-run median assertion and Vitest benchmark report including k
+  - 2026-10-26 · Codex · branch `feat/wi-28-benchmarks` · done: shared seed-7 fixture/query, gated eleven-run T15 assertion (N=5000, k=183, median 1.201 ms), benchmark and portable verbose scripts; README records measurement · next: final gate and merge · note: installed Vitest 5 uses context.bench inside a test; default reporter hides successful logs, so perf/bench scripts use verbose
 - [ ] **WI-29** Coverage & bug bash — owner S + Dv — depends on 27, 28
 
 ### Phase 6 — Docs and demo

@@ -275,7 +275,7 @@ Each demo starts from **Settings → Data → Load sample calendar**.
 - [ ] `npm run typecheck`, `lint`, `test:coverage` (thresholds met), `test:dst` and `build` pass on `main`.
 - [ ] `npm run test:props:full` passes. Any seeds it found are added as regression cases.
 - [ ] `npm run e2e` passes (E1–E3).
-- [ ] `PERF=1 npm test -- perf` gives a T15 median under 100 ms. The printed numbers are pasted into `README.md`.
+- [ ] `npm run test:perf` gives a T15 median under 100 ms (portable `PERF=1 npm test -- perf`). The printed numbers are pasted into `README.md`.
 - [ ] The production URL is live and in `README.md`. A fresh browser shows the empty state with "Load sample week".
 - [ ] `README.md` covers setup (`npm ci`, `npm run dev`), tests, deployment, the architecture summary (links to the three docs), and the production URL.
 - [ ] The change logs of all three docs are updated, and `docs/PROGRESS.md` is fully ticked.
@@ -297,3 +297,4 @@ Each demo starts from **Settings → Data → Load sample calendar**.
 | 2026-10-26 | v1.1 (WI-08): §2 lists `tests/helpers/props.ts` (`propParams`, `PROP_TIMEOUT_MS`). |
 | 2026-10-26 | v1.2 (WI-14): T16 step (5) schedules at Tue 09:00–10:00, not 10:30. Step (3) set the duration to 60, and `scheduleTask` rejects a slot that does not match it (TECH_SPEC §7.4.3). |
 | 2026-10-26 | v1.3 (WI-25–27): §6 documents executable E1–E3 and their isolated UI fixtures; §7 records local automated accessibility evidence while retaining human production checks. |
+| 2026-10-26 | v1.4 (WI-28): §9 uses the portable `test:perf` script for T15; the gated assertion measures eleven combined-query runs and prints k and the median. |

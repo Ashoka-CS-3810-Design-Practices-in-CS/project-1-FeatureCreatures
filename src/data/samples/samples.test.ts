@@ -7,7 +7,7 @@ import { BASE_MONDAY, t } from '../../../tests/helpers/time';
 import { at } from './build';
 import { SAMPLES, type SampleId } from './index';
 import { mulberry32, nextInt } from './prng';
-import { STRESS_WEEKS } from './stress';
+import { buildStress, STRESS_WEEKS } from './stress';
 
 const STRESS_EVENT_COUNT = 5000;
 const RANDOM_DRAWS = 1000;
@@ -109,6 +109,13 @@ describe('samples (TECH_SPEC §9.5)', () => {
 
   it('at() rejects a malformed time', () => {
     expect(() => at(BASE_MONDAY, 0, '9:00')).toThrow('Bad sample time');
+  });
+
+  it('reuses the stress generator with T15 seed 7 without changing the default sample', () => {
+    const benchmark = buildStress(BASE_MONDAY, 7);
+    expect(benchmark.events).toHaveLength(STRESS_EVENT_COUNT);
+    expect(benchmark.events).toEqual(buildStress(BASE_MONDAY, 7).events);
+    expect(benchmark.events).not.toEqual(build('stress').events);
   });
 });
 

@@ -37,10 +37,10 @@ function stressDay(
   return events;
 }
 
-// PRE:  weekMonday is a local Monday midnight
-// POST: returns the stress sample: STRESS_WEEKS × 5 working days × 10 events, the same on every run
-export function buildStress(weekMonday: Minute): ExportFile {
-  const random = mulberry32(STRESS_SEED);
+// PRE:  weekMonday is a local Monday midnight; seed is an integer
+// POST: returns STRESS_WEEKS × 5 working days × 10 events, repeatable for seed (default sample: 42)
+export function buildStress(weekMonday: Minute, seed = STRESS_SEED): ExportFile {
+  const random = mulberry32(seed);
   const events: CalendarEvent[] = [];
 
   // INVARIANT: events holds the events of weeks 0 … week − 1, in order
