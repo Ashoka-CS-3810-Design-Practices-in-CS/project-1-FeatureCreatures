@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** none — next is WI-18 Store, bootstrap, App shell, toasts, empty state (Phase 4 UI). WI-28 Benchmarks is also unblocked.
-- **Last session:** 2026-10-26 · Claude Code · finished and merged WI-08–WI-17 (Phase 3 complete, tag `m3`).
+- **Active WI:** WI-18 Store, bootstrap, App shell, toasts, empty state (branch `feat/wi-18-app-shell`).
+- **Last session:** 2026-10-26 · Claude Code · finished and merged WI-08–WI-17 (tag `m3`); started WI-18.
 - **Gate status on `main`:** green (typecheck, lint, test; also test:dst, test:coverage, build).
 
 ## Work items
@@ -59,7 +59,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 ### Phase 4 — UI
 
-- [ ] **WI-18** Store, bootstrap, App shell, toasts, empty state — owner Dv — depends on 17
+- [~] **WI-18** Store, bootstrap, App shell, toasts, empty state — owner Dv — depends on 17
+  - 2026-10-26 · Claude Code · branch `feat/wi-18-app-shell` · done: claimed · next: `format/{time,errors}.ts` (the parts the store needs), `store/{toastSlice,appStore}.ts`, `Toasts`, `Modal`, `EmptyState`, `App.tsx`, `main.tsx` bootstrap; Toasts + App UI tests
 - [ ] **WI-19** Calendar view + EventDialog — owner Dv — depends on 18
 - [ ] **WI-20** Task panel + TaskDialog — owner S — depends on 18
 - [ ] **WI-21** Conflict panel + SlotPicker (both modes) — owner S — depends on 19, 20
