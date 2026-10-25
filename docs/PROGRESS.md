@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-23 Settings dialog + data section, branch `feat/wi-23-settings` (WI-24, WI-25 and WI-28 are also unblocked).
-- **Last session:** 2026-10-26 · Claude Code · finished and merged WI-08–WI-22 (tag `m3`).
+- **Active WI:** none — next is WI-24 Toolbar, theme, shortcuts, help (WI-25 and WI-28 are also unblocked).
+- **Last session:** 2026-10-26 · Claude Code · finished and merged WI-23.
 - **Gate status on `main`:** green (typecheck, lint, test; also test:dst, test:coverage, build).
 
 ## Work items
@@ -69,8 +69,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-26 · Claude Code · branch `feat/wi-21-picker` · done: `format/explain.ts` slot explanations (summary line, BR-7 reasons, BR-8 boundaries, fit, queue summary); picker store actions (`openAlternatives`, select, criterion, buffer, toggle, apply, skip, stop); `SlotPicker` (task + alternatives modes, ER2/ER3 block with Edit task); `ConflictPanel` (50-row limit, "(hidden by filter)"); both mounted in App; tests: §5 SlotPicker cases (T6 summary, T10 re-order, radio group), T17-UI incl. skip, T20-UI, ER7 refresh, T14's panel line, T30's hidden note · next: WI-22 · note: ER7 (`StaleResult`) toasts are now `info`, not `error` (PROJECT_SCHEMA §7.4). The ER4 "View conflict" action only emphasises the pair; scrolling the panel to it could be WI-26 polish
 - [x] **WI-22** Replan dialog — owner S — depends on 21
   - 2026-10-26 · Claude Code · branch `feat/wi-22-replan-dialog` · done: `ReplanDialog` (from/to dates defaulting to the visible week, "to" inclusive, buffer override, two plan cards with metrics, moves, unplaced, Apply this plan / No changes needed) mounted in App; store `computeReplan` / `applyReplan`; move and plan sentences in `format/explain.ts`; tests: the §5 Replan UI case (default week, T22 cards, Apply calls `applyReplan`, empty case) plus bad range, buffer override, ER7 recompute · next: WI-23 · note: **nothing opens the dialog yet except `openDialog({kind: 'replan'})`**: the toolbar's Replan button is WI-24
-- [~] **WI-23** Settings dialog + data section — owner S — depends on 18
-  - 2026-10-26 · Claude Code · branch `feat/wi-23-settings` · started
+- [x] **WI-23** Settings dialog + data section — owner S — depends on 18
+  - 2026-10-26 · Claude Code · branch `feat/wi-23-settings` · done: `forms/settingsForm.ts` (converters + resolver; an end time of 00:00 means 24:00), store `updateSettings` / `exportFile` / `checkImport` / `importData` / `clearAllData` (every replace-all, samples included, goes through one `replaceAll` helper that also closes the picker and clears the task selection), `SettingsDialog` (settings form with barred-slot rows + Data section: Export JSON, Import JSON with ER6 check then confirm, Load sample calendar, Clear all data) mounted in App; tests: §5 SettingsDialog cases (end ≤ start inline, add/remove barred slot, export download via `URL.createObjectURL`), import/sample/clear via UI, store and form unit tests · next: WI-24 · note: **nothing opens the dialog yet except `openDialog({kind: 'settings'})`**: the toolbar's ⚙ is WI-24. `toClockTime` moved to `format/time.ts`, the criterion labels (`CRITERIA`) to `format/explain.ts`, and `toDateInput`/`fromDateInput` to `forms/eventForm.ts`. **The "spinner overlay for loading a sample or importing > 1,000 records" (PROJECT_SCHEMA §7.4) is not built yet**; WI-26 should add it around `replaceAll`
 - [ ] **WI-24** Toolbar, theme, shortcuts, help — owner Dv — depends on 19
 - [ ] **WI-25** Styles & tokens — owner Dv — depends on 19
 - [ ] **WI-26** Responsive drawer + a11y pass (+ optional drag preview) — owner S — depends on 21–25
@@ -114,4 +114,7 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 - 2026-10-26 (WI-11, Claude Code): T35 reads "overlap no static event … even with each expanded by the buffer" as "the placed event grown by the buffer meets no other event". That is BR-6's free-gap condition; growing both sides would demand twice the buffer, which BR-12 never promises.
 - 2026-10-26 (WI-13, Claude Code): damaged IndexedDB data and a failing `load()` both surface from `init()` as `StorageError`, so the App's full-page error (Retry / Reset local data, TECH_SPEC §4) covers both. `init()` checks shapes only; WI-17 should run its import cross-record checks (task ↔ event links) in `init()` as well.
 - 2026-10-26 (WI-19, Claude Code): `@fullcalendar/react` was at 7.1.3 while `@fullcalendar/core` and the plugins were at 6.1.22. v7 is a new architecture that cannot load the v6 plugins, so the wrapper is pinned to `^6.1.22` (TECH_SPEC v1.12).
+- 2026-10-26 (WI-23, Claude Code): "Clear all data" replaces everything with an empty calendar and `DEFAULT_SETTINGS` (through `engine.importData`, so the undo history is cleared as for any import). "All data" includes the settings, and D5's Export → Clear → Import round trip then restores them too.
+- 2026-10-26 (WI-23, Claude Code): loading a sample from Settings asks for confirmation ("This replaces all your events, tasks and settings.") unless the calendar is empty, because a sample replaces everything just like an import. The empty-state button still loads at once.
+- 2026-10-26 (WI-23, Claude Code): `bufferMinSchema` gives a non-number the buffer range message (TECH_SPEC v1.13), so a blank buffer field reads "Buffer must be between 0 and 120 minutes." instead of Zod's generic type error.
 - 2026-10-26 (WI-19, Claude Code): the production bundle is 799 kB (241 kB gzip), mostly FullCalendar, so Vite warns about chunk size. Code splitting (lazy-loading the calendar or the stress sample) is left to WI-29.
