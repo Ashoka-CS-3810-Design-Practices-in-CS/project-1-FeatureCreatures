@@ -66,6 +66,15 @@ export function sampleLoadedText(label: string): string {
   return `Loaded sample: ${label}.`;
 }
 
+export const SETTINGS_SAVED_TEXT = 'Settings saved.';
+export const DATA_CLEARED_TEXT = 'All data cleared.';
+
+// PRE:  eventCount, taskCount ≥ 0 are what an import brought in
+// POST: returns the success toast after the import, e.g. "Imported 2 events and 1 task."
+export function importedText(eventCount: number, taskCount: number): string {
+  return `Imported ${counted(eventCount, 'event', 'events')} and ${counted(taskCount, 'task', 'tasks')}.`;
+}
+
 // PRE:  slot is a suggested interval
 // POST: returns the label of the ER4 toast's button that moves the event there
 export function moveToLabel(slot: Interval): string {
