@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** none — next is WI-02 Shared types, result, errors, constants.
-- **Last session:** 2026-10-25 · Claude Code · finished and merged WI-01.
+- **Active WI:** WI-02 Shared types, result, errors, constants (branch `feat/wi-02-shared-types`).
+- **Last session:** 2026-10-25 · Claude Code · finished WI-01, claimed WI-02.
 - **Gate status on `main`:** green (typecheck, lint, test; also test:dst, test:coverage, build).
 
 ## Work items
@@ -21,7 +21,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 ### Phase 2 — Core types and data
 
-- [ ] **WI-02** Shared types, result, errors, constants — owner S — depends on 01
+- [~] **WI-02** Shared types, result, errors, constants — owner S — depends on 01
+  - 2026-10-25 · Claude Code · branch `feat/wi-02-shared-types` · done: claimed · next: write `src/shared/{types,result,errors,constants}.ts` from TECH_SPEC §5
 - [ ] **WI-03** Schemas — owner Dv — depends on 02
 - [ ] **WI-04** Local-time module — owner S — depends on 02
 - [ ] **WI-05** Interval / sortedArray / minHeap — owner S — depends on 02
