@@ -31,13 +31,15 @@ function TaskRow({
   const isUnscheduled = task.status === 'unscheduled';
   return (
     <li className={`task-row prio-${task.priority}`}>
-      <input
-        type="checkbox"
-        aria-label={`Select ${task.name}`}
-        checked={selected}
-        disabled={!isUnscheduled}
-        onChange={() => actions.toggleTaskSelection(task.id)}
-      />{' '}
+      <label className="task-selection">
+        <input
+          type="checkbox"
+          aria-label={`Select ${task.name}`}
+          checked={selected}
+          disabled={!isUnscheduled}
+          onChange={() => actions.toggleTaskSelection(task.id)}
+        />
+      </label>{' '}
       <strong>{task.name}</strong> <span className="tag">{TAG_FOR[task.priority]}</span>{' '}
       <span>{fmtDuration(task.durationMin)}</span>{' '}
       <span>

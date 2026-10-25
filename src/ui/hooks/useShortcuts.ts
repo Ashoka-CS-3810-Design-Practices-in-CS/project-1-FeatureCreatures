@@ -144,13 +144,23 @@ function runShortcut(
 export function useShortcuts(calendarRef: RefObject<FullCalendar | null>): void {
   const dialogOpen = useAppStore((state) => state.dialog !== null);
   const pickerOpen = useAppStore((state) => state.picker !== null);
+  const busy = useAppStore((state) => state.busy !== null);
   const actions = useAppStore((state) => state.actions);
 
   useEffect(() => {
     // PRE:  event is a keydown on window
     // POST: runs the shortcut it means, if any, instead of the browser's default
     function onKeyDown(event: KeyboardEvent): void {
-      const command = shortcutFor(event, isTextField(event.target), dialogOpen || pickerOpen);
+      const nativeModalOpen = document.querySelector('dialog[open]') !== null;
+      // Native Esc closes only the top dialog, including the drawer; a loading dialog cancels it.
+      if (busy || (event.key === 'Escape' && nativeModalOpen)) {
+        return;
+      }
+      const command = shortcutFor(
+        event,
+        isTextField(event.target),
+        dialogOpen || pickerOpen || nativeModalOpen,
+      );
       if (command === null) {
         return;
       }
@@ -160,5 +170,5 @@ export function useShortcuts(calendarRef: RefObject<FullCalendar | null>): void 
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [actions, calendarRef, dialogOpen, pickerOpen]);
+  }, [actions, calendarRef, dialogOpen, pickerOpen, busy]);
 }

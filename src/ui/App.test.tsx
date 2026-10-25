@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, screen } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ev } from '../../tests/helpers/builders';
 import { makeEngine } from '../../tests/helpers/engine';
@@ -7,6 +7,52 @@ import { renderWithStore, storeFor } from '../../tests/helpers/render';
 import { App } from './App';
 
 describe('App', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('below 1024 px opens one copy of the panels in a drawer and returns focus when closed', async () => {
+    const media = window.matchMedia('(max-width: 1023px)');
+    vi.spyOn(window, 'matchMedia').mockReturnValue({ ...media, matches: true });
+    const store = storeFor((await makeEngine()).engine);
+    renderWithStore(<App />, store);
+    const trigger = screen.getByRole('button', { name: 'Tasks and conflicts' });
+    expect(screen.queryByRole('heading', { name: 'Tasks' })).not.toBeInTheDocument();
+
+    await userEvent.click(trigger);
+
+    expect(screen.getByRole('dialog', { name: 'Tasks and conflicts' })).toBeInTheDocument();
+    expect(screen.getAllByRole('heading', { name: 'Tasks' })).toHaveLength(1);
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    await userEvent.click(screen.getByRole('button', { name: 'Close panels' }));
+    expect(screen.queryByRole('dialog', { name: 'Tasks and conflicts' })).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+  });
+
+  it('shows a non-dismissible loading overlay while loading a sample', async () => {
+    const { engine } = await makeEngine();
+    let finishImport: (() => void) | undefined;
+    const completed = engine.importData.bind(engine);
+    vi.spyOn(engine, 'importData').mockImplementation(async (json) => {
+      await new Promise<void>((resolve) => {
+        finishImport = resolve;
+      });
+      return completed(json);
+    });
+    const store = storeFor(engine);
+    renderWithStore(<App />, store);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Load sample week' }));
+
+    const overlay = await screen.findByRole('dialog', { name: 'Loading calendar' });
+    expect(screen.getByRole('status')).toHaveTextContent('Loading sample calendar…');
+    fireEvent(overlay, new Event('cancel', { cancelable: true }));
+    expect(overlay).toHaveAttribute('open');
+    await waitFor(() => expect(finishImport).toBeDefined());
+    await act(async () => finishImport?.());
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: 'Loading calendar' })).not.toBeInTheDocument(),
+    );
+  });
+
   it('shows the empty state; "Load sample week" loads sparseWeek with 1 conflict', async () => {
     const store = storeFor((await makeEngine()).engine);
     renderWithStore(<App />, store);

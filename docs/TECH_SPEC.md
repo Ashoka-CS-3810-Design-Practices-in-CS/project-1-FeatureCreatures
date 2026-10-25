@@ -484,6 +484,9 @@ export const CONFLICT_LIST_LIMIT = 50;
 export const TOAST_MS = 4000;          // success / info toasts
 export const WARNING_TOAST_MS = 8000;  // ER4 warning toasts
 export const EMPHASIS_MS = 1500;       // changed events stay emphasised
+export const DRAWER_BREAKPOINT_PX = 1024;
+export const MIN_CLICK_TARGET_PX = 32;
+export const IMPORT_SPINNER_THRESHOLD = 1000;
 export const MINUTES_PER_DAY = 1440;
 export const MAX_TITLE_LENGTH = 100;          // event title and task name
 export const MAX_DESCRIPTION_LENGTH = 1000;
@@ -1331,6 +1334,7 @@ interface AppState {
   status: 'loading' | 'ready' | 'fatal';
   fatalError: EngineError | null;
   storageWarning: boolean;
+  busy: string | null;                        // loading message while replacing a sample/large import
   snapshot: Snapshot;                          // the ONLY copy of domain data in the UI
   view: { type: 'timeGridDay' | 'timeGridWeek' | 'dayGridMonth' | 'listWeek'; date: Minute;
           activeRange: Interval | null };      // activeRange from FullCalendar datesSet
@@ -1358,6 +1362,10 @@ interface Toast { id: string; tone: 'success' | 'info' | 'warning' | 'error'; te
 ```
 
 `createAppStore(engine, {storageWarning, init, now, resetStorage, initialView?})` builds the store; `now` dates the samples and `resetStorage` empties the repository for the fatal screen's *Reset local data*. `initialView` is the view remembered in `localStorage['fc-view']` (`storedView()` in `hooks/preferences.ts`); `main.tsx` calls `rememberView(store)` so later view changes are remembered too. `onDatesSet` records `view.type` and `view.date` (the shown period's first day, for the toolbar title) as well as `activeRange`. `StoreProvider` and `useAppStore(selector)` live in `appStore.ts`.
+
+`SidePanel` renders the panels once: an `aside` at 1024 px and wider, a native `Modal` drawer below it. `useNarrowLayout` listens for media-query changes. App owns the drawer's open state and the toolbar trigger. Nested dialogs keep the drawer open; native Esc closes only the top dialog. Modal cleanup returns focus to the connected trigger, with the page trigger retained across confirmation replacements.
+
+All sample loads and imports with more than `IMPORT_SPINNER_THRESHOLD` events plus tasks set `busy`. `BusyOverlay` is a non-dismissible native modal with a polite status and a reduced-motion-aware spinner. Sample generation is deferred until after a rendering frame and task so the feedback can paint first. The shared replace-all helper clears `busy` in `finally`, including storage failures; Retry repeats the same loading feedback.
 
 **Rules for actions.**
 
@@ -1423,6 +1431,7 @@ FullCalendar is a **controlled, render-only view**. Its `events` prop is always 
 ```
 
 - `conflictMinutes` is the largest overlap minutes among the event's conflicts.
+- Each entry also carries a complete accessible `label` from `format/explain.ts`: title, date/time range, priority, kind and conflict. `EventContent` updates the FullCalendar button's accessible name and native tooltip whenever the label changes. List custom content supplies a native button to retain the keyboard activation that would otherwise be lost with FullCalendar's default anchor. Short blocks keep a 32 px minimum target; the complete text remains available in List view and the dialog.
 - Barred slots for the visible range are added as `{display: 'background', classNames: ['barred'], title: label}` entries, one per day, built with `buildDayFrames(activeRange, settings)`.
 - The function is pure and memoised on `snapshot.version`, the filter, `activeRange` and `emphasisIds`.
 
@@ -1690,3 +1699,4 @@ Production URL: https://…vercel.app
 | 2026-10-26 | v1.13 (WI-23): §6 `bufferMinSchema` gives a non-number the buffer range message, so a blank buffer field in a form reads "Buffer must be between 0 and 120 minutes.". |
 | 2026-10-26 | v1.14 (WI-24): §2 lists `forms/settingsForm.ts` and `hooks/preferences.ts`; §11.1 gives `createAppStore` an optional `initialView` (last view, PROJECT_SCHEMA §3.2) and says what `onDatesSet` records. |
 | 2026-10-26 | v1.15 (WI-25): §1.1 and §11.4 clarify CSS Module layout and global shared styles; primary-control foreground, backdrop and shadow tokens are explicit. §11.3 uses short day headers and omits the all-day row because every event is timed. |
+| 2026-10-26 | v1.16 (WI-26): §5 adds drawer, target and import-feedback constants; §11.1 documents `busy`, responsive panels, native dialog focus and loading feedback; §11.3 documents complete event names/tooltips and minimum target height. |

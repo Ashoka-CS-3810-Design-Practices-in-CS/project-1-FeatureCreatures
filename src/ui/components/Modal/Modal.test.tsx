@@ -35,4 +35,22 @@ describe('Modal', () => {
 
     expect(onClose).toHaveBeenCalledOnce();
   });
+
+  it('returns focus to its trigger on unmount without reporting a user close', () => {
+    const trigger = document.createElement('button');
+    document.body.append(trigger);
+    trigger.focus();
+    const onClose = vi.fn();
+    const { unmount } = render(
+      <Modal open title="Edit" onClose={onClose}>
+        Body
+      </Modal>,
+    );
+
+    unmount();
+
+    expect(trigger).toHaveFocus();
+    expect(onClose).not.toHaveBeenCalled();
+    trigger.remove();
+  });
 });

@@ -5,6 +5,7 @@ import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import { useMemo, type RefObject } from 'react';
 import { fromMinute } from '@/shared/time';
+import { MIN_CLICK_TARGET_PX } from '@/shared/constants';
 import { useAppStore } from '../../store/appStore';
 import { createCalendarHandlers } from './calendarHandlers';
 import { EventContent } from './EventContent';
@@ -60,6 +61,7 @@ export function CalendarView({ calendarRef }: { calendarRef: RefObject<FullCalen
       selectable
       selectMirror
       eventOverlap
+      eventMinHeight={MIN_CLICK_TARGET_PX}
       businessHours={{
         daysOfWeek: [...workDays],
         startTime: toClockTime(workStartMin),
@@ -75,6 +77,11 @@ export function CalendarView({ calendarRef }: { calendarRef: RefObject<FullCalen
             {...(arg.event.extendedProps as EventBlockProps)}
             title={arg.event.title}
             timeText={arg.timeText}
+            onOpen={
+              arg.view.type === 'listWeek'
+                ? () => actions.openDialog({ kind: 'event', mode: 'edit', id: arg.event.id })
+                : undefined
+            }
           />
         )
       }

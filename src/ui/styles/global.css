@@ -60,6 +60,7 @@ textarea {
 
 button {
   min-height: var(--target-min);
+  min-width: var(--target-min);
   padding: 4px 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -112,6 +113,7 @@ label:has(> input[type='radio']) {
   display: inline-flex;
   align-items: center;
   min-height: var(--target-min);
+  min-width: var(--target-min);
   margin-right: 12px;
 }
 
@@ -289,6 +291,14 @@ td {
   margin-top: 8px;
 }
 
+.task-selection {
+  justify-content: center;
+}
+
+.task-selection input[type='checkbox'] {
+  margin: 0;
+}
+
 .task-row.prio-high {
   border-left-color: var(--prio-high);
 }
@@ -323,6 +333,41 @@ dialog {
 
 dialog::backdrop {
   background: var(--backdrop);
+}
+
+.panel-drawer {
+  margin: 0 0 0 auto;
+  width: min(420px, 100vw);
+  max-height: 100dvh;
+  height: 100dvh;
+  border-radius: 0;
+}
+
+.panel-drawer > section {
+  margin-top: 16px;
+}
+
+.spinner {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  vertical-align: middle;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
 }
 
 dialog form > label,

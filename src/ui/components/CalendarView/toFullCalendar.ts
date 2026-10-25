@@ -3,6 +3,7 @@
 
 import type { EventInput } from '@fullcalendar/core';
 import { buildDayFrames, fromMinute } from '@/shared/time';
+import { eventAccessibleText } from '../../format/explain';
 import type {
   CalendarEvent,
   Category,
@@ -13,6 +14,7 @@ import type {
 } from '@/shared/types';
 
 export interface EventBlockProps {
+  label: string;
   priority: Priority;
   category: Category;
   flexible: boolean;
@@ -50,6 +52,7 @@ function toEntry(event: CalendarEvent, conflictMinutes: number, emphasised: bool
     classNames.push('is-emphasised');
   }
   const extendedProps: EventBlockProps = {
+    label: eventAccessibleText(event, conflictMinutes),
     priority: event.priority,
     category: event.category,
     flexible: event.flexible,
