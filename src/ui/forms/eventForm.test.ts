@@ -6,7 +6,9 @@ import {
   eventFormValues,
   eventResolver,
   flexibleByDefault,
+  fromDateInput,
   fromDateTimeLocal,
+  toDateInput,
   toDateTimeLocal,
   toEventInput,
   type EventFormValues,
@@ -43,6 +45,12 @@ describe('eventForm', () => {
     expect(toDateTimeLocal(t('Mon 09:05'))).toBe('2026-11-02T09:05');
     expect(fromDateTimeLocal('2026-11-02T09:05')).toBe(t('Mon 09:05'));
     expect(fromDateTimeLocal('')).toBeNaN();
+  });
+
+  it('converts date-input strings both ways, with NaN for an empty value', () => {
+    expect(toDateInput(t('Tue 23:30'))).toBe('2026-11-03');
+    expect(fromDateInput('2026-11-03')).toBe(t('Tue 00:00'));
+    expect(fromDateInput('')).toBeNaN();
   });
 
   it('makes assignments and personal events flexible by default, the rest fixed', () => {

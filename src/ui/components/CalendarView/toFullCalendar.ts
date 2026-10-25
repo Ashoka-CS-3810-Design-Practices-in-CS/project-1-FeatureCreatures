@@ -2,7 +2,6 @@
 // always derived from the snapshot here, never the other way round.
 
 import type { EventInput } from '@fullcalendar/core';
-import { MINUTES_PER_HOUR } from '@/shared/constants';
 import { buildDayFrames, fromMinute } from '@/shared/time';
 import type {
   CalendarEvent,
@@ -19,16 +18,6 @@ export interface EventBlockProps {
   flexible: boolean;
   isTask: boolean;
   conflictMinutes: number; // largest overlap among the event's conflicts, 0 if none
-}
-
-const PAD_WIDTH = 2;
-
-// PRE:  minuteOfDay is an integer 0 … 1440
-// POST: returns it as 'HH:mm' for FullCalendar's businessHours (1440 gives '24:00')
-export function toClockTime(minuteOfDay: number): string {
-  const hours = String(Math.floor(minuteOfDay / MINUTES_PER_HOUR)).padStart(PAD_WIDTH, '0');
-  const minutes = String(minuteOfDay % MINUTES_PER_HOUR).padStart(PAD_WIDTH, '0');
-  return `${hours}:${minutes}`;
 }
 
 // PRE:  conflicts are the snapshot's conflicts

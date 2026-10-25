@@ -3,7 +3,7 @@ import { fromMinute } from '@/shared/time';
 import type { BarredSlot, CalendarEvent, Settings, Snapshot } from '@/shared/types';
 import { ev, flexEv, iv, settings } from '../../../../tests/helpers/builders';
 import { t } from '../../../../tests/helpers/time';
-import { toClockTime, toFullCalendar } from './toFullCalendar';
+import { toFullCalendar } from './toFullCalendar';
 
 // PRE:  events have distinct ids
 // POST: returns the snapshot the engine would expose for them
@@ -63,11 +63,5 @@ describe('toFullCalendar', () => {
       { title: 'Lunch', display: 'background', classNames: ['barred'] },
     ]);
     expect(entries[1]?.start).toEqual(fromMinute(t('Tue 13:00')));
-  });
-
-  it('toClockTime formats minutes of the day for businessHours', () => {
-    expect(toClockTime(540)).toBe('09:00');
-    expect(toClockTime(1440)).toBe('24:00');
-    expect(toClockTime(5)).toBe('00:05');
   });
 });

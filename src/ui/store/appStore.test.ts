@@ -1,8 +1,8 @@
 import { MemoryRepository } from '@/data/memoryRepository';
 import type { Repository } from '@/data/repository';
 import { createEngine, type Engine } from '@/engine';
-import { EMPHASIS_MS } from '@/shared/constants';
-import { ev, iv, task } from '../../../tests/helpers/builders';
+import { DEFAULT_SETTINGS, EMPHASIS_MS } from '@/shared/constants';
+import { ev, iv, settings, task } from '../../../tests/helpers/builders';
 import { makeEngine } from '../../../tests/helpers/engine';
 import { FailingRepository } from '../../../tests/helpers/failingRepository';
 import { t } from '../../../tests/helpers/time';
@@ -358,6 +358,89 @@ describe('createAppStore', () => {
       expect(texts(store)).toEqual([
         '2 selected tasks are already scheduled, so they were left out.',
       ]);
+    });
+  });
+
+  describe('settings and data actions', () => {
+    it('updateSettings adopts the new settings with a toast; an invalid change keeps the old ones', async () => {
+      const { engine } = await makeEngine();
+      const store = storeFor(engine);
+
+      const saved = await store.getState().actions.updateSettings(settings({ bufferMin: 15 }));
+      const rejected = await store
+        .getState()
+        .actions.updateSettings(settings({ workStartMin: 600, workEndMin: 600 }));
+
+      expect(saved.ok).toBe(true);
+      expect(rejected.ok).toBe(false);
+      expect(store.getState().snapshot.settings.bufferMin).toBe(15);
+      expect(texts(store)).toEqual(['Settings saved.', 'Working hours must end after they start.']);
+    });
+
+    it('updateSettings shows the sticky ER5 toast when storage fails', async () => {
+      const repo = new FailingRepository();
+      const { engine } = await makeEngine({ repo });
+      const store = storeFor(engine);
+      repo.failNextSaveSettings();
+
+      await store.getState().actions.updateSettings(settings({ bufferMin: 15 }));
+
+      expect(store.getState().toasts[0]).toMatchObject({ tone: 'error', sticky: true });
+      expect(store.getState().snapshot.settings.bufferMin).toBe(0);
+    });
+
+    it('exportFile names the file by the local date and holds the export JSON', async () => {
+      const { engine } = await makeEngine({ events: [ev('A', 'Mon 10:00', 'Mon 11:00')] });
+
+      const file = storeFor(engine).getState().actions.exportFile();
+
+      expect(file.fileName).toBe('calendar-export-2026-11-02.json');
+      expect(JSON.parse(file.json)).toMatchObject({ events: [{ id: 'A' }] });
+    });
+
+    it('checkImport accepts a valid export and reports an invalid one with the ER6 toast', async () => {
+      const { engine } = await makeEngine();
+      const store = storeFor(engine);
+
+      expect(store.getState().actions.checkImport(engine.exportData())).toBe(true);
+      expect(store.getState().actions.checkImport('not json')).toBe(false);
+
+      expect(store.getState().toasts).toMatchObject([
+        { tone: 'error', text: "That file isn't a valid calendar export: Not valid JSON." },
+      ]);
+    });
+
+    it('importData replaces everything, clears the picker and selection, and says what came in', async () => {
+      const source = await makeEngine({
+        events: [ev('A', 'Mon 10:00', 'Mon 11:00'), ev('B', 'Tue 10:00', 'Tue 11:00')],
+        tasks: [task('T', 60, ['Mon 09:00', 'Fri 18:00'])],
+      });
+      const { engine } = await makeEngine({ tasks: [task('Old', 60, ['Mon 09:00', 'Fri 18:00'])] });
+      const store = storeFor(engine);
+      store.getState().actions.toggleTaskSelection('Old');
+      store.getState().actions.openTaskPicker(['Old']);
+
+      const result = await store.getState().actions.importData(source.engine.exportData());
+
+      expect(result.ok).toBe(true);
+      expect(store.getState().snapshot.events.map((event) => event.id)).toEqual(['A', 'B']);
+      expect(store.getState().picker).toBeNull();
+      expect(store.getState().taskPanel.selectedIds).toEqual([]);
+      expect(texts(store)).toEqual(['Imported 2 events and 1 task.']);
+    });
+
+    it('clearAllData empties the calendar and resets the settings', async () => {
+      const { engine } = await makeEngine({
+        events: [ev('A', 'Mon 10:00', 'Mon 11:00')],
+        settings: settings({ bufferMin: 30 }),
+      });
+      const store = storeFor(engine);
+
+      await store.getState().actions.clearAllData();
+
+      expect(store.getState().snapshot).toMatchObject({ events: [], tasks: [], canUndo: false });
+      expect(store.getState().snapshot.settings).toEqual(DEFAULT_SETTINGS);
+      expect(texts(store)).toEqual(['All data cleared.']);
     });
   });
 });

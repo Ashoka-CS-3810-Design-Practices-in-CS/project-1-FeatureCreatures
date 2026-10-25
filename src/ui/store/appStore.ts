@@ -6,31 +6,37 @@ import { useStore } from 'zustand';
 import { createStore, type StoreApi } from 'zustand/vanilla';
 import { SAMPLES, type SampleId } from '@/data/samples';
 import type { Engine } from '@/engine';
-import { EMPHASIS_MS } from '@/shared/constants';
+import { DEFAULT_SETTINGS, EMPHASIS_MS, EXPORT_FORMAT, EXPORT_VERSION } from '@/shared/constants';
 import type { EngineError } from '@/shared/errors';
 import type { Result } from '@/shared/result';
-import { startOfLocalWeek } from '@/shared/time';
+import { parseExportFile } from '@/shared/schemas';
+import { fromMinute, startOfLocalWeek } from '@/shared/time';
 import type {
   Conflict,
   EventInput,
+  ExportFile,
   Interval,
   Minute,
   MutationResult,
   Priority,
   ReplanPlan,
   ReplanResult,
+  Settings,
   Snapshot,
   SlotSearchResult,
   TaskInput,
   UserCriterion,
 } from '@/shared/types';
 import { errorMessage } from '../format/errors';
+import { toDateInput } from '../forms/eventForm';
 import {
   alternativeAppliedText,
   conflictText,
   createdText,
+  DATA_CLEARED_TEXT,
   deletedText,
   historyText,
+  importedText,
   movedText,
   moveToLabel,
   droppedFromQueueText,
@@ -38,6 +44,7 @@ import {
   queueSummaryText,
   scheduledText,
   sampleLoadedText,
+  SETTINGS_SAVED_TEXT,
   taskCreatedText,
   taskDeletedText,
   taskSavedText,
@@ -91,6 +98,11 @@ export interface AppActions {
   redo(): Promise<Result<MutationResult>>;
   applyAlternative(eventId: string, slot: Interval): Promise<Result<MutationResult>>;
   loadSample(id: SampleId): Promise<Result<Snapshot>>;
+  updateSettings(settings: Settings): Promise<Result<Snapshot>>;
+  exportFile(): { fileName: string; json: string };
+  checkImport(json: string): boolean;
+  importData(json: string): Promise<Result<Snapshot>>;
+  clearAllData(): Promise<Result<Snapshot>>;
   retryInit(): Promise<void>;
   resetLocalData(): Promise<void>;
 }
@@ -280,6 +292,31 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
         return;
       }
       refresh({ ...picker, index });
+    }
+
+    // PRE:  json is the text of an export file (validated by the engine); describe gives the
+    //       success text for the new snapshot
+    // POST: replaces all data with json's (B2); on ok adopts the snapshot, closes the picker,
+    //       clears the task selection (both may name records that are gone) and shows describe's
+    //       toast; on err shows the error toast and changes nothing; returns the result
+    async function replaceAll(
+      json: string,
+      describe: (snapshot: Snapshot) => string,
+    ): Promise<Result<Snapshot>> {
+      const result = await engine.importData(json);
+      if (!result.ok) {
+        showError(result.error, () => {
+          void replaceAll(json, describe);
+        });
+        return result;
+      }
+      set({
+        snapshot: result.value,
+        picker: null,
+        taskPanel: { ...get().taskPanel, selectedIds: [] },
+      });
+      pushToast({ tone: 'success', text: describe(result.value) });
+      return result;
     }
 
     const actions: AppActions = {
@@ -603,18 +640,71 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
 
       // PRE:  id names a sample
       // POST: replaces all data with that sample built for the current week; shows a toast
-      async loadSample(id) {
+      loadSample(id) {
         const sample = SAMPLES[id];
-        const result = await engine.importData(
-          JSON.stringify(sample.build(startOfLocalWeek(options.now()))),
+        return replaceAll(JSON.stringify(sample.build(startOfLocalWeek(options.now()))), () =>
+          sampleLoadedText(sample.label),
         );
+      },
+
+      // PRE:  settings come from the settings dialog (validated by the engine)
+      // POST: saves them (not undoable, FR11); on ok adopts the snapshot and toasts "Settings
+      //       saved."; on err shows the error toast and keeps the old settings
+      async updateSettings(settings) {
+        const result = await engine.updateSettings(settings);
         if (!result.ok) {
-          pushToast({ tone: 'error', text: errorMessage(result.error) });
+          showError(result.error, () => {
+            void actions.updateSettings(settings);
+          });
           return result;
         }
         set({ snapshot: result.value });
-        pushToast({ tone: 'success', text: sampleLoadedText(sample.label) });
+        pushToast({ tone: 'success', text: SETTINGS_SAVED_TEXT });
         return result;
+      },
+
+      // PRE:  none
+      // POST: returns the export JSON and its file name, calendar-export-YYYY-MM-DD.json (local
+      //       date of now, B2)
+      exportFile() {
+        return {
+          fileName: `calendar-export-${toDateInput(options.now())}.json`,
+          json: engine.exportData(),
+        };
+      },
+
+      // PRE:  json is the text of a chosen file (untrusted)
+      // POST: returns whether it is a valid export (ER6); when it is not, shows the ER6 toast
+      checkImport(json) {
+        const parsed = parseExportFile(json);
+        if (!parsed.ok) {
+          showError(parsed.error, () => undefined);
+        }
+        return parsed.ok;
+      },
+
+      // PRE:  json is the text of a chosen file (validated by the engine)
+      // POST: replaces all data with it through replaceAll; the toast says how many events and
+      //       tasks came in
+      importData(json) {
+        return replaceAll(json, (snapshot) =>
+          importedText(snapshot.events.length, snapshot.tasks.length),
+        );
+      },
+
+      // PRE:  none
+      // POST: replaces all data with an empty calendar and the default settings through
+      //       replaceAll (it clears the undo history, like any import)
+      clearAllData() {
+        const empty: ExportFile = {
+          format: EXPORT_FORMAT,
+          version: EXPORT_VERSION,
+          exportedAt: fromMinute(options.now()).toISOString(),
+          events: [],
+          tasks: [],
+          settings: DEFAULT_SETTINGS,
+        };
+        return replaceAll(JSON.stringify(empty), () => DATA_CLEARED_TEXT);
       },
 
       // PRE:  none

@@ -31,6 +31,8 @@ type DateField = 'start' | 'end' | 'flexStart' | 'flexEnd';
 
 const DATETIME_LOCAL_FORMAT = "yyyy-MM-dd'T'HH:mm";
 const DATETIME_LOCAL = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})$/;
+const DATE_INPUT_FORMAT = 'yyyy-MM-dd';
+const DATE_INPUT = /^\d{4}-\d{2}-\d{2}$/;
 const MISSING_DATE_MESSAGE = 'Enter a date and time.';
 const FLEXIBLE_CATEGORIES: readonly Category[] = ['assignment', 'personal'];
 
@@ -56,6 +58,18 @@ export function fromDateTimeLocal(text: string): Minute {
   }
   const [, date = '', time = ''] = match;
   return atLocal(date, time);
+}
+
+// PRE:  minute is an integer Minute
+// POST: returns its local date as a date-input value, 'YYYY-MM-DD'
+export function toDateInput(minute: Minute): string {
+  return format(fromMinute(minute), DATE_INPUT_FORMAT);
+}
+
+// PRE:  text is any string from a date input
+// POST: returns that day's local midnight, or NaN when text is not a date (the engine rejects NaN)
+export function fromDateInput(text: string): Minute {
+  return DATE_INPUT.test(text) ? atLocal(text, '00:00') : Number.NaN;
 }
 
 // PRE:  category is a Category

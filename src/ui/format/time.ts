@@ -7,6 +7,7 @@ import type { Interval, Minute } from '@/shared/types';
 
 const TIME_FORMAT = 'HH:mm';
 const DAY_FORMAT = 'EEE d MMM';
+const PAD_WIDTH = 2;
 
 // PRE:  minute is an integer Minute
 // POST: returns its local time as HH:mm
@@ -40,4 +41,12 @@ export function fmtDuration(minutes: number): string {
     return `${rest} min`;
   }
   return rest === 0 ? `${hours} h` : `${hours} h ${rest} min`;
+}
+
+// PRE:  minuteOfDay is an integer 0 … 1440
+// POST: returns it as 'HH:mm' (1440 gives '24:00')
+export function toClockTime(minuteOfDay: number): string {
+  const hours = String(Math.floor(minuteOfDay / MINUTES_PER_HOUR)).padStart(PAD_WIDTH, '0');
+  const minutes = String(minuteOfDay % MINUTES_PER_HOUR).padStart(PAD_WIDTH, '0');
+  return `${hours}:${minutes}`;
 }

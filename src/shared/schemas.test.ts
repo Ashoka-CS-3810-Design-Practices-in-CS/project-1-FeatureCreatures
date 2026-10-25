@@ -374,6 +374,19 @@ describe('searchOptionsSchema', () => {
       expect(result.error).toMatchObject({ code: 'InvalidInput', issues: [{ path: 'bufferMin' }] });
     },
   );
+
+  it.each([[Number.NaN], ['15'], [-1], [121]])(
+    'gives bufferMin %s the range message (a blank form field becomes NaN)',
+    (bufferMin) => {
+      const result = parseInput(searchOptionsSchema, { bufferMin });
+
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.error).toMatchObject({
+        issues: [{ path: 'bufferMin', message: 'Buffer must be between 0 and 120 minutes.' }],
+      });
+    },
+  );
 });
 
 describe('storedDataSchema', () => {
