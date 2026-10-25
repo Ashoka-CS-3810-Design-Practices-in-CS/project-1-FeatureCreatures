@@ -7,7 +7,10 @@ import {
   distanceText,
   fitText,
   gapText,
+  moveReasonText,
+  moveText,
   optionReasonText,
+  planAppliedText,
   priorityAwareText,
   queueSummaryText,
   scheduledText,
@@ -115,5 +118,29 @@ describe('format/explain (slots, BR-7, BR-8)', () => {
     if (!result.ok) throw new Error('search failed');
 
     expect(searchSummaryText(result.value)).toBe('1 free gap in window (1 h) — 1 fits 1 h');
+  });
+
+  it('describes replan moves and the applied plan (BR-12)', () => {
+    expect(moveReasonText({ kind: 'outsideFlexWindow' })).toBe('outside its flex window');
+    expect(moveReasonText({ kind: 'outsideWorkingHours' })).toBe('outside working hours');
+    expect(moveReasonText({ kind: 'barred', label: 'Lunch' })).toBe('in the barred slot "Lunch"');
+    expect(moveReasonText({ kind: 'buffer', withEventId: 'S', withTitle: 'Seminar' })).toBe(
+      'inside the buffer of "Seminar"',
+    );
+    expect(moveReasonText({ kind: 'balance', fromDayLoadMin: 120, toDayLoadMin: 0 })).toBe(
+      'balances the week (day load 2 h → 0 min)',
+    );
+    expect(
+      moveText({
+        eventId: 'R',
+        title: 'Read',
+        priority: 'low',
+        from: iv('Mon 14:00', 'Mon 15:00'),
+        to: iv('Tue 09:00', 'Tue 10:00'),
+        reason: { kind: 'conflict', withEventId: 'L', withTitle: 'Lecture' },
+      }),
+    ).toBe('"Read" Mon 2 Nov 14:00–15:00 → Tue 3 Nov 09:00–10:00 — conflicts with "Lecture"');
+    expect(planAppliedText(1)).toBe('Plan applied: 1 event moved');
+    expect(planAppliedText(2)).toBe('Plan applied: 2 events moved');
   });
 });
