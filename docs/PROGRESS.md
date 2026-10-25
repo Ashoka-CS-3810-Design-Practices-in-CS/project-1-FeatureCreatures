@@ -88,6 +88,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 - [~] **WI-27** Playwright E1–E3 — owner Dv — depends on 26
   - 2026-10-26 · Codex · branch `feat/wi-27-playwright` · done: verified WI-26 main gate; Chromium installed and accessibility harness green · next: exact E1 conflicts, E2 real drag/resize plus reload persistence, E3 schedule Report; remove CI no-tests escape hatch
+  - 2026-10-26 · Codex · branch `feat/wi-27-playwright` · done: E1–E3 written, CI escape hatch removed; first run exposed missing roles on focusable FullCalendar anchors · next: verify role fix and precise pointer geometry, then rerun all six browser tests
+  - 2026-10-26 · Codex · branch `feat/wi-27-playwright` · done: E1, E2 and E3 individually green; E2 performs real pointer drag/resize then reloads IndexedDB data · next: full gate and six-test browser run, merge · note: test geometry uses the initial row's center snap to account for FullCalendar's subject-centering; native-dialog tests wait for React unmount before the next shortcut
 - [ ] **WI-28** Benchmarks — owner S — depends on 17
 - [ ] **WI-29** Coverage & bug bash — owner S + Dv — depends on 27, 28
 
