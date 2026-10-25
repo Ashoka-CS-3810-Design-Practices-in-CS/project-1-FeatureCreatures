@@ -551,6 +551,8 @@ export const exportFileSchema = z.object({
 
 `storedEventSchema` and `storedTaskSchema` extend the input schemas with `id`, `taskId`, `status`, `scheduledEventId`, `createdAt` and `updatedAt`.
 
+`storedDataSchema = {events: storedEvent[], tasks: storedTask[], settings: settings | null}` validates `Repository.load()` in `engine.init()`. `searchOptionsSchema = {bufferMin?: int 0–120}` validates the `bufferMin` override of `findSlots`, `suggestAlternatives` and `planReplan`; it shares one `bufferMinSchema` with `settingsSchema`.
+
 - Zod 4 cannot `.extend()` a refined object, so each schema is a plain object shape plus a named refine function (`refineEventTiming`, `refineTaskWindow`), and the stored schemas extend the shape and re-apply the same refinements.
 - `storedTaskSchema` also checks `(status = 'scheduled') ⟺ (scheduledEventId ≠ null)` as a shape issue at `scheduledEventId`: "A task has an event id exactly when it is scheduled."
 - A non-integer duration gives "Duration must be a whole number of minutes." (T31's 2.5 case).
@@ -719,6 +721,7 @@ Every mutation pipeline follows the same skeleton: validate → look up → buil
      - if `flexWindow` is `null`, set it to `task.window`
      - build the task mirror `{name: title, priority, durationMin: end − start, window: flexWindow, updatedAt}` (BR-9)
      - add the task's record change to the same `Change`
+     - the mirror is validated with `taskInputSchema`, so an edit that would make the task invalid (e.g. a 3 min duration) is rejected
   5. Use the label `Edit "<title>"`. Then commit and compute the suggestion as in `createEvent`.
 - **`moveEvent(id, to)`** is the same as `updateEvent(id, {...old, start: to.start, end: to.end})`, with the label `Move "<title>"`.
 - **`deleteEvent(id)`**
@@ -1208,7 +1211,7 @@ export interface Repository {
 }
 ```
 
-`engine.init()` calls `load()`, sorts the events, and uses `DEFAULT_SETTINGS` when `settings` is `null`. It also saves those defaults.
+`engine.init()` calls `load()`, validates it with `storedDataSchema`, sorts the events, and uses `DEFAULT_SETTINGS` when `settings` is `null`. It also saves those defaults. A failing `load()` or `saveSettings()`, or damaged stored data, gives `StorageError` (message "Saved data is damaged." for the latter), which the App shows as the full-page error of §4.
 
 ### 9.2 `dexieRepository.ts`
 
@@ -1660,3 +1663,4 @@ Production URL: https://…vercel.app
 | 2026-10-26 | v1.4 (WI-08): §8.4 gives `countOverlaps` its typed signature (`Interval` candidate and events, returns a count). |
 | 2026-10-26 | v1.5 (WI-09): §8.7 pseudocode builds no-working-hours segments as the window minus barred slots in one pass (as BR-5 says), replacing the per-day pieces plus merge, whose "none yet" edge could survive next to a barred slot ending at 24:00; work edges win ties with the window. §8.8 says where `bufferMin` comes from. |
 | 2026-10-26 | v1.6 (WI-12): §7.1 names `commit`'s result (`CommitOutcome`) and adds `createState` for `engine.init()`. |
+| 2026-10-26 | v1.7 (WI-13): §6 adds `storedDataSchema` and `searchOptionsSchema`; §7.4.1 validates the BR-9 task mirror; §9.1 says how `init()` treats damaged stored data. |
