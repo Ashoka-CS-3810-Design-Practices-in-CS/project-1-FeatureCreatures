@@ -6,12 +6,21 @@ import { err, type Result } from '@/shared/result';
 import { parseInput, searchOptionsSchema } from '@/shared/schemas';
 import { addLocalDays, startOfLocalDay } from '@/shared/time';
 import type { CalendarEvent, Interval, Minute, SlotSearchResult } from '@/shared/types';
-import { search } from '../search';
-import type { EngineState } from '../state';
+import { requireCurrentVersion, requireSlotLength, search } from '../search';
+import type { EngineState, PipelineContext, PipelineOutcome } from '../state';
+// eventCrud also imports this module (for the ER4 suggestion). The cycle is safe: each side only
+// calls the other's functions at run time, never while the modules load.
+import { moveEvent } from './eventCrud';
 
 // A fixed event is searched from the day before its day to the day after it.
 const FIXED_SEARCH_DAYS_BEFORE = 1;
 const FIXED_SEARCH_DAYS_AFTER = 2;
+
+export interface ApplyAlternativeRequest {
+  eventId: string;
+  slot: Interval;
+  baseVersion: number;
+}
 
 export interface AlternativesRequest {
   eventId: string;
@@ -72,4 +81,27 @@ export function suggestAlternatives(
     },
     notBefore,
   );
+}
+
+// PRE:  request comes from the UI, normally an option of suggestAlternatives
+// POST: moves the event to request.slot as moveEvent does (label 'Move "<title>"'); err StaleResult
+//       when the state changed since request.baseVersion (ER7), NotFound for an unknown event, or
+//       InvalidTime when the slot is not exactly the event's duration
+export async function applyAlternative(
+  context: PipelineContext,
+  request: ApplyAlternativeRequest,
+): Promise<Result<PipelineOutcome, EngineError>> {
+  const current = requireCurrentVersion(context.state, request.baseVersion);
+  if (!current.ok) {
+    return current;
+  }
+  const event = context.state.events.find((candidate) => candidate.id === request.eventId);
+  if (event === undefined) {
+    return err({ code: 'NotFound', entity: 'event', id: request.eventId });
+  }
+  const fits = requireSlotLength(request.slot, event.end - event.start);
+  if (!fits.ok) {
+    return fits;
+  }
+  return moveEvent(context, event.id, request.slot);
 }

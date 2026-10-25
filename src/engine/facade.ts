@@ -19,7 +19,7 @@ import type {
   TaskInput,
   UserCriterion,
 } from '@/shared/types';
-import { suggestAlternatives } from './pipelines/conflictResolution';
+import { applyAlternative, suggestAlternatives } from './pipelines/conflictResolution';
 import { createEvent, deleteEvent, moveEvent, updateEvent } from './pipelines/eventCrud';
 import {
   createTask,
@@ -244,10 +244,14 @@ class CalendarEngine implements Engine {
     return suggestAlternatives(this.state, req, notBeforeFor(this.deps.now()));
   }
 
-  // PRE:  none
-  // POST: not implemented until WI-15
-  applyAlternative(): Promise<Result<MutationResult>> {
-    return notImplementedUntil('WI-15');
+  // PRE:  req comes from the UI (checked by the pipeline, version check included)
+  // POST: as conflictResolution.applyAlternative, queued, so the version check sees the latest state
+  applyAlternative(req: {
+    eventId: string;
+    slot: Interval;
+    baseVersion: number;
+  }): Promise<Result<MutationResult>> {
+    return this.mutate((context) => applyAlternative(context, req));
   }
 
   // PRE:  input comes from the UI (validated by the pipeline)
