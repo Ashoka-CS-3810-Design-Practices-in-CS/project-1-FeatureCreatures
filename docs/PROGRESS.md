@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-05 Interval / sortedArray / minHeap (branch `feat/wi-05-structures`).
-- **Last session:** 2026-10-25 · Claude Code · finished WI-01–04, claimed WI-05.
+- **Active WI:** none — next is WI-06 Repositories (WI-07 is also unblocked).
+- **Last session:** 2026-10-25 · Claude Code · finished and merged WI-01–05.
 - **Gate status on `main`:** green (typecheck, lint, test; also test:dst, test:coverage, build).
 
 ## Work items
@@ -27,8 +27,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-25 · Claude Code · branch `feat/wi-03-schemas` · done: `src/shared/schemas.ts` with T5 (a–f) and T31 schema-level cases, settings, stored and export schemas; 41 cases in `schemas.test.ts` · next: WI-04 · note: the engine must validate with `parseInput` (maps to InvalidTime/InvalidInput); import builds InvalidImport from `toFieldIssues`; facade-level and UI parts of T5/T31 belong to WI-13/14 and WI-19/20 (TECH_SPEC v1.3)
 - [x] **WI-04** Local-time module — owner S — depends on 02
   - 2026-10-25 · Claude Code · branch `feat/wi-04-time` · done: `src/shared/time.ts` (§8.6); `time.test.ts` green under UTC; `time.dst.test.ts` (T29 time part: 1500-min frame, work at +600, 540 long, 09:00 round-trip) green under `test:dst` · next: WI-05 · note: T29's "only option is 09:00–18:00" needs `findSlots`, so WI-14 must add it to a `*.dst.test.ts`; a barred `endMin` of 1440 also maps to `dayEnd`; added an ESLint rule so only `shared/time.ts` may import date-fns
-- [~] **WI-05** Interval / sortedArray / minHeap — owner S — depends on 02
-  - 2026-10-25 · Claude Code · branch `feat/wi-05-structures` · done: claimed · next: unit tests (TEST_PLAN §4.3) then `algorithms/{interval,sortedArray,minHeap}.ts`
+- [x] **WI-05** Interval / sortedArray / minHeap — owner S — depends on 02
+  - 2026-10-25 · Claude Code · branch `feat/wi-05-structures` · done: `algorithms/{interval,sortedArray,minHeap}.ts` with TEST_PLAN §4.3 unit tests, 100% coverage · next: WI-06 · note: `sortedArray.test.ts` has a local `event()` builder; WI-07 should swap it for the shared `ev()` helper; `insertSorted` places a new event after equal ones
 - [ ] **WI-06** Repositories — owner Dv — depends on 02
 - [ ] **WI-07** Test helpers & oracles — owner S — depends on 02, 04
 
