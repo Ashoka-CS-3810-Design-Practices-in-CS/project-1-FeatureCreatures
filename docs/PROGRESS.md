@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** none — next is WI-20 Task panel + TaskDialog (WI-23, WI-24, WI-25 and WI-28 are also unblocked).
-- **Last session:** 2026-10-26 · Claude Code · finished and merged WI-08–WI-19 (tag `m3`).
+- **Active WI:** WI-20 Task panel + TaskDialog (branch `feat/wi-20-tasks`).
+- **Last session:** 2026-10-26 · Claude Code · finished and merged WI-08–WI-19 (tag `m3`); started WI-20.
 - **Gate status on `main`:** green (typecheck, lint, test; also test:dst, test:coverage, build).
 
 ## Work items
@@ -63,7 +63,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-26 · Claude Code · branch `feat/wi-18-app-shell` · done: `main.tsx` bootstrap (§4), `ui/store/{appStore,toastSlice,pickerSlice}.ts` (picker: types only), `ui/format/{time,errors}.ts`, `App.tsx` (loading / fatal / shell + degraded banner), `Toasts`, `Modal`, `EmptyState`; tests for all of them (Toasts live regions, sticky ER5 + Retry, App empty state → sparseWeek → 1 conflict, banner, fatal Retry / Reset) · next: WI-19 · note: **App's main area is a one-line summary placeholder**, which WI-19 (calendar) and WI-21 (conflict panel) replace. Store mutations go through `runMutation` in `appStore.ts`; add event and task actions there. `format/time.ts` and `format/errors.ts` exist, and WI-19 extends `format/*`. The app was checked in jsdom only, not yet in a real browser; WI-27's E1 covers that. No CSS yet (WI-25)
 - [x] **WI-19** Calendar view + EventDialog — owner Dv — depends on 18
   - 2026-10-26 · Claude Code · branch `feat/wi-19-calendar` · done: `@fullcalendar/react` pinned to v6; `forms/eventForm.ts` (converters, category defaults, resolver); store event actions; `format/explain.ts` (all toast sentences); `CalendarView/{CalendarView,toFullCalendar,calendarHandlers,EventContent}`; `EventDialog`, `ConfirmDialog`, mounted in App; tests: T14 (`calendarHandlers.test.tsx`), EventDialog UI cases + T5 UI, CalendarView jsdom smoke test · next: WI-20 · note: **T14's ConflictPanel line belongs to WI-21**. App keeps a one-line status ("N events · N tasks · N conflicts") above the calendar. There is no toolbar "+ Event" yet (WI-24): events are created by selecting time on the calendar, and a dialog opened without times gets the next whole hour. The `ErrorText` helper in `EventDialog.tsx` could be shared with TaskDialog
-- [ ] **WI-20** Task panel + TaskDialog — owner S — depends on 18
+- [~] **WI-20** Task panel + TaskDialog — owner S — depends on 18
+  - 2026-10-26 · Claude Code · branch `feat/wi-20-tasks` · done: claimed · next: `store/selectors.ts` (T30 sort/filter), `forms/taskForm.ts`, store task actions + `openTaskPicker` (store side only), `TaskPanel`, `TaskDialog`; T30 + TaskDialog UI tests
 - [ ] **WI-21** Conflict panel + SlotPicker (both modes) — owner S — depends on 19, 20
 - [ ] **WI-22** Replan dialog — owner S — depends on 21
 - [ ] **WI-23** Settings dialog + data section — owner S — depends on 18
