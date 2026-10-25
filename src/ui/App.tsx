@@ -1,4 +1,7 @@
+import { CalendarView } from './components/CalendarView/CalendarView';
+import { ConfirmDialog } from './components/ConfirmDialog/ConfirmDialog';
 import { EmptyState } from './components/EmptyState/EmptyState';
+import { EventDialog } from './components/EventDialog/EventDialog';
 import { Toasts } from './components/Toasts/Toasts';
 import { errorMessage } from './format/errors';
 import { useAppStore } from './store/appStore';
@@ -31,9 +34,11 @@ function FatalScreen() {
 }
 
 // PRE:  rendered under StoreProvider; reads status, storageWarning and snapshot
-//       + additional props from: EmptyState, Toasts, FatalScreen
+//       + additional props from: EmptyState, CalendarView, EventDialog, ConfirmDialog, Toasts,
+//       FatalScreen
 // POST: shows the loading line, the fatal screen, or the app: the degraded-mode banner when
-//       storage is unavailable, the empty state on a blank calendar, and the toasts
+//       storage is unavailable, the empty state on a blank calendar, the status line, the
+//       calendar, the open dialog and the toasts
 export function App() {
   const status = useAppStore((state) => state.status);
   const storageWarning = useAppStore((state) => state.storageWarning);
@@ -58,16 +63,16 @@ export function App() {
         <h1>Interactive Calendar</h1>
       </header>
       <main>
-        {isEmpty ? (
-          <EmptyState />
-        ) : (
-          // Placeholder summary until the calendar (WI-19) and the conflict panel (WI-21) arrive.
-          <p>
-            {countOf(snapshot.events.length, 'event')} · {countOf(snapshot.tasks.length, 'task')} ·{' '}
-            {countOf(snapshot.conflicts.length, 'conflict')}
-          </p>
-        )}
+        {isEmpty && <EmptyState />}
+        {/* Status line; the conflict panel (WI-21) will list the conflicts themselves. */}
+        <p className="status-line">
+          {countOf(snapshot.events.length, 'event')} · {countOf(snapshot.tasks.length, 'task')} ·{' '}
+          {countOf(snapshot.conflicts.length, 'conflict')}
+        </p>
+        <CalendarView />
       </main>
+      <EventDialog />
+      <ConfirmDialog />
       <Toasts />
     </div>
   );

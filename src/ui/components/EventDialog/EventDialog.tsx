@@ -1,0 +1,235 @@
+import { useId } from 'react';
+import { useForm, useWatch, type FieldError } from 'react-hook-form';
+import { MINUTES_PER_HOUR } from '@/shared/constants';
+import { ceilTo } from '@/shared/time';
+import type { CalendarEvent, Category, Interval, Priority } from '@/shared/types';
+import {
+  eventFormValues,
+  eventResolver,
+  flexibleByDefault,
+  toEventInput,
+  type EventFormValues,
+} from '../../forms/eventForm';
+import { useAppStore, type Dialog } from '../../store/appStore';
+import { Modal } from '../Modal/Modal';
+
+type EventDialogState = Extract<Exclude<Dialog, null>, { kind: 'event' }>;
+
+const CATEGORIES: { value: Category; label: string }[] = [
+  { value: 'meeting', label: 'Meeting' },
+  { value: 'class', label: 'Class' },
+  { value: 'appointment', label: 'Appointment' },
+  { value: 'assignment', label: 'Assignment' },
+  { value: 'personal', label: 'Personal' },
+];
+const PRIORITIES: { value: Priority; label: string }[] = [
+  { value: 'high', label: 'High' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'low', label: 'Low' },
+];
+
+// PRE:  id names a form field; error is that field's RHF error, if any
+// POST: renders the field's message, linked to the field by id (aria-describedby)
+function ErrorText({ id, error }: { id: string; error: FieldError | undefined }) {
+  return error?.message === undefined ? null : (
+    <p id={id} className="field-error">
+      {error.message}
+    </p>
+  );
+}
+
+// PRE:  viewDate is the calendar's current date (a Minute)
+// POST: returns the interval a new event gets when no time was selected: the next whole hour, 1 h
+function nextHourSlot(viewDate: number): Interval {
+  const start = ceilTo(viewDate, MINUTES_PER_HOUR);
+  return { start, end: start + MINUTES_PER_HOUR };
+}
+
+// PRE:  rendered under StoreProvider; dialog is the open event dialog; existing is the event being
+//       edited (undefined when creating); reads settings and view.date; uses event actions
+//       + additional props from: Modal
+// POST: shows the event form (title, category, priority, start, end, flexible, flex window when
+//       flexible, description); Save validates with eventResolver and only then calls the engine,
+//       closing on success; Delete asks for confirmation first
+function EventForm({
+  dialog,
+  existing,
+}: {
+  dialog: EventDialogState;
+  existing: CalendarEvent | undefined;
+}) {
+  const settings = useAppStore((state) => state.snapshot.settings);
+  const viewDate = useAppStore((state) => state.view.date);
+  const actions = useAppStore((state) => state.actions);
+  const idPrefix = useId();
+  const defaults = dialog.mode === 'create' ? dialog.defaults : {};
+  const source = existing ?? { ...nextHourSlot(viewDate), ...defaults };
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    control,
+    formState: { errors, isSubmitting },
+  } = useForm<EventFormValues>({
+    resolver: eventResolver,
+    defaultValues: eventFormValues(source, settings),
+  });
+  const flexible = useWatch({ control, name: 'flexible' });
+  const isTaskEvent = existing?.taskId != null;
+  const fieldId = (name: keyof EventFormValues) => `${idPrefix}-${name}`;
+  const errorId = (name: keyof EventFormValues) => `${idPrefix}-${name}-error`;
+  const described = (name: keyof EventFormValues) =>
+    errors[name] === undefined ? {} : { 'aria-invalid': true, 'aria-describedby': errorId(name) };
+
+  // PRE:  values passed eventResolver
+  // POST: creates or updates the event; closes the dialog on success, stays open on failure
+  async function save(values: EventFormValues): Promise<void> {
+    const input = toEventInput(values);
+    const result =
+      existing === undefined
+        ? await actions.createEvent(input)
+        : await actions.updateEvent(existing.id, input);
+    if (result.ok) {
+      actions.closeDialog();
+    }
+  }
+
+  // PRE:  existing is defined
+  // POST: replaces this dialog with a confirmation that deletes the event
+  function confirmDelete(event: CalendarEvent): void {
+    actions.openDialog({
+      kind: 'confirm',
+      title: 'Delete event?',
+      body: `Delete "${event.title}"? You can undo this.`,
+      confirmLabel: 'Delete',
+      onConfirm: () => void actions.deleteEvent(event.id),
+    });
+  }
+
+  const categoryField = register('category');
+  return (
+    <Modal
+      open
+      title={existing === undefined ? 'New event' : 'Edit event'}
+      onClose={actions.closeDialog}
+    >
+      <form noValidate onSubmit={(event) => void handleSubmit(save)(event)}>
+        <label htmlFor={fieldId('title')}>Title</label>
+        <input id={fieldId('title')} type="text" {...register('title')} {...described('title')} />
+        <ErrorText id={errorId('title')} error={errors.title} />
+
+        <label htmlFor={fieldId('category')}>Category</label>
+        <select
+          id={fieldId('category')}
+          {...categoryField}
+          onChange={(event) => {
+            void categoryField.onChange(event);
+            if (existing === undefined) {
+              setValue('flexible', flexibleByDefault(event.target.value as Category));
+            }
+          }}
+        >
+          {CATEGORIES.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+
+        <label htmlFor={fieldId('priority')}>Priority</label>
+        <select id={fieldId('priority')} {...register('priority')}>
+          {PRIORITIES.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+
+        <label htmlFor={fieldId('start')}>Start</label>
+        <input
+          id={fieldId('start')}
+          type="datetime-local"
+          {...register('start')}
+          {...described('start')}
+        />
+        <ErrorText id={errorId('start')} error={errors.start} />
+
+        <label htmlFor={fieldId('end')}>End</label>
+        <input
+          id={fieldId('end')}
+          type="datetime-local"
+          {...register('end')}
+          {...described('end')}
+        />
+        <ErrorText id={errorId('end')} error={errors.end} />
+
+        <label>
+          <input type="checkbox" disabled={isTaskEvent} {...register('flexible')} /> Flexible (the
+          planner may move it)
+        </label>
+        {isTaskEvent && <p className="hint">Events of scheduled tasks always stay flexible.</p>}
+
+        {flexible && (
+          <fieldset>
+            <legend>Flex window</legend>
+            <label htmlFor={fieldId('flexStart')}>Window start</label>
+            <input
+              id={fieldId('flexStart')}
+              type="datetime-local"
+              {...register('flexStart')}
+              {...described('flexStart')}
+            />
+            <ErrorText id={errorId('flexStart')} error={errors.flexStart} />
+            <label htmlFor={fieldId('flexEnd')}>Window end</label>
+            <input
+              id={fieldId('flexEnd')}
+              type="datetime-local"
+              {...register('flexEnd')}
+              {...described('flexEnd')}
+            />
+            <ErrorText id={errorId('flexEnd')} error={errors.flexEnd} />
+          </fieldset>
+        )}
+
+        <label htmlFor={fieldId('description')}>Description</label>
+        <textarea id={fieldId('description')} {...register('description')} />
+
+        <button type="submit" disabled={isSubmitting}>
+          Save
+        </button>
+        <button type="button" onClick={actions.closeDialog}>
+          Cancel
+        </button>
+        {existing !== undefined && (
+          <button type="button" onClick={() => confirmDelete(existing)}>
+            Delete
+          </button>
+        )}
+      </form>
+    </Modal>
+  );
+}
+
+// PRE:  rendered under StoreProvider; reads dialog and snapshot.events
+//       + additional props from: EventForm
+// POST: while an event dialog is open, shows its form (keyed by the dialog, so it starts fresh);
+//       an edit dialog for an event that no longer exists shows nothing
+export function EventDialog() {
+  const dialog = useAppStore((state) => state.dialog);
+  const events = useAppStore((state) => state.snapshot.events);
+  if (dialog?.kind !== 'event') {
+    return null;
+  }
+  const existing =
+    dialog.mode === 'edit' ? events.find((event) => event.id === dialog.id) : undefined;
+  if (dialog.mode === 'edit' && existing === undefined) {
+    return null;
+  }
+  return (
+    <EventForm
+      key={dialog.mode === 'edit' ? dialog.id : 'create'}
+      dialog={dialog}
+      existing={existing}
+    />
+  );
+}

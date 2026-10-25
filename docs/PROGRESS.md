@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-19 Calendar view + EventDialog (branch `feat/wi-19-calendar`).
-- **Last session:** 2026-10-26 · Claude Code · finished and merged WI-08–WI-18 (tag `m3`); started WI-19.
+- **Active WI:** none — next is WI-20 Task panel + TaskDialog (WI-23, WI-24, WI-25 and WI-28 are also unblocked).
+- **Last session:** 2026-10-26 · Claude Code · finished and merged WI-08–WI-19 (tag `m3`).
 - **Gate status on `main`:** green (typecheck, lint, test; also test:dst, test:coverage, build).
 
 ## Work items
@@ -61,8 +61,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 - [x] **WI-18** Store, bootstrap, App shell, toasts, empty state — owner Dv — depends on 17
   - 2026-10-26 · Claude Code · branch `feat/wi-18-app-shell` · done: `main.tsx` bootstrap (§4), `ui/store/{appStore,toastSlice,pickerSlice}.ts` (picker: types only), `ui/format/{time,errors}.ts`, `App.tsx` (loading / fatal / shell + degraded banner), `Toasts`, `Modal`, `EmptyState`; tests for all of them (Toasts live regions, sticky ER5 + Retry, App empty state → sparseWeek → 1 conflict, banner, fatal Retry / Reset) · next: WI-19 · note: **App's main area is a one-line summary placeholder**, which WI-19 (calendar) and WI-21 (conflict panel) replace. Store mutations go through `runMutation` in `appStore.ts`; add event and task actions there. `format/time.ts` and `format/errors.ts` exist, and WI-19 extends `format/*`. The app was checked in jsdom only, not yet in a real browser; WI-27's E1 covers that. No CSS yet (WI-25)
-- [~] **WI-19** Calendar view + EventDialog — owner Dv — depends on 18
-  - 2026-10-26 · Claude Code · branch `feat/wi-19-calendar` · done: claimed · next: `forms/eventForm.ts`, store event actions, `CalendarView/{toFullCalendar,calendarHandlers,EventContent,CalendarView}`, `EventDialog`, `ConfirmDialog`; T14 (ConflictPanel part → WI-21) + EventDialog UI tests
+- [x] **WI-19** Calendar view + EventDialog — owner Dv — depends on 18
+  - 2026-10-26 · Claude Code · branch `feat/wi-19-calendar` · done: `@fullcalendar/react` pinned to v6; `forms/eventForm.ts` (converters, category defaults, resolver); store event actions; `format/explain.ts` (all toast sentences); `CalendarView/{CalendarView,toFullCalendar,calendarHandlers,EventContent}`; `EventDialog`, `ConfirmDialog`, mounted in App; tests: T14 (`calendarHandlers.test.tsx`), EventDialog UI cases + T5 UI, CalendarView jsdom smoke test · next: WI-20 · note: **T14's ConflictPanel line belongs to WI-21**. App keeps a one-line status ("N events · N tasks · N conflicts") above the calendar. There is no toolbar "+ Event" yet (WI-24): events are created by selecting time on the calendar, and a dialog opened without times gets the next whole hour. The `ErrorText` helper in `EventDialog.tsx` could be shared with TaskDialog
 - [ ] **WI-20** Task panel + TaskDialog — owner S — depends on 18
 - [ ] **WI-21** Conflict panel + SlotPicker (both modes) — owner S — depends on 19, 20
 - [ ] **WI-22** Replan dialog — owner S — depends on 21
@@ -109,3 +109,5 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 - 2026-10-26 (WI-09, Claude Code): in `allowedSegments`, when the work start or end equals the window edge, the edge is labelled `workStart`/`workEnd`, not `windowStart`/`windowEnd`. T6 expects `after = workEnd` for a window that equals working hours.
 - 2026-10-26 (WI-11, Claude Code): T35 reads "overlap no static event … even with each expanded by the buffer" as "the placed event grown by the buffer meets no other event". That is BR-6's free-gap condition; growing both sides would demand twice the buffer, which BR-12 never promises.
 - 2026-10-26 (WI-13, Claude Code): damaged IndexedDB data and a failing `load()` both surface from `init()` as `StorageError`, so the App's full-page error (Retry / Reset local data, TECH_SPEC §4) covers both. `init()` checks shapes only; WI-17 should run its import cross-record checks (task ↔ event links) in `init()` as well.
+- 2026-10-26 (WI-19, Claude Code): `@fullcalendar/react` was at 7.1.3 while `@fullcalendar/core` and the plugins were at 6.1.22. v7 is a new architecture that cannot load the v6 plugins, so the wrapper is pinned to `^6.1.22` (TECH_SPEC v1.12).
+- 2026-10-26 (WI-19, Claude Code): the production bundle is 799 kB (241 kB gzip), mostly FullCalendar, so Vite warns about chunk size. Code splitting (lazy-loading the calendar or the stress sample) is left to WI-29.
