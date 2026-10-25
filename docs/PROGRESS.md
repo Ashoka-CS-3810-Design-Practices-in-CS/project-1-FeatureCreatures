@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-16 Replan pipeline (branch `feat/wi-16-replan-pipeline`).
-- **Last session:** 2026-10-26 · Claude Code · finished and merged WI-08–WI-15; started WI-16.
+- **Active WI:** none — next is WI-17 Undo/redo, import/export, samples (the last engine WI).
+- **Last session:** 2026-10-26 · Claude Code · finished and merged WI-08–WI-16.
 - **Gate status on `main`:** green (typecheck, lint, test; also test:dst, test:coverage, build).
 
 ## Work items
@@ -52,8 +52,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-26 · Claude Code · branch `feat/wi-14-scheduler` · done: `pipelines/taskScheduler.ts` wired into the facade; `tests/integration/taskScheduler.test.ts` covers T6–T11, T16–T19, T27 (scheduling half), T28 (a, b) and T31; `taskScheduler.dst.test.ts` covers T29's `findSlots` part · next: WI-15 · note: **T27's replan half and T28 (c) need Replan, so WI-16 must add them**; TEST_PLAN T16 step (5) fixed (v1.2); `requireCurrentVersion` / `requireSlotLength` in `search.ts` are for WI-15's `applyAlternative` too; "each step adds exactly one undo entry" in T16 is checked via `undoLabel` until WI-17 can undo step by step
 - [x] **WI-15** Conflict Resolution pipeline — owner Dv — depends on 13
   - 2026-10-26 · Claude Code · branch `feat/wi-15-alternatives` · done: `applyAlternative` in `pipelines/conflictResolution.ts`, wired into the facade; `tests/integration/conflictResolution.test.ts` covers T20 (target, nearest options, apply resolves, the toggle's 3-day window and options) plus StaleResult / wrong length / NotFound · next: WI-16 · note: `eventCrud` ↔ `conflictResolution` import each other (ER4 suggestion ↔ moveEvent); this is safe because the calls happen at run time only, and a comment says why
-- [~] **WI-16** Replan pipeline — owner S — depends on 11, 13
-  - 2026-10-26 · Claude Code · branch `feat/wi-16-replan-pipeline` · done: claimed · next: `pipelines/replan.ts`, facade `planReplan`/`applyReplan` + `lastReplan`, T22, T23 (apply; the undo step waits for WI-17), T27 replan half, T28 (c)
+- [x] **WI-16** Replan pipeline — owner S — depends on 11, 13
+  - 2026-10-26 · Claude Code · branch `feat/wi-16-replan-pipeline` · done: `pipelines/replan.ts` + facade `planReplan` / `applyReplan` with private `lastReplan`; `tests/integration/replan.test.ts` covers T22, T23 (a) and its apply, T27's replan half and T28 (c), plus range/buffer validation · next: WI-17 · note: **T23 (b)'s `undo()` step (Read back at Mon 14:00) belongs in WI-17's tests**; WI-17's `importData` must clear `lastReplan` (§7.4.6); new constant `REPLAN_DST_SLACK_MIN` (TECH_SPEC v1.9)
 - [ ] **WI-17** Undo/redo, import/export, samples — owner Dv — depends on 13
 
 ### Phase 4 — UI
