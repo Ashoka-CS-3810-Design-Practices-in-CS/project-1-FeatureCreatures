@@ -17,6 +17,8 @@ import type {
   Minute,
   MutationResult,
   Priority,
+  ReplanPlan,
+  ReplanResult,
   Snapshot,
   SlotSearchResult,
   TaskInput,
@@ -32,6 +34,7 @@ import {
   movedText,
   moveToLabel,
   droppedFromQueueText,
+  planAppliedText,
   queueSummaryText,
   scheduledText,
   sampleLoadedText,
@@ -75,6 +78,8 @@ export interface AppActions {
   toggleTaskSelection(id: string): void;
   openTaskPicker(taskIds: readonly string[]): void;
   openAlternatives(conflict: Conflict): void;
+  computeReplan(range: Interval, bufferMin: number | undefined): Result<ReplanResult>;
+  applyReplan(baseVersion: number, planId: ReplanPlan['id']): Promise<Result<MutationResult>>;
   pickerSelect(index: number): void;
   pickerSetCriterion(criterion: UserCriterion): void;
   pickerSetBuffer(bufferMin: number): void;
@@ -442,6 +447,22 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
           result: { ok: false, error: { code: 'StaleResult' } },
           selected: 0,
         });
+      },
+
+      // PRE:  range and bufferMin come from the replan dialog (validated by the engine)
+      // POST: returns both replan plans for range (FR10); the engine keeps them for applyReplan
+      computeReplan(range, bufferMin) {
+        return engine.planReplan({ range, bufferMin });
+      },
+
+      // PRE:  baseVersion and planId come from the plans computeReplan returned
+      // POST: moves the plan's events through runMutation (one undo step); the toast reads
+      //       "Plan applied: N events moved"
+      applyReplan(baseVersion, planId) {
+        return runMutation(
+          () => engine.applyReplan({ baseVersion, planId }),
+          (value) => planAppliedText(value.changedEventIds.length),
+        );
       },
 
       // PRE:  index is an option index

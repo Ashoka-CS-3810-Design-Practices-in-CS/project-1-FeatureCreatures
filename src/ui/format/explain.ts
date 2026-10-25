@@ -7,7 +7,9 @@ import type {
   EffectiveCriterion,
   Interval,
   Minute,
+  MoveReason,
   Priority,
+  ReplanMove,
   SlotOption,
   SlotSearchResult,
 } from '@/shared/types';
@@ -218,4 +220,35 @@ export function scheduledText(slot: Interval): string {
 export function queueSummaryText(scheduled: number, total: number, skipped: number): string {
   const base = `Scheduled ${scheduled} of ${counted(total, 'task', 'tasks')}`;
   return skipped === 0 ? base : `${base} (${skipped} skipped)`;
+}
+
+// PRE:  reason is a replan move reason
+// POST: returns why the event moves (BR-12), e.g. 'conflicts with "Lecture"'
+export function moveReasonText(reason: MoveReason): string {
+  switch (reason.kind) {
+    case 'outsideFlexWindow':
+      return 'outside its flex window';
+    case 'outsideWorkingHours':
+      return 'outside working hours';
+    case 'barred':
+      return `in the barred slot "${reason.label}"`;
+    case 'conflict':
+      return `conflicts with "${reason.withTitle}"`;
+    case 'buffer':
+      return `inside the buffer of "${reason.withTitle}"`;
+    case 'balance':
+      return `balances the week (day load ${fmtDuration(reason.fromDayLoadMin)} → ${fmtDuration(reason.toDayLoadMin)})`;
+  }
+}
+
+// PRE:  move is a planned move
+// POST: returns its line, e.g. '"Study" Mon 2 Nov 11:00–12:00 → Mon 2 Nov 12:00–13:00 — conflicts with "Lecture"'
+export function moveText(move: ReplanMove): string {
+  return `"${move.title}" ${fmtRange(move.from)} → ${fmtRange(move.to)} — ${moveReasonText(move.reason)}`;
+}
+
+// PRE:  moved ≥ 1 events were moved by the applied plan
+// POST: returns the success toast, e.g. "Plan applied: 2 events moved"
+export function planAppliedText(moved: number): string {
+  return `Plan applied: ${counted(moved, 'event', 'events')} moved`;
 }
