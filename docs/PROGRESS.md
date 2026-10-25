@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-07 Test helpers & oracles (branch `feat/wi-07-test-helpers`).
-- **Last session:** 2026-10-25 · Claude Code · finished WI-01–06, claimed WI-07.
+- **Active WI:** none — next is WI-08 Conflict sweep (WI-09 is also unblocked).
+- **Last session:** 2026-10-25 · Claude Code · finished and merged WI-01–07 (Phase 2 complete).
 - **Gate status on `main`:** green (typecheck, lint, test; also test:dst, test:coverage, build).
 
 ## Work items
@@ -31,8 +31,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-25 · Claude Code · branch `feat/wi-05-structures` · done: `algorithms/{interval,sortedArray,minHeap}.ts` with TEST_PLAN §4.3 unit tests, 100% coverage · next: WI-06 · note: `sortedArray.test.ts` has a local `event()` builder; WI-07 should swap it for the shared `ev()` helper; `insertSorted` places a new event after equal ones
 - [x] **WI-06** Repositories — owner Dv — depends on 02
   - 2026-10-25 · Claude Code · branch `feat/wi-06-repositories` · done: `src/data/{repository,memoryRepository,dexieRepository}.ts`; `repository.test.ts` runs the same round-trip/no-aliasing contract on both adapters plus Dexie atomicity (apply and replaceAll roll back) and reopen persistence under fake-indexeddb · next: WI-07 · note: `DexieRepository.close()` was added for tests (not on the interface); `repository.test.ts` has local `event()`/`task()` builders that WI-07 should replace
-- [~] **WI-07** Test helpers & oracles — owner S — depends on 02, 04
-  - 2026-10-25 · Claude Code · branch `feat/wi-07-test-helpers` · done: claimed · next: `tests/helpers/{time,builders,oracle,failingRepository}.ts` + self-test; `engine.ts` (makeEngine) waits for WI-13
+- [x] **WI-07** Test helpers & oracles — owner S — depends on 02, 04
+  - 2026-10-25 · Claude Code · branch `feat/wi-07-test-helpers` · done: `tests/helpers/{time,builders,oracle,failingRepository}.ts`; `helpers.test.ts` checks the oracles against T1–T3, T6, T11 · next: WI-08 · note: **`tests/helpers/engine.ts` (`makeEngine`) is not built yet — it needs the Engine, so WI-13 must add it**; the local minute-based builders in `sortedArray.test.ts` / `repository.test.ts` were kept on purpose (they test raw minute arithmetic)
 
 ### Phase 3 — Algorithms and engine
 
@@ -85,3 +85,4 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 - 2026-10-25 (WI-01, Claude Code): `.prettierignore` excludes `docs/`, `AGENTS.md`, `CLAUDE.md` and the skill folders so `npm run format` never reflows the hand-written specs.
 - 2026-10-25 (WI-01, Claude Code): `vitest.dst.config.ts` spreads the base config instead of using `mergeConfig`, because `mergeConfig` concatenates arrays and would keep the base include/exclude lists.
 - 2026-10-25 (WI-02, Claude Code): CI runs `test:coverage` with global thresholds (70%, and 90% for algorithms), so any `src/` file with runtime code and no test makes CI red. Every WI must ship tests that import each new runtime file, even when its "Done when" asks only for "compiles".
+- 2026-10-25 (WI-07, Claude Code): `makeEngine` (TEST_PLAN §2, `tests/helpers/engine.ts`) moves from WI-07 to WI-13, because WI-07 depends only on WI-02/04 and the Engine does not exist until WI-13.
