@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-13 Facade + Event CRUD (branch `feat/wi-13-facade`).
-- **Last session:** 2026-10-26 · Claude Code · finished and merged WI-08–WI-12; started WI-13.
+- **Active WI:** none — next is WI-14 Task Scheduler pipeline (WI-15 and WI-17 are also unblocked; WI-16 needs only 11 and 13, so it is unblocked too).
+- **Last session:** 2026-10-26 · Claude Code · finished and merged WI-08–WI-13 (Phase 3 core: algorithms, state, facade).
 - **Gate status on `main`:** green (typecheck, lint, test; also test:dst, test:coverage, build).
 
 ## Work items
@@ -46,8 +46,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-26 · Claude Code · branch `feat/wi-11-replan` · done: `algorithms/{taskOrder,replanHeuristics}.ts`; unit tests cover all 5 BR-11 keys, every BR-12 move reason and their order, unplaced events staying busy, notBefore, and T22/T23 with TEST_PLAN's exact values at algorithm level; T35 in `replanHeuristics.props.test.ts` (green at 10,000 runs; a dropped buffer check is caught) · next: WI-12 · note: WI-16 can build `ReplanInput` the way `replanHeuristics.test.ts` does (`segmentsFor` = `allowedSegments(…, useWorkingHours: true, notBefore)`); `compareIds` is now exported from `sortedArray.ts`
 - [x] **WI-12** Engine state & commit & history — owner Dv — depends on 06, 08
   - 2026-10-26 · Claude Code · branch `feat/wi-12-state` · done: `src/engine/state.ts` (`createState`, `applyChange`, `commit`, history) + `state.test.ts` (forward/backward, StorageError leaves state and repo untouched, 50-step limit, redo cleared on do) · next: WI-13 · note: `commit` returns a `CommitOutcome`; the facade must add `snapshot` and `suggestion` (TECH_SPEC v1.6). For 'undo'/'redo' the caller passes the top of that stack, and `commit` pops it. **WI-13 must also add `tests/helpers/engine.ts` (`makeEngine`)**
-- [~] **WI-13** Facade + Event CRUD — owner Dv — depends on 12, 10
-  - 2026-10-26 · Claude Code · branch `feat/wi-13-facade` · done: claimed · next: buffer-override schema, `search.ts`, `suggestAlternatives` (needed for T21's ER4 suggestion), `eventCrud.ts`, `facade.ts`/`index.ts`, `makeEngine`, T5/T13/T21/T26
+- [x] **WI-13** Facade + Event CRUD — owner Dv — depends on 12, 10
+  - 2026-10-26 · Claude Code · branch `feat/wi-13-facade` · done: `facade.ts` (queue, `init`, `snapshot`, Event CRUD, `suggestAlternatives`, `updateSettings`), `index.ts`, `search.ts`, `pipelines/{eventCrud,conflictResolution}.ts`, `tests/helpers/engine.ts` (`makeEngine`, `capture`); `tests/integration/{eventCrud,persistence}.test.ts` cover T5, T13 (Memory + Dexie), T21, T26 · next: WI-14 · note: **the other facade methods throw "Not implemented until WI-NN"** (WI-14 tasks, WI-15 `applyAlternative`, WI-16 replan, WI-17 undo/redo/import/export); replace each stub and its test. `suggestAlternatives` is already done, so WI-15 only adds `applyAlternative` + T20. Pipelines are functions `(PipelineContext, …) → Result<PipelineOutcome>`, and the facade's `mutate()` adopts the new state
 - [ ] **WI-14** Task Scheduler pipeline — owner Dv — depends on 13
 - [ ] **WI-15** Conflict Resolution pipeline — owner Dv — depends on 13
 - [ ] **WI-16** Replan pipeline — owner S — depends on 11, 13
@@ -101,3 +101,4 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 - 2026-10-26 (WI-08, Claude Code): property tests read `PROP_RUNS`/`PROP_SEED` through one shared helper, `tests/helpers/props.ts`. `npm test` leaves both unset, so the helper's defaults (1000, 42) are what CI runs; this matches TEST_PLAN §1.3 without changing the npm scripts.
 - 2026-10-26 (WI-09, Claude Code): in `allowedSegments`, when the work start or end equals the window edge, the edge is labelled `workStart`/`workEnd`, not `windowStart`/`windowEnd`. T6 expects `after = workEnd` for a window that equals working hours.
 - 2026-10-26 (WI-11, Claude Code): T35 reads "overlap no static event … even with each expanded by the buffer" as "the placed event grown by the buffer meets no other event". That is BR-6's free-gap condition; growing both sides would demand twice the buffer, which BR-12 never promises.
+- 2026-10-26 (WI-13, Claude Code): damaged IndexedDB data and a failing `load()` both surface from `init()` as `StorageError`, so the App's full-page error (Retry / Reset local data, TECH_SPEC §4) covers both. `init()` checks shapes only; WI-17 should run its import cross-record checks (task ↔ event links) in `init()` as well.

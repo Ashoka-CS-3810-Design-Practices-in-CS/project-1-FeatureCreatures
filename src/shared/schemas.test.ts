@@ -5,7 +5,9 @@ import {
   eventInputSchema,
   exportFileSchema,
   parseInput,
+  searchOptionsSchema,
   settingsSchema,
+  storedDataSchema,
   storedEventSchema,
   storedTaskSchema,
   taskInputSchema,
@@ -354,5 +356,34 @@ describe('stored schemas', () => {
     const result = exportFileSchema.safeParse({ format: 'other' });
 
     expect(result.error?.issues.map((issue) => issue.path.join('.'))).toContain('format');
+  });
+});
+
+describe('searchOptionsSchema', () => {
+  it.each([[{}], [{ bufferMin: 0 }], [{ bufferMin: 120 }]])('accepts %j', (options) => {
+    expect(parseInput(searchOptionsSchema, options).ok).toBe(true);
+  });
+
+  it.each([[-1], [121], [7.5], ['15']])(
+    'rejects bufferMin %j as InvalidInput at bufferMin',
+    (bufferMin) => {
+      const result = parseInput(searchOptionsSchema, { bufferMin });
+
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.error).toMatchObject({ code: 'InvalidInput', issues: [{ path: 'bufferMin' }] });
+    },
+  );
+});
+
+describe('storedDataSchema', () => {
+  it('accepts empty first-run data with null settings', () => {
+    expect(parseInput(storedDataSchema, { events: [], tasks: [], settings: null }).ok).toBe(true);
+  });
+
+  it('rejects a damaged event row with its path', () => {
+    const result = storedDataSchema.safeParse({ events: [{ id: 'x' }], tasks: [], settings: null });
+
+    expect(result.error?.issues.map((issue) => issue.path.join('.'))).toContain('events.0.title');
   });
 });
