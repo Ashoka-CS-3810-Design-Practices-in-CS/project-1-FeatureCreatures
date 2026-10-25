@@ -2,7 +2,7 @@ import { MemoryRepository } from '@/data/memoryRepository';
 import type { Repository } from '@/data/repository';
 import { createEngine, type Engine } from '@/engine';
 import { EMPHASIS_MS } from '@/shared/constants';
-import { ev, iv } from '../../../tests/helpers/builders';
+import { ev, iv, task } from '../../../tests/helpers/builders';
 import { makeEngine } from '../../../tests/helpers/engine';
 import { FailingRepository } from '../../../tests/helpers/failingRepository';
 import { t } from '../../../tests/helpers/time';
@@ -244,5 +244,120 @@ describe('createAppStore', () => {
     await store.getState().actions.resetLocalData();
 
     expect(store.getState().status).toBe('fatal');
+  });
+
+  describe('task actions', () => {
+    const WEEK: [string, string] = ['Mon 09:00', 'Fri 18:00'];
+    const input = {
+      name: 'Read',
+      description: '',
+      category: 'assignment' as const,
+      priority: 'medium' as const,
+      durationMin: 45,
+      window: iv(...WEEK),
+      useWorkingHours: true,
+    };
+
+    it('create, edit, unschedule and delete tasks with their toasts', async () => {
+      const { engine } = await makeEngine({
+        events: [
+          ev('E', 'Mon 10:00', 'Mon 11:00', {
+            taskId: 'S',
+            flexible: true,
+            flexWindow: iv(...WEEK),
+          }),
+        ],
+        tasks: [task('S', 60, WEEK, { status: 'scheduled', scheduledEventId: 'E' })],
+      });
+      const store = storeFor(engine);
+      const { actions } = store.getState();
+
+      await actions.createTask(input);
+      await actions.updateTask('id-1', { ...input, name: 'Read more' });
+      await actions.unscheduleTask('S');
+      await actions.unscheduleTask('S');
+      await actions.deleteTask('id-1');
+
+      expect(texts(store)).toEqual([
+        'Task created: "Read".',
+        'Saved task "Read more".',
+        'Unscheduled "S"; it is back in the task list.',
+        'Deleted task "Read more".',
+      ]);
+      expect(store.getState().snapshot.tasks.map((entry) => entry.id)).toEqual(['S']);
+    });
+
+    it('changes the panel state and toggles the selection', async () => {
+      const store = storeFor((await makeEngine()).engine);
+      const { actions } = store.getState();
+
+      actions.setTaskPanel({ sort: 'windowEnd', status: 'all' });
+      actions.toggleTaskSelection('A');
+      actions.toggleTaskSelection('B');
+      actions.toggleTaskSelection('A');
+
+      expect(store.getState().taskPanel).toMatchObject({
+        sort: 'windowEnd',
+        status: 'all',
+        selectedIds: ['B'],
+      });
+    });
+
+    it('openTaskPicker queues in BR-11 order, leaves out scheduled tasks and searches the first', async () => {
+      const window: [string, string] = ['Mon 09:00', 'Mon 12:00'];
+      const { engine } = await makeEngine({
+        events: [
+          ev('E', 'Mon 13:00', 'Mon 14:00', {
+            taskId: 'S',
+            flexible: true,
+            flexWindow: iv(...WEEK),
+          }),
+        ],
+        tasks: [
+          task('L1', 60, window, { priority: 'low' }),
+          task('H1', 60, window, { priority: 'high' }),
+          task('S', 60, WEEK, { status: 'scheduled', scheduledEventId: 'E' }),
+        ],
+      });
+      const store = storeFor(engine);
+      store.getState().actions.openDialog({ kind: 'task', mode: 'edit', id: 'H1' });
+
+      store.getState().actions.openTaskPicker(['L1', 'H1', 'S']);
+
+      const { picker, dialog } = store.getState();
+      expect(dialog).toBeNull();
+      expect(picker).toMatchObject({
+        mode: 'task',
+        queue: ['H1', 'L1'],
+        index: 0,
+        criterion: 'earliest',
+        bufferMin: 0,
+      });
+      expect(picker?.result.ok && picker.result.value.options[0]?.slot).toEqual(
+        iv('Mon 09:00', 'Mon 10:00'),
+      );
+      expect(texts(store)).toEqual(['1 selected task is already scheduled, so it was left out.']);
+    });
+
+    it('openTaskPicker does nothing more when every task was left out', async () => {
+      const { engine } = await makeEngine({
+        events: [
+          ev('E', 'Mon 13:00', 'Mon 14:00', {
+            taskId: 'S',
+            flexible: true,
+            flexWindow: iv(...WEEK),
+          }),
+        ],
+        tasks: [task('S', 60, WEEK, { status: 'scheduled', scheduledEventId: 'E' })],
+      });
+      const store = storeFor(engine);
+
+      store.getState().actions.openTaskPicker(['S', 'missing']);
+
+      expect(store.getState().picker).toBeNull();
+      expect(texts(store)).toEqual([
+        '2 selected tasks are already scheduled, so they were left out.',
+      ]);
+    });
   });
 });

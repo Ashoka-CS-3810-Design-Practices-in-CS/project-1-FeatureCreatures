@@ -18,6 +18,7 @@ import type {
   MutationResult,
   Priority,
   Snapshot,
+  TaskInput,
 } from '@/shared/types';
 import { errorMessage } from '../format/errors';
 import {
@@ -28,7 +29,12 @@ import {
   historyText,
   movedText,
   moveToLabel,
+  droppedFromQueueText,
   sampleLoadedText,
+  taskCreatedText,
+  taskDeletedText,
+  taskSavedText,
+  unscheduledText,
   updatedText,
 } from '../format/explain';
 import type { PickerState } from './pickerSlice';
@@ -57,6 +63,13 @@ export interface AppActions {
   moveEvent(id: string, to: Interval): Promise<Result<MutationResult>>;
   deleteEvent(id: string): Promise<Result<MutationResult>>;
   setActiveRange(range: Interval): void;
+  createTask(input: TaskInput): Promise<Result<MutationResult>>;
+  updateTask(id: string, input: TaskInput): Promise<Result<MutationResult>>;
+  deleteTask(id: string): Promise<Result<MutationResult>>;
+  unscheduleTask(id: string): Promise<Result<MutationResult>>;
+  setTaskPanel(change: Partial<AppState['taskPanel']>): void;
+  toggleTaskSelection(id: string): void;
+  openTaskPicker(taskIds: readonly string[]): void;
   undo(): Promise<Result<MutationResult>>;
   redo(): Promise<Result<MutationResult>>;
   applyAlternative(eventId: string, slot: Interval): Promise<Result<MutationResult>>;
@@ -199,6 +212,12 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
       return result;
     }
 
+    // PRE:  value is a successful mutation; id is a task id
+    // POST: returns that task's name in the new snapshot ('' if it is gone)
+    function taskNameIn(value: MutationResult, id: string): string {
+      return value.snapshot.tasks.find((task) => task.id === id)?.name ?? '';
+    }
+
     // PRE:  value is a successful mutation; id is an event id
     // POST: returns that event's title in the new snapshot ('' if it is gone)
     function titleIn(value: MutationResult, id: string): string {
@@ -269,6 +288,90 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
       // POST: view.activeRange is range
       setActiveRange(range) {
         set({ view: { ...get().view, activeRange: range } });
+      },
+
+      // PRE:  input comes from the task dialog (validated by the engine)
+      // POST: creates the task through runMutation
+      createTask(input) {
+        return runMutation(
+          () => engine.createTask(input),
+          (value) => taskCreatedText(value.snapshot.tasks.at(-1)?.name ?? input.name),
+        );
+      },
+
+      // PRE:  input comes from the task dialog (validated by the engine)
+      // POST: saves the task (and its event, if scheduled) through runMutation
+      updateTask(id, input) {
+        return runMutation(
+          () => engine.updateTask(id, input),
+          (value) => taskSavedText(taskNameIn(value, id)),
+        );
+      },
+
+      // PRE:  id is any string
+      // POST: deletes the task (and its event, if scheduled) through runMutation
+      deleteTask(id) {
+        const name = get().snapshot.tasks.find((task) => task.id === id)?.name ?? '';
+        return runMutation(
+          () => engine.deleteTask(id),
+          () => taskDeletedText(name),
+        );
+      },
+
+      // PRE:  id is any string
+      // POST: unschedules the task through runMutation; no toast when it was not scheduled
+      unscheduleTask(id) {
+        return runMutation(
+          () => engine.unscheduleTask(id),
+          (value) => (value.label === '' ? null : unscheduledText(taskNameIn(value, id))),
+        );
+      },
+
+      // PRE:  change holds any subset of the task panel state
+      // POST: the task panel state has change applied
+      setTaskPanel(change) {
+        set({ taskPanel: { ...get().taskPanel, ...change } });
+      },
+
+      // PRE:  id is a task id
+      // POST: adds id to the panel's selection, or removes it when it was selected
+      toggleTaskSelection(id) {
+        const { taskPanel } = get();
+        const selectedIds = taskPanel.selectedIds.includes(id)
+          ? taskPanel.selectedIds.filter((selected) => selected !== id)
+          : [...taskPanel.selectedIds, id];
+        set({ taskPanel: { ...taskPanel, selectedIds } });
+      },
+
+      // PRE:  taskIds are the tasks to schedule, in any order
+      // POST: queues the unscheduled ones in BR-11 order (an info toast names any left out) and
+      //       opens the task picker on the first, with the settings' criterion and buffer; closes
+      //       any dialog; does nothing more when no task is left to schedule
+      openTaskPicker(taskIds) {
+        const queue = engine.orderForScheduling(taskIds);
+        const dropped = new Set(taskIds).size - queue.length;
+        if (dropped > 0) {
+          pushToast({ tone: 'info', text: droppedFromQueueText(dropped) });
+        }
+        const first = queue[0];
+        if (first === undefined) {
+          return;
+        }
+        const { defaultCriterion, bufferMin } = get().snapshot.settings;
+        set({
+          dialog: null,
+          picker: {
+            mode: 'task',
+            queue,
+            index: 0,
+            criterion: defaultCriterion,
+            bufferMin,
+            result: engine.findSlots({ taskId: first, criterion: defaultCriterion, bufferMin }),
+            selected: 0,
+            scheduled: 0,
+            skipped: 0,
+          },
+        });
       },
 
       // PRE:  none

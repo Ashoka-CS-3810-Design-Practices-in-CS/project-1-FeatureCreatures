@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import { useForm, useWatch, type FieldError } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { MINUTES_PER_HOUR } from '@/shared/constants';
 import { ceilTo } from '@/shared/time';
 import type { CalendarEvent, Category, Interval, Priority } from '@/shared/types';
@@ -11,6 +11,7 @@ import {
   type EventFormValues,
 } from '../../forms/eventForm';
 import { useAppStore, type Dialog } from '../../store/appStore';
+import { ErrorText } from '../Modal/ErrorText';
 import { Modal } from '../Modal/Modal';
 
 type EventDialogState = Extract<Exclude<Dialog, null>, { kind: 'event' }>;
@@ -27,16 +28,6 @@ const PRIORITIES: { value: Priority; label: string }[] = [
   { value: 'medium', label: 'Medium' },
   { value: 'low', label: 'Low' },
 ];
-
-// PRE:  id names a form field; error is that field's RHF error, if any
-// POST: renders the field's message, linked to the field by id (aria-describedby)
-function ErrorText({ id, error }: { id: string; error: FieldError | undefined }) {
-  return error?.message === undefined ? null : (
-    <p id={id} className="field-error">
-      {error.message}
-    </p>
-  );
-}
 
 // PRE:  viewDate is the calendar's current date (a Minute)
 // POST: returns the interval a new event gets when no time was selected: the next whole hour, 1 h

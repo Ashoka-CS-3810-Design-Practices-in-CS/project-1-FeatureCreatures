@@ -2,6 +2,8 @@ import { CalendarView } from './components/CalendarView/CalendarView';
 import { ConfirmDialog } from './components/ConfirmDialog/ConfirmDialog';
 import { EmptyState } from './components/EmptyState/EmptyState';
 import { EventDialog } from './components/EventDialog/EventDialog';
+import { TaskDialog } from './components/TaskDialog/TaskDialog';
+import { TaskPanel } from './components/TaskPanel/TaskPanel';
 import { Toasts } from './components/Toasts/Toasts';
 import { errorMessage } from './format/errors';
 import { useAppStore } from './store/appStore';
@@ -34,11 +36,11 @@ function FatalScreen() {
 }
 
 // PRE:  rendered under StoreProvider; reads status, storageWarning and snapshot
-//       + additional props from: EmptyState, CalendarView, EventDialog, ConfirmDialog, Toasts,
-//       FatalScreen
+//       + additional props from: EmptyState, CalendarView, TaskPanel, EventDialog, TaskDialog,
+//       ConfirmDialog, Toasts, FatalScreen
 // POST: shows the loading line, the fatal screen, or the app: the degraded-mode banner when
 //       storage is unavailable, the empty state on a blank calendar, the status line, the
-//       calendar, the open dialog and the toasts
+//       calendar, the task panel, the open dialog and the toasts
 export function App() {
   const status = useAppStore((state) => state.status);
   const storageWarning = useAppStore((state) => state.storageWarning);
@@ -71,7 +73,11 @@ export function App() {
         </p>
         <CalendarView />
       </main>
+      <aside>
+        <TaskPanel />
+      </aside>
       <EventDialog />
+      <TaskDialog />
       <ConfirmDialog />
       <Toasts />
     </div>
