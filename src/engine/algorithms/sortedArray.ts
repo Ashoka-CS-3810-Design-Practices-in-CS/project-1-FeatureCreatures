@@ -5,7 +5,8 @@ import type { CalendarEvent, Interval } from '@/shared/types';
 
 // PRE:  first and second are strings
 // POST: returns < 0, 0 or > 0 as first sorts before, equal to or after second by code units
-function compareIds(first: string, second: string): number {
+//       (ids and conflict keys use this order, never the locale)
+export function compareIds(first: string, second: string): number {
   if (first < second) {
     return -1;
   }
