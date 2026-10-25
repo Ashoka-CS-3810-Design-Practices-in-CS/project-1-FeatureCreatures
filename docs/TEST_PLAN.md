@@ -217,6 +217,8 @@ These are part of their WI's definition of done in TECH_SPEC §14.
 
 Each test does `page.clock.install({ time: new Date('2026-11-02T08:00:00') })` before `goto('/')`, so "this week" is the base week. Each test starts with fresh storage (new context).
 
+`e2e/calendar.spec.ts` implements E1–E3; shared UI setup lives in `e2e/helpers.ts`. E2 creates E1's fixture independently, then uses real pointer gestures whose distances come from rendered time rows; no engine or store calls drive the gestures. E3 selects the panel's All status filter so the newly scheduled row remains visible.
+
 | ID | Flow | Assertions |
 |---|---|---|
 | **E1** | + Event "A", Mon 10:00–11:30 → Save. + Event "B", Mon 11:00–12:00 → Save. | Both blocks contain the text "Conflict". The conflict panel shows "11:00–11:30 (30 min)". |
@@ -294,3 +296,4 @@ Each demo starts from **Settings → Data → Load sample calendar**.
 | 2026-10-25 | v1.0: unified test plan. Kept A3 T1–T15 with exact values; added T16–T36, E1–E3 and D1–D5. |
 | 2026-10-26 | v1.1 (WI-08): §2 lists `tests/helpers/props.ts` (`propParams`, `PROP_TIMEOUT_MS`). |
 | 2026-10-26 | v1.2 (WI-14): T16 step (5) schedules at Tue 09:00–10:00, not 10:30. Step (3) set the duration to 60, and `scheduleTask` rejects a slot that does not match it (TECH_SPEC §7.4.3). |
+| 2026-10-26 | v1.3 (WI-25–27): §6 documents executable E1–E3 and their isolated UI fixtures; §7 records local automated accessibility evidence while retaining human production checks. |

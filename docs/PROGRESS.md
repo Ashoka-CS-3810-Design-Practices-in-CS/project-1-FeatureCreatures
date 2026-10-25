@@ -6,9 +6,9 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-27 Playwright E1–E3, branch `feat/wi-27-playwright` (WI-28 is also unblocked).
-- **Last session:** 2026-10-26 · Codex · finished and merged WI-25/26; started WI-27.
-- **Gate status on `main`:** verified green after WI-26 merge (typecheck, lint, 507 tests); build and 3 Chromium accessibility checks green.
+- **Active WI:** none; next WI-28 Benchmarks.
+- **Last session:** 2026-10-26 · Codex · completed WI-27, including actual pointer gestures and persistence.
+- **Gate status on `main`:** green after WI-26 (507 tests); WI-27 branch gate green (507), build and all 6 Chromium checks green.
 
 ## Work items
 
@@ -86,10 +86,11 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 ### Phase 5 — Testing
 
-- [~] **WI-27** Playwright E1–E3 — owner Dv — depends on 26
+- [x] **WI-27** Playwright E1–E3 — owner Dv — depends on 26
   - 2026-10-26 · Codex · branch `feat/wi-27-playwright` · done: verified WI-26 main gate; Chromium installed and accessibility harness green · next: exact E1 conflicts, E2 real drag/resize plus reload persistence, E3 schedule Report; remove CI no-tests escape hatch
   - 2026-10-26 · Codex · branch `feat/wi-27-playwright` · done: E1–E3 written, CI escape hatch removed; first run exposed missing roles on focusable FullCalendar anchors · next: verify role fix and precise pointer geometry, then rerun all six browser tests
   - 2026-10-26 · Codex · branch `feat/wi-27-playwright` · done: E1, E2 and E3 individually green; E2 performs real pointer drag/resize then reloads IndexedDB data · next: full gate and six-test browser run, merge · note: test geometry uses the initial row's center snap to account for FullCalendar's subject-centering; native-dialog tests wait for React unmount before the next shortcut
+  - 2026-10-26 · Codex · branch `feat/wi-27-playwright` · done: exact E1–E3 and 3 accessibility tests green together, full gate 507 tests and build green; CI now fails if browser tests are absent · next: WI-28 · note: E2's fresh context reconstructs E1, then moves B to 13:00, resizes to 14:30 and verifies reload; E3 keeps the scheduled row visible with All filter
 - [ ] **WI-28** Benchmarks — owner S — depends on 17
 - [ ] **WI-29** Coverage & bug bash — owner S + Dv — depends on 27, 28
 
