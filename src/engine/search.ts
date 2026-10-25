@@ -118,3 +118,24 @@ export function segmentsFor(
       notBefore,
     });
 }
+
+// PRE:  state is the current state; baseVersion comes from an earlier search result
+// POST: returns ok when baseVersion is the current version, else err StaleResult (ER7)
+export function requireCurrentVersion(
+  state: EngineState,
+  baseVersion: number,
+): Result<null, EngineError> {
+  return baseVersion === state.version ? ok(null) : err({ code: 'StaleResult' });
+}
+
+// PRE:  slot comes from the UI; durationMin is the length the slot must have
+// POST: returns ok when slot is exactly durationMin long, else err InvalidTime at path 'slot'
+export function requireSlotLength(slot: Interval, durationMin: number): Result<null, EngineError> {
+  if (slot.end - slot.start === durationMin) {
+    return ok(null);
+  }
+  return err({
+    code: 'InvalidTime',
+    issues: [{ path: 'slot', message: 'The slot must be exactly as long as the duration.' }],
+  });
+}
