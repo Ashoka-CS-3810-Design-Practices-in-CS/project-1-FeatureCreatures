@@ -1398,6 +1398,7 @@ FullCalendar is a **controlled, render-only view**. Its `events` prop is always 
 <FullCalendar
   plugins={[timeGridPlugin, dayGridPlugin, listPlugin, interactionPlugin]}
   initialView="timeGridWeek" firstDay={1} headerToolbar={false} height="100%"
+  dayHeaderFormat={{ weekday: 'short', day: 'numeric' }} allDaySlot={false}   // "Mon 2"; events are never all-day
   slotDuration="00:30:00" snapDuration="00:05:00" scrollTime="08:00:00" nowIndicator
   slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
   eventTimeFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
