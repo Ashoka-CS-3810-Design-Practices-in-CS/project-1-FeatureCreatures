@@ -8,7 +8,8 @@ import { fromMinute } from '@/shared/time';
 import { useAppStore } from '../../store/appStore';
 import { createCalendarHandlers } from './calendarHandlers';
 import { EventContent } from './EventContent';
-import { toClockTime, toFullCalendar, type EventBlockProps } from './toFullCalendar';
+import { toClockTime } from '../../format/time';
+import { toFullCalendar, type EventBlockProps } from './toFullCalendar';
 
 const PLUGINS = [timeGridPlugin, dayGridPlugin, listPlugin, interactionPlugin];
 const TWENTY_FOUR_HOUR = { hour: '2-digit', minute: '2-digit', hour12: false } as const;

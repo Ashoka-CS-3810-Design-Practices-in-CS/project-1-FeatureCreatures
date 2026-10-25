@@ -36,7 +36,7 @@ const FIELD_FOR_PATH: Record<string, keyof TaskFormValues> = {
 // PRE:  text is any string from a number input
 // POST: returns it as a number of hours or minutes: '' is 0 only when allowEmpty, a non-negative
 //       whole number is itself, anything else is NaN
-function wholeNumber(text: string, allowEmpty: boolean): number {
+export function wholeNumber(text: string, allowEmpty: boolean): number {
   const trimmed = text.trim();
   if (trimmed === '') {
     return allowEmpty ? 0 : Number.NaN;
