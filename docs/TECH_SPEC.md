@@ -70,7 +70,7 @@ npm i -D vitest @vitest/coverage-v8 jsdom @testing-library/react @testing-librar
 npx playwright install chromium
 ```
 
-Pin whatever versions npm resolves on day one (`package-lock.json` is committed).
+Pin whatever versions npm resolves on day one (`package-lock.json` is committed). Exception: `@hookform/resolvers` is pinned to `^5` (v6 has an unresolvable optional-peer conflict on `effect`; v5 supports Zod 4).
 
 The code examples here use Zod 4 syntax. If Zod 3 is installed, the equivalent API is identical for everything used in this file.
 
@@ -1512,7 +1512,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
       - run: npm ci && npx playwright install --with-deps chromium
-      - run: npm run e2e
+      - run: npm run e2e -- --pass-with-no-tests   # flag only until WI-27 adds E1–E3; WI-27 removes it
 ```
 
 `main` is protected: it requires the `check` job and one review.
@@ -1624,3 +1624,4 @@ Production URL: https://…vercel.app
 |---|---|
 | 2026-10-25 | v1.0: unified technical spec (Dexie, heap sweep, four pipelines, B1–B4). |
 | 2026-10-25 | v1.1: aligned with the `disciplined-coding` skill and `AGENTS.md` (local `--no-ff` merges, no function length cap, no `assertSorted`, scaffold via a temp folder, `PROGRESS.md` pre-created, Vercel deploy is a human step). |
+| 2026-10-25 | v1.2 (WI-01): `@hookform/resolvers` pinned to `^5` (§1.2); CI e2e step passes with no tests until WI-27 (§13.1). |

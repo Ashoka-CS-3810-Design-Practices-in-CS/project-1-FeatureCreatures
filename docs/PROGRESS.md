@@ -6,9 +6,9 @@ Production URL: _not deployed yet_
 
 ## Current state
 
-- **Active WI:** WI-01 Scaffold & tooling (branch `feat/wi-01-scaffold`).
-- **Last session:** 2026-10-25 · Claude Code · claimed WI-01.
-- **Gate status on `main`:** n/a (no package.json yet).
+- **Active WI:** none — next is WI-02 Shared types, result, errors, constants.
+- **Last session:** 2026-10-25 · Claude Code · finished and merged WI-01.
+- **Gate status on `main`:** green (typecheck, lint, test; also test:dst, test:coverage, build).
 
 ## Work items
 
@@ -16,8 +16,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 ### Phase 1 — Setup
 
-- [~] **WI-01** Scaffold & tooling — owner Dv — depends on —
-  - 2026-10-25 · Claude Code · branch `feat/wi-01-scaffold` · done: claimed · next: scaffold Vite via vite-tmp, configs §12, ESLint §3.2, CI §13.1
+- [x] **WI-01** Scaffold & tooling — owner Dv — depends on —
+  - 2026-10-25 · Claude Code · branch `feat/wi-01-scaffold` · done: Vite react-ts scaffold, all §12 configs, ESLint §3.2 boundaries (probed: algorithms→date-fns is rejected), CI §13.1, README stub, toolchain tests for TZ=UTC and the DST zone · next: WI-02 · note: `src/main.tsx` is a placeholder until WI-18; `npx playwright install chromium` not run yet (needed from WI-27); first Vercel deploy is a human step
 
 ### Phase 2 — Core types and data
 
@@ -73,3 +73,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 ## Decisions log (append-only)
 
 - 2026-10-25: Repo initialised with the three spec docs, AGENTS.md, CLAUDE.md and the `disciplined-coding` skill. TECH_SPEC v1.1 aligns the spec with the skill.
+- 2026-10-25 (WI-01, Claude Code): the current create-vite template ships oxlint and a split tsconfig; both were dropped for ESLint (§1.1) and a single `tsconfig.json` (§12).
+- 2026-10-25 (WI-01, Claude Code): `@hookform/resolvers` pinned to `^5`; v6 fails to install on an optional-peer conflict (`effect` 3 vs 4). Zod resolved to 4.x. TECH_SPEC v1.2.
+- 2026-10-25 (WI-01, Claude Code): CI e2e runs with `--pass-with-no-tests` until WI-27, otherwise every push to `main` fails on "no tests found". WI-27 must remove the flag. TECH_SPEC v1.2.
+- 2026-10-25 (WI-01, Claude Code): `.prettierignore` excludes `docs/`, `AGENTS.md`, `CLAUDE.md` and the skill folders so `npm run format` never reflows the hand-written specs.
+- 2026-10-25 (WI-01, Claude Code): `vitest.dst.config.ts` spreads the base config instead of using `mergeConfig`, because `mergeConfig` concatenates arrays and would keep the base include/exclude lists.
