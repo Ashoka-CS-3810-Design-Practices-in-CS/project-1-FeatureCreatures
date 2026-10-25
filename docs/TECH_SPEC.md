@@ -475,6 +475,7 @@ export const MAX_OPTIONS = 5;        // BR-7
 export const HISTORY_LIMIT = 50;     // B1
 export const SNAP_MIN = 5;           // BR-5 notBefore rounding + UI snap
 export const MAX_REPLAN_DAYS = 14;   // BR-12
+export const REPLAN_DST_SLACK_MIN = 120; // a 14-day replan range may span DST changes
 export const CONFLICT_LIST_LIMIT = 50;
 export const MINUTES_PER_DAY = 1440;
 export const MAX_TITLE_LENGTH = 100;          // event title and task name
@@ -774,7 +775,7 @@ Every mutation pipeline follows the same skeleton: validate → look up → buil
 
 **`planReplan({range, bufferMin})`**
 
-1. Validate the range: `end > start` and `end − start ≤ 14 × 1440 + 120` (DST slack). Otherwise return `InvalidTime` with the path `range`.
+1. Validate `bufferMin` with `searchOptionsSchema`. Validate the range: `end > start` and `end − start ≤ MAX_REPLAN_DAYS × 1440 + REPLAN_DST_SLACK_MIN` (120). Otherwise return `InvalidTime` with the issue `{path: 'range', message: 'The replan range must be 1 to 14 days long.'}`.
 2. Build the inputs:
    - `frames = buildDayFrames(range, settings)`
    - `notBefore`
@@ -1666,3 +1667,4 @@ Production URL: https://…vercel.app
 | 2026-10-26 | v1.6 (WI-12): §7.1 names `commit`'s result (`CommitOutcome`) and adds `createState` for `engine.init()`. |
 | 2026-10-26 | v1.7 (WI-13): §6 adds `storedDataSchema` and `searchOptionsSchema`; §7.4.1 validates the BR-9 task mirror; §9.1 says how `init()` treats damaged stored data. |
 | 2026-10-26 | v1.8 (WI-14): §7.4.3 validates the mirrored event of `updateTask` with `eventInputSchema` (a task window may be shorter than the task, a flex window may not), and names the `slot` issue of a wrong-length `scheduleTask`. |
+| 2026-10-26 | v1.9 (WI-16): §5 constants gain `REPLAN_DST_SLACK_MIN = 120`; §7.4.4 validates `bufferMin` and gives the range message. |
