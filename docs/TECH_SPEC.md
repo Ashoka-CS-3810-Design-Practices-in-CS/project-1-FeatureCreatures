@@ -1004,19 +1004,26 @@ export function allowedSegments(window: Interval, frames: readonly DayFrame[],
 ```
 
 ```text
-pieces ← []
-for f in frames:
-    base ← useWorkingHours ? f.work (edges workStart/workEnd) : [f.dayStart, f.dayEnd) (edges: none yet)
-    if base is null: continue
-    seg ← intersect(base, window); edges become windowStart/windowEnd where the window clipped them
-    for each barred b in f.barred (sorted): subtract b.interval from seg → pieces get barred edges {label, at}
-    pieces.push(remaining pieces)
-clip every piece to start ≥ notBefore (edge 'now' where clipped); drop empty pieces
-merge touching pieces (only happens when useWorkingHours = false across midnight), keeping outer edges
+if useWorkingHours:
+    pieces ← []
+    for f in frames with f.work ≠ null:
+        seg ← intersect(f.work, window)            // skip if empty
+        edges: workStart/workEnd, or windowStart/windowEnd where the window cuts strictly inside f.work
+        pieces.push(subtractBarred(seg, f.barred))
+else:                                              // BR-5: the window minus barred slots, in one pass
+    pieces ← subtractBarred(window (edges windowStart/windowEnd), concat of every f.barred)
+clip every piece to start ≥ notBefore (edge 'now' where clipped); drop pieces ending at or before it
 return pieces (sorted, disjoint)
+
+subtractBarred(seg, barred sorted by start; slots may overlap):
+    cursor ← seg.start with seg.startEdge
+    for b in barred, skipping those ending ≤ cursor or starting ≥ seg.end:
+        if b.start > cursor: emit [cursor, b.start) with end edge barred {b.label, b.start}
+        cursor ← b.end with edge barred {b.label, b.end}
+    if cursor < seg.end: emit [cursor, seg.end) with seg.endEdge
 ```
 
-An edge kind of `none yet` is only possible for a day boundary that is merged away. If a day boundary survives, it is always clipped by the window, so it gets `windowStart` or `windowEnd`.
+Without working hours the window is never split per day, so consecutive days join across midnight and no unlabelled day boundary can appear. A barred slot ending at 24:00 leaves a `barred` edge at midnight.
 
 This costs O(D·B) time.
 
@@ -1041,7 +1048,7 @@ for seg in segments:
     // j is NOT advanced to k: a block may continue into the next segment
 ```
 
-`eventBoundary` builds `{kind: 'event', eventId, title, at: event.start or event.end (unbuffered), bufferMin}`.
+`eventBoundary` builds `{kind: 'event', eventId, title, at: event.start or event.end (unbuffered), bufferMin}`. `bufferMin` is read back from the block (`startEvent.start − block.start`, or `block.end − endEvent.end`), because `mergeBusy` grows every event by the same buffer.
 
 **Complexity.** O(n + s) time, where s is the number of segments. A block is revisited only by the segments it spans, which is bounded because events are at most 24 h long. Space is O(m).
 
@@ -1649,3 +1656,4 @@ Production URL: https://…vercel.app
 | 2026-10-25 | v1.2 (WI-01): `@hookform/resolvers` pinned to `^5` (§1.2); CI e2e step passes with no tests until WI-27 (§13.1). |
 | 2026-10-25 | v1.3 (WI-03): §6 gains `toFieldIssues` / `parseInput`, the shape/refine split, the stored-task link check, the integer-duration message and the settings messages; §5 constants gain the schema limits (`MINUTES_PER_DAY`, `MAX_TITLE_LENGTH`, …). |
 | 2026-10-26 | v1.4 (WI-08): §8.4 gives `countOverlaps` its typed signature (`Interval` candidate and events, returns a count). |
+| 2026-10-26 | v1.5 (WI-09): §8.7 pseudocode builds no-working-hours segments as the window minus barred slots in one pass (as BR-5 says), replacing the per-day pieces plus merge, whose "none yet" edge could survive next to a barred slot ending at 24:00; work edges win ties with the window. §8.8 says where `bufferMin` comes from. |

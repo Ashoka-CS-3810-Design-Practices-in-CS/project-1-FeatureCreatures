@@ -116,6 +116,21 @@ describe('allowedSegments (BR-5)', () => {
     expect(allowedSegments(iv('Sat 00:00', '2026-11-09 00:00'), frames, NO_CLIP)).toEqual([]);
   });
 
+  it('skips a working day whose hours miss the window, and barred slots outside the hours', () => {
+    const frames = [
+      frame('Mon', ['09:00', '18:00'], [['Evening', '19:00', '20:00']]),
+      frame('Tue', ['09:00', '18:00'], [['Breakfast', '07:00', '08:00']]),
+    ];
+
+    expect(allowedSegments(iv('Mon 18:00', 'Tue 09:30'), frames, NO_CLIP)).toEqual([
+      {
+        ...iv('Tue 09:00', 'Tue 09:30'),
+        startEdge: { kind: 'edge', reason: 'workStart', at: t('Tue 09:00') },
+        endEdge: { kind: 'edge', reason: 'windowEnd', at: t('Tue 09:30') },
+      },
+    ]);
+  });
+
   it('without working hours, merges days across midnight into one segment', () => {
     const frames = [frame('Mon', ['09:00', '18:00']), frame('Tue', ['09:00', '18:00'])];
     const options = { useWorkingHours: false, notBefore: t('Mon 00:00') };
