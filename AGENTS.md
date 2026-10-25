@@ -128,7 +128,9 @@ Do not assume you remember where things stand. Rebuild the picture from the repo
 - Installing global tools or changing system settings / the Windows PATH.
 - Deleting branches, rewriting history (`rebase -i`, `commit --amend` on merged commits, force anything).
 
-When you need one of these, finish what you can, write the request in `PROGRESS.md`, and tell the human in one line.
+When you need one of these, write the request in `PROGRESS.md` and tell the human in one line, **then keep working**. A human-only step is a reason to stop only if the next WI cannot proceed without it. Pushing, tagging pushes and deploys never block work: there may be no remote yet, and the humans do them on their own schedule.
+
+**Phase boundaries and milestone tags are not stopping points.** Tag the milestone (TECH_SPEC §15), then continue straight into the next phase. Stop only when your budget is nearly gone, a decision in §8 needs the human, or the human explicitly told you to stop in the **current** message. An instruction to halt given in an earlier session, or for an earlier WI, does not carry over.
 
 ## 8. Asking the human
 
