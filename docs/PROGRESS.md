@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** none — next is WI-08 Conflict sweep (WI-09 is also unblocked).
-- **Last session:** 2026-10-25 · Claude Code · finished and merged WI-01–07 (Phase 2 complete).
+- **Active WI:** WI-08 Conflict sweep (branch `feat/wi-08-sweep`).
+- **Last session:** 2026-10-26 · Claude Code · started WI-08.
 - **Gate status on `main`:** green (typecheck, lint, test; also test:dst, test:coverage, build).
 
 ## Work items
@@ -36,7 +36,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 ### Phase 3 — Algorithms and engine
 
-- [ ] **WI-08** Conflict sweep — owner S — depends on 05, 07
+- [~] **WI-08** Conflict sweep — owner S — depends on 05, 07
+  - 2026-10-26 · Claude Code · branch `feat/wi-08-sweep` · done: claimed · next: `target.ts`, `sweep.ts`, T1–T4, T12
 - [ ] **WI-09** Merge, segments, gaps — owner S — depends on 05, 07
 - [ ] **WI-10** Day load + ranking — owner S — depends on 09
 - [ ] **WI-11** Task order + replan heuristics — owner S — depends on 10
