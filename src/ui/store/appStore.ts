@@ -6,7 +6,13 @@ import { useStore } from 'zustand';
 import { createStore, type StoreApi } from 'zustand/vanilla';
 import { SAMPLES, type SampleId } from '@/data/samples';
 import type { Engine } from '@/engine';
-import { DEFAULT_SETTINGS, EMPHASIS_MS, EXPORT_FORMAT, EXPORT_VERSION } from '@/shared/constants';
+import {
+  DEFAULT_SETTINGS,
+  EMPHASIS_MS,
+  EXPORT_FORMAT,
+  EXPORT_VERSION,
+  IMPORT_SPINNER_THRESHOLD,
+} from '@/shared/constants';
 import type { EngineError } from '@/shared/errors';
 import type { Result } from '@/shared/result';
 import { parseExportFile } from '@/shared/schemas';
@@ -113,6 +119,7 @@ export interface AppState {
   status: 'loading' | 'ready' | 'fatal';
   fatalError: EngineError | null;
   storageWarning: boolean;
+  busy: string | null;
   snapshot: Snapshot;
   view: { type: ViewType; date: Minute; activeRange: Interval | null };
   eventPriorityFilter: Priority[];
@@ -297,19 +304,36 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
       refresh({ ...picker, index });
     }
 
-    // PRE:  json is the text of an export file (validated by the engine); describe gives the
-    //       success text for the new snapshot
-    // POST: replaces all data with json's (B2); on ok adopts the snapshot, closes the picker,
+    // PRE:  buildJson supplies export text (validated by the engine); describe gives its success
+    //       message; busy is the loading message, or null for an instant operation
+    // POST: optionally paints loading feedback before building/importing data; on ok adopts the snapshot, closes the picker,
     //       clears the task selection (both may name records that are gone) and shows describe's
     //       toast; on err shows the error toast and changes nothing; returns the result
     async function replaceAll(
-      json: string,
+      buildJson: () => string,
       describe: (snapshot: Snapshot) => string,
+      busy: string | null = null,
     ): Promise<Result<Snapshot>> {
-      const result = await engine.importData(json);
+      set({ busy });
+      if (busy !== null) {
+        await new Promise<void>((resolve) => {
+          // The extra task after the frame lets the browser paint before sample generation.
+          if (typeof requestAnimationFrame === 'function') {
+            requestAnimationFrame(() => setTimeout(resolve, 0));
+          } else {
+            setTimeout(resolve, 0);
+          }
+        });
+      }
+      let result: Result<Snapshot>;
+      try {
+        result = await engine.importData(buildJson());
+      } finally {
+        set({ busy: null });
+      }
       if (!result.ok) {
         showError(result.error, () => {
-          void replaceAll(json, describe);
+          void replaceAll(buildJson, describe, busy);
         });
         return result;
       }
@@ -663,8 +687,10 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
       // POST: replaces all data with that sample built for the current week; shows a toast
       loadSample(id) {
         const sample = SAMPLES[id];
-        return replaceAll(JSON.stringify(sample.build(startOfLocalWeek(options.now()))), () =>
-          sampleLoadedText(sample.label),
+        return replaceAll(
+          () => JSON.stringify(sample.build(startOfLocalWeek(options.now()))),
+          () => sampleLoadedText(sample.label),
+          'Loading sample calendar…',
         );
       },
 
@@ -708,8 +734,12 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
       // POST: replaces all data with it through replaceAll; the toast says how many events and
       //       tasks came in
       importData(json) {
-        return replaceAll(json, (snapshot) =>
-          importedText(snapshot.events.length, snapshot.tasks.length),
+        const parsed = parseExportFile(json);
+        const count = parsed.ok ? parsed.value.events.length + parsed.value.tasks.length : 0;
+        return replaceAll(
+          () => json,
+          (snapshot) => importedText(snapshot.events.length, snapshot.tasks.length),
+          count > IMPORT_SPINNER_THRESHOLD ? 'Importing calendar…' : null,
         );
       },
 
@@ -725,7 +755,10 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
           tasks: [],
           settings: DEFAULT_SETTINGS,
         };
-        return replaceAll(JSON.stringify(empty), () => DATA_CLEARED_TEXT);
+        return replaceAll(
+          () => JSON.stringify(empty),
+          () => DATA_CLEARED_TEXT,
+        );
       },
 
       // PRE:  none
@@ -758,6 +791,7 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
       status: options.init.ok ? 'ready' : 'fatal',
       fatalError: options.init.ok ? null : options.init.error,
       storageWarning: options.storageWarning,
+      busy: null,
       snapshot: options.init.ok ? options.init.value : engine.snapshot(),
       view: { type: options.initialView ?? 'timeGridWeek', date: now, activeRange: null },
       eventPriorityFilter: [...ALL_PRIORITIES],

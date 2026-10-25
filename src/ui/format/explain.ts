@@ -3,6 +3,7 @@
 
 import type {
   Boundary,
+  CalendarEvent,
   EdgeReason,
   EffectiveCriterion,
   Interval,
@@ -127,6 +128,14 @@ export const CRITERIA: { value: UserCriterion; label: string }[] = [
   { value: 'priorityAware', label: 'Priority-aware' },
 ];
 const PRIORITY_NAME: Record<Priority, string> = { high: 'High', medium: 'Medium', low: 'Low' };
+
+// PRE:  event is a stored calendar event; conflictMinutes is its largest overlap, or zero
+// POST: returns its complete accessible name, including the date, priority, kind and conflict
+export function eventAccessibleText(event: CalendarEvent, conflictMinutes: number): string {
+  const kind = event.taskId !== null ? 'Task' : event.flexible ? 'Flexible' : 'Fixed';
+  const conflict = conflictMinutes > 0 ? `, Conflict ${fmtDuration(conflictMinutes)}` : '';
+  return `${event.title}, ${fmtRange(event)}, ${PRIORITY_NAME[event.priority]} priority, ${kind}${conflict}`;
+}
 const EFFECTIVE_NAME: Record<EffectiveCriterion, string> = {
   earliest: 'earliest slot',
   bestFit: 'tightest fit',

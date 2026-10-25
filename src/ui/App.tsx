@@ -1,8 +1,8 @@
 import type FullCalendar from '@fullcalendar/react';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { CalendarView } from './components/CalendarView/CalendarView';
 import { ConfirmDialog } from './components/ConfirmDialog/ConfirmDialog';
-import { ConflictPanel } from './components/ConflictPanel/ConflictPanel';
+import { BusyOverlay } from './components/BusyOverlay/BusyOverlay';
 import { EmptyState } from './components/EmptyState/EmptyState';
 import { EventDialog } from './components/EventDialog/EventDialog';
 import { ReplanDialog } from './components/ReplanDialog/ReplanDialog';
@@ -10,12 +10,13 @@ import { SettingsDialog } from './components/SettingsDialog/SettingsDialog';
 import { ShortcutHelp } from './components/ShortcutHelp/ShortcutHelp';
 import { SlotPicker } from './components/SlotPicker/SlotPicker';
 import { TaskDialog } from './components/TaskDialog/TaskDialog';
-import { TaskPanel } from './components/TaskPanel/TaskPanel';
+import { SidePanel } from './components/SidePanel/SidePanel';
 import { Toasts } from './components/Toasts/Toasts';
 import { Toolbar } from './components/Toolbar/Toolbar';
 import { errorMessage } from './format/errors';
 import { useShortcuts } from './hooks/useShortcuts';
 import { useTheme } from './hooks/useTheme';
+import { useNarrowLayout } from './hooks/useNarrowLayout';
 import { useAppStore } from './store/appStore';
 import styles from './App.module.css';
 
@@ -47,7 +48,7 @@ function FatalScreen() {
 }
 
 // PRE:  rendered under StoreProvider; reads status, storageWarning and snapshot
-//       + additional props from: Toolbar, EmptyState, CalendarView, TaskPanel, ConflictPanel,
+//       + additional props from: Toolbar, EmptyState, CalendarView, SidePanel, BusyOverlay,
 //       EventDialog, TaskDialog, ReplanDialog, SettingsDialog, ShortcutHelp, ConfirmDialog,
 //       SlotPicker, Toasts, FatalScreen
 // POST: applies the theme and listens for shortcuts (B3, B4); shows the loading line, the fatal
@@ -56,6 +57,8 @@ function FatalScreen() {
 //       panels, the open dialog, the picker and the toasts
 export function App() {
   const calendarRef = useRef<FullCalendar>(null);
+  const narrow = useNarrowLayout();
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const { theme, cycleTheme } = useTheme();
   useShortcuts(calendarRef);
   const status = useAppStore((state) => state.status);
@@ -79,7 +82,13 @@ export function App() {
       )}
       <header>
         <h1>Interactive Calendar</h1>
-        <Toolbar calendarRef={calendarRef} theme={theme} onCycleTheme={cycleTheme} />
+        <Toolbar
+          calendarRef={calendarRef}
+          theme={theme}
+          onCycleTheme={cycleTheme}
+          panelsOpen={narrow && drawerOpen}
+          onOpenPanels={narrow ? () => setDrawerOpen(true) : undefined}
+        />
       </header>
       <main>
         {isEmpty && <EmptyState />}
@@ -89,10 +98,7 @@ export function App() {
         </p>
         <CalendarView calendarRef={calendarRef} />
       </main>
-      <aside>
-        <TaskPanel />
-        <ConflictPanel />
-      </aside>
+      <SidePanel narrow={narrow} open={drawerOpen} onClose={() => setDrawerOpen(false)} />
       <EventDialog />
       <TaskDialog />
       <ReplanDialog />
@@ -101,6 +107,7 @@ export function App() {
       <ConfirmDialog />
       <SlotPicker />
       <Toasts />
+      <BusyOverlay />
     </div>
   );
 }

@@ -1,11 +1,14 @@
 import { fmtDuration } from '../../format/time';
+import { useEffect, useRef } from 'react';
 import type { EventBlockProps } from './toFullCalendar';
 
 const PRIORITY_TAG = { high: '[H]', medium: '[M]', low: '[L]' } as const;
 
 // PRE:  title and timeText come from FullCalendar; the rest from toFullCalendar's extendedProps
+//       onOpen opens the event dialog when supplied for a List-view button
 // POST: renders an event block: title, time, the priority tag (BR-13, text as well as colour),
-//       a Task or Fixed tag, and "⚠ Conflict N min" when the event overlaps another
+//       a Task or Fixed tag, and "⚠ Conflict N min" when the event overlaps another; keeps its
+//       FullCalendar button's accessible name and tooltip complete even when the block is clipped
 export function EventContent({
   title,
   timeText,
@@ -13,10 +16,20 @@ export function EventContent({
   flexible,
   isTask,
   conflictMinutes,
-}: EventBlockProps & { title: string; timeText: string }) {
+  label,
+  onOpen,
+}: EventBlockProps & { title: string; timeText: string; onOpen?: () => void }) {
+  const contentRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const eventElement = contentRef.current?.closest<HTMLElement>('.ev');
+    if (eventElement !== null && eventElement !== undefined) {
+      eventElement.setAttribute('aria-label', label);
+      eventElement.title = label;
+    }
+  }, [label]);
   const kind = isTask ? 'Task' : flexible ? null : 'Fixed';
-  return (
-    <div className="event-content">
+  const content = (
+    <>
       {conflictMinutes > 0 && (
         <span className="tag tag-conflict">⚠ Conflict {fmtDuration(conflictMinutes)}</span>
       )}{' '}
@@ -24,6 +37,25 @@ export function EventContent({
       <strong className="event-title">{title}</strong>{' '}
       <span className={`tag prio-${priority}`}>{PRIORITY_TAG[priority]}</span>
       {kind !== null && <span className="tag">{kind}</span>}
+    </>
+  );
+  // FullCalendar's List default contains the keyboard anchor; custom content replaces it.
+  return onOpen === undefined ? (
+    <div className="event-content" ref={contentRef}>
+      {content}
     </div>
+  ) : (
+    <button
+      type="button"
+      className="event-content event-list-button"
+      aria-label={label}
+      title={label}
+      onClick={(event) => {
+        event.stopPropagation();
+        onOpen();
+      }}
+    >
+      {content}
+    </button>
   );
 }

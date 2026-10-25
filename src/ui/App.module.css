@@ -62,21 +62,9 @@
   color: var(--muted);
 }
 
-/* Until the drawer (WI-26), narrow screens stack the side column under the calendar. */
 @media (max-width: 1023px) {
   .app {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto auto auto;
-    grid-template-areas: 'banner' 'header' 'main' 'side';
-    height: auto;
-  }
-
-  .app > main {
-    height: 80vh;
-  }
-
-  .app > aside {
-    border-left: none;
-    border-top: 1px solid var(--border);
+    grid-template-areas: 'banner' 'header' 'main';
   }
 }

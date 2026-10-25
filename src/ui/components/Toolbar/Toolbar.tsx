@@ -29,6 +29,7 @@ function historyTooltip(verb: 'Undo' | 'Redo', label: string | null): string {
 //       state; uses openDialog, toggleEventPriority, undo and redo; calendarRef points at the
 //       FullCalendar that CalendarView renders; theme is the current theme choice and onCycleTheme
 //       moves to the next one
+//       onOpenPanels, when supplied, opens the narrow-screen drawer; panelsOpen is its state
 // POST: shows the toolbar of Figure 1: previous / Today / next, the period title, the view switch,
 //       the priority filter chips, + Event, + Task, Replan, Undo / Redo (disabled when there is
 //       nothing to do, tooltip = the change), the theme toggle and Settings
@@ -36,10 +37,14 @@ export function Toolbar({
   calendarRef,
   theme,
   onCycleTheme,
+  onOpenPanels,
+  panelsOpen = false,
 }: {
   calendarRef: RefObject<FullCalendar | null>;
   theme: ThemeChoice;
   onCycleTheme: () => void;
+  onOpenPanels?: () => void;
+  panelsOpen?: boolean;
 }) {
   const view = useAppStore((state) => state.view);
   const filter = useAppStore((state) => state.eventPriorityFilter);
@@ -52,6 +57,16 @@ export function Toolbar({
 
   return (
     <div className="toolbar">
+      {onOpenPanels !== undefined && (
+        <button
+          type="button"
+          aria-controls="side-panels"
+          aria-expanded={panelsOpen}
+          onClick={onOpenPanels}
+        >
+          Tasks and conflicts
+        </button>
+      )}
       <div role="group" aria-label="Navigation">
         <button type="button" aria-label="Previous period" onClick={() => calendar()?.prev()}>
           ◀
