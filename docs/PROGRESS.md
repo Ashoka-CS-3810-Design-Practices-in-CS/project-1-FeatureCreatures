@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** none — next is WI-03 Schemas (WI-04, 05, 06 are also unblocked).
-- **Last session:** 2026-10-25 · Claude Code · finished and merged WI-01 and WI-02.
+- **Active WI:** WI-03 Schemas (branch `feat/wi-03-schemas`).
+- **Last session:** 2026-10-25 · Claude Code · finished WI-01 and WI-02, claimed WI-03.
 - **Gate status on `main`:** green (typecheck, lint, test; also test:dst, test:coverage, build).
 
 ## Work items
@@ -23,7 +23,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 - [x] **WI-02** Shared types, result, errors, constants — owner S — depends on 01
   - 2026-10-25 · Claude Code · branch `feat/wi-02-shared-types` · done: `src/shared/{types,result,errors,constants}.ts` match §5; `result.test.ts` and `constants.test.ts` green · next: WI-03 · note: `ok`/`err` are function declarations (same exported names and signatures) so they carry PRE/POST
-- [ ] **WI-03** Schemas — owner Dv — depends on 02
+- [~] **WI-03** Schemas — owner Dv — depends on 02
+  - 2026-10-25 · Claude Code · branch `feat/wi-03-schemas` · done: claimed · next: `schemas.test.ts` (T5, T31 schema cases) then `src/shared/schemas.ts`
 - [ ] **WI-04** Local-time module — owner S — depends on 02
 - [ ] **WI-05** Interval / sortedArray / minHeap — owner S — depends on 02
 - [ ] **WI-06** Repositories — owner Dv — depends on 02
