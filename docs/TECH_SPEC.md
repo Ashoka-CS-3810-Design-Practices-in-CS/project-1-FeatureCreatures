@@ -114,6 +114,7 @@ Every file listed here exists by the end of the project. The WI column says whic
 ├─ tests/
 │  ├─ setup.ts             # jest-dom, <dialog> polyfill, ResizeObserver stub
 │  ├─ helpers/             # time.ts (t(), BASE_MONDAY), builders.ts (ev(), task()), engine.ts (makeEngine()),
+│  │                       # render.tsx (storeFor(), renderWithStore()), props.ts (propParams()),
 │  │                       # oracle.ts (brute-force sweep, minute-bitmap gaps), failingRepository.ts
 │  └─ integration/         # T13, T16, T17, T24, T25, T26 ... (facade-level tests)
 └─ src/
@@ -480,6 +481,9 @@ export const EXPORT_FORMAT = 'feature-creatures-calendar'; // §9.4
 export const EXPORT_VERSION = 1;
 export const REPLAN_DST_SLACK_MIN = 120; // a 14-day replan range may span DST changes
 export const CONFLICT_LIST_LIMIT = 50;
+export const TOAST_MS = 4000;          // success / info toasts
+export const WARNING_TOAST_MS = 8000;  // ER4 warning toasts
+export const EMPHASIS_MS = 1500;       // changed events stay emphasised
 export const MINUTES_PER_DAY = 1440;
 export const MAX_TITLE_LENGTH = 100;          // event title and task name
 export const MAX_DESCRIPTION_LENGTH = 1000;
@@ -1353,6 +1357,8 @@ interface Toast { id: string; tone: 'success' | 'info' | 'warning' | 'error'; te
                   actions?: { label: string; run: () => void }[]; sticky?: boolean }
 ```
 
+`createAppStore(engine, {storageWarning, init, now, resetStorage})` builds the store; `now` dates the samples and `resetStorage` empties the repository for the fatal screen's *Reset local data*. `StoreProvider` and `useAppStore(selector)` live in `appStore.ts`.
+
 **Rules for actions.**
 
 - **Mutations.** Every mutating action does `const r = await engine.x(...)`.
@@ -1675,3 +1681,4 @@ Production URL: https://…vercel.app
 | 2026-10-26 | v1.8 (WI-14): §7.4.3 validates the mirrored event of `updateTask` with `eventInputSchema` (a task window may be shorter than the task, a flex window may not), and names the `slot` issue of a wrong-length `scheduleTask`. |
 | 2026-10-26 | v1.9 (WI-16): §5 constants gain `REPLAN_DST_SLACK_MIN = 120`; §7.4.4 validates `bufferMin` and gives the range message. |
 | 2026-10-26 | v1.10 (WI-17): §2 adds `samples/build.ts`; §5 constants gain `EXPORT_FORMAT` / `EXPORT_VERSION`; §7.4.6 names `linkIssues` / `parseExportFile`, runs the link checks in `init()`, and takes `exportedAt` from `deps.now()`; §8.6 adds `onLocalDay` and `startOfLocalWeek`. |
+| 2026-10-26 | v1.11 (WI-18): §5 constants gain `TOAST_MS`, `WARNING_TOAST_MS`, `EMPHASIS_MS`; §11.1 gives `createAppStore` its `now` and `resetStorage` options; §2 lists `tests/helpers/render.tsx`. |
