@@ -2,7 +2,7 @@
 
 Shared handoff file for every agent and human working on this repo. Format and rules: `AGENTS.md` §3–§5 and `docs/TECH_SPEC.md` §0 and §14.
 
-Production URL: _not deployed yet_
+Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
@@ -67,7 +67,7 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 ## Human-only steps
 
 - [ ] Connect the GitHub Classroom repo as `origin` and push `main`.
-- [ ] First Vercel deploy (TECH_SPEC §13.2) and paste the URL at the top of this file.
+- [x] First Vercel deploy (TECH_SPEC §13.2) and paste the URL at the top of this file.
 - [ ] Turn on branch protection for `main` on GitHub (optional).
 
 ## Decisions log (append-only)

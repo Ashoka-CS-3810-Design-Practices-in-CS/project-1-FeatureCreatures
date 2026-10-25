@@ -33,3 +33,5 @@ logs/
 
 # scaffold leftovers (WI-01 scaffolds into this folder, then removes it)
 vite-tmp/
+
+.vercel
