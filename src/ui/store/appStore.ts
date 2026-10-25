@@ -18,7 +18,9 @@ import type {
   MutationResult,
   Priority,
   Snapshot,
+  SlotSearchResult,
   TaskInput,
+  UserCriterion,
 } from '@/shared/types';
 import { errorMessage } from '../format/errors';
 import {
@@ -30,6 +32,8 @@ import {
   movedText,
   moveToLabel,
   droppedFromQueueText,
+  queueSummaryText,
+  scheduledText,
   sampleLoadedText,
   taskCreatedText,
   taskDeletedText,
@@ -70,6 +74,14 @@ export interface AppActions {
   setTaskPanel(change: Partial<AppState['taskPanel']>): void;
   toggleTaskSelection(id: string): void;
   openTaskPicker(taskIds: readonly string[]): void;
+  openAlternatives(conflict: Conflict): void;
+  pickerSelect(index: number): void;
+  pickerSetCriterion(criterion: UserCriterion): void;
+  pickerSetBuffer(bufferMin: number): void;
+  pickerToggleTarget(): void;
+  pickerApply(): Promise<void>;
+  pickerSkip(): void;
+  pickerStop(): void;
   undo(): Promise<Result<MutationResult>>;
   redo(): Promise<Result<MutationResult>>;
   applyAlternative(eventId: string, slot: Interval): Promise<Result<MutationResult>>;
@@ -145,11 +157,13 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
     }
 
     // PRE:  error is an engine error; retry re-runs the failed command
-    // POST: shows its toast; a StorageError toast is sticky and offers Retry (ER5)
+    // POST: shows its toast; a StorageError toast is sticky and offers Retry (ER5); a StaleResult
+    //       toast is a brief info (ER7)
     function showError(error: EngineError, retry: () => void): void {
       const isStorage = error.code === 'StorageError';
       pushToast({
-        tone: 'error',
+        // ER7 is a brief notice: the picker recomputes its options at once.
+        tone: error.code === 'StaleResult' ? 'info' : 'error',
         text: errorMessage(error),
         sticky: isStorage,
         actions: isStorage ? [{ label: 'Retry', run: retry }] : undefined,
@@ -222,6 +236,45 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
     // POST: returns that event's title in the new snapshot ('' if it is gone)
     function titleIn(value: MutationResult, id: string): string {
       return value.snapshot.events.find((event) => event.id === id)?.title ?? '';
+    }
+
+    // PRE:  picker is a picker state
+    // POST: returns a fresh search for its current subject, criterion and buffer
+    function searchFor(picker: PickerState): Result<SlotSearchResult> {
+      if (picker.mode === 'task') {
+        return engine.findSlots({
+          taskId: picker.queue[picker.index] ?? '',
+          criterion: picker.criterion,
+          bufferMin: picker.bufferMin,
+        });
+      }
+      return engine.suggestAlternatives({
+        eventId: picker.eventId,
+        otherEventId: picker.otherEventId ?? undefined,
+        bufferMin: picker.bufferMin,
+      });
+    }
+
+    // PRE:  picker is the picker state to show
+    // POST: shows picker with a fresh search and the first option selected
+    function refresh(picker: PickerState): void {
+      set({ picker: { ...picker, result: searchFor(picker), selected: 0 } });
+    }
+
+    // PRE:  picker is a task picker whose counts include the task just handled
+    // POST: moves to the next task in the queue and searches for it, or, after the last one,
+    //       closes the picker with the summary toast
+    function advance(picker: Extract<PickerState, { mode: 'task' }>): void {
+      const index = picker.index + 1;
+      if (index >= picker.queue.length) {
+        set({ picker: null });
+        pushToast({
+          tone: 'success',
+          text: queueSummaryText(picker.scheduled, picker.queue.length, picker.skipped),
+        });
+        return;
+      }
+      refresh({ ...picker, index });
     }
 
     const actions: AppActions = {
@@ -372,6 +425,132 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
             skipped: 0,
           },
         });
+      },
+
+      // PRE:  conflict is one of the snapshot's conflicts
+      // POST: opens the alternatives picker for the event BR-10 suggests moving, with the other
+      //       event as the toggle and the settings buffer (FR7)
+      openAlternatives(conflict) {
+        const otherEventId = conflict.targetId === conflict.aId ? conflict.bId : conflict.aId;
+        set({ dialog: null });
+        refresh({
+          mode: 'alternatives',
+          eventId: conflict.targetId,
+          otherEventId,
+          bufferMin: get().snapshot.settings.bufferMin,
+          // A placeholder: refresh replaces it with the real search before anything renders.
+          result: { ok: false, error: { code: 'StaleResult' } },
+          selected: 0,
+        });
+      },
+
+      // PRE:  index is an option index
+      // POST: that option is selected
+      pickerSelect(index) {
+        const { picker } = get();
+        if (picker !== null) {
+          set({ picker: { ...picker, selected: index } });
+        }
+      },
+
+      // PRE:  criterion is a user criterion
+      // POST: the task picker ranks by criterion (its search re-runs)
+      pickerSetCriterion(criterion) {
+        const { picker } = get();
+        if (picker?.mode === 'task') {
+          refresh({ ...picker, criterion });
+        }
+      },
+
+      // PRE:  bufferMin comes from the picker's buffer field (validated by the engine)
+      // POST: the picker searches with bufferMin (an invalid value shows as the search error)
+      pickerSetBuffer(bufferMin) {
+        const { picker } = get();
+        if (picker !== null) {
+          refresh({ ...picker, bufferMin });
+        }
+      },
+
+      // PRE:  none
+      // POST: an alternatives picker with an other event swaps which of the two is moved
+      pickerToggleTarget() {
+        const { picker } = get();
+        if (picker?.mode === 'alternatives' && picker.otherEventId !== null) {
+          refresh({ ...picker, eventId: picker.otherEventId, otherEventId: picker.eventId });
+        }
+      },
+
+      // PRE:  none
+      // POST: applies the selected option through runMutation against the search's version: a task
+      //       picker schedules and moves on; an alternatives picker moves the event and closes; on
+      //       StaleResult (ER7) the search re-runs; other errors keep the picker as it is
+      async pickerApply() {
+        const picker = get().picker;
+        if (picker === null || !picker.result.ok) {
+          return;
+        }
+        const option = picker.result.value.options[picker.selected];
+        if (option === undefined) {
+          return;
+        }
+        const baseVersion = picker.result.value.baseVersion;
+        const result =
+          picker.mode === 'task'
+            ? await runMutation(
+                () =>
+                  engine.scheduleTask({
+                    taskId: picker.queue[picker.index] ?? '',
+                    slot: option.slot,
+                    baseVersion,
+                  }),
+                () => scheduledText(option.slot),
+              )
+            : await runMutation(
+                () =>
+                  engine.applyAlternative({
+                    eventId: picker.eventId,
+                    slot: option.slot,
+                    baseVersion,
+                  }),
+                (value) => alternativeAppliedText(option.slot, value.resolvedConflicts.length > 0),
+              );
+        const current = get().picker;
+        if (current === null) {
+          return;
+        }
+        if (!result.ok) {
+          if (result.error.code === 'StaleResult') {
+            refresh(current);
+          }
+          return;
+        }
+        if (current.mode === 'task') {
+          advance({ ...current, scheduled: current.scheduled + 1 });
+        } else {
+          set({ picker: null });
+        }
+      },
+
+      // PRE:  none
+      // POST: a task picker counts the current task as skipped and moves on
+      pickerSkip() {
+        const { picker } = get();
+        if (picker?.mode === 'task') {
+          advance({ ...picker, skipped: picker.skipped + 1 });
+        }
+      },
+
+      // PRE:  none
+      // POST: closes the picker; a task picker first shows its summary toast
+      pickerStop() {
+        const { picker } = get();
+        set({ picker: null });
+        if (picker?.mode === 'task') {
+          pushToast({
+            tone: 'success',
+            text: queueSummaryText(picker.scheduled, picker.queue.length, picker.skipped),
+          });
+        }
       },
 
       // PRE:  none
