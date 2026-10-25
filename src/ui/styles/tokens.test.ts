@@ -42,10 +42,14 @@ const TEXT_PAIRS: [string, string][] = [
   ['on-accent', 'accent'], // primary and pressed buttons
 ];
 
-// PRE:  selector is a selector that opens one rule in tokens.css (inside a media query or not)
-// POST: returns that rule's custom properties, name (without --) → value
+// PRE:  selector is written as Prettier formats it (single quotes)
+// POST: returns the custom properties of the rule it opens in tokens.css, name (without --) →
+//       value; throws when no rule opens with it
 function tokensOf(selector: string): Map<string, string> {
   const start = TOKENS_CSS.indexOf(`${selector} {`);
+  if (start < 0) {
+    throw new Error(`tokens.css has no rule for ${selector}`);
+  }
   const body = TOKENS_CSS.slice(start, TOKENS_CSS.indexOf('}', start));
   const tokens = new Map<string, string>();
 
@@ -79,7 +83,7 @@ function contrast(first: string, second: string): number {
 }
 
 const light = tokensOf(':root');
-const dark = tokensOf(':root[data-theme="dark"]');
+const dark = tokensOf(":root[data-theme='dark']");
 
 describe('tokens.css', () => {
   it.each([
@@ -103,6 +107,6 @@ describe('tokens.css', () => {
   });
 
   it('gives the system dark mode the same values as data-theme="dark"', () => {
-    expect(tokensOf(':root:not([data-theme="light"])')).toEqual(dark);
+    expect(tokensOf(":root:not([data-theme='light'])")).toEqual(dark);
   });
 });
