@@ -3,6 +3,7 @@ import { ConfirmDialog } from './components/ConfirmDialog/ConfirmDialog';
 import { ConflictPanel } from './components/ConflictPanel/ConflictPanel';
 import { EmptyState } from './components/EmptyState/EmptyState';
 import { EventDialog } from './components/EventDialog/EventDialog';
+import { ReplanDialog } from './components/ReplanDialog/ReplanDialog';
 import { SlotPicker } from './components/SlotPicker/SlotPicker';
 import { TaskDialog } from './components/TaskDialog/TaskDialog';
 import { TaskPanel } from './components/TaskPanel/TaskPanel';
@@ -39,7 +40,7 @@ function FatalScreen() {
 
 // PRE:  rendered under StoreProvider; reads status, storageWarning and snapshot
 //       + additional props from: EmptyState, CalendarView, TaskPanel, ConflictPanel, EventDialog,
-//       TaskDialog, ConfirmDialog, SlotPicker, Toasts, FatalScreen
+//       TaskDialog, ReplanDialog, ConfirmDialog, SlotPicker, Toasts, FatalScreen
 // POST: shows the loading line, the fatal screen, or the app: the degraded-mode banner when
 //       storage is unavailable, the empty state on a blank calendar, the status line, the
 //       calendar, the task and conflict panels, the open dialog, the picker and the toasts
@@ -80,6 +81,7 @@ export function App() {
       </aside>
       <EventDialog />
       <TaskDialog />
+      <ReplanDialog />
       <ConfirmDialog />
       <SlotPicker />
       <Toasts />
