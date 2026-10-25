@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** none — next is WI-10 Day load + ranking (WI-12 is also unblocked).
-- **Last session:** 2026-10-26 · Claude Code · finished and merged WI-08 and WI-09.
+- **Active WI:** WI-10 Day load + ranking (branch `feat/wi-10-rank`).
+- **Last session:** 2026-10-26 · Claude Code · finished and merged WI-08 and WI-09; started WI-10.
 - **Gate status on `main`:** green (typecheck, lint, test; also test:dst, test:coverage, build).
 
 ## Work items
@@ -40,7 +40,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-26 · Claude Code · branch `feat/wi-08-sweep` · done: `algorithms/{sweep,target}.ts`; T1–T4 and BR-10 rules 1–5 in unit tests; T12 in `sweep.props.test.ts` (also green at 10,000 random-seed runs; a `<`/`≤` mutation is caught) · next: WI-09 · note: new `tests/helpers/props.ts` (`propParams`, `PROP_TIMEOUT_MS`) — use it in T33–T35; `countOverlaps` takes `Interval`s (TECH_SPEC v1.4)
 - [x] **WI-09** Merge, segments, gaps — owner S — depends on 05, 07
   - 2026-10-26 · Claude Code · branch `feat/wi-09-gaps` · done: `algorithms/{merge,segments,gaps}.ts` with the §4.3 unit tests; T33 in `gaps.props.test.ts` (green at 10,000 random-seed runs; a skip-too-far mutation is caught) · next: WI-10 · note: no-working-hours segments are the window minus barred slots in one pass, not per day plus merge (TECH_SPEC v1.5); gap boundaries read `bufferMin` back from the block; `allowedSegments` expects `notBefore` already rounded up to `SNAP_MIN` (the caller's job, WI-13 `search.ts`)
-- [ ] **WI-10** Day load + ranking — owner S — depends on 09
+- [~] **WI-10** Day load + ranking — owner S — depends on 09
+  - 2026-10-26 · Claude Code · branch `feat/wi-10-rank` · done: claimed · next: `dayLoad.ts`, `rank.ts`, unit tests, T34
 - [ ] **WI-11** Task order + replan heuristics — owner S — depends on 10
 - [ ] **WI-12** Engine state & commit & history — owner Dv — depends on 06, 08
 - [ ] **WI-13** Facade + Event CRUD — owner Dv — depends on 12, 10
