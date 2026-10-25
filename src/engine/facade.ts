@@ -20,6 +20,7 @@ import type {
   UserCriterion,
 } from '@/shared/types';
 import { applyAlternative, suggestAlternatives } from './pipelines/conflictResolution';
+import { applyReplan, planReplan } from './pipelines/replan';
 import { createEvent, deleteEvent, moveEvent, updateEvent } from './pipelines/eventCrud';
 import {
   createTask,
@@ -112,6 +113,7 @@ class CalendarEngine implements Engine {
   private readonly deps: EngineDeps;
   private state: EngineState = createState({ events: [], tasks: [], settings: DEFAULT_SETTINGS });
   private chain: Promise<unknown> = Promise.resolve();
+  private lastReplan: ReplanResult | null = null; // §7.4.4: not part of EngineState
 
   // PRE:  deps.repo is a Repository; deps.now returns the current Minute; deps.newId returns fresh ids
   // POST: creates an engine with empty state; call init() before anything else
@@ -304,16 +306,24 @@ class CalendarEngine implements Engine {
     return this.mutate((context) => scheduleTask(context, req));
   }
 
-  // PRE:  none
-  // POST: not implemented until WI-16
-  planReplan(): Result<ReplanResult> {
-    return notImplementedUntil('WI-16');
+  // PRE:  req comes from the UI (checked by the pipeline)
+  // POST: as replan.planReplan on the current state, with notBefore from now; a successful result
+  //       becomes lastReplan, the only plan applyReplan accepts
+  planReplan(req: { range: Interval; bufferMin?: number }): Result<ReplanResult> {
+    const result = planReplan(this.state, req, notBeforeFor(this.deps.now()));
+    if (result.ok) {
+      this.lastReplan = result.value;
+    }
+    return result;
   }
 
-  // PRE:  none
-  // POST: not implemented until WI-16
-  applyReplan(): Promise<Result<MutationResult>> {
-    return notImplementedUntil('WI-16');
+  // PRE:  req comes from the UI (checked by the pipeline, version check included)
+  // POST: as replan.applyReplan against lastReplan, queued, so the check sees the latest state
+  applyReplan(req: {
+    baseVersion: number;
+    planId: ReplanPlan['id'];
+  }): Promise<Result<MutationResult>> {
+    return this.mutate((context) => applyReplan(context, this.lastReplan, req));
   }
 
   // PRE:  settings comes from the UI (any shape)
