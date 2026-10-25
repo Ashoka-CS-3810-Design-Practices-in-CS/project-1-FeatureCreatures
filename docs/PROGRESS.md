@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** none — next is WI-04 Local-time module (WI-05 and WI-06 are also unblocked).
-- **Last session:** 2026-10-25 · Claude Code · finished and merged WI-01, WI-02 and WI-03.
+- **Active WI:** WI-04 Local-time module (branch `feat/wi-04-time`).
+- **Last session:** 2026-10-25 · Claude Code · finished WI-01–03, claimed WI-04.
 - **Gate status on `main`:** green (typecheck, lint, test; also test:dst, test:coverage, build).
 
 ## Work items
@@ -25,7 +25,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-25 · Claude Code · branch `feat/wi-02-shared-types` · done: `src/shared/{types,result,errors,constants}.ts` match §5; `result.test.ts` and `constants.test.ts` green · next: WI-03 · note: `ok`/`err` are function declarations (same exported names and signatures) so they carry PRE/POST
 - [x] **WI-03** Schemas — owner Dv — depends on 02
   - 2026-10-25 · Claude Code · branch `feat/wi-03-schemas` · done: `src/shared/schemas.ts` with T5 (a–f) and T31 schema-level cases, settings, stored and export schemas; 41 cases in `schemas.test.ts` · next: WI-04 · note: the engine must validate with `parseInput` (maps to InvalidTime/InvalidInput); import builds InvalidImport from `toFieldIssues`; facade-level and UI parts of T5/T31 belong to WI-13/14 and WI-19/20 (TECH_SPEC v1.3)
-- [ ] **WI-04** Local-time module — owner S — depends on 02
+- [~] **WI-04** Local-time module — owner S — depends on 02
+  - 2026-10-25 · Claude Code · branch `feat/wi-04-time` · done: claimed · next: `time.test.ts`, `time.dst.test.ts` (T29), then `src/shared/time.ts`
 - [ ] **WI-05** Interval / sortedArray / minHeap — owner S — depends on 02
 - [ ] **WI-06** Repositories — owner Dv — depends on 02
 - [ ] **WI-07** Test helpers & oracles — owner S — depends on 02, 04
