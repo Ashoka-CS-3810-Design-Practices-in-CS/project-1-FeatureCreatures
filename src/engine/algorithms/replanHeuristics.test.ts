@@ -203,6 +203,22 @@ describe('planReplan (BR-12)', () => {
     ]);
   });
 
+  it('lets a static event just before the range push its buffer into the range', () => {
+    const frames = [dayFrame('Mon', ['00:00', '24:00']), ...WEEKDAYS.slice(1)];
+    const lateSunday = ev('S', '2026-11-01 23:30', 'Mon 00:00');
+    const early = flexEv('X', 'Mon 00:00', 'Mon 01:00', ['Mon 00:00', 'Mon 06:00']);
+
+    const [minimal] = planReplan(input([lateSunday, early], { frames, bufferMin: 15 })).plans;
+
+    expect(minimal.moves).toEqual([
+      expect.objectContaining({
+        eventId: 'X',
+        to: iv('Mon 00:15', 'Mon 01:15'),
+        reason: { kind: 'buffer', withEventId: 'S', withTitle: 'S' },
+      }),
+    ]);
+  });
+
   it('returns two empty plans when nothing is movable', () => {
     const { movableCount, plans } = planReplan(input([lecture]));
 
