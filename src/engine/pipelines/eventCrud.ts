@@ -27,14 +27,14 @@ function findEvent(state: EngineState, id: string): Result<CalendarEvent, Engine
 
 // PRE:  event is an event
 // POST: returns the EventInput fields of event
-function inputOf(event: CalendarEvent): EventInput {
+export function inputOf(event: CalendarEvent): EventInput {
   const { title, description, category, priority, start, end, flexible, flexWindow } = event;
   return { title, description, category, priority, start, end, flexible, flexWindow };
 }
 
 // PRE:  state.events is sorted; eventId is in state.events; notBefore is now rounded to SNAP_MIN
 // POST: returns the top nearest alternative for eventId, or null when the search finds none
-function topAlternative(state: EngineState, eventId: string, notBefore: number): SlotOption | null {
+function topAlternative(state: EngineState, eventId: string, notBefore: Minute): SlotOption | null {
   const result = suggestAlternatives(state, { eventId }, notBefore);
   return result.ok ? (result.value.options[0] ?? null) : null;
 }
@@ -42,7 +42,7 @@ function topAlternative(state: EngineState, eventId: string, notBefore: number):
 // PRE:  change is valid for context.state; subjectId is the id of the event change creates or edits
 // POST: commits change ('do'); on success also returns, as suggestion, the top alternative for
 //       subjectId when an introduced conflict involves it (ER4), else null; errors pass through
-async function commitWithSuggestion(
+export async function commitWithSuggestion(
   context: PipelineContext,
   change: Change,
   subjectId: string,

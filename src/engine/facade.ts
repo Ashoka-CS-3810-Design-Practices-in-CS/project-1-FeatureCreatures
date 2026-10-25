@@ -21,6 +21,15 @@ import type {
 } from '@/shared/types';
 import { suggestAlternatives } from './pipelines/conflictResolution';
 import { createEvent, deleteEvent, moveEvent, updateEvent } from './pipelines/eventCrud';
+import {
+  createTask,
+  deleteTask,
+  findSlots,
+  orderForScheduling,
+  scheduleTask,
+  unscheduleTask,
+  updateTask,
+} from './pipelines/taskScheduler';
 import { notBeforeFor } from './search';
 import { createState, type EngineState, type PipelineContext, type PipelineOutcome } from './state';
 
@@ -241,46 +250,54 @@ class CalendarEngine implements Engine {
     return notImplementedUntil('WI-15');
   }
 
-  // PRE:  none
-  // POST: not implemented until WI-14
-  createTask(): Promise<Result<MutationResult>> {
-    return notImplementedUntil('WI-14');
+  // PRE:  input comes from the UI (validated by the pipeline)
+  // POST: as taskScheduler.createTask, queued
+  createTask(input: TaskInput): Promise<Result<MutationResult>> {
+    return this.mutate((context) => createTask(context, input));
+  }
+
+  // PRE:  input comes from the UI (validated by the pipeline)
+  // POST: as taskScheduler.updateTask, queued
+  updateTask(id: string, input: TaskInput): Promise<Result<MutationResult>> {
+    return this.mutate((context) => updateTask(context, id, input));
   }
 
   // PRE:  none
-  // POST: not implemented until WI-14
-  updateTask(): Promise<Result<MutationResult>> {
-    return notImplementedUntil('WI-14');
+  // POST: as taskScheduler.deleteTask, queued
+  deleteTask(id: string): Promise<Result<MutationResult>> {
+    return this.mutate((context) => deleteTask(context, id));
   }
 
   // PRE:  none
-  // POST: not implemented until WI-14
-  deleteTask(): Promise<Result<MutationResult>> {
-    return notImplementedUntil('WI-14');
+  // POST: as taskScheduler.unscheduleTask, queued
+  unscheduleTask(id: string): Promise<Result<MutationResult>> {
+    return this.mutate((context) => unscheduleTask(context, id));
   }
 
   // PRE:  none
-  // POST: not implemented until WI-14
-  unscheduleTask(): Promise<Result<MutationResult>> {
-    return notImplementedUntil('WI-14');
+  // POST: as taskScheduler.orderForScheduling on the current state
+  orderForScheduling(taskIds: readonly string[]): string[] {
+    return orderForScheduling(this.state, taskIds);
   }
 
-  // PRE:  none
-  // POST: not implemented until WI-14
-  orderForScheduling(): string[] {
-    return notImplementedUntil('WI-14');
+  // PRE:  req comes from the UI (bufferMin validated by the pipeline)
+  // POST: as taskScheduler.findSlots on the current state, with notBefore from now
+  findSlots(req: {
+    taskId: string;
+    criterion?: UserCriterion;
+    bufferMin?: number;
+  }): Result<SlotSearchResult> {
+    return findSlots(this.state, req, notBeforeFor(this.deps.now()));
   }
 
-  // PRE:  none
-  // POST: not implemented until WI-14
-  findSlots(): Result<SlotSearchResult> {
-    return notImplementedUntil('WI-14');
-  }
-
-  // PRE:  none
-  // POST: not implemented until WI-14
-  scheduleTask(): Promise<Result<MutationResult>> {
-    return notImplementedUntil('WI-14');
+  // PRE:  req comes from the UI (checked by the pipeline, version check included)
+  // POST: as taskScheduler.scheduleTask, queued, so the version check sees the latest state
+  scheduleTask(req: {
+    taskId: string;
+    slot: Interval;
+    baseVersion: number;
+  }): Promise<Result<MutationResult>> {
+    return this.mutate((context) => scheduleTask(context, req));
   }
 
   // PRE:  none

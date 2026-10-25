@@ -339,6 +339,8 @@ describe('methods of later work items', () => {
   it('throw a clear error until they are built', async () => {
     const { engine } = await makeEngine();
 
-    expect(() => engine.findSlots({ taskId: 'T' })).toThrow('Not implemented until WI-14');
+    expect(() => engine.planReplan({ range: iv('Mon 00:00', 'Sat 00:00') })).toThrow(
+      'Not implemented until WI-16',
+    );
   });
 });
