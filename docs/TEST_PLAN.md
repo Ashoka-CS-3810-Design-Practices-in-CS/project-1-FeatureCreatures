@@ -73,6 +73,10 @@ export async function makeEngine(o?: { events?: CalendarEvent[]; tasks?: Task[];
 export function bruteForceConflicts(events: CalendarEvent[]): { key: string; overlap: Interval; minutes: number }[]; // O(n²)
 export function bitmapGaps(segments: Interval[], events: Interval[], bufferMin: number): Interval[];             // minute array
 
+// props.ts — fast-check settings for every *.props.test.ts (§1.3)
+export function propParams(): { numRuns: number; seed?: number };  // PROP_RUNS (default 1000), PROP_SEED (default 42; 'random' omits it)
+export const PROP_TIMEOUT_MS: number;                               // per-test timeout, large enough for 10,000 runs
+
 // failingRepository.ts
 export class FailingRepository implements Repository {   // wraps MemoryRepository
   failNextApply(): void; failNextSaveSettings(): void;
@@ -286,3 +290,4 @@ Each demo starts from **Settings → Data → Load sample calendar**.
 | Date | Change |
 |---|---|
 | 2026-10-25 | v1.0: unified test plan. Kept A3 T1–T15 with exact values; added T16–T36, E1–E3 and D1–D5. |
+| 2026-10-26 | v1.1 (WI-08): §2 lists `tests/helpers/props.ts` (`propParams`, `PROP_TIMEOUT_MS`). |

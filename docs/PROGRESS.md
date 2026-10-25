@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-08 Conflict sweep (branch `feat/wi-08-sweep`).
-- **Last session:** 2026-10-26 · Claude Code · started WI-08.
+- **Active WI:** none — next is WI-09 Merge, segments, gaps (WI-12 is also unblocked).
+- **Last session:** 2026-10-26 · Claude Code · finished and merged WI-08.
 - **Gate status on `main`:** green (typecheck, lint, test; also test:dst, test:coverage, build).
 
 ## Work items
@@ -36,8 +36,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 ### Phase 3 — Algorithms and engine
 
-- [~] **WI-08** Conflict sweep — owner S — depends on 05, 07
-  - 2026-10-26 · Claude Code · branch `feat/wi-08-sweep` · done: claimed · next: `target.ts`, `sweep.ts`, T1–T4, T12
+- [x] **WI-08** Conflict sweep — owner S — depends on 05, 07
+  - 2026-10-26 · Claude Code · branch `feat/wi-08-sweep` · done: `algorithms/{sweep,target}.ts`; T1–T4 and BR-10 rules 1–5 in unit tests; T12 in `sweep.props.test.ts` (also green at 10,000 random-seed runs; a `<`/`≤` mutation is caught) · next: WI-09 · note: new `tests/helpers/props.ts` (`propParams`, `PROP_TIMEOUT_MS`) — use it in T33–T35; `countOverlaps` takes `Interval`s (TECH_SPEC v1.4)
 - [ ] **WI-09** Merge, segments, gaps — owner S — depends on 05, 07
 - [ ] **WI-10** Day load + ranking — owner S — depends on 09
 - [ ] **WI-11** Task order + replan heuristics — owner S — depends on 10
@@ -92,4 +92,5 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 - 2026-10-25 (WI-01, Claude Code): `.prettierignore` excludes `docs/`, `AGENTS.md`, `CLAUDE.md` and the skill folders so `npm run format` never reflows the hand-written specs.
 - 2026-10-25 (WI-01, Claude Code): `vitest.dst.config.ts` spreads the base config instead of using `mergeConfig`, because `mergeConfig` concatenates arrays and would keep the base include/exclude lists.
 - 2026-10-25 (WI-02, Claude Code): CI runs `test:coverage` with global thresholds (70%, and 90% for algorithms), so any `src/` file with runtime code and no test makes CI red. Every WI must ship tests that import each new runtime file, even when its "Done when" asks only for "compiles".
+- 2026-10-26 (WI-08, Claude Code): property tests read `PROP_RUNS`/`PROP_SEED` through one shared helper, `tests/helpers/props.ts`. `npm test` leaves both unset, so the helper's defaults (1000, 42) are what CI runs; this matches TEST_PLAN §1.3 without changing the npm scripts.
 - 2026-10-25 (WI-07, Claude Code): `makeEngine` (TEST_PLAN §2, `tests/helpers/engine.ts`) moves from WI-07 to WI-13, because WI-07 depends only on WI-02/04 and the Engine does not exist until WI-13.
