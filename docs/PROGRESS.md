@@ -78,6 +78,7 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 ## Human-only steps
 
 - [ ] Connect the GitHub Classroom repo as `origin` and push `main`.
+- [ ] Push the WI branches and milestone tags too: `git push origin --all` and `git push origin --tags` (tags `m1`, `m2` exist locally).
 - [x] First Vercel deploy (TECH_SPEC §13.2) and paste the URL at the top of this file.
 - [ ] Turn on branch protection for `main` on GitHub (optional).
 
