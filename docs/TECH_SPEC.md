@@ -1573,7 +1573,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
       - run: npm ci && npx playwright install --with-deps chromium
-      - run: npm run e2e -- --pass-with-no-tests   # flag only until WI-27 adds E1–E3; WI-27 removes it
+      - run: npm run e2e
 ```
 
 `main` is protected: it requires the `check` job and one review.
@@ -1700,3 +1700,4 @@ Production URL: https://…vercel.app
 | 2026-10-26 | v1.14 (WI-24): §2 lists `forms/settingsForm.ts` and `hooks/preferences.ts`; §11.1 gives `createAppStore` an optional `initialView` (last view, PROJECT_SCHEMA §3.2) and says what `onDatesSet` records. |
 | 2026-10-26 | v1.15 (WI-25): §1.1 and §11.4 clarify CSS Module layout and global shared styles; primary-control foreground, backdrop and shadow tokens are explicit. §11.3 uses short day headers and omits the all-day row because every event is timed. |
 | 2026-10-26 | v1.16 (WI-26): §5 adds drawer, target and import-feedback constants; §11.1 documents `busy`, responsive panels, native dialog focus and loading feedback; §11.3 documents complete event names/tooltips and minimum target height. |
+| 2026-10-26 | v1.17 (WI-27): §13.1 removes the CI no-tests escape hatch now that E1–E3 and accessibility smoke tests exist. Focusable FullCalendar event anchors also receive a button role. |

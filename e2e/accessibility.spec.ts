@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
+import { openCalendar } from './helpers';
 
-const BASE_TIME = new Date('2026-11-02T08:00:00');
 const VIEWPORT_HEIGHT = 900;
 const DESKTOP_WIDTHS = [1280, 1024];
 const NARROW_WIDTH = 900;
@@ -15,8 +15,7 @@ const DIALOG_CASES = [
 // PRE:  page has fresh storage
 // POST: loads the sparse sample in the base week and waits until its loading overlay closes
 async function loadSample(page: Page): Promise<void> {
-  await page.clock.install({ time: BASE_TIME });
-  await page.goto('/');
+  await openCalendar(page);
   await page.getByRole('button', { name: 'Load sample week', exact: true }).click();
   await expect(page.locator('.status-line')).toHaveText('8 events · 4 tasks · 1 conflict');
   await expect(page.getByRole('dialog', { name: 'Loading calendar' })).toBeHidden();
@@ -121,7 +120,7 @@ test('dialog types keep keyboard focus and restore their connected trigger', asy
     await page.keyboard.press('Tab');
     expect(await dialog.evaluate((element) => element.contains(document.activeElement))).toBe(true);
     await page.keyboard.press('Escape');
-    await expect(dialog).toBeHidden();
+    await expect(dialog).toHaveCount(0);
     await expect(trigger).toBeFocused();
   }
   // POST: event, task, replan and settings dialogs satisfy keyboard focus and Esc behavior
@@ -135,7 +134,7 @@ test('dialog types keep keyboard focus and restore their connected trigger', asy
   const confirmation = page.getByRole('dialog', { name: 'Clear all data?' });
   await expect(confirmation).toBeVisible();
   await page.keyboard.press('Escape');
-  await expect(confirmation).toBeHidden();
+  await expect(confirmation).toHaveCount(0);
   await expect(settingsTrigger).toBeFocused();
 
   const taskRow = page
@@ -156,7 +155,7 @@ test('dialog types keep keyboard focus and restore their connected trigger', asy
   await page.keyboard.press('Tab');
   expect(await picker.evaluate((element) => element.contains(document.activeElement))).toBe(true);
   await page.keyboard.press('Escape');
-  await expect(picker).toBeHidden();
+  await expect(picker).toHaveCount(0);
   await expect(findTime).toBeFocused();
   await expect(page.getByLabel('Notifications')).toHaveAttribute('aria-live', 'polite');
 });

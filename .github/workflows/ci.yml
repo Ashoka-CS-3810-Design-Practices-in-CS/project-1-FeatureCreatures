@@ -22,5 +22,4 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
       - run: npm ci && npx playwright install --with-deps chromium
-      # --pass-with-no-tests only until WI-27 adds E1–E3; remove it then.
-      - run: npm run e2e -- --pass-with-no-tests
+      - run: npm run e2e

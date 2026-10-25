@@ -24,6 +24,7 @@ export function EventContent({
     const eventElement = contentRef.current?.closest<HTMLElement>('.ev');
     if (eventElement !== null && eventElement !== undefined) {
       eventElement.setAttribute('aria-label', label);
+      eventElement.setAttribute('role', 'button');
       eventElement.title = label;
     }
   }, [label]);
