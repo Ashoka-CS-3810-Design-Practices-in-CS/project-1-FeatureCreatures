@@ -161,11 +161,14 @@ const barredSlotSchema = z
     }
   });
 
+const BUFFER_RANGE_MESSAGE = 'Buffer must be between 0 and 120 minutes.';
+
+// A blank or non-numeric buffer field arrives as NaN, which gets the same range message.
 const bufferMinSchema = z
-  .number()
+  .number({ message: BUFFER_RANGE_MESSAGE })
   .int()
-  .min(0, 'Buffer must be between 0 and 120 minutes.')
-  .max(MAX_BUFFER_MIN, 'Buffer must be between 0 and 120 minutes.');
+  .min(0, BUFFER_RANGE_MESSAGE)
+  .max(MAX_BUFFER_MIN, BUFFER_RANGE_MESSAGE);
 
 // The optional per-search override of the settings buffer (findSlots, suggestAlternatives, planReplan).
 export const searchOptionsSchema = z.object({ bufferMin: bufferMinSchema.optional() });

@@ -564,7 +564,7 @@ export const exportFileSchema = z.object({
 - Zod 4 cannot `.extend()` a refined object, so each schema is a plain object shape plus a named refine function (`refineEventTiming`, `refineTaskWindow`), and the stored schemas extend the shape and re-apply the same refinements.
 - `storedTaskSchema` also checks `(status = 'scheduled') ⟺ (scheduledEventId ≠ null)` as a shape issue at `scheduledEventId`: "A task has an event id exactly when it is scheduled."
 - A non-integer duration gives "Duration must be a whole number of minutes." (T31's 2.5 case).
-- `settingsSchema` messages: "Pick at least one working day." · "Working hours must end after they start." (time, `workEndMin`) · "Buffer must be between 0 and 120 minutes." · barred label "Label is required." / "Labels can be at most 40 characters." · "A barred slot must end after it starts." (time, `barredSlots.N.endMin`). `workStartMin` and barred `startMin` are 0–1439; `workEndMin` and barred `endMin` are 0–1440.
+- `settingsSchema` messages: "Pick at least one working day." · "Working hours must end after they start." (time, `workEndMin`) · "Buffer must be between 0 and 120 minutes." · barred label "Label is required." / "Labels can be at most 40 characters." · "A barred slot must end after it starts." (time, `barredSlots.N.endMin`). `workStartMin` and barred `startMin` are 0–1439; `workEndMin` and barred `endMin` are 0–1440. A buffer that is not a number (a blank form field becomes `NaN`) also gets the buffer message.
 
 **Shared validator helpers** (also in `schemas.ts`):
 
@@ -1683,3 +1683,4 @@ Production URL: https://…vercel.app
 | 2026-10-26 | v1.10 (WI-17): §2 adds `samples/build.ts`; §5 constants gain `EXPORT_FORMAT` / `EXPORT_VERSION`; §7.4.6 names `linkIssues` / `parseExportFile`, runs the link checks in `init()`, and takes `exportedAt` from `deps.now()`; §8.6 adds `onLocalDay` and `startOfLocalWeek`. |
 | 2026-10-26 | v1.11 (WI-18): §5 constants gain `TOAST_MS`, `WARNING_TOAST_MS`, `EMPHASIS_MS`; §11.1 gives `createAppStore` its `now` and `resetStorage` options; §2 lists `tests/helpers/render.tsx`. |
 | 2026-10-26 | v1.12 (WI-19): §1.2 pins `@fullcalendar/react` to `^6.1.22`, matching `@fullcalendar/core` and the plugins. v7 is incompatible with the v6 plugin API that §11.3 uses. |
+| 2026-10-26 | v1.13 (WI-23): §6 `bufferMinSchema` gives a non-number the buffer range message, so a blank buffer field in a form reads "Buffer must be between 0 and 120 minutes.". |
