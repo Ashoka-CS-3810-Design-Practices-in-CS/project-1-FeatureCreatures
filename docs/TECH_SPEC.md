@@ -945,7 +945,7 @@ This fixes the A1/A2 running-max version, which only compared against the single
 - Total time: **O(N log N + k log k)**, and **O(N + k)** space.
 - For a personal calendar k is small, so this behaves as O(N log N).
 
-`countOverlaps(candidate, events)` is also exported. It is an O(n) linear check, used only by the optional drag preview (§11.3).
+`countOverlaps(candidate: Interval, events: readonly Interval[]): number` is also exported. It counts the events that overlap `candidate` (BR-2). It is an O(n) linear check, used only by the optional drag preview (§11.3); the caller leaves the dragged event out of `events`.
 
 ### 8.5 `merge.ts` — busy blocks (BR-6)
 
@@ -1648,3 +1648,4 @@ Production URL: https://…vercel.app
 | 2026-10-25 | v1.1: aligned with the `disciplined-coding` skill and `AGENTS.md` (local `--no-ff` merges, no function length cap, no `assertSorted`, scaffold via a temp folder, `PROGRESS.md` pre-created, Vercel deploy is a human step). |
 | 2026-10-25 | v1.2 (WI-01): `@hookform/resolvers` pinned to `^5` (§1.2); CI e2e step passes with no tests until WI-27 (§13.1). |
 | 2026-10-25 | v1.3 (WI-03): §6 gains `toFieldIssues` / `parseInput`, the shape/refine split, the stored-task link check, the integer-duration message and the settings messages; §5 constants gain the schema limits (`MINUTES_PER_DAY`, `MAX_TITLE_LENGTH`, …). |
+| 2026-10-26 | v1.4 (WI-08): §8.4 gives `countOverlaps` its typed signature (`Interval` candidate and events, returns a count). |
