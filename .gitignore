@@ -1,0 +1,33 @@
+# dependencies and build output
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# test and coverage output
+coverage/
+playwright-report/
+test-results/
+blob-report/
+playwright/.cache/
+
+# deployment
+.vercel/
+
+# environment
+.env
+.env.*
+
+# editors and OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+
+# per-machine agent settings (shared ones are committed)
+.claude/settings.local.json
+
+# scaffold leftovers (WI-01 scaffolds into this folder, then removes it)
+vite-tmp/

@@ -1,0 +1,7 @@
+# Normalise every text file to LF so Windows agents (PowerShell / Git Bash) and CI (Linux) produce identical diffs.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff2 binary
