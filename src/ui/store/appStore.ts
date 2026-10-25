@@ -20,7 +20,17 @@ import type {
   Snapshot,
 } from '@/shared/types';
 import { errorMessage } from '../format/errors';
-import { fmtDuration, fmtRange, fmtTime } from '../format/time';
+import {
+  alternativeAppliedText,
+  conflictText,
+  createdText,
+  deletedText,
+  historyText,
+  movedText,
+  moveToLabel,
+  sampleLoadedText,
+  updatedText,
+} from '../format/explain';
 import type { PickerState } from './pickerSlice';
 import { withoutToast, type Toast } from './toastSlice';
 
@@ -42,6 +52,11 @@ export interface AppActions {
   pushToast(toast: Omit<Toast, 'id'>): string;
   openDialog(dialog: Exclude<Dialog, null>): void;
   closeDialog(): void;
+  createEvent(input: EventInput): Promise<Result<MutationResult>>;
+  updateEvent(id: string, input: EventInput): Promise<Result<MutationResult>>;
+  moveEvent(id: string, to: Interval): Promise<Result<MutationResult>>;
+  deleteEvent(id: string): Promise<Result<MutationResult>>;
+  setActiveRange(range: Interval): void;
   undo(): Promise<Result<MutationResult>>;
   redo(): Promise<Result<MutationResult>>;
   applyAlternative(eventId: string, slot: Interval): Promise<Result<MutationResult>>;
@@ -141,7 +156,7 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
           ? []
           : [
               {
-                label: `Move to ${fmtRange(suggestion.slot)}`,
+                label: moveToLabel(suggestion.slot),
                 run: () => {
                   void actions.applyAlternative(subjectId, suggestion.slot);
                 },
@@ -149,7 +164,7 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
             ];
       pushToast({
         tone: 'warning',
-        text: `Saved with a conflict: overlaps "${other?.title ?? otherId}" ${fmtTime(overlap.start)}–${fmtTime(overlap.end)} (${fmtDuration(minutes)}).`,
+        text: conflictText(other?.title ?? otherId, overlap, minutes),
         actions: [
           ...moveAction,
           { label: 'View conflict', run: () => emphasise([subjectId, otherId]) },
@@ -184,10 +199,10 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
       return result;
     }
 
-    // PRE:  verb is 'Undid' or 'Redid'; idle is the info text when there was nothing to do
-    // POST: returns the describe function for an undo / redo result
-    function historyText(verb: string, idle: string): (value: MutationResult) => string {
-      return (value) => (value.label === '' ? idle : `${verb}: ${value.label}`);
+    // PRE:  value is a successful mutation; id is an event id
+    // POST: returns that event's title in the new snapshot ('' if it is gone)
+    function titleIn(value: MutationResult, id: string): string {
+      return value.snapshot.events.find((event) => event.id === id)?.title ?? '';
     }
 
     const actions: AppActions = {
@@ -213,16 +228,65 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
         set({ dialog: null });
       },
 
+      // PRE:  input comes from the event dialog (validated by the engine)
+      // POST: creates the event through runMutation; the toast reads 'Event created: "<title>".'
+      createEvent(input) {
+        return runMutation(
+          () => engine.createEvent(input),
+          (value) => createdText(titleIn(value, value.changedEventIds[0] ?? '')),
+        );
+      },
+
+      // PRE:  input comes from the event dialog (validated by the engine)
+      // POST: saves the edit through runMutation
+      updateEvent(id, input) {
+        return runMutation(
+          () => engine.updateEvent(id, input),
+          (value) => updatedText(titleIn(value, id)),
+        );
+      },
+
+      // PRE:  to comes from a drag or resize
+      // POST: moves the event through runMutation; the toast names where it went
+      moveEvent(id, to) {
+        return runMutation(
+          () => engine.moveEvent(id, to),
+          (value) => movedText(titleIn(value, id), to),
+        );
+      },
+
+      // PRE:  id is any string
+      // POST: deletes the event through runMutation (its task, if any, becomes unscheduled)
+      deleteEvent(id) {
+        const title = get().snapshot.events.find((event) => event.id === id)?.title ?? '';
+        return runMutation(
+          () => engine.deleteEvent(id),
+          () => deletedText(title),
+        );
+      },
+
+      // PRE:  range is the interval FullCalendar currently shows
+      // POST: view.activeRange is range
+      setActiveRange(range) {
+        set({ view: { ...get().view, activeRange: range } });
+      },
+
       // PRE:  none
       // POST: undoes the newest change through runMutation; the toast reads "Undid: <label>" (B1)
       undo() {
-        return runMutation(() => engine.undo(), historyText('Undid', 'Nothing to undo.'));
+        return runMutation(
+          () => engine.undo(),
+          (value) => historyText('Undid', value.label),
+        );
       },
 
       // PRE:  none
       // POST: redoes the newest undone change; the toast reads "Redid: <label>"
       redo() {
-        return runMutation(() => engine.redo(), historyText('Redid', 'Nothing to redo.'));
+        return runMutation(
+          () => engine.redo(),
+          (value) => historyText('Redid', value.label),
+        );
       },
 
       // PRE:  slot is an option of the current alternatives (or the ER4 suggestion)
@@ -230,8 +294,7 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
       applyAlternative(eventId, slot) {
         return runMutation(
           () => engine.applyAlternative({ eventId, slot, baseVersion: get().snapshot.version }),
-          (value) =>
-            `Moved to ${fmtRange(slot)}${value.resolvedConflicts.length > 0 ? ' — conflict resolved' : ''}.`,
+          (value) => alternativeAppliedText(slot, value.resolvedConflicts.length > 0),
         );
       },
 
@@ -247,7 +310,7 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
           return result;
         }
         set({ snapshot: result.value });
-        pushToast({ tone: 'success', text: `Loaded sample: ${sample.label}.` });
+        pushToast({ tone: 'success', text: sampleLoadedText(sample.label) });
         return result;
       },
 
