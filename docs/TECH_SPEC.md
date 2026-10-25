@@ -476,6 +476,13 @@ export const HISTORY_LIMIT = 50;     // B1
 export const SNAP_MIN = 5;           // BR-5 notBefore rounding + UI snap
 export const MAX_REPLAN_DAYS = 14;   // BR-12
 export const CONFLICT_LIST_LIMIT = 50;
+export const MINUTES_PER_DAY = 1440;
+export const MAX_TITLE_LENGTH = 100;          // event title and task name
+export const MAX_DESCRIPTION_LENGTH = 1000;
+export const MAX_BARRED_LABEL_LENGTH = 40;
+export const MIN_TASK_DURATION_MIN = 5;
+export const MAX_TASK_DURATION_MIN = MAX_EVENT_MIN;
+export const MAX_BUFFER_MIN = 120;
 export const PRIORITY_RANK: Record<Priority, number> = { high: 3, medium: 2, low: 1 };
 export const DEFAULT_SETTINGS: Settings = {
   workDays: [1, 2, 3, 4, 5], workStartMin: 540, workEndMin: 1080,
@@ -543,6 +550,21 @@ export const exportFileSchema = z.object({
 ```
 
 `storedEventSchema` and `storedTaskSchema` extend the input schemas with `id`, `taskId`, `status`, `scheduledEventId`, `createdAt` and `updatedAt`.
+
+- Zod 4 cannot `.extend()` a refined object, so each schema is a plain object shape plus a named refine function (`refineEventTiming`, `refineTaskWindow`), and the stored schemas extend the shape and re-apply the same refinements.
+- `storedTaskSchema` also checks `(status = 'scheduled') ⟺ (scheduledEventId ≠ null)` as a shape issue at `scheduledEventId`: "A task has an event id exactly when it is scheduled."
+- A non-integer duration gives "Duration must be a whole number of minutes." (T31's 2.5 case).
+- `settingsSchema` messages: "Pick at least one working day." · "Working hours must end after they start." (time, `workEndMin`) · "Buffer must be between 0 and 120 minutes." · barred label "Label is required." / "Labels can be at most 40 characters." · "A barred slot must end after it starts." (time, `barredSlots.N.endMin`). `workStartMin` and barred `startMin` are 0–1439; `workEndMin` and barred `endMin` are 0–1440.
+
+**Shared validator helpers** (also in `schemas.ts`):
+
+```ts
+export function toFieldIssues(zodError: z.ZodError): FieldIssue[];   // path segments joined by '.', '' for the root
+export function parseInput<Output>(schema: z.ZodType<Output>, input: unknown): Result<Output>;
+  // ok(parsed) | err(InvalidTime) if every issue has params.kind === 'time' | err(InvalidInput) otherwise
+```
+
+The facade validates every command with `parseInput`. `importData` uses `toFieldIssues` to build `InvalidImport`.
 
 **UI forms.** Forms keep strings (`datetime-local`, number inputs). `src/ui/forms/eventForm.ts` exports two things:
 
@@ -1625,3 +1647,4 @@ Production URL: https://…vercel.app
 | 2026-10-25 | v1.0: unified technical spec (Dexie, heap sweep, four pipelines, B1–B4). |
 | 2026-10-25 | v1.1: aligned with the `disciplined-coding` skill and `AGENTS.md` (local `--no-ff` merges, no function length cap, no `assertSorted`, scaffold via a temp folder, `PROGRESS.md` pre-created, Vercel deploy is a human step). |
 | 2026-10-25 | v1.2 (WI-01): `@hookform/resolvers` pinned to `^5` (§1.2); CI e2e step passes with no tests until WI-27 (§13.1). |
+| 2026-10-25 | v1.3 (WI-03): §6 gains `toFieldIssues` / `parseInput`, the shape/refine split, the stored-task link check, the integer-duration message and the settings messages; §5 constants gain the schema limits (`MINUTES_PER_DAY`, `MAX_TITLE_LENGTH`, …). |

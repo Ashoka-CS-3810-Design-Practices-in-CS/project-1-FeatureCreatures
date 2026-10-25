@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-03 Schemas (branch `feat/wi-03-schemas`).
-- **Last session:** 2026-10-25 · Claude Code · finished WI-01 and WI-02, claimed WI-03.
+- **Active WI:** none — next is WI-04 Local-time module (WI-05 and WI-06 are also unblocked).
+- **Last session:** 2026-10-25 · Claude Code · finished and merged WI-01, WI-02 and WI-03.
 - **Gate status on `main`:** green (typecheck, lint, test; also test:dst, test:coverage, build).
 
 ## Work items
@@ -23,8 +23,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 - [x] **WI-02** Shared types, result, errors, constants — owner S — depends on 01
   - 2026-10-25 · Claude Code · branch `feat/wi-02-shared-types` · done: `src/shared/{types,result,errors,constants}.ts` match §5; `result.test.ts` and `constants.test.ts` green · next: WI-03 · note: `ok`/`err` are function declarations (same exported names and signatures) so they carry PRE/POST
-- [~] **WI-03** Schemas — owner Dv — depends on 02
-  - 2026-10-25 · Claude Code · branch `feat/wi-03-schemas` · done: claimed · next: `schemas.test.ts` (T5, T31 schema cases) then `src/shared/schemas.ts`
+- [x] **WI-03** Schemas — owner Dv — depends on 02
+  - 2026-10-25 · Claude Code · branch `feat/wi-03-schemas` · done: `src/shared/schemas.ts` with T5 (a–f) and T31 schema-level cases, settings, stored and export schemas; 41 cases in `schemas.test.ts` · next: WI-04 · note: the engine must validate with `parseInput` (maps to InvalidTime/InvalidInput); import builds InvalidImport from `toFieldIssues`; facade-level and UI parts of T5/T31 belong to WI-13/14 and WI-19/20 (TECH_SPEC v1.3)
 - [ ] **WI-04** Local-time module — owner S — depends on 02
 - [ ] **WI-05** Interval / sortedArray / minHeap — owner S — depends on 02
 - [ ] **WI-06** Repositories — owner Dv — depends on 02
