@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-06 Repositories (branch `feat/wi-06-repositories`).
-- **Last session:** 2026-10-25 · Claude Code · finished WI-01–05, claimed WI-06.
+- **Active WI:** none — next is WI-07 Test helpers & oracles (then WI-08 and WI-09).
+- **Last session:** 2026-10-25 · Claude Code · finished and merged WI-01–06.
 - **Gate status on `main`:** green (typecheck, lint, test; also test:dst, test:coverage, build).
 
 ## Work items
@@ -29,8 +29,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-25 · Claude Code · branch `feat/wi-04-time` · done: `src/shared/time.ts` (§8.6); `time.test.ts` green under UTC; `time.dst.test.ts` (T29 time part: 1500-min frame, work at +600, 540 long, 09:00 round-trip) green under `test:dst` · next: WI-05 · note: T29's "only option is 09:00–18:00" needs `findSlots`, so WI-14 must add it to a `*.dst.test.ts`; a barred `endMin` of 1440 also maps to `dayEnd`; added an ESLint rule so only `shared/time.ts` may import date-fns
 - [x] **WI-05** Interval / sortedArray / minHeap — owner S — depends on 02
   - 2026-10-25 · Claude Code · branch `feat/wi-05-structures` · done: `algorithms/{interval,sortedArray,minHeap}.ts` with TEST_PLAN §4.3 unit tests, 100% coverage · next: WI-06 · note: `sortedArray.test.ts` has a local `event()` builder; WI-07 should swap it for the shared `ev()` helper; `insertSorted` places a new event after equal ones
-- [~] **WI-06** Repositories — owner Dv — depends on 02
-  - 2026-10-25 · Claude Code · branch `feat/wi-06-repositories` · done: claimed · next: `src/data/repository.test.ts` (round-trip on both adapters, Dexie atomicity via fake-indexeddb), then the three data files
+- [x] **WI-06** Repositories — owner Dv — depends on 02
+  - 2026-10-25 · Claude Code · branch `feat/wi-06-repositories` · done: `src/data/{repository,memoryRepository,dexieRepository}.ts`; `repository.test.ts` runs the same round-trip/no-aliasing contract on both adapters plus Dexie atomicity (apply and replaceAll roll back) and reopen persistence under fake-indexeddb · next: WI-07 · note: `DexieRepository.close()` was added for tests (not on the interface); `repository.test.ts` has local `event()`/`task()` builders that WI-07 should replace
 - [ ] **WI-07** Test helpers & oracles — owner S — depends on 02, 04
 
 ### Phase 3 — Algorithms and engine
