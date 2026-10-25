@@ -1,33 +1,19 @@
-import { format } from 'date-fns';
 import { useId, useState } from 'react';
 import type { Result } from '@/shared/result';
-import { addLocalDays, atLocal, fromMinute, startOfLocalWeek } from '@/shared/time';
+import { addLocalDays, startOfLocalWeek } from '@/shared/time';
 import type { Interval, Minute, ReplanPlan, ReplanResult } from '@/shared/types';
 import { errorMessage } from '../../format/errors';
 import { moveReasonText, moveText } from '../../format/explain';
 import { fmtDuration } from '../../format/time';
+import { fromDateInput, toDateInput } from '../../forms/eventForm';
 import { useAppStore } from '../../store/appStore';
 import { Modal } from '../Modal/Modal';
 
-const DATE_INPUT_FORMAT = 'yyyy-MM-dd';
-const DATE_INPUT = /^\d{4}-\d{2}-\d{2}$/;
 const LAST_DAY_OF_WEEK = 6; // Sunday, counted from Monday
 const PLAN_NAME: Record<ReplanPlan['id'], string> = {
   minimalChange: 'Minimal change',
   balanced: 'Balanced week',
 };
-
-// PRE:  minute is an integer Minute
-// POST: returns its local date as a date-input value
-function toDateInput(minute: Minute): string {
-  return format(fromMinute(minute), DATE_INPUT_FORMAT);
-}
-
-// PRE:  text is any string from a date input
-// POST: returns that day's local midnight, or NaN when text is not a date (the engine rejects NaN)
-function fromDateInput(text: string): Minute {
-  return DATE_INPUT.test(text) ? atLocal(text, '00:00') : Number.NaN;
-}
 
 // PRE:  activeRange is the visible range, or null; viewDate is the calendar's date
 // POST: returns the default first and last day: the visible range, or the week of viewDate
