@@ -6,9 +6,9 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** none; next WI-27 Playwright E1–E3 (WI-28 is also unblocked).
-- **Last session:** 2026-10-26 · Codex · finished WI-26 responsive panels, loading feedback and accessibility checks.
-- **Gate status on `main`:** green after WI-25 (501 tests); WI-26 branch gate green (507 tests), build and 3 Chromium accessibility tests green.
+- **Active WI:** WI-27 Playwright E1–E3, branch `feat/wi-27-playwright` (WI-28 is also unblocked).
+- **Last session:** 2026-10-26 · Codex · finished and merged WI-25/26; started WI-27.
+- **Gate status on `main`:** verified green after WI-26 merge (typecheck, lint, 507 tests); build and 3 Chromium accessibility checks green.
 
 ## Work items
 
@@ -86,7 +86,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 ### Phase 5 — Testing
 
-- [ ] **WI-27** Playwright E1–E3 — owner Dv — depends on 26
+- [~] **WI-27** Playwright E1–E3 — owner Dv — depends on 26
+  - 2026-10-26 · Codex · branch `feat/wi-27-playwright` · done: verified WI-26 main gate; Chromium installed and accessibility harness green · next: exact E1 conflicts, E2 real drag/resize plus reload persistence, E3 schedule Report; remove CI no-tests escape hatch
 - [ ] **WI-28** Benchmarks — owner S — depends on 17
 - [ ] **WI-29** Coverage & bug bash — owner S + Dv — depends on 27, 28
 
@@ -97,6 +98,7 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 ## Milestones
 
+- **m4** (2026-10-26) — Phase 4 UI: all calendar/task/conflict/replan/settings workflows, toolbar/theme/shortcuts, both-theme styles, responsive native drawer and loading feedback; 507 tests and 3 Chromium accessibility checks green. Production visual/screen-reader release checks remain human-only.
 - **m1** (2026-10-25) — Phase 1 Setup: Vite/React/TS scaffold, ESLint layer boundaries, Vitest (UTC + DST), Playwright config, CI workflow; first Vercel deploy done by the humans.
 - **m3** (2026-10-26) — Phase 3 Algorithms and engine: conflict sweep (min-heap), busy merge, allowed segments, free gaps, day loads, BR-7 ranking, BR-10 target, BR-11 queue order, BR-12 replan heuristics; engine state with reversible changes and bounded history; the facade with its command queue and all four pipelines; undo/redo, export/import with cross-record checks, six samples. 296 unit/integration/property tests + 6 DST tests, 99.5% line coverage; T1–T13, T16–T36 engine parts green.
 - **m2** (2026-10-25) — Phase 2 Core types and data: frozen shared types/constants/result/errors, Zod schemas with `parseInput`, DST-safe local-time module, interval/sortedArray/minHeap, Memory + Dexie repositories (atomic), test helpers and brute-force oracles. 105 unit tests + 4 DST tests, 100% coverage of `src/`.
@@ -105,7 +107,7 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 - [ ] Before presenting the release, run TEST_PLAN §7 on production, including the devtools contrast picker and an NVDA/VoiceOver announcement check. Local Chromium layout/focus/semantic-name checks and both-theme contrast-token tests pass; live screen-reader control is unavailable in this environment.
 - [ ] Connect the GitHub Classroom repo as `origin` and push `main`.
-- [ ] Push the WI branches and milestone tags too: `git push origin --all` and `git push origin --tags` (tags `m1`, `m2`, `m3` exist locally).
+- [ ] Push the WI branches and milestone tags too: `git push origin --all` and `git push origin --tags` (tags `m1`, `m2`, `m3`, `m4` exist locally).
 - [x] First Vercel deploy (TECH_SPEC §13.2) and paste the URL at the top of this file.
 - [ ] Turn on branch protection for `main` on GitHub (optional).
 
