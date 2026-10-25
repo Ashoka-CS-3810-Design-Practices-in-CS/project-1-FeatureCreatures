@@ -6,7 +6,7 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** none — next is WI-23 Settings dialog + data section (WI-24, WI-25 and WI-28 are also unblocked).
+- **Active WI:** WI-23 Settings dialog + data section, branch `feat/wi-23-settings` (WI-24, WI-25 and WI-28 are also unblocked).
 - **Last session:** 2026-10-26 · Claude Code · finished and merged WI-08–WI-22 (tag `m3`).
 - **Gate status on `main`:** green (typecheck, lint, test; also test:dst, test:coverage, build).
 
@@ -69,7 +69,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-26 · Claude Code · branch `feat/wi-21-picker` · done: `format/explain.ts` slot explanations (summary line, BR-7 reasons, BR-8 boundaries, fit, queue summary); picker store actions (`openAlternatives`, select, criterion, buffer, toggle, apply, skip, stop); `SlotPicker` (task + alternatives modes, ER2/ER3 block with Edit task); `ConflictPanel` (50-row limit, "(hidden by filter)"); both mounted in App; tests: §5 SlotPicker cases (T6 summary, T10 re-order, radio group), T17-UI incl. skip, T20-UI, ER7 refresh, T14's panel line, T30's hidden note · next: WI-22 · note: ER7 (`StaleResult`) toasts are now `info`, not `error` (PROJECT_SCHEMA §7.4). The ER4 "View conflict" action only emphasises the pair; scrolling the panel to it could be WI-26 polish
 - [x] **WI-22** Replan dialog — owner S — depends on 21
   - 2026-10-26 · Claude Code · branch `feat/wi-22-replan-dialog` · done: `ReplanDialog` (from/to dates defaulting to the visible week, "to" inclusive, buffer override, two plan cards with metrics, moves, unplaced, Apply this plan / No changes needed) mounted in App; store `computeReplan` / `applyReplan`; move and plan sentences in `format/explain.ts`; tests: the §5 Replan UI case (default week, T22 cards, Apply calls `applyReplan`, empty case) plus bad range, buffer override, ER7 recompute · next: WI-23 · note: **nothing opens the dialog yet except `openDialog({kind: 'replan'})`**: the toolbar's Replan button is WI-24
-- [ ] **WI-23** Settings dialog + data section — owner S — depends on 18
+- [~] **WI-23** Settings dialog + data section — owner S — depends on 18
+  - 2026-10-26 · Claude Code · branch `feat/wi-23-settings` · started
 - [ ] **WI-24** Toolbar, theme, shortcuts, help — owner Dv — depends on 19
 - [ ] **WI-25** Styles & tokens — owner Dv — depends on 19
 - [ ] **WI-26** Responsive drawer + a11y pass (+ optional drag preview) — owner S — depends on 21–25
