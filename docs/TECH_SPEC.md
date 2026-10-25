@@ -144,7 +144,8 @@ Every file listed here exists by the end of the project. The WI column says whic
    │  ├─ memoryRepository.ts
    │  ├─ dexieRepository.ts
    │  └─ samples/          # index.ts (registry), sparseWeek.ts, backToBack.ts, overlapCluster.ts,
-   │                       # fullyBooked.ts, midnight.ts, stress.ts, prng.ts (mulberry32)
+   │                       # fullyBooked.ts, midnight.ts, stress.ts, prng.ts (mulberry32),
+   │                       # build.ts (shared record builders and the at()/span() time helpers)
    └─ ui/
       ├─ App.tsx  App.module.css
       ├─ store/appStore.ts  store/selectors.ts  store/pickerSlice.ts  store/toastSlice.ts
@@ -475,6 +476,8 @@ export const MAX_OPTIONS = 5;        // BR-7
 export const HISTORY_LIMIT = 50;     // B1
 export const SNAP_MIN = 5;           // BR-5 notBefore rounding + UI snap
 export const MAX_REPLAN_DAYS = 14;   // BR-12
+export const EXPORT_FORMAT = 'feature-creatures-calendar'; // §9.4
+export const EXPORT_VERSION = 1;
 export const REPLAN_DST_SLACK_MIN = 120; // a 14-day replan range may span DST changes
 export const CONFLICT_LIST_LIMIT = 50;
 export const MINUTES_PER_DAY = 1440;
@@ -803,7 +806,7 @@ There is no history entry, and the conflicts are unchanged.
 
 #### 7.4.6 Import / export
 
-**`exportData()`** returns `JSON.stringify(exportFile, null, 2)` with `exportedAt = new Date().toISOString()`.
+**`exportData()`** returns `JSON.stringify(exportFile, null, 2)` with `exportedAt` = `deps.now()` as an ISO string (the injected clock keeps exports deterministic in tests).
 
 **`importData(json)`**
 
@@ -814,6 +817,7 @@ There is no history entry, and the conflicts are unchanged.
    - unique task IDs
    - every scheduled task's `scheduledEventId` exists and points back with `taskId`
    - every event `taskId` points to a scheduled task
+   - these checks are `linkIssues(events, tasks)` in `schemas.ts`; `parseExportFile(json)` runs steps 1–3, and `engine.init()` runs `linkIssues` on stored data too
 4. Then:
    1. `await repo.replaceAll(data)`
    2. sort the events
@@ -984,6 +988,8 @@ export function localMinuteOfDay(m: Minute): number;           // hours*60+minut
 /** One DayFrame per local day intersecting `window`, in order. Work and barred times are built with
  *  date-fns `set(day, {hours, minutes})`, never by adding minutes to midnight — so DST days are correct. */
 export function buildDayFrames(window: Interval, s: Settings): DayFrame[];
+export function onLocalDay(day: Minute, minuteOfDay: number): Minute;  // day's local HH:mm (1440 = next midnight)
+export function startOfLocalWeek(m: Minute): Minute;                    // Monday 00:00 of m's week
 ```
 
 `buildDayFrames` works as follows:
@@ -1668,3 +1674,4 @@ Production URL: https://…vercel.app
 | 2026-10-26 | v1.7 (WI-13): §6 adds `storedDataSchema` and `searchOptionsSchema`; §7.4.1 validates the BR-9 task mirror; §9.1 says how `init()` treats damaged stored data. |
 | 2026-10-26 | v1.8 (WI-14): §7.4.3 validates the mirrored event of `updateTask` with `eventInputSchema` (a task window may be shorter than the task, a flex window may not), and names the `slot` issue of a wrong-length `scheduleTask`. |
 | 2026-10-26 | v1.9 (WI-16): §5 constants gain `REPLAN_DST_SLACK_MIN = 120`; §7.4.4 validates `bufferMin` and gives the range message. |
+| 2026-10-26 | v1.10 (WI-17): §2 adds `samples/build.ts`; §5 constants gain `EXPORT_FORMAT` / `EXPORT_VERSION`; §7.4.6 names `linkIssues` / `parseExportFile`, runs the link checks in `init()`, and takes `exportedAt` from `deps.now()`; §8.6 adds `onLocalDay` and `startOfLocalWeek`. |
