@@ -60,3 +60,35 @@ export function sampleLoadedText(label: string): string {
 export function moveToLabel(slot: Interval): string {
   return `Move to ${fmtRange(slot)}`;
 }
+
+// PRE:  name is a task name
+// POST: returns the success toast after creating the task
+export function taskCreatedText(name: string): string {
+  return `Task created: "${name}".`;
+}
+
+// PRE:  name is a task name
+// POST: returns the success toast after editing the task
+export function taskSavedText(name: string): string {
+  return `Saved task "${name}".`;
+}
+
+// PRE:  name is a task name
+// POST: returns the success toast after deleting the task (and its event, if scheduled)
+export function taskDeletedText(name: string): string {
+  return `Deleted task "${name}".`;
+}
+
+// PRE:  name is a task name
+// POST: returns the success toast after unscheduling the task
+export function unscheduledText(name: string): string {
+  return `Unscheduled "${name}"; it is back in the task list.`;
+}
+
+// PRE:  count ≥ 1 tasks were left out of a scheduling queue
+// POST: returns the info toast explaining why
+export function droppedFromQueueText(count: number): string {
+  return count === 1
+    ? '1 selected task is already scheduled, so it was left out.'
+    : `${count} selected tasks are already scheduled, so they were left out.`;
+}

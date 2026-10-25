@@ -8,6 +8,11 @@ import {
   movedText,
   moveToLabel,
   sampleLoadedText,
+  droppedFromQueueText,
+  taskCreatedText,
+  taskDeletedText,
+  taskSavedText,
+  unscheduledText,
   updatedText,
 } from './explain';
 
@@ -39,5 +44,18 @@ describe('format/explain (toast sentences)', () => {
     expect(historyText('Undid', '')).toBe('Nothing to undo.');
     expect(historyText('Redid', '')).toBe('Nothing to redo.');
     expect(sampleLoadedText('Sparse week')).toBe('Loaded sample: Sparse week.');
+  });
+
+  it('describes task changes and a shortened queue', () => {
+    expect(taskCreatedText('Read')).toBe('Task created: "Read".');
+    expect(taskSavedText('Read')).toBe('Saved task "Read".');
+    expect(taskDeletedText('Read')).toBe('Deleted task "Read".');
+    expect(unscheduledText('Read')).toBe('Unscheduled "Read"; it is back in the task list.');
+    expect(droppedFromQueueText(1)).toBe(
+      '1 selected task is already scheduled, so it was left out.',
+    );
+    expect(droppedFromQueueText(3)).toBe(
+      '3 selected tasks are already scheduled, so they were left out.',
+    );
   });
 });

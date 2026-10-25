@@ -29,13 +29,11 @@ function renderDialogs(engine: Engine): AppStore {
 // POST: opens the create dialog for Mon 10:00–11:00
 function openCreate(store: AppStore): void {
   act(() =>
-    store
-      .getState()
-      .actions.openDialog({
-        kind: 'event',
-        mode: 'create',
-        defaults: iv('Mon 10:00', 'Mon 11:00'),
-      }),
+    store.getState().actions.openDialog({
+      kind: 'event',
+      mode: 'create',
+      defaults: iv('Mon 10:00', 'Mon 11:00'),
+    }),
   );
 }
 
