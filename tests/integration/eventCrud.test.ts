@@ -334,11 +334,3 @@ describe('init', () => {
     });
   });
 });
-
-describe('methods of later work items', () => {
-  it('throw a clear error until they are built', async () => {
-    const { engine } = await makeEngine();
-
-    expect(() => engine.exportData()).toThrow('Not implemented until WI-17');
-  });
-});
