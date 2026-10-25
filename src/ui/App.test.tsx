@@ -19,6 +19,20 @@ describe('App', () => {
     expect(screen.getByText('Loaded sample: Sparse week.')).toBeInTheDocument();
   });
 
+  it('mounts the settings dialog: Clear all data, confirmed, empties the calendar', async () => {
+    const store = storeFor(
+      (await makeEngine({ events: [ev('A', 'Mon 10:00', 'Mon 11:00')] })).engine,
+    );
+    renderWithStore(<App />, store);
+
+    act(() => store.getState().actions.openDialog({ kind: 'settings' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Clear all data' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Clear all data' }));
+
+    expect(await screen.findByText('All data cleared.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Load sample week' })).toBeInTheDocument();
+  });
+
   it('shows the degraded-mode banner when storage is unavailable', async () => {
     const store = storeFor((await makeEngine()).engine, { storageWarning: true });
     renderWithStore(<App />, store);

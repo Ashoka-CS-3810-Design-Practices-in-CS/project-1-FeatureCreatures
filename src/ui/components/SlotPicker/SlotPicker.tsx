@@ -1,8 +1,9 @@
 import { useId } from 'react';
 import type { Result } from '@/shared/result';
-import type { Minute, Priority, SlotSearchResult, UserCriterion } from '@/shared/types';
+import type { Minute, Priority, SlotSearchResult } from '@/shared/types';
 import { errorMessage } from '../../format/errors';
 import {
+  CRITERIA,
   fitText,
   gapText,
   optionReasonText,
@@ -17,11 +18,6 @@ import { Modal } from '../Modal/Modal';
 type TaskPickerState = Extract<PickerState, { mode: 'task' }>;
 type AlternativesPickerState = Extract<PickerState, { mode: 'alternatives' }>;
 
-const CRITERIA: { value: UserCriterion; label: string }[] = [
-  { value: 'earliest', label: 'Earliest fit' },
-  { value: 'bestFit', label: 'Best fit' },
-  { value: 'priorityAware', label: 'Priority-aware' },
-];
 const PRIORITY_NAME: Record<Priority, string> = { high: 'High', medium: 'Medium', low: 'Low' };
 
 // PRE:  result is the picker's search; selected is the chosen option; originalStart is the moved

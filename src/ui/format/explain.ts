@@ -12,6 +12,7 @@ import type {
   ReplanMove,
   SlotOption,
   SlotSearchResult,
+  UserCriterion,
 } from '@/shared/types';
 import { fmtDuration, fmtRange, fmtTime } from './time';
 
@@ -120,6 +121,11 @@ const EDGE_TEXT: Record<EdgeReason, string> = {
   workEnd: 'working hours end',
   now: 'now',
 };
+export const CRITERIA: { value: UserCriterion; label: string }[] = [
+  { value: 'earliest', label: 'Earliest fit' },
+  { value: 'bestFit', label: 'Best fit' },
+  { value: 'priorityAware', label: 'Priority-aware' },
+];
 const PRIORITY_NAME: Record<Priority, string> = { high: 'High', medium: 'Medium', low: 'Low' };
 const EFFECTIVE_NAME: Record<EffectiveCriterion, string> = {
   earliest: 'earliest slot',
