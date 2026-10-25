@@ -31,6 +31,23 @@ export default tseslint.config(
     ),
   },
   {
+    files: ['src/shared/**/*.ts'],
+    ignores: ['src/shared/time.ts', 'src/shared/**/*.test.ts'],
+    rules: restrict(
+      [
+        '@/ui/**',
+        '@/engine/**',
+        '@/data/**',
+        'react',
+        'dexie',
+        'zustand',
+        'date-fns',
+        'date-fns/*',
+      ],
+      'only shared/time.ts may use date-fns (TECH_SPEC §3.2)',
+    ),
+  },
+  {
     files: ['src/engine/**/*.ts'],
     rules: restrict(
       [
