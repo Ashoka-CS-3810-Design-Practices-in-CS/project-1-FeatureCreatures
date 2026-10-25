@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-14 Task Scheduler pipeline (branch `feat/wi-14-scheduler`).
-- **Last session:** 2026-10-26 · Claude Code · finished and merged WI-08–WI-13; started WI-14.
+- **Active WI:** none — next is WI-15 Conflict Resolution pipeline (WI-16 and WI-17 are also unblocked).
+- **Last session:** 2026-10-26 · Claude Code · finished and merged WI-08–WI-14.
 - **Gate status on `main`:** green (typecheck, lint, test; also test:dst, test:coverage, build).
 
 ## Work items
@@ -48,8 +48,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-26 · Claude Code · branch `feat/wi-12-state` · done: `src/engine/state.ts` (`createState`, `applyChange`, `commit`, history) + `state.test.ts` (forward/backward, StorageError leaves state and repo untouched, 50-step limit, redo cleared on do) · next: WI-13 · note: `commit` returns a `CommitOutcome`; the facade must add `snapshot` and `suggestion` (TECH_SPEC v1.6). For 'undo'/'redo' the caller passes the top of that stack, and `commit` pops it. **WI-13 must also add `tests/helpers/engine.ts` (`makeEngine`)**
 - [x] **WI-13** Facade + Event CRUD — owner Dv — depends on 12, 10
   - 2026-10-26 · Claude Code · branch `feat/wi-13-facade` · done: `facade.ts` (queue, `init`, `snapshot`, Event CRUD, `suggestAlternatives`, `updateSettings`), `index.ts`, `search.ts`, `pipelines/{eventCrud,conflictResolution}.ts`, `tests/helpers/engine.ts` (`makeEngine`, `capture`); `tests/integration/{eventCrud,persistence}.test.ts` cover T5, T13 (Memory + Dexie), T21, T26 · next: WI-14 · note: **the other facade methods throw "Not implemented until WI-NN"** (WI-14 tasks, WI-15 `applyAlternative`, WI-16 replan, WI-17 undo/redo/import/export); replace each stub and its test. `suggestAlternatives` is already done, so WI-15 only adds `applyAlternative` + T20. Pipelines are functions `(PipelineContext, …) → Result<PipelineOutcome>`, and the facade's `mutate()` adopts the new state
-- [~] **WI-14** Task Scheduler pipeline — owner Dv — depends on 13
-  - 2026-10-26 · Claude Code · branch `feat/wi-14-scheduler` · done: claimed · next: `pipelines/taskScheduler.ts`, facade wiring, T6–T11, T16–T19, T27 (scheduling half), T28 (a, b), T29 (findSlots, DST), T31
+- [x] **WI-14** Task Scheduler pipeline — owner Dv — depends on 13
+  - 2026-10-26 · Claude Code · branch `feat/wi-14-scheduler` · done: `pipelines/taskScheduler.ts` wired into the facade; `tests/integration/taskScheduler.test.ts` covers T6–T11, T16–T19, T27 (scheduling half), T28 (a, b) and T31; `taskScheduler.dst.test.ts` covers T29's `findSlots` part · next: WI-15 · note: **T27's replan half and T28 (c) need Replan, so WI-16 must add them**; TEST_PLAN T16 step (5) fixed (v1.2); `requireCurrentVersion` / `requireSlotLength` in `search.ts` are for WI-15's `applyAlternative` too; "each step adds exactly one undo entry" in T16 is checked via `undoLabel` until WI-17 can undo step by step
 - [ ] **WI-15** Conflict Resolution pipeline — owner Dv — depends on 13
 - [ ] **WI-16** Replan pipeline — owner S — depends on 11, 13
 - [ ] **WI-17** Undo/redo, import/export, samples — owner Dv — depends on 13

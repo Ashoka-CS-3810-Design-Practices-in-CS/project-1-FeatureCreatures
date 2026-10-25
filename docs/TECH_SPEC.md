@@ -753,6 +753,7 @@ Every mutation pipeline follows the same skeleton: validate → look up → buil
 - **`createTask(input)`** validates the input and creates `{...parsed, id, status: 'unscheduled', scheduledEventId: null, createdAt, updatedAt}`. The label is `Create task "<name>"`.
 - **`updateTask(id, input)`** validates the input and updates the task.
   - If the task is scheduled, mirror the change into the linked event: `title = name`, `priority`, `end = event.start + durationMin` (the start is kept) and `flexWindow = window`. Both records go in one `Change`.
+  - The mirrored event is validated with `eventInputSchema`, so a window shorter than the task gives `InvalidTime` at `flexWindow` and nothing changes.
   - The label is `Edit task "<name>"`.
   - Introduced conflicts and the suggestion are handled as in `updateEvent`.
 - **`deleteTask(id)`** removes the task, and its linked event if it is scheduled. The label is `Delete task "<name>"`.
@@ -764,7 +765,7 @@ Every mutation pipeline follows the same skeleton: validate → look up → buil
   1. Look up the task. If it is scheduled, return `InvalidInput` with the issue `{path: 'status', message: 'Task is already scheduled.'}`.
   2. Return `search({durationMin: task.durationMin, priority: task.priority, window: task.window, useWorkingHours: task.useWorkingHours, excludeIds: [], originalStart: null, criterion: criterion ?? settings.defaultCriterion, bufferMin: bufferMin ?? settings.bufferMin, subject: {kind: 'task', taskId, name}})`.
 - **`scheduleTask({taskId, slot, baseVersion})`**
-  1. Check the version (ER7), look up the task (it must be unscheduled), and check that `slot.end − slot.start === durationMin`, or return `InvalidTime`.
+  1. Check the version (ER7), look up the task (it must be unscheduled, else the `status` issue of `findSlots`), and check that `slot.end − slot.start === durationMin`, or return `InvalidTime` with the issue `{path: 'slot', message: 'The slot must be exactly as long as the duration.'}`.
   2. Build `event = {id: newId(), title: name, description, category, priority, start, end, flexible: true, flexWindow: task.window, taskId, createdAt, updatedAt}`.
   3. Update the task with `{status: 'scheduled', scheduledEventId: event.id}`.
   4. Put both in one `Change` with the label `Schedule "<name>"`.
@@ -1664,3 +1665,4 @@ Production URL: https://…vercel.app
 | 2026-10-26 | v1.5 (WI-09): §8.7 pseudocode builds no-working-hours segments as the window minus barred slots in one pass (as BR-5 says), replacing the per-day pieces plus merge, whose "none yet" edge could survive next to a barred slot ending at 24:00; work edges win ties with the window. §8.8 says where `bufferMin` comes from. |
 | 2026-10-26 | v1.6 (WI-12): §7.1 names `commit`'s result (`CommitOutcome`) and adds `createState` for `engine.init()`. |
 | 2026-10-26 | v1.7 (WI-13): §6 adds `storedDataSchema` and `searchOptionsSchema`; §7.4.1 validates the BR-9 task mirror; §9.1 says how `init()` treats damaged stored data. |
+| 2026-10-26 | v1.8 (WI-14): §7.4.3 validates the mirrored event of `updateTask` with `eventInputSchema` (a task window may be shorter than the task, a flex window may not), and names the `slot` issue of a wrong-length `scheduleTask`. |
