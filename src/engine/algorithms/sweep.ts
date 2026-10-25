@@ -3,6 +3,7 @@
 import type { CalendarEvent, Conflict, Interval } from '@/shared/types';
 import { overlaps } from './interval';
 import { MinHeap } from './minHeap';
+import { compareIds } from './sortedArray';
 import { chooseTarget } from './target';
 
 // PRE:  earlier and later are distinct events with earlier.start ≤ later.start < earlier.end
@@ -28,10 +29,7 @@ function compareConflicts(first: Conflict, second: Conflict): number {
   if (first.overlap.start !== second.overlap.start) {
     return first.overlap.start - second.overlap.start;
   }
-  if (first.key === second.key) {
-    return 0;
-  }
-  return first.key < second.key ? -1 : 1;
+  return compareIds(first.key, second.key);
 }
 
 // PRE:  sorted is sorted by compareEvents; ids are distinct; every event has start < end
