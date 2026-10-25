@@ -119,9 +119,14 @@ describe('calendar handlers ↔ engine (T14, ER4, ER5)', () => {
     createCalendarHandlers(store.getState().actions).onDatesSet({
       start: fromMinute(t('Mon 00:00')),
       end: fromMinute(t('2026-11-09 00:00')),
+      view: { type: 'listWeek', currentStart: fromMinute(t('Mon 00:00')) },
     });
 
-    expect(store.getState().view.activeRange).toEqual(iv('Mon 00:00', '2026-11-09 00:00'));
+    expect(store.getState().view).toEqual({
+      type: 'listWeek',
+      date: t('Mon 00:00'),
+      activeRange: iv('Mon 00:00', '2026-11-09 00:00'),
+    });
   });
 
   it('EventContent shows a Task tag, and no kind tag for a plain flexible event', () => {

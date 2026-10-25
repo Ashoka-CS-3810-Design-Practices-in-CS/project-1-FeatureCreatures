@@ -33,6 +33,29 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: 'Load sample week' })).toBeInTheDocument();
   });
 
+  it('the toolbar and the shortcuts drive the real calendar', async () => {
+    const store = storeFor((await makeEngine()).engine);
+    renderWithStore(<App />, store);
+    expect(await screen.findByRole('heading', { name: 'Week of 2 Nov 2026' })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Next period' }));
+    expect(await screen.findByRole('heading', { name: 'Week of 9 Nov 2026' })).toBeInTheDocument();
+    await userEvent.keyboard('m');
+    expect(await screen.findByRole('heading', { name: 'November 2026' })).toBeInTheDocument();
+    expect(store.getState().view.type).toBe('dayGridMonth');
+  });
+
+  it('T32 (a, d): N opens the event dialog, ? the shortcut help', async () => {
+    const store = storeFor((await makeEngine()).engine);
+    renderWithStore(<App />, store);
+
+    await userEvent.keyboard('n');
+    expect(await screen.findByRole('dialog', { name: 'New event' })).toBeInTheDocument();
+    act(() => store.getState().actions.closeDialog());
+    await userEvent.keyboard('?');
+    expect(screen.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeInTheDocument();
+  });
+
   it('shows the degraded-mode banner when storage is unavailable', async () => {
     const store = storeFor((await makeEngine()).engine, { storageWarning: true });
     renderWithStore(<App />, store);

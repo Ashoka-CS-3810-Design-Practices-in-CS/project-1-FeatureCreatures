@@ -1,3 +1,5 @@
+import type FullCalendar from '@fullcalendar/react';
+import { useRef } from 'react';
 import { CalendarView } from './components/CalendarView/CalendarView';
 import { ConfirmDialog } from './components/ConfirmDialog/ConfirmDialog';
 import { ConflictPanel } from './components/ConflictPanel/ConflictPanel';
@@ -5,11 +7,15 @@ import { EmptyState } from './components/EmptyState/EmptyState';
 import { EventDialog } from './components/EventDialog/EventDialog';
 import { ReplanDialog } from './components/ReplanDialog/ReplanDialog';
 import { SettingsDialog } from './components/SettingsDialog/SettingsDialog';
+import { ShortcutHelp } from './components/ShortcutHelp/ShortcutHelp';
 import { SlotPicker } from './components/SlotPicker/SlotPicker';
 import { TaskDialog } from './components/TaskDialog/TaskDialog';
 import { TaskPanel } from './components/TaskPanel/TaskPanel';
 import { Toasts } from './components/Toasts/Toasts';
+import { Toolbar } from './components/Toolbar/Toolbar';
 import { errorMessage } from './format/errors';
+import { useShortcuts } from './hooks/useShortcuts';
+import { useTheme } from './hooks/useTheme';
 import { useAppStore } from './store/appStore';
 
 // PRE:  count ≥ 0; noun is singular
@@ -40,12 +46,17 @@ function FatalScreen() {
 }
 
 // PRE:  rendered under StoreProvider; reads status, storageWarning and snapshot
-//       + additional props from: EmptyState, CalendarView, TaskPanel, ConflictPanel, EventDialog,
-//       TaskDialog, ReplanDialog, SettingsDialog, ConfirmDialog, SlotPicker, Toasts, FatalScreen
-// POST: shows the loading line, the fatal screen, or the app: the degraded-mode banner when
-//       storage is unavailable, the empty state on a blank calendar, the status line, the
-//       calendar, the task and conflict panels, the open dialog, the picker and the toasts
+//       + additional props from: Toolbar, EmptyState, CalendarView, TaskPanel, ConflictPanel,
+//       EventDialog, TaskDialog, ReplanDialog, SettingsDialog, ShortcutHelp, ConfirmDialog,
+//       SlotPicker, Toasts, FatalScreen
+// POST: applies the theme and listens for shortcuts (B3, B4); shows the loading line, the fatal
+//       screen, or the app: the degraded-mode banner when storage is unavailable, the toolbar, the
+//       empty state on a blank calendar, the status line, the calendar, the task and conflict
+//       panels, the open dialog, the picker and the toasts
 export function App() {
+  const calendarRef = useRef<FullCalendar>(null);
+  const { theme, cycleTheme } = useTheme();
+  useShortcuts(calendarRef);
   const status = useAppStore((state) => state.status);
   const storageWarning = useAppStore((state) => state.storageWarning);
   const snapshot = useAppStore((state) => state.snapshot);
@@ -67,6 +78,7 @@ export function App() {
       )}
       <header>
         <h1>Interactive Calendar</h1>
+        <Toolbar calendarRef={calendarRef} theme={theme} onCycleTheme={cycleTheme} />
       </header>
       <main>
         {isEmpty && <EmptyState />}
@@ -74,7 +86,7 @@ export function App() {
           {countOf(snapshot.events.length, 'event')} · {countOf(snapshot.tasks.length, 'task')} ·{' '}
           {countOf(snapshot.conflicts.length, 'conflict')}
         </p>
-        <CalendarView />
+        <CalendarView calendarRef={calendarRef} />
       </main>
       <aside>
         <TaskPanel />
@@ -84,6 +96,7 @@ export function App() {
       <TaskDialog />
       <ReplanDialog />
       <SettingsDialog />
+      <ShortcutHelp />
       <ConfirmDialog />
       <SlotPicker />
       <Toasts />

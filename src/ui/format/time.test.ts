@@ -1,6 +1,6 @@
 import { iv } from '../../../tests/helpers/builders';
 import { t } from '../../../tests/helpers/time';
-import { fmtDay, fmtDuration, fmtRange, fmtTime, toClockTime } from './time';
+import { fmtDay, fmtDuration, fmtRange, fmtTime, fmtViewTitle, toClockTime } from './time';
 
 describe('format/time', () => {
   it.each([
@@ -27,5 +27,12 @@ describe('format/time', () => {
     expect(toClockTime(540)).toBe('09:00');
     expect(toClockTime(1440)).toBe('24:00');
     expect(toClockTime(5)).toBe('00:05');
+  });
+
+  it('fmtViewTitle names the shown period for each view', () => {
+    expect(fmtViewTitle('timeGridDay', t('Tue 00:00'))).toBe('Tue 3 Nov 2026');
+    expect(fmtViewTitle('timeGridWeek', t('Mon 00:00'))).toBe('Week of 2 Nov 2026');
+    expect(fmtViewTitle('listWeek', t('Mon 00:00'))).toBe('Week of 2 Nov 2026');
+    expect(fmtViewTitle('dayGridMonth', t('2026-11-01 00:00'))).toBe('November 2026');
   });
 });

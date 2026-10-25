@@ -4,10 +4,20 @@ import { format } from 'date-fns';
 import { MINUTES_PER_HOUR } from '@/shared/constants';
 import { fromMinute, startOfLocalDay } from '@/shared/time';
 import type { Interval, Minute } from '@/shared/types';
+import type { ViewType } from '../store/appStore';
 
 const TIME_FORMAT = 'HH:mm';
 const DAY_FORMAT = 'EEE d MMM';
+const DAY_TITLE_FORMAT = 'EEE d MMM yyyy';
+const WEEK_TITLE_FORMAT = "'Week of' d MMM yyyy";
+const MONTH_TITLE_FORMAT = 'MMMM yyyy';
 const PAD_WIDTH = 2;
+const VIEW_TITLE_FORMAT: Record<ViewType, string> = {
+  timeGridDay: DAY_TITLE_FORMAT,
+  timeGridWeek: WEEK_TITLE_FORMAT,
+  listWeek: WEEK_TITLE_FORMAT,
+  dayGridMonth: MONTH_TITLE_FORMAT,
+};
 
 // PRE:  minute is an integer Minute
 // POST: returns its local time as HH:mm
@@ -49,4 +59,10 @@ export function toClockTime(minuteOfDay: number): string {
   const hours = String(Math.floor(minuteOfDay / MINUTES_PER_HOUR)).padStart(PAD_WIDTH, '0');
   const minutes = String(minuteOfDay % MINUTES_PER_HOUR).padStart(PAD_WIDTH, '0');
   return `${hours}:${minutes}`;
+}
+
+// PRE:  type is the shown view; periodStart is the first day of the period it shows
+// POST: returns the toolbar title: "Tue 3 Nov 2026", "Week of 2 Nov 2026" or "November 2026"
+export function fmtViewTitle(type: ViewType, periodStart: Minute): string {
+  return format(fromMinute(periodStart), VIEW_TITLE_FORMAT[type]);
 }

@@ -7,6 +7,7 @@ import { createEngine } from '@/engine';
 import { DEFAULT_SETTINGS } from '@/shared/constants';
 import { toMinute } from '@/shared/time';
 import { App } from '@/ui/App';
+import { rememberView, storedView } from '@/ui/hooks/preferences';
 import { createAppStore, StoreProvider } from '@/ui/store/appStore';
 
 // COMPOSITION ROOT (TECH_SPEC §4): the only place that picks the repository and wires the
@@ -26,7 +27,8 @@ async function openRepository(): Promise<{ repo: Repository; storageWarning: boo
 }
 
 // PRE:  the page has been parsed (module scripts run after parsing)
-// POST: opens storage, creates and initialises the engine, and renders the App with its store;
+// POST: opens storage, creates and initialises the engine, and renders the App with its store
+//       (starting in the remembered view, and remembering view changes);
 //       throws if index.html has no #root
 async function bootstrap(): Promise<void> {
   const rootElement = document.getElementById('root');
@@ -42,7 +44,9 @@ async function bootstrap(): Promise<void> {
     init,
     now,
     resetStorage: () => repo.replaceAll({ events: [], tasks: [], settings: DEFAULT_SETTINGS }),
+    initialView: storedView(),
   });
+  rememberView(store);
   createRoot(rootElement).render(
     <StrictMode>
       <StoreProvider store={store}>
