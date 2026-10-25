@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-17 Undo/redo, import/export, samples (branch `feat/wi-17-history-io`).
-- **Last session:** 2026-10-26 · Claude Code · finished and merged WI-08–WI-16; started WI-17.
+- **Active WI:** none — next is WI-18 Store, bootstrap, App shell, toasts, empty state (Phase 4 UI). WI-28 Benchmarks is also unblocked.
+- **Last session:** 2026-10-26 · Claude Code · finished and merged WI-08–WI-17 (Phase 3 complete, tag `m3`).
 - **Gate status on `main`:** green (typecheck, lint, test; also test:dst, test:coverage, build).
 
 ## Work items
@@ -54,8 +54,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-26 · Claude Code · branch `feat/wi-15-alternatives` · done: `applyAlternative` in `pipelines/conflictResolution.ts`, wired into the facade; `tests/integration/conflictResolution.test.ts` covers T20 (target, nearest options, apply resolves, the toggle's 3-day window and options) plus StaleResult / wrong length / NotFound · next: WI-16 · note: `eventCrud` ↔ `conflictResolution` import each other (ER4 suggestion ↔ moveEvent); this is safe because the calls happen at run time only, and a comment says why
 - [x] **WI-16** Replan pipeline — owner S — depends on 11, 13
   - 2026-10-26 · Claude Code · branch `feat/wi-16-replan-pipeline` · done: `pipelines/replan.ts` + facade `planReplan` / `applyReplan` with private `lastReplan`; `tests/integration/replan.test.ts` covers T22, T23 (a) and its apply, T27's replan half and T28 (c), plus range/buffer validation · next: WI-17 · note: **T23 (b)'s `undo()` step (Read back at Mon 14:00) belongs in WI-17's tests**; WI-17's `importData` must clear `lastReplan` (§7.4.6); new constant `REPLAN_DST_SLACK_MIN` (TECH_SPEC v1.9)
-- [~] **WI-17** Undo/redo, import/export, samples — owner Dv — depends on 13
-  - 2026-10-26 · Claude Code · branch `feat/wi-17-history-io` · done: claimed · next: undo/redo (T24, T23 b), `linkIssues` + import/export (T25), samples + `mulberry32`, T36
+- [x] **WI-17** Undo/redo, import/export, samples — owner Dv — depends on 13
+  - 2026-10-26 · Claude Code · branch `feat/wi-17-history-io` · done: facade `undo`/`redo` (via `state.replay`), `exportData`/`importData` (`parseExportFile`, `linkIssues` also run in `init`), `src/data/samples/*` (6 samples, `prng.ts`, `build.ts`), `onLocalDay`/`startOfLocalWeek` in `time.ts`; tests: `history.test.ts` (T24, T23 b), `importExport.test.ts` (T25 a/b), `history.props.test.ts` (T36; a dropped task delete is caught), `samples.test.ts` · next: WI-18 · note: **the engine is complete, with no stubs left**. The UI loads a sample with `engine.importData(JSON.stringify(SAMPLES[id].build(startOfLocalWeek(now))))`. T25's UI toast text (path brackets) belongs to WI-19/23's `format/errors.ts`
 
 ### Phase 4 — UI
 
@@ -83,12 +83,13 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 ## Milestones
 
 - **m1** (2026-10-25) — Phase 1 Setup: Vite/React/TS scaffold, ESLint layer boundaries, Vitest (UTC + DST), Playwright config, CI workflow; first Vercel deploy done by the humans.
+- **m3** (2026-10-26) — Phase 3 Algorithms and engine: conflict sweep (min-heap), busy merge, allowed segments, free gaps, day loads, BR-7 ranking, BR-10 target, BR-11 queue order, BR-12 replan heuristics; engine state with reversible changes and bounded history; the facade with its command queue and all four pipelines; undo/redo, export/import with cross-record checks, six samples. 296 unit/integration/property tests + 6 DST tests, 99.5% line coverage; T1–T13, T16–T36 engine parts green.
 - **m2** (2026-10-25) — Phase 2 Core types and data: frozen shared types/constants/result/errors, Zod schemas with `parseInput`, DST-safe local-time module, interval/sortedArray/minHeap, Memory + Dexie repositories (atomic), test helpers and brute-force oracles. 105 unit tests + 4 DST tests, 100% coverage of `src/`.
 
 ## Human-only steps
 
 - [ ] Connect the GitHub Classroom repo as `origin` and push `main`.
-- [ ] Push the WI branches and milestone tags too: `git push origin --all` and `git push origin --tags` (tags `m1`, `m2` exist locally).
+- [ ] Push the WI branches and milestone tags too: `git push origin --all` and `git push origin --tags` (tags `m1`, `m2`, `m3` exist locally).
 - [x] First Vercel deploy (TECH_SPEC §13.2) and paste the URL at the top of this file.
 - [ ] Turn on branch protection for `main` on GitHub (optional).
 

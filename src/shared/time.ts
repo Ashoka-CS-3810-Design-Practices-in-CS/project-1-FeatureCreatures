@@ -1,11 +1,12 @@
 // The local-time boundary (TECH_SPEC §8.6, BR-1): the only non-UI module that may use date-fns.
 // Everything else works in absolute Minutes; DayFrames hand algorithms pre-expanded local days.
 
-import { addDays, parse, set, startOfDay } from 'date-fns';
+import { addDays, parse, set, startOfDay, startOfWeek } from 'date-fns';
 import { MINUTES_PER_DAY, MINUTES_PER_HOUR, MS_PER_MINUTE } from './constants';
 import type { DayFrame, Interval, Minute, Settings, Weekday } from './types';
 
 const LOCAL_DATE_TIME_FORMAT = 'yyyy-MM-dd HH:mm';
+const MONDAY = 1; // weeks start on Monday (BR-1)
 
 // PRE:  date is a valid Date
 // POST: returns the whole minutes since the Unix epoch at date (seconds are dropped)
@@ -65,6 +66,19 @@ function atMinuteOfDay(dayStart: Minute, dayEnd: Minute, minuteOfDay: number): M
     minutes: minuteOfDay % MINUTES_PER_HOUR,
   };
   return toMinute(set(fromMinute(dayStart), wallClock));
+}
+
+// PRE:  day is a local midnight; minuteOfDay is an integer with 0 ≤ minuteOfDay ≤ MINUTES_PER_DAY
+// POST: returns the Minute at local wall-clock minuteOfDay on day's date (DST-safe), or the next
+//       local midnight when minuteOfDay = MINUTES_PER_DAY
+export function onLocalDay(day: Minute, minuteOfDay: number): Minute {
+  return atMinuteOfDay(day, addLocalDays(day, 1), minuteOfDay);
+}
+
+// PRE:  minute is an integer Minute
+// POST: returns the local midnight that starts the Monday of minute's week
+export function startOfLocalWeek(minute: Minute): Minute {
+  return toMinute(startOfWeek(fromMinute(minute), { weekStartsOn: MONDAY }));
 }
 
 // PRE:  dayStart is a local midnight; settings satisfies settingsSchema

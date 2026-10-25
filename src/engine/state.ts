@@ -228,3 +228,34 @@ export async function commit(
     resolvedConflicts: conflictsMissingFrom(state.conflicts, conflicts),
   });
 }
+
+// PRE:  state is the current state
+// POST: returns the outcome of a command that had nothing to do: state as it is, label '', no
+//       changes, no conflicts introduced or resolved, no suggestion (and so no history entry)
+export function unchangedOutcome(state: EngineState): PipelineOutcome {
+  return {
+    state,
+    label: '',
+    changedEventIds: [],
+    introducedConflicts: [],
+    resolvedConflicts: [],
+    suggestion: null,
+  };
+}
+
+// PRE:  mode is 'undo' or 'redo'
+// POST: commits the newest change of that stack in mode (undo applies it backward, redo forward,
+//       and it moves to the other stack) and returns the outcome labelled with the change's label;
+//       an empty stack returns unchangedOutcome; StorageError leaves everything unchanged
+export async function replay(
+  context: PipelineContext,
+  mode: 'undo' | 'redo',
+): Promise<Result<PipelineOutcome, EngineError>> {
+  const stack = mode === 'undo' ? context.state.undo : context.state.redo;
+  const change = stack.at(-1);
+  if (change === undefined) {
+    return ok(unchangedOutcome(context.state));
+  }
+  const committed = await commit(context.state, change, mode, context.repo);
+  return committed.ok ? ok({ ...committed.value, suggestion: null }) : committed;
+}

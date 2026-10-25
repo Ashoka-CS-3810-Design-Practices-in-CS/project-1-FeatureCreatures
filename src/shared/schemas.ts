@@ -3,6 +3,8 @@
 
 import { z } from 'zod';
 import {
+  EXPORT_FORMAT,
+  EXPORT_VERSION,
   MAX_BARRED_LABEL_LENGTH,
   MAX_BUFFER_MIN,
   MAX_DESCRIPTION_LENGTH,
@@ -14,7 +16,7 @@ import {
 } from './constants';
 import type { EngineError, FieldIssue } from './errors';
 import { err, ok, type Result } from './result';
-import type { EventInput, Interval } from './types';
+import type { CalendarEvent, EventInput, ExportFile, Interval, Task } from './types';
 
 // Tags ordering issues so they map to InvalidTime rather than InvalidInput.
 const TIME_ISSUE_KIND = 'time';
@@ -191,8 +193,8 @@ export const storedDataSchema = z.object({
 });
 
 export const exportFileSchema = z.object({
-  format: z.literal('feature-creatures-calendar'),
-  version: z.literal(1),
+  format: z.literal(EXPORT_FORMAT),
+  version: z.literal(EXPORT_VERSION),
   exportedAt: z.string(),
   events: z.array(storedEventSchema),
   tasks: z.array(storedTaskSchema),
@@ -228,4 +230,78 @@ export function parseInput<Output>(schema: z.ZodType<Output>, input: unknown): R
     ? { code: 'InvalidTime', issues }
     : { code: 'InvalidInput', issues };
   return err(error);
+}
+
+// PRE:  records have an id each
+// POST: returns one issue at path for every id that already appeared earlier in records
+function duplicateIdIssues(records: readonly { id: string }[], path: string): FieldIssue[] {
+  const seen = new Set<string>();
+  const issues: FieldIssue[] = [];
+
+  // INVARIANT: seen holds the ids of the visited records ∧ issues names every repeat among them
+  for (const record of records) {
+    if (seen.has(record.id)) {
+      issues.push({ path, message: `Duplicate id "${record.id}".` });
+    }
+    seen.add(record.id);
+  }
+  // POST: issues names every repeated id
+
+  return issues;
+}
+
+// PRE:  events and tasks are shape-valid stored records (storedEventSchema, storedTaskSchema)
+// POST: returns the cross-record issues (TECH_SPEC §7.4.6), empty when the data is consistent:
+//       duplicate event ids ('events'), duplicate task ids ('tasks'), a scheduled task whose event
+//       is missing or does not point back ('tasks.N.scheduledEventId'), and an event whose taskId
+//       does not name a task scheduled as that event ('events.N.taskId')
+export function linkIssues(events: readonly CalendarEvent[], tasks: readonly Task[]): FieldIssue[] {
+  const issues = [...duplicateIdIssues(events, 'events'), ...duplicateIdIssues(tasks, 'tasks')];
+  const eventsById = new Map(events.map((event) => [event.id, event]));
+  const tasksById = new Map(tasks.map((task) => [task.id, task]));
+
+  // INVARIANT: issues names every broken link of the tasks before taskIndex
+  for (const [taskIndex, task] of tasks.entries()) {
+    const linked =
+      task.scheduledEventId === null ? undefined : eventsById.get(task.scheduledEventId);
+    if (task.status === 'scheduled' && linked?.taskId !== task.id) {
+      issues.push({
+        path: `tasks.${taskIndex}.scheduledEventId`,
+        message: 'This scheduled task has no event that points back to it.',
+      });
+    }
+  }
+  // POST: issues names every task with a broken link
+
+  // INVARIANT: issues names every broken link of the events before eventIndex
+  for (const [eventIndex, event] of events.entries()) {
+    const owner = event.taskId === null ? undefined : tasksById.get(event.taskId);
+    if (event.taskId !== null && owner?.scheduledEventId !== event.id) {
+      issues.push({
+        path: `events.${eventIndex}.taskId`,
+        message: 'This event names a task that is not scheduled as this event.',
+      });
+    }
+  }
+  // POST: issues names every event with a broken link
+
+  return issues;
+}
+
+// PRE:  json is untrusted text (a file the user picked)
+// POST: returns the ExportFile it holds; err InvalidImport with path '' for text that is not JSON,
+//       with every schema issue when the shape is wrong, or with the linkIssues otherwise (ER6)
+export function parseExportFile(json: string): Result<ExportFile> {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(json);
+  } catch {
+    return err({ code: 'InvalidImport', issues: [{ path: '', message: 'Not valid JSON.' }] });
+  }
+  const parsed = exportFileSchema.safeParse(raw);
+  if (!parsed.success) {
+    return err({ code: 'InvalidImport', issues: toFieldIssues(parsed.error) });
+  }
+  const issues = linkIssues(parsed.data.events, parsed.data.tasks);
+  return issues.length === 0 ? ok(parsed.data) : err({ code: 'InvalidImport', issues });
 }

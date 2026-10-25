@@ -26,6 +26,7 @@ import {
   type PipelineContext,
   type PipelineOutcome,
   type RecordChange,
+  unchangedOutcome,
 } from '../state';
 import { commitWithSuggestion, inputOf } from './eventCrud';
 
@@ -191,14 +192,7 @@ export async function unscheduleTask(context: PipelineContext, id: string): Pipe
   }
   const task = found.value;
   if (task.status === 'unscheduled') {
-    return ok({
-      state: context.state,
-      label: '',
-      changedEventIds: [],
-      introducedConflicts: [],
-      resolvedConflicts: [],
-      suggestion: null,
-    });
+    return ok(unchangedOutcome(context.state));
   }
   return commitPlain(context, {
     label: `Unschedule "${task.name}"`,
