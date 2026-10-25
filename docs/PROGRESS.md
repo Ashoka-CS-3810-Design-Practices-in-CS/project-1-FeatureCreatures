@@ -6,7 +6,7 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** none — next is WI-24 Toolbar, theme, shortcuts, help (WI-25 and WI-28 are also unblocked).
+- **Active WI:** WI-24 Toolbar, theme, shortcuts, help, branch `feat/wi-24-toolbar` (WI-25 and WI-28 are also unblocked).
 - **Last session:** 2026-10-26 · Claude Code · finished and merged WI-23.
 - **Gate status on `main`:** green (typecheck, lint, test; also test:dst, test:coverage, build).
 
@@ -71,7 +71,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-26 · Claude Code · branch `feat/wi-22-replan-dialog` · done: `ReplanDialog` (from/to dates defaulting to the visible week, "to" inclusive, buffer override, two plan cards with metrics, moves, unplaced, Apply this plan / No changes needed) mounted in App; store `computeReplan` / `applyReplan`; move and plan sentences in `format/explain.ts`; tests: the §5 Replan UI case (default week, T22 cards, Apply calls `applyReplan`, empty case) plus bad range, buffer override, ER7 recompute · next: WI-23 · note: **nothing opens the dialog yet except `openDialog({kind: 'replan'})`**: the toolbar's Replan button is WI-24
 - [x] **WI-23** Settings dialog + data section — owner S — depends on 18
   - 2026-10-26 · Claude Code · branch `feat/wi-23-settings` · done: `forms/settingsForm.ts` (converters + resolver; an end time of 00:00 means 24:00), store `updateSettings` / `exportFile` / `checkImport` / `importData` / `clearAllData` (every replace-all, samples included, goes through one `replaceAll` helper that also closes the picker and clears the task selection), `SettingsDialog` (settings form with barred-slot rows + Data section: Export JSON, Import JSON with ER6 check then confirm, Load sample calendar, Clear all data) mounted in App; tests: §5 SettingsDialog cases (end ≤ start inline, add/remove barred slot, export download via `URL.createObjectURL`), import/sample/clear via UI, store and form unit tests · next: WI-24 · note: **nothing opens the dialog yet except `openDialog({kind: 'settings'})`**: the toolbar's ⚙ is WI-24. `toClockTime` moved to `format/time.ts`, the criterion labels (`CRITERIA`) to `format/explain.ts`, and `toDateInput`/`fromDateInput` to `forms/eventForm.ts`. **The "spinner overlay for loading a sample or importing > 1,000 records" (PROJECT_SCHEMA §7.4) is not built yet**; WI-26 should add it around `replaceAll`
-- [ ] **WI-24** Toolbar, theme, shortcuts, help — owner Dv — depends on 19
+- [~] **WI-24** Toolbar, theme, shortcuts, help — owner Dv — depends on 19
+  - 2026-10-26 · Claude Code · branch `feat/wi-24-toolbar` · started
 - [ ] **WI-25** Styles & tokens — owner Dv — depends on 19
 - [ ] **WI-26** Responsive drawer + a11y pass (+ optional drag preview) — owner S — depends on 21–25
 
