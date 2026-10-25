@@ -17,6 +17,7 @@ import { errorMessage } from './format/errors';
 import { useShortcuts } from './hooks/useShortcuts';
 import { useTheme } from './hooks/useTheme';
 import { useAppStore } from './store/appStore';
+import styles from './App.module.css';
 
 // PRE:  count ≥ 0; noun is singular
 // POST: returns "1 event" / "3 events"
@@ -70,7 +71,7 @@ export function App() {
 
   const isEmpty = snapshot.events.length === 0 && snapshot.tasks.length === 0;
   return (
-    <div className="app">
+    <div className={`app ${styles.app}`}>
       {storageWarning && (
         <p role="alert" className="banner">
           Storage unavailable: changes will be lost when you close this tab.

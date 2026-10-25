@@ -9,6 +9,9 @@ import { toMinute } from '@/shared/time';
 import { App } from '@/ui/App';
 import { rememberView, storedView } from '@/ui/hooks/preferences';
 import { createAppStore, StoreProvider } from '@/ui/store/appStore';
+import '@/ui/styles/tokens.css';
+import '@/ui/styles/global.css';
+import '@/ui/styles/fullcalendar.css';
 
 // COMPOSITION ROOT (TECH_SPEC §4): the only place that picks the repository and wires the
 // engine, the store and the UI together.

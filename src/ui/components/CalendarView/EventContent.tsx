@@ -17,13 +17,13 @@ export function EventContent({
   const kind = isTask ? 'Task' : flexible ? null : 'Fixed';
   return (
     <div className="event-content">
+      {conflictMinutes > 0 && (
+        <span className="tag tag-conflict">⚠ Conflict {fmtDuration(conflictMinutes)}</span>
+      )}{' '}
       <span className="event-time">{timeText}</span>{' '}
       <strong className="event-title">{title}</strong>{' '}
       <span className={`tag prio-${priority}`}>{PRIORITY_TAG[priority]}</span>
       {kind !== null && <span className="tag">{kind}</span>}
-      {conflictMinutes > 0 && (
-        <span className="tag tag-conflict">⚠ Conflict {fmtDuration(conflictMinutes)}</span>
-      )}
     </div>
   );
 }

@@ -1,0 +1,82 @@
+/* Design tokens (TECH_SPEC §11.4, PROJECT_SCHEMA §7.5). Every colour in the UI comes from here, so
+   the two themes differ only in this file. tokens.test.ts checks the text pairs reach 4.5:1. */
+
+:root {
+  color-scheme: light;
+  --bg: #ffffff;
+  --surface: #f6f7f9;
+  --text: #1b1f24;
+  --muted: #5b6470;
+  --border: #d6dae0;
+  --accent: #2f5bd3;
+  --on-accent: #ffffff;
+  --danger: #c0262d;
+  --warning: #a85b06;
+  --success: #1f7a3d;
+  --focus: #2f5bd3;
+  --prio-high: #b42318;
+  --prio-high-bg: #fde8e8;
+  --prio-medium: #a85b06;
+  --prio-medium-bg: #fef3c7;
+  --prio-low: #34558b;
+  --prio-low-bg: #e3ebf7;
+  --barred: #e9ecf1;
+  --nonwork: #f3f4f6;
+
+  --radius: 6px;
+  --target-min: 32px; /* smallest click target (PROJECT_SCHEMA §7.7) */
+  --side-width: 360px;
+  --backdrop: rgb(0 0 0 / 45%);
+  --shadow: rgb(0 0 0 / 20%);
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #14171c;
+  --surface: #1c2027;
+  --text: #e7eaee;
+  --muted: #a0a8b3;
+  --border: #343a44;
+  --accent: #7aa2ff;
+  --on-accent: #14171c;
+  --danger: #ff6b6b;
+  --warning: #f5b041;
+  --success: #4cc38a;
+  --focus: #7aa2ff;
+  --prio-high: #ff8a8a;
+  --prio-high-bg: #3a1f22;
+  --prio-medium: #f5b041;
+  --prio-medium-bg: #3a2e14;
+  --prio-low: #8fb0e6;
+  --prio-low-bg: #1f2a3d;
+  --barred: #262b33;
+  --nonwork: #181b21;
+}
+
+/* "System" theme: no data-theme attribute, so follow the OS. CSS cannot share a rule between a
+   media query and an attribute selector, so these values repeat the dark block above exactly
+   (tokens.test.ts keeps the two equal). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --bg: #14171c;
+    --surface: #1c2027;
+    --text: #e7eaee;
+    --muted: #a0a8b3;
+    --border: #343a44;
+    --accent: #7aa2ff;
+    --on-accent: #14171c;
+    --danger: #ff6b6b;
+    --warning: #f5b041;
+    --success: #4cc38a;
+    --focus: #7aa2ff;
+    --prio-high: #ff8a8a;
+    --prio-high-bg: #3a1f22;
+    --prio-medium: #f5b041;
+    --prio-medium-bg: #3a2e14;
+    --prio-low: #8fb0e6;
+    --prio-low-bg: #1f2a3d;
+    --barred: #262b33;
+    --nonwork: #181b21;
+  }
+}
