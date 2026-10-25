@@ -179,6 +179,35 @@ describe('createAppStore', () => {
     }
   });
 
+  it('records the shown view and toggles the event priority filter', async () => {
+    const { engine } = await makeEngine();
+    const store = storeFor(engine);
+
+    store.getState().actions.setView('dayGridMonth', t('2026-11-01 00:00'));
+    store.getState().actions.toggleEventPriority('medium');
+    store.getState().actions.toggleEventPriority('low');
+    store.getState().actions.toggleEventPriority('medium');
+
+    expect(store.getState().view).toMatchObject({
+      type: 'dayGridMonth',
+      date: t('2026-11-01 00:00'),
+    });
+    expect(store.getState().eventPriorityFilter).toEqual(['high', 'medium']);
+  });
+
+  it('starts in the remembered view when one is given', async () => {
+    const { engine } = await makeEngine();
+    const store = createAppStore(engine, {
+      storageWarning: false,
+      init: { ok: true, value: engine.snapshot() },
+      now: () => t('Mon 08:00'),
+      resetStorage: async () => undefined,
+      initialView: 'listWeek',
+    });
+
+    expect(store.getState().view.type).toBe('listWeek');
+  });
+
   it('opens and closes dialogs', async () => {
     const { engine } = await makeEngine();
     const store = storeFor(engine);

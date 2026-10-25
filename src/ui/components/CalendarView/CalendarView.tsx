@@ -16,7 +16,7 @@ const TWENTY_FOUR_HOUR = { hour: '2-digit', minute: '2-digit', hour12: false } a
 const MONDAY = 1;
 
 // PRE:  rendered under StoreProvider; reads snapshot (events, conflicts, settings), view,
-//       eventPriorityFilter and emphasisIds; uses actions.moveEvent / openDialog / setActiveRange
+//       eventPriorityFilter and emphasisIds; uses actions.moveEvent / openDialog / setActiveRange / setView
 //       + additional props from: EventContent
 // POST: shows the calendar as a controlled, render-only FullCalendar (TECH_SPEC §11.3): its events
 //       always come from the snapshot; drags, resizes, selections and clicks go to the store

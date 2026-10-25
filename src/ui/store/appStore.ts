@@ -77,6 +77,8 @@ export interface AppActions {
   moveEvent(id: string, to: Interval): Promise<Result<MutationResult>>;
   deleteEvent(id: string): Promise<Result<MutationResult>>;
   setActiveRange(range: Interval): void;
+  setView(type: ViewType, date: Minute): void;
+  toggleEventPriority(priority: Priority): void;
   createTask(input: TaskInput): Promise<Result<MutationResult>>;
   updateTask(id: string, input: TaskInput): Promise<Result<MutationResult>>;
   deleteTask(id: string): Promise<Result<MutationResult>>;
@@ -132,6 +134,7 @@ export interface AppStoreOptions {
   init: Result<Snapshot>; // the result of engine.init() at bootstrap
   now: () => Minute;
   resetStorage: () => Promise<void>; // empties the repository, for the fatal screen's Reset
+  initialView?: ViewType; // the view remembered from the last visit (default: week)
 }
 
 export type AppStore = StoreApi<AppState>;
@@ -383,6 +386,24 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
       // POST: view.activeRange is range
       setActiveRange(range) {
         set({ view: { ...get().view, activeRange: range } });
+      },
+
+      // PRE:  type is the view FullCalendar shows; date is the start of the period it shows
+      // POST: view.type is type and view.date is date
+      setView(type, date) {
+        set({ view: { ...get().view, type, date } });
+      },
+
+      // PRE:  priority is a priority
+      // POST: the calendar's priority filter (FR6) shows priority if it was hidden, and hides it if
+      //       it was shown; the filter keeps the order high, medium, low
+      toggleEventPriority(priority) {
+        const shown = get().eventPriorityFilter;
+        set({
+          eventPriorityFilter: ALL_PRIORITIES.filter((candidate) =>
+            candidate === priority ? !shown.includes(candidate) : shown.includes(candidate),
+          ),
+        });
       },
 
       // PRE:  input comes from the task dialog (validated by the engine)
@@ -738,7 +759,7 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
       fatalError: options.init.ok ? null : options.init.error,
       storageWarning: options.storageWarning,
       snapshot: options.init.ok ? options.init.value : engine.snapshot(),
-      view: { type: 'timeGridWeek', date: now, activeRange: null },
+      view: { type: options.initialView ?? 'timeGridWeek', date: now, activeRange: null },
       eventPriorityFilter: [...ALL_PRIORITIES],
       taskPanel: {
         sort: 'priority',

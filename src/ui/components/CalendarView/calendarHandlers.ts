@@ -2,7 +2,7 @@
 // info objects (T14). The info types below are the parts of FullCalendar's arguments they read.
 
 import { toMinute } from '@/shared/time';
-import type { AppActions } from '../../store/appStore';
+import type { AppActions, ViewType } from '../../store/appStore';
 
 export interface ChangedEventInfo {
   event: { id: string; start: Date | null; end: Date | null };
@@ -22,6 +22,7 @@ export interface ClickInfo {
 export interface DatesInfo {
   start: Date;
   end: Date;
+  view: { type: string; currentStart: Date }; // currentStart: the first day of the shown period
 }
 
 export interface CalendarHandlers {
@@ -35,9 +36,10 @@ export interface CalendarHandlers {
 // PRE:  actions are the store's actions
 // POST: returns FullCalendar's handlers: a drag or resize moves the event and snaps it back when
 //       the engine refuses (ER5); a selection opens the create dialog; a click on an event opens
-//       its edit dialog (background blocks are ignored); a date change records the visible range
+//       its edit dialog (background blocks are ignored); a date change records the view, its
+//       period start and the visible range
 export function createCalendarHandlers(
-  actions: Pick<AppActions, 'moveEvent' | 'openDialog' | 'setActiveRange'>,
+  actions: Pick<AppActions, 'moveEvent' | 'openDialog' | 'setActiveRange' | 'setView'>,
 ): CalendarHandlers {
   // PRE:  info describes a dragged or resized event
   // POST: asks the store to move it; reverts FullCalendar's copy when that fails
@@ -71,6 +73,8 @@ export function createCalendarHandlers(
       actions.openDialog({ kind: 'event', mode: 'edit', id: info.event.id });
     },
     onDatesSet(info) {
+      // The calendar only ever switches between the four ViewType views.
+      actions.setView(info.view.type as ViewType, toMinute(info.view.currentStart));
       actions.setActiveRange({ start: toMinute(info.start), end: toMinute(info.end) });
     },
   };
