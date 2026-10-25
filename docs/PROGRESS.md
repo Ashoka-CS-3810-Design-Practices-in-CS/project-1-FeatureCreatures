@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** none — next is WI-12 Engine state & commit & history (its dependencies 06 and 08 are done).
-- **Last session:** 2026-10-26 · Claude Code · finished and merged WI-08–WI-11.
+- **Active WI:** WI-12 Engine state & commit & history (branch `feat/wi-12-state`).
+- **Last session:** 2026-10-26 · Claude Code · finished and merged WI-08–WI-11; started WI-12.
 - **Gate status on `main`:** green (typecheck, lint, test; also test:dst, test:coverage, build).
 
 ## Work items
@@ -44,7 +44,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-26 · Claude Code · branch `feat/wi-10-rank` · done: `algorithms/{dayLoad,rank}.ts` with the §4.3 unit tests (T10 orders, clamp, every tie-break); T34 in `rank.props.test.ts` (green at 10,000 runs; a key-order mutation is caught) · next: WI-11 · note: `computeDayLoads` returns an entry for every frame (0 on non-working days); the frame builder moved to `tests/helpers/builders.ts` as `dayFrame()`; ranking criteria are the Strategy pattern (`sortKey` in `rank.ts`)
 - [x] **WI-11** Task order + replan heuristics — owner S — depends on 10
   - 2026-10-26 · Claude Code · branch `feat/wi-11-replan` · done: `algorithms/{taskOrder,replanHeuristics}.ts`; unit tests cover all 5 BR-11 keys, every BR-12 move reason and their order, unplaced events staying busy, notBefore, and T22/T23 with TEST_PLAN's exact values at algorithm level; T35 in `replanHeuristics.props.test.ts` (green at 10,000 runs; a dropped buffer check is caught) · next: WI-12 · note: WI-16 can build `ReplanInput` the way `replanHeuristics.test.ts` does (`segmentsFor` = `allowedSegments(…, useWorkingHours: true, notBefore)`); `compareIds` is now exported from `sortedArray.ts`
-- [ ] **WI-12** Engine state & commit & history — owner Dv — depends on 06, 08
+- [~] **WI-12** Engine state & commit & history — owner Dv — depends on 06, 08
+  - 2026-10-26 · Claude Code · branch `feat/wi-12-state` · done: claimed · next: `src/engine/state.ts` (`applyChange`, `commit`, history) + `state.test.ts`
 - [ ] **WI-13** Facade + Event CRUD — owner Dv — depends on 12, 10
 - [ ] **WI-14** Task Scheduler pipeline — owner Dv — depends on 13
 - [ ] **WI-15** Conflict Resolution pipeline — owner Dv — depends on 13
