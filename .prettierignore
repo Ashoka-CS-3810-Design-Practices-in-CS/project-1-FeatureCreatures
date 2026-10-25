@@ -1,0 +1,12 @@
+# hand-written specs and agent instructions keep their own layout
+docs/
+AGENTS.md
+CLAUDE.md
+.agents/
+.claude/
+
+package-lock.json
+dist/
+coverage/
+playwright-report/
+test-results/

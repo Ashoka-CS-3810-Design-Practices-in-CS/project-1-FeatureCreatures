@@ -1,0 +1,26 @@
+name: ci
+on: { pull_request: {}, push: { branches: [main] }, workflow_dispatch: {} }
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run test:coverage # fails under thresholds
+      - run: npm run test:dst
+      - run: npm run build
+  e2e:
+    if: github.event_name != 'pull_request' # main + manual only (saves CI minutes)
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci && npx playwright install --with-deps chromium
+      # --pass-with-no-tests only until WI-27 adds E1–E3; remove it then.
+      - run: npm run e2e -- --pass-with-no-tests
