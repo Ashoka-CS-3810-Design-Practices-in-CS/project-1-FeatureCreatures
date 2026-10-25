@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { screen, waitFor } from '@testing-library/react';
+import { createRef } from 'react';
 import { ev, iv } from '../../../../tests/helpers/builders';
 import { makeEngine } from '../../../../tests/helpers/engine';
 import { renderWithStore, storeFor } from '../../../../tests/helpers/render';
@@ -15,7 +16,7 @@ describe('CalendarView', () => {
     });
     const store = storeFor(engine);
 
-    renderWithStore(<CalendarView />, store);
+    renderWithStore(<CalendarView calendarRef={createRef()} />, store);
 
     expect(await screen.findByText('Lecture')).toBeInTheDocument();
     expect(screen.getByText('Gym')).toBeInTheDocument();

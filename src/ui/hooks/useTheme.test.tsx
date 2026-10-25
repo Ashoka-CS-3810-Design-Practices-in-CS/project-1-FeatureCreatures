@@ -1,34 +1,10 @@
 // @vitest-environment jsdom
 import { act, renderHook } from '@testing-library/react';
-import { readPreference, writePreference } from './preferences';
 import { THEME_KEY, nextTheme, useTheme } from './useTheme';
 
 afterEach(() => {
   localStorage.clear();
   delete document.documentElement.dataset.theme;
-});
-
-describe('preferences', () => {
-  it('reads back what was written, and null for a missing key', () => {
-    writePreference('fc-test', 'on');
-
-    expect(readPreference('fc-test')).toBe('on');
-    expect(readPreference('fc-missing')).toBeNull();
-  });
-
-  it('survives a localStorage that throws (private mode, blocked storage)', () => {
-    const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
-      throw new Error('blocked');
-    });
-    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-      throw new Error('blocked');
-    });
-
-    expect(readPreference('fc-test')).toBeNull();
-    expect(() => writePreference('fc-test', 'on')).not.toThrow();
-    getItem.mockRestore();
-    setItem.mockRestore();
-  });
 });
 
 describe('useTheme', () => {

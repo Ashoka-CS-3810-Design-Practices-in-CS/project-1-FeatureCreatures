@@ -155,9 +155,9 @@ Every file listed here exists by the end of the project. The WI column says whic
       │  ├─ TaskPanel/  ConflictPanel/  EventDialog/  TaskDialog/  SlotPicker/  ReplanDialog/
       │  ├─ SettingsDialog/  ConfirmDialog/  ShortcutHelp/  Toasts/  Modal/ (native <dialog> wrapper)
       │  └─ EmptyState/
-      ├─ hooks/useShortcuts.ts  hooks/useTheme.ts
+      ├─ hooks/useShortcuts.ts  hooks/useTheme.ts  hooks/preferences.ts  # guarded localStorage (theme, last view)
       ├─ format/time.ts  format/explain.ts  format/errors.ts   # all user-facing strings built here
-      ├─ forms/eventForm.ts  forms/taskForm.ts                 # form ⇄ input converters + resolvers
+      ├─ forms/eventForm.ts  forms/taskForm.ts  forms/settingsForm.ts  # form ⇄ input converters + resolvers
       └─ styles/tokens.css  styles/global.css  styles/fullcalendar.css
 ```
 
@@ -1357,7 +1357,7 @@ interface Toast { id: string; tone: 'success' | 'info' | 'warning' | 'error'; te
                   actions?: { label: string; run: () => void }[]; sticky?: boolean }
 ```
 
-`createAppStore(engine, {storageWarning, init, now, resetStorage})` builds the store; `now` dates the samples and `resetStorage` empties the repository for the fatal screen's *Reset local data*. `StoreProvider` and `useAppStore(selector)` live in `appStore.ts`.
+`createAppStore(engine, {storageWarning, init, now, resetStorage, initialView?})` builds the store; `now` dates the samples and `resetStorage` empties the repository for the fatal screen's *Reset local data*. `initialView` is the view remembered in `localStorage['fc-view']` (`storedView()` in `hooks/preferences.ts`); `main.tsx` calls `rememberView(store)` so later view changes are remembered too. `onDatesSet` records `view.type` and `view.date` (the shown period's first day, for the toolbar title) as well as `activeRange`. `StoreProvider` and `useAppStore(selector)` live in `appStore.ts`.
 
 **Rules for actions.**
 
@@ -1684,3 +1684,4 @@ Production URL: https://…vercel.app
 | 2026-10-26 | v1.11 (WI-18): §5 constants gain `TOAST_MS`, `WARNING_TOAST_MS`, `EMPHASIS_MS`; §11.1 gives `createAppStore` its `now` and `resetStorage` options; §2 lists `tests/helpers/render.tsx`. |
 | 2026-10-26 | v1.12 (WI-19): §1.2 pins `@fullcalendar/react` to `^6.1.22`, matching `@fullcalendar/core` and the plugins. v7 is incompatible with the v6 plugin API that §11.3 uses. |
 | 2026-10-26 | v1.13 (WI-23): §6 `bufferMinSchema` gives a non-number the buffer range message, so a blank buffer field in a form reads "Buffer must be between 0 and 120 minutes.". |
+| 2026-10-26 | v1.14 (WI-24): §2 lists `forms/settingsForm.ts` and `hooks/preferences.ts`; §11.1 gives `createAppStore` an optional `initialView` (last view, PROJECT_SCHEMA §3.2) and says what `onDatesSet` records. |

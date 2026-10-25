@@ -3,7 +3,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import { useMemo } from 'react';
+import { useMemo, type RefObject } from 'react';
 import { fromMinute } from '@/shared/time';
 import { useAppStore } from '../../store/appStore';
 import { createCalendarHandlers } from './calendarHandlers';
@@ -16,11 +16,12 @@ const TWENTY_FOUR_HOUR = { hour: '2-digit', minute: '2-digit', hour12: false } a
 const MONDAY = 1;
 
 // PRE:  rendered under StoreProvider; reads snapshot (events, conflicts, settings), view,
-//       eventPriorityFilter and emphasisIds; uses actions.moveEvent / openDialog / setActiveRange / setView
+//       eventPriorityFilter and emphasisIds; uses actions.moveEvent / openDialog / setActiveRange / setView;
+//       calendarRef receives the FullCalendar instance (the toolbar and shortcuts drive it)
 //       + additional props from: EventContent
 // POST: shows the calendar as a controlled, render-only FullCalendar (TECH_SPEC §11.3): its events
 //       always come from the snapshot; drags, resizes, selections and clicks go to the store
-export function CalendarView() {
+export function CalendarView({ calendarRef }: { calendarRef: RefObject<FullCalendar | null> }) {
   const snapshot = useAppStore((state) => state.snapshot);
   const view = useAppStore((state) => state.view);
   const filter = useAppStore((state) => state.eventPriorityFilter);
@@ -37,6 +38,7 @@ export function CalendarView() {
 
   return (
     <FullCalendar
+      ref={calendarRef}
       plugins={PLUGINS}
       initialView={view.type}
       initialDate={fromMinute(view.date)}
