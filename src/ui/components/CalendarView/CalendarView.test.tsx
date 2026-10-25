@@ -20,6 +20,8 @@ describe('CalendarView', () => {
 
     expect(await screen.findByText('Lecture')).toBeInTheDocument();
     expect(screen.getByText('Gym')).toBeInTheDocument();
+    expect(screen.getByText('Mon 2')).toBeInTheDocument();
+    expect(screen.queryByText('all-day')).not.toBeInTheDocument();
     expect(screen.getAllByText('Fixed').length).toBeGreaterThanOrEqual(2);
     await waitFor(() =>
       expect(store.getState().view.activeRange).toEqual(iv('Mon 00:00', '2026-11-09 00:00')),

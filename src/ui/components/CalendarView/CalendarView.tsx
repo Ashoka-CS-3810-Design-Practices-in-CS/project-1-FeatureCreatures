@@ -13,7 +13,7 @@ import { toFullCalendar, type EventBlockProps } from './toFullCalendar';
 
 const PLUGINS = [timeGridPlugin, dayGridPlugin, listPlugin, interactionPlugin];
 const TWENTY_FOUR_HOUR = { hour: '2-digit', minute: '2-digit', hour12: false } as const;
-const DAY_HEADER = { weekday: 'short', day: 'numeric' } as const; // "Mon 2", as in Figure 1
+const WEEKDAY = new Intl.DateTimeFormat('en', { weekday: 'short' });
 const MONDAY = 1;
 
 // PRE:  rendered under StoreProvider; reads snapshot (events, conflicts, settings), view,
@@ -45,7 +45,9 @@ export function CalendarView({ calendarRef }: { calendarRef: RefObject<FullCalen
       initialDate={fromMinute(view.date)}
       firstDay={MONDAY}
       headerToolbar={false}
-      dayHeaderFormat={DAY_HEADER}
+      views={{
+        timeGrid: { dayHeaderContent: ({ date }) => `${WEEKDAY.format(date)} ${date.getDate()}` },
+      }}
       allDaySlot={false}
       height="100%"
       slotDuration="00:30:00"

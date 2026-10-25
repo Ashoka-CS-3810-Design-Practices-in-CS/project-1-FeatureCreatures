@@ -76,6 +76,7 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 - [~] **WI-25** Styles & tokens — owner Dv — depends on 19
   - 2026-10-26 · Claude Code · branch `feat/wi-25-styles` · started
   - 2026-10-26 · Codex · branch `feat/wi-25-styles` · done: recovered coherent global and FullCalendar styles plus calendar header changes; tokens and contrast tests already committed · next: verify main gate, review both themes and complete styling · note: preserving all previous-session work
+  - 2026-10-26 · Codex · branch `feat/wi-25-styles` · done: main gate verified (497 tests), branch gate (501), CSS Module layout, token-only colours, Chromium screenshots of light/dark Week and dark List/Month/dialog · next: final visual check and gate, finish WI-25 · note: fixed Month headers inheriting time-grid dates and text spilling out of short events; Playwright Chromium installed
 - [ ] **WI-26** Responsive drawer + a11y pass (+ optional drag preview) — owner S — depends on 21–25
 
 ### Phase 5 — Testing

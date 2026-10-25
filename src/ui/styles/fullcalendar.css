@@ -69,6 +69,17 @@
   margin-right: 2px;
 }
 
+/* Short events must not paint their text over a later time slot. Full details remain in List
+   view and the event dialog; month cells can grow to hold wrapped content. */
+.fc .fc-timegrid-event .fc-event-main {
+  overflow: hidden;
+}
+
+.fc .fc-daygrid-dot-event .event-content {
+  white-space: normal;
+  min-width: 0;
+}
+
 /* ── Barred slots: hatched background blocks with their label (FR11) ── */
 
 .fc .fc-bg-event.barred {

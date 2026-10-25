@@ -53,7 +53,7 @@ The session protocol for agents (start, commit, handoff, merge) lives in `AGENTS
 | Lint / format | ESLint (flat config, typescript-eslint, react-hooks), Prettier | Layer boundaries are enforced in ESLint (§3.2) |
 | CI | GitHub Actions | §13.1 |
 | Hosting | Vercel (static) | §13.2 |
-| Styling | CSS Modules plus one global `tokens.css` | No CSS framework |
+| Styling | CSS Modules for layout; global tokens, shared controls and FullCalendar overrides | No CSS framework |
 
 ### 1.2 Dependencies (install exactly these)
 
@@ -1398,7 +1398,8 @@ FullCalendar is a **controlled, render-only view**. Its `events` prop is always 
 <FullCalendar
   plugins={[timeGridPlugin, dayGridPlugin, listPlugin, interactionPlugin]}
   initialView="timeGridWeek" firstDay={1} headerToolbar={false} height="100%"
-  dayHeaderFormat={{ weekday: 'short', day: 'numeric' }} allDaySlot={false}   // "Mon 2"; events are never all-day
+  views={{ timeGrid: { dayHeaderContent: ({date}) => `${weekdayName(date)} ${date.getDate()}` } }}
+  allDaySlot={false}   // events are never all-day; Month retains weekday-only headers
   slotDuration="00:30:00" snapDuration="00:05:00" scrollTime="08:00:00" nowIndicator
   slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
   eventTimeFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
@@ -1455,6 +1456,8 @@ FullCalendar is a **controlled, render-only view**. Its `events` prop is always 
 ```
 
 **Event and slot styles.**
+- `App.module.css` scopes the application layout. `global.css` shares control, tag, panel, dialog and toast rules; `fullcalendar.css` overrides FullCalendar's injected styles. `main.tsx` imports the three global stylesheets in tokens → controls → calendar order.
+- Primary controls use `--on-accent` (`#ffffff` in light mode, `#14171c` in dark mode) over `--accent`. Backdrop and shadow colours also come from tokens.
 - An event block has `background: var(--prio-X-bg)`, `border-left: 4px solid var(--prio-X)` and `color: var(--text)`.
 - `.is-conflict` adds `outline: 2px dashed var(--danger)` and `outline-offset: -2px`.
 - `.barred` uses a 45° repeating-linear-gradient hatch over `var(--barred)`.
@@ -1686,3 +1689,4 @@ Production URL: https://…vercel.app
 | 2026-10-26 | v1.12 (WI-19): §1.2 pins `@fullcalendar/react` to `^6.1.22`, matching `@fullcalendar/core` and the plugins. v7 is incompatible with the v6 plugin API that §11.3 uses. |
 | 2026-10-26 | v1.13 (WI-23): §6 `bufferMinSchema` gives a non-number the buffer range message, so a blank buffer field in a form reads "Buffer must be between 0 and 120 minutes.". |
 | 2026-10-26 | v1.14 (WI-24): §2 lists `forms/settingsForm.ts` and `hooks/preferences.ts`; §11.1 gives `createAppStore` an optional `initialView` (last view, PROJECT_SCHEMA §3.2) and says what `onDatesSet` records. |
+| 2026-10-26 | v1.15 (WI-25): §1.1 and §11.4 clarify CSS Module layout and global shared styles; primary-control foreground, backdrop and shadow tokens are explicit. §11.3 uses short day headers and omits the all-day row because every event is timed. |

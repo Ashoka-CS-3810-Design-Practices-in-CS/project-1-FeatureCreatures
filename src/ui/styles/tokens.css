@@ -26,6 +26,8 @@
   --radius: 6px;
   --target-min: 32px; /* smallest click target (PROJECT_SCHEMA §7.7) */
   --side-width: 360px;
+  --backdrop: rgb(0 0 0 / 45%);
+  --shadow: rgb(0 0 0 / 20%);
 }
 
 :root[data-theme='dark'] {
