@@ -5,6 +5,7 @@ import {
   eventInputSchema,
   exportFileSchema,
   parseInput,
+  searchOptionsSchema,
   settingsSchema,
   storedEventSchema,
   storedTaskSchema,
@@ -355,4 +356,21 @@ describe('stored schemas', () => {
 
     expect(result.error?.issues.map((issue) => issue.path.join('.'))).toContain('format');
   });
+});
+
+describe('searchOptionsSchema', () => {
+  it.each([[{}], [{ bufferMin: 0 }], [{ bufferMin: 120 }]])('accepts %j', (options) => {
+    expect(parseInput(searchOptionsSchema, options).ok).toBe(true);
+  });
+
+  it.each([[-1], [121], [7.5], ['15']])(
+    'rejects bufferMin %j as InvalidInput at bufferMin',
+    (bufferMin) => {
+      const result = parseInput(searchOptionsSchema, { bufferMin });
+
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.error).toMatchObject({ code: 'InvalidInput', issues: [{ path: 'bufferMin' }] });
+    },
+  );
 });

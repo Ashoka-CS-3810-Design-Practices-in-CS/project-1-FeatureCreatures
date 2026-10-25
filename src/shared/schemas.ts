@@ -159,16 +159,21 @@ const barredSlotSchema = z
     }
   });
 
+const bufferMinSchema = z
+  .number()
+  .int()
+  .min(0, 'Buffer must be between 0 and 120 minutes.')
+  .max(MAX_BUFFER_MIN, 'Buffer must be between 0 and 120 minutes.');
+
+// The optional per-search override of the settings buffer (findSlots, suggestAlternatives, planReplan).
+export const searchOptionsSchema = z.object({ bufferMin: bufferMinSchema.optional() });
+
 export const settingsSchema = z
   .object({
     workDays: z.array(weekday).min(1, 'Pick at least one working day.'),
     workStartMin: minuteOfDayStart,
     workEndMin: minuteOfDayEnd,
-    bufferMin: z
-      .number()
-      .int()
-      .min(0, 'Buffer must be between 0 and 120 minutes.')
-      .max(MAX_BUFFER_MIN, 'Buffer must be between 0 and 120 minutes.'),
+    bufferMin: bufferMinSchema,
     barredSlots: z.array(barredSlotSchema),
     defaultCriterion: z.enum(['earliest', 'bestFit', 'priorityAware']),
   })
