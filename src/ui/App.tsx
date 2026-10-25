@@ -1,7 +1,9 @@
 import { CalendarView } from './components/CalendarView/CalendarView';
 import { ConfirmDialog } from './components/ConfirmDialog/ConfirmDialog';
+import { ConflictPanel } from './components/ConflictPanel/ConflictPanel';
 import { EmptyState } from './components/EmptyState/EmptyState';
 import { EventDialog } from './components/EventDialog/EventDialog';
+import { SlotPicker } from './components/SlotPicker/SlotPicker';
 import { TaskDialog } from './components/TaskDialog/TaskDialog';
 import { TaskPanel } from './components/TaskPanel/TaskPanel';
 import { Toasts } from './components/Toasts/Toasts';
@@ -36,11 +38,11 @@ function FatalScreen() {
 }
 
 // PRE:  rendered under StoreProvider; reads status, storageWarning and snapshot
-//       + additional props from: EmptyState, CalendarView, TaskPanel, EventDialog, TaskDialog,
-//       ConfirmDialog, Toasts, FatalScreen
+//       + additional props from: EmptyState, CalendarView, TaskPanel, ConflictPanel, EventDialog,
+//       TaskDialog, ConfirmDialog, SlotPicker, Toasts, FatalScreen
 // POST: shows the loading line, the fatal screen, or the app: the degraded-mode banner when
 //       storage is unavailable, the empty state on a blank calendar, the status line, the
-//       calendar, the task panel, the open dialog and the toasts
+//       calendar, the task and conflict panels, the open dialog, the picker and the toasts
 export function App() {
   const status = useAppStore((state) => state.status);
   const storageWarning = useAppStore((state) => state.storageWarning);
@@ -66,7 +68,6 @@ export function App() {
       </header>
       <main>
         {isEmpty && <EmptyState />}
-        {/* Status line; the conflict panel (WI-21) will list the conflicts themselves. */}
         <p className="status-line">
           {countOf(snapshot.events.length, 'event')} · {countOf(snapshot.tasks.length, 'task')} ·{' '}
           {countOf(snapshot.conflicts.length, 'conflict')}
@@ -75,10 +76,12 @@ export function App() {
       </main>
       <aside>
         <TaskPanel />
+        <ConflictPanel />
       </aside>
       <EventDialog />
       <TaskDialog />
       <ConfirmDialog />
+      <SlotPicker />
       <Toasts />
     </div>
   );

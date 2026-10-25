@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-21 Conflict panel + SlotPicker (branch `feat/wi-21-picker`).
-- **Last session:** 2026-10-26 · Claude Code · finished and merged WI-08–WI-20 (tag `m3`); started WI-21.
+- **Active WI:** none — next is WI-22 Replan dialog (WI-23, WI-24, WI-25 and WI-28 are also unblocked).
+- **Last session:** 2026-10-26 · Claude Code · finished and merged WI-08–WI-21 (tag `m3`).
 - **Gate status on `main`:** green (typecheck, lint, test; also test:dst, test:coverage, build).
 
 ## Work items
@@ -65,8 +65,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-26 · Claude Code · branch `feat/wi-19-calendar` · done: `@fullcalendar/react` pinned to v6; `forms/eventForm.ts` (converters, category defaults, resolver); store event actions; `format/explain.ts` (all toast sentences); `CalendarView/{CalendarView,toFullCalendar,calendarHandlers,EventContent}`; `EventDialog`, `ConfirmDialog`, mounted in App; tests: T14 (`calendarHandlers.test.tsx`), EventDialog UI cases + T5 UI, CalendarView jsdom smoke test · next: WI-20 · note: **T14's ConflictPanel line belongs to WI-21**. App keeps a one-line status ("N events · N tasks · N conflicts") above the calendar. There is no toolbar "+ Event" yet (WI-24): events are created by selecting time on the calendar, and a dialog opened without times gets the next whole hour. The `ErrorText` helper in `EventDialog.tsx` could be shared with TaskDialog
 - [x] **WI-20** Task panel + TaskDialog — owner S — depends on 18
   - 2026-10-26 · Claude Code · branch `feat/wi-20-tasks` · done: `store/selectors.ts` (`visibleTasks`, T30), `forms/taskForm.ts` + resolver, store task actions, panel state, `openTaskPicker` (store side: BR-11 queue + first `findSlots`), shared `Modal/ErrorText.tsx`, `TaskDialog`, `TaskPanel` (mounted in an aside); tests: T30 (selectors + panel UI), T31 UI, TaskDialog cases · next: WI-21 · note: **`picker` state is set by `openTaskPicker`, but nothing renders it yet**. WI-21 adds the `SlotPicker` UI plus `pickerApply` / `pickerSkip` / `pickerStop` / criterion and buffer changes, and the alternatives mode. T30's "(hidden by filter)" ConflictPanel line is WI-21's too. The panel has no context menu: each row's Edit button covers it (revisit in WI-26)
-- [~] **WI-21** Conflict panel + SlotPicker (both modes) — owner S — depends on 19, 20
-  - 2026-10-26 · Claude Code · branch `feat/wi-21-picker` · done: claimed · next: `format/explain.ts` slot explanations, picker store actions, `SlotPicker`, `ConflictPanel`; T17-UI, T20-UI, §5 SlotPicker cases, T14's ConflictPanel line, T30's "(hidden by filter)"
+- [x] **WI-21** Conflict panel + SlotPicker (both modes) — owner S — depends on 19, 20
+  - 2026-10-26 · Claude Code · branch `feat/wi-21-picker` · done: `format/explain.ts` slot explanations (summary line, BR-7 reasons, BR-8 boundaries, fit, queue summary); picker store actions (`openAlternatives`, select, criterion, buffer, toggle, apply, skip, stop); `SlotPicker` (task + alternatives modes, ER2/ER3 block with Edit task); `ConflictPanel` (50-row limit, "(hidden by filter)"); both mounted in App; tests: §5 SlotPicker cases (T6 summary, T10 re-order, radio group), T17-UI incl. skip, T20-UI, ER7 refresh, T14's panel line, T30's hidden note · next: WI-22 · note: ER7 (`StaleResult`) toasts are now `info`, not `error` (PROJECT_SCHEMA §7.4). The ER4 "View conflict" action only emphasises the pair; scrolling the panel to it could be WI-26 polish
 - [ ] **WI-22** Replan dialog — owner S — depends on 21
 - [ ] **WI-23** Settings dialog + data section — owner S — depends on 18
 - [ ] **WI-24** Toolbar, theme, shortcuts, help — owner Dv — depends on 19
