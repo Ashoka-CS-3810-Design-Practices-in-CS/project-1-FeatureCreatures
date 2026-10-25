@@ -70,6 +70,11 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 - [ ] **WI-30** README & demo scripts — owner S + Dv — depends on 29
 - [ ] **WI-31** Final docs sync — owner S + Dv — depends on 30
 
+## Milestones
+
+- **m1** (2026-10-25) — Phase 1 Setup: Vite/React/TS scaffold, ESLint layer boundaries, Vitest (UTC + DST), Playwright config, CI workflow; first Vercel deploy done by the humans.
+- **m2** (2026-10-25) — Phase 2 Core types and data: frozen shared types/constants/result/errors, Zod schemas with `parseInput`, DST-safe local-time module, interval/sortedArray/minHeap, Memory + Dexie repositories (atomic), test helpers and brute-force oracles. 105 unit tests + 4 DST tests, 100% coverage of `src/`.
+
 ## Human-only steps
 
 - [ ] Connect the GitHub Classroom repo as `origin` and push `main`.
