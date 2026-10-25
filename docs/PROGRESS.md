@@ -103,6 +103,7 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 - [~] **WI-30** README & demo scripts — owner S + Dv — depends on 29
   - 2026-10-26 · Codex · branch `docs/wi-30-demo` · done: verified WI-29 main gate and read D1–D5/release requirements · next: complete README, reproducible six-sample JSON exports and rehearsal guide; production rehearsal needs the human deployment step
+  - 2026-10-26 · Codex · branch `docs/wi-30-demo` · done: generated and schema-validated all six JSON sample deliverables for 2026-11-02 UTC using an existing-Vite-module-loader script · next: README, sample guide, repeat-generation check and local gate; keep WI-30 open until production D1–D5 rehearsal
 - [ ] **WI-31** Final docs sync — owner S + Dv — depends on 30
 
 ## Milestones

@@ -1,0 +1,96 @@
+{
+  "format": "feature-creatures-calendar",
+  "version": 1,
+  "exportedAt": "2026-11-02T00:00:00.000Z",
+  "events": [
+    {
+      "id": "booked-1",
+      "title": "Workshop",
+      "description": "",
+      "category": "meeting",
+      "priority": "medium",
+      "start": 29897820,
+      "end": 29897910,
+      "flexible": false,
+      "flexWindow": null,
+      "taskId": null,
+      "createdAt": 29892960,
+      "updatedAt": 29892960
+    },
+    {
+      "id": "booked-2",
+      "title": "Review",
+      "description": "",
+      "category": "meeting",
+      "priority": "medium",
+      "start": 29897910,
+      "end": 29898000,
+      "flexible": false,
+      "flexWindow": null,
+      "taskId": null,
+      "createdAt": 29892960,
+      "updatedAt": 29892960
+    },
+    {
+      "id": "booked-3",
+      "title": "Client call",
+      "description": "",
+      "category": "meeting",
+      "priority": "medium",
+      "start": 29898015,
+      "end": 29898120,
+      "flexible": false,
+      "flexWindow": null,
+      "taskId": null,
+      "createdAt": 29892960,
+      "updatedAt": 29892960
+    },
+    {
+      "id": "booked-4",
+      "title": "Planning",
+      "description": "",
+      "category": "meeting",
+      "priority": "medium",
+      "start": 29898120,
+      "end": 29898360,
+      "flexible": false,
+      "flexWindow": null,
+      "taskId": null,
+      "createdAt": 29892960,
+      "updatedAt": 29892960
+    }
+  ],
+  "tasks": [
+    {
+      "id": "booked-task",
+      "name": "Quick email",
+      "description": "",
+      "category": "assignment",
+      "priority": "medium",
+      "durationMin": 30,
+      "window": {
+        "start": 29897820,
+        "end": 29898360
+      },
+      "useWorkingHours": true,
+      "status": "unscheduled",
+      "scheduledEventId": null,
+      "createdAt": 29892960,
+      "updatedAt": 29892960
+    }
+  ],
+  "settings": {
+    "workDays": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "workStartMin": 540,
+    "workEndMin": 1080,
+    "bufferMin": 0,
+    "barredSlots": [],
+    "defaultCriterion": "earliest"
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "format": "feature-creatures-calendar",
+  "version": 1,
+  "exportedAt": "2026-11-02T00:00:00.000Z",
+  "events": [
+    {
+      "id": "midnight-late",
+      "title": "Late shift",
+      "description": "",
+      "category": "meeting",
+      "priority": "medium",
+      "start": 29894340,
+      "end": 29894460,
+      "flexible": false,
+      "flexWindow": null,
+      "taskId": null,
+      "createdAt": 29892960,
+      "updatedAt": 29892960
+    },
+    {
+      "id": "midnight-early",
+      "title": "Night call",
+      "description": "",
+      "category": "meeting",
+      "priority": "medium",
+      "start": 29894430,
+      "end": 29894490,
+      "flexible": false,
+      "flexWindow": null,
+      "taskId": null,
+      "createdAt": 29892960,
+      "updatedAt": 29892960
+    }
+  ],
+  "tasks": [],
+  "settings": {
+    "workDays": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "workStartMin": 540,
+    "workEndMin": 1080,
+    "bufferMin": 0,
+    "barredSlots": [],
+    "defaultCriterion": "earliest"
+  }
+}
