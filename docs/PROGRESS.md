@@ -6,8 +6,8 @@ Production URL: _not deployed yet_
 
 ## Current state
 
-- **Active WI:** none — start at WI-01.
-- **Last session:** repo setup by the humans (docs, AGENTS.md, skill, git init). No code yet.
+- **Active WI:** WI-01 Scaffold & tooling (branch `feat/wi-01-scaffold`).
+- **Last session:** 2026-10-25 · Claude Code · claimed WI-01.
 - **Gate status on `main`:** n/a (no package.json yet).
 
 ## Work items
@@ -16,7 +16,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 ### Phase 1 — Setup
 
-- [ ] **WI-01** Scaffold & tooling — owner Dv — depends on —
+- [~] **WI-01** Scaffold & tooling — owner Dv — depends on —
+  - 2026-10-25 · Claude Code · branch `feat/wi-01-scaffold` · done: claimed · next: scaffold Vite via vite-tmp, configs §12, ESLint §3.2, CI §13.1
 
 ### Phase 2 — Core types and data
 
