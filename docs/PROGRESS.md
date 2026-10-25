@@ -6,9 +6,9 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-29 Coverage & bug bash, branch `test/wi-29-coverage`.
-- **Last session:** 2026-10-26 · Codex · finished and merged WI-25–28; started WI-29.
-- **Gate status on `main`:** verified green after WI-28 merge (typecheck, lint, 508 tests; T15 intentionally skipped by default); T15 enabled and benchmark pass.
+- **Active WI:** none; next WI-30 README & demo scripts.
+- **Last session:** 2026-10-26 · Codex · completed WI-29 coverage, full properties and browser bug bash.
+- **Gate status on `main`:** green after WI-28; WI-29 coverage passes (508 tests, T15 opt-in), 5 full-property tests, 6 DST cases, build and 6 Chromium checks pass.
 
 ## Work items
 
@@ -95,8 +95,9 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-26 · Codex · branch `feat/wi-28-benchmarks` · done: read T15 and verified main gate · next: seed-7 stress fixture, gated eleven-run median assertion and Vitest benchmark report including k
   - 2026-10-26 · Codex · branch `feat/wi-28-benchmarks` · done: shared seed-7 fixture/query, gated eleven-run T15 assertion (N=5000, k=183, median 1.201 ms), benchmark and portable verbose scripts; README records measurement · next: final gate and merge · note: installed Vitest 5 uses context.bench inside a test; default reporter hides successful logs, so perf/bench scripts use verbose
   - 2026-10-26 · Codex · branch `feat/wi-28-benchmarks` · done: typecheck/lint and 508 tests pass (T15 separately enabled and green); benchmark prints k=183 and mean 0.2665 ms; default seed-42 sample unchanged · next: WI-29 · note: Vitest warns of module-export getter overhead in benchmark runs; numbers describe the local test runner, not production latency
-- [~] **WI-29** Coverage & bug bash — owner S + Dv — depends on 27, 28
+- [x] **WI-29** Coverage & bug bash — owner S + Dv — depends on 27, 28
   - 2026-10-26 · Codex · branch `test/wi-29-coverage` · done: verified WI-28 main gate · next: coverage thresholds, 10,000-run random-seed properties, DST/build/browser checks and remaining UI bug bash
+  - 2026-10-26 · Codex · branch `test/wi-29-coverage` · done: coverage 98.25% lines / 92.85% branches overall; algorithms 99.65% / 95.76% with 100% functions; T12/T33–T36 each pass 10,000 random-seed cases; 6 DST cases, build and all 6 browser checks pass · next: WI-30 · note: no new failing seed or blocker; Vite retains the existing large-bundle warning, and production manual checks remain human-only
 
 ### Phase 6 — Docs and demo
 
@@ -105,6 +106,7 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 ## Milestones
 
+- **m5** (2026-10-26) — Phase 5 Testing: E1–E3 plus three accessibility browser checks, reproducible T15 (N=5000, seed=7, k=183; eleven-run median 1.201 ms), coverage above thresholds, all five 10,000-case properties and six DST cases green.
 - **m4** (2026-10-26) — Phase 4 UI: all calendar/task/conflict/replan/settings workflows, toolbar/theme/shortcuts, both-theme styles, responsive native drawer and loading feedback; 507 tests and 3 Chromium accessibility checks green. Production visual/screen-reader release checks remain human-only.
 - **m1** (2026-10-25) — Phase 1 Setup: Vite/React/TS scaffold, ESLint layer boundaries, Vitest (UTC + DST), Playwright config, CI workflow; first Vercel deploy done by the humans.
 - **m3** (2026-10-26) — Phase 3 Algorithms and engine: conflict sweep (min-heap), busy merge, allowed segments, free gaps, day loads, BR-7 ranking, BR-10 target, BR-11 queue order, BR-12 replan heuristics; engine state with reversible changes and bounded history; the facade with its command queue and all four pipelines; undo/redo, export/import with cross-record checks, six samples. 296 unit/integration/property tests + 6 DST tests, 99.5% line coverage; T1–T13, T16–T36 engine parts green.
@@ -114,7 +116,7 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 - [ ] Before presenting the release, run TEST_PLAN §7 on production, including the devtools contrast picker and an NVDA/VoiceOver announcement check. Local Chromium layout/focus/semantic-name checks and both-theme contrast-token tests pass; live screen-reader control is unavailable in this environment.
 - [ ] Connect the GitHub Classroom repo as `origin` and push `main`.
-- [ ] Push the WI branches and milestone tags too: `git push origin --all` and `git push origin --tags` (tags `m1`, `m2`, `m3`, `m4` exist locally).
+- [ ] Push the WI branches and milestone tags too: `git push origin --all` and `git push origin --tags` (tags `m1`–`m5` exist locally).
 - [x] First Vercel deploy (TECH_SPEC §13.2) and paste the URL at the top of this file.
 - [ ] Turn on branch protection for `main` on GitHub (optional).
 
