@@ -25,6 +25,8 @@ playwright/.cache/
 .DS_Store
 Thumbs.db
 *.log
+logs/
+*.sw?
 
 # per-machine agent settings (shared ones are committed)
 .claude/settings.local.json
