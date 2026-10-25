@@ -15,6 +15,7 @@ import {
   type PipelineContext,
   type PipelineOutcome,
   type RecordChange,
+  unchangedOutcome,
 } from '../state';
 
 const MAX_RANGE_MIN = MAX_REPLAN_DAYS * MINUTES_PER_DAY + REPLAN_DST_SLACK_MIN;
@@ -92,14 +93,7 @@ export async function applyReplan(
   const [minimalChange, balanced] = lastReplan.plans;
   const plan = request.planId === 'balanced' ? balanced : minimalChange;
   if (plan.moves.length === 0) {
-    return ok({
-      state: context.state,
-      label: '',
-      changedEventIds: [],
-      introducedConflicts: [],
-      resolvedConflicts: [],
-      suggestion: null,
-    });
+    return ok(unchangedOutcome(context.state));
   }
 
   const byId = new Map(context.state.events.map((event) => [event.id, event]));

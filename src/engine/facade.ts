@@ -32,7 +32,13 @@ import {
   updateTask,
 } from './pipelines/taskScheduler';
 import { notBeforeFor } from './search';
-import { createState, type EngineState, type PipelineContext, type PipelineOutcome } from './state';
+import {
+  createState,
+  replay,
+  type EngineState,
+  type PipelineContext,
+  type PipelineOutcome,
+} from './state';
 
 export interface EngineDeps {
   repo: Repository;
@@ -347,15 +353,17 @@ class CalendarEngine implements Engine {
   }
 
   // PRE:  none
-  // POST: not implemented until WI-17
+  // POST: as state.replay('undo'), queued: undoes the newest change (B1), or returns ok with the
+  //       same snapshot and the label '' when there is nothing to undo
   undo(): Promise<Result<MutationResult>> {
-    return notImplementedUntil('WI-17');
+    return this.mutate((context) => replay(context, 'undo'));
   }
 
   // PRE:  none
-  // POST: not implemented until WI-17
+  // POST: as state.replay('redo'), queued: redoes the newest undone change, or returns ok with the
+  //       same snapshot and the label '' when there is nothing to redo
   redo(): Promise<Result<MutationResult>> {
-    return notImplementedUntil('WI-17');
+    return this.mutate((context) => replay(context, 'redo'));
   }
 
   // PRE:  none
