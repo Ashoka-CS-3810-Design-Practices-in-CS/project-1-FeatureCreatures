@@ -6,9 +6,9 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** none; next WI-26 Responsive drawer + a11y pass (WI-28 is also unblocked).
-- **Last session:** 2026-10-26 · Codex · recovered and completed WI-25 styling.
-- **Gate status on `main`:** verified green at WI-24 (typecheck, lint, 497 tests); WI-25 branch gate green (501 tests) and build green.
+- **Active WI:** WI-26 Responsive drawer + a11y pass, branch `feat/wi-26-accessibility` (WI-28 is also unblocked).
+- **Last session:** 2026-10-26 · Codex · recovered, finished and merged WI-25; started WI-26.
+- **Gate status on `main`:** verified green after WI-25 merge (typecheck, lint, 501 tests); build also green.
 
 ## Work items
 
@@ -78,7 +78,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-26 · Codex · branch `feat/wi-25-styles` · done: recovered coherent global and FullCalendar styles plus calendar header changes; tokens and contrast tests already committed · next: verify main gate, review both themes and complete styling · note: preserving all previous-session work
   - 2026-10-26 · Codex · branch `feat/wi-25-styles` · done: main gate verified (497 tests), branch gate (501), CSS Module layout, token-only colours, Chromium screenshots of light/dark Week and dark List/Month/dialog · next: final visual check and gate, finish WI-25 · note: fixed Month headers inheriting time-grid dates and text spilling out of short events; Playwright Chromium installed
   - 2026-10-26 · Codex · branch `feat/wi-25-styles` · done: both themes pass all contrast-token pairs and local Chromium visual checks; Month keeps weekday-only headings, Day/Week show Mon 2; conflict text comes first so short blocks retain the warning · next: WI-26 · note: production devtools/NVDA checklist remains manual; screenshots in ignored `test-results/appearance/`
-- [ ] **WI-26** Responsive drawer + a11y pass (+ optional drag preview) — owner S — depends on 21–25
+- [~] **WI-26** Responsive drawer + a11y pass (+ optional drag preview) — owner S — depends on 21–25
+  - 2026-10-26 · Codex · branch `feat/wi-26-accessibility` · done: verified WI-25 main gate and reviewed TEST_PLAN §7 · next: native responsive drawer, dialog focus return, targets/event labels, sample/large-import overlay, keyboard/browser verification · note: optional drag preview deferred; existing List view and event dialog provide text/keyboard alternatives
 
 ### Phase 5 — Testing
 
