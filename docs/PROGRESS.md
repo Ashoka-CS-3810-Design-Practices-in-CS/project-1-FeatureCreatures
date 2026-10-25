@@ -6,9 +6,9 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-26 Responsive drawer + a11y pass, branch `feat/wi-26-accessibility` (WI-28 is also unblocked).
-- **Last session:** 2026-10-26 · Codex · recovered, finished and merged WI-25; started WI-26.
-- **Gate status on `main`:** verified green after WI-25 merge (typecheck, lint, 501 tests); build also green.
+- **Active WI:** none; next WI-27 Playwright E1–E3 (WI-28 is also unblocked).
+- **Last session:** 2026-10-26 · Codex · finished WI-26 responsive panels, loading feedback and accessibility checks.
+- **Gate status on `main`:** green after WI-25 (501 tests); WI-26 branch gate green (507 tests), build and 3 Chromium accessibility tests green.
 
 ## Work items
 
@@ -78,8 +78,11 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-26 · Codex · branch `feat/wi-25-styles` · done: recovered coherent global and FullCalendar styles plus calendar header changes; tokens and contrast tests already committed · next: verify main gate, review both themes and complete styling · note: preserving all previous-session work
   - 2026-10-26 · Codex · branch `feat/wi-25-styles` · done: main gate verified (497 tests), branch gate (501), CSS Module layout, token-only colours, Chromium screenshots of light/dark Week and dark List/Month/dialog · next: final visual check and gate, finish WI-25 · note: fixed Month headers inheriting time-grid dates and text spilling out of short events; Playwright Chromium installed
   - 2026-10-26 · Codex · branch `feat/wi-25-styles` · done: both themes pass all contrast-token pairs and local Chromium visual checks; Month keeps weekday-only headings, Day/Week show Mon 2; conflict text comes first so short blocks retain the warning · next: WI-26 · note: production devtools/NVDA checklist remains manual; screenshots in ignored `test-results/appearance/`
-- [~] **WI-26** Responsive drawer + a11y pass (+ optional drag preview) — owner S — depends on 21–25
+- [x] **WI-26** Responsive drawer + a11y pass (+ optional drag preview) — owner S — depends on 21–25
   - 2026-10-26 · Codex · branch `feat/wi-26-accessibility` · done: verified WI-25 main gate and reviewed TEST_PLAN §7 · next: native responsive drawer, dialog focus return, targets/event labels, sample/large-import overlay, keyboard/browser verification · note: optional drag preview deferred; existing List view and event dialog provide text/keyboard alternatives
+  - 2026-10-26 · Codex · branch `feat/wi-26-accessibility` · done: native responsive panels, nested Esc/focus return, 32 px controls, sample/large-import feedback and error cleanup; 207 UI tests pass; Chromium desktop/drawer/focus check passes · next: complete keyboard-edit browser regression and final gate · note: found custom List content had replaced FullCalendar's keyboard anchor; restoring it with a native event button
+  - 2026-10-26 · Codex · branch `feat/wi-26-accessibility` · done: Chromium drawer and keyboard List edit/move/resize regressions both green; complete event names refresh after edits · next: check remaining dialog types, full gate and merge · note: native List buttons restore keyboard activation removed by the custom renderer
+  - 2026-10-26 · Codex · branch `feat/wi-26-accessibility` · done: gate 507 tests, build and 3 Chromium accessibility checks (1280/1024/900 px, targets, nested drawer, dialog families, focus return, complete names, keyboard move/resize); sample and >1,000-record overlay with failure cleanup · next: WI-27 · note: production devtools/NVDA release checks remain human-only; optional drag preview omitted
 
 ### Phase 5 — Testing
 
@@ -100,6 +103,7 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 ## Human-only steps
 
+- [ ] Before presenting the release, run TEST_PLAN §7 on production, including the devtools contrast picker and an NVDA/VoiceOver announcement check. Local Chromium layout/focus/semantic-name checks and both-theme contrast-token tests pass; live screen-reader control is unavailable in this environment.
 - [ ] Connect the GitHub Classroom repo as `origin` and push `main`.
 - [ ] Push the WI branches and milestone tags too: `git push origin --all` and `git push origin --tags` (tags `m1`, `m2`, `m3` exist locally).
 - [x] First Vercel deploy (TECH_SPEC §13.2) and paste the URL at the top of this file.
@@ -126,5 +130,3 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 - 2026-10-26 (WI-23, Claude Code): `bufferMinSchema` gives a non-number the buffer range message (TECH_SPEC v1.13), so a blank buffer field reads "Buffer must be between 0 and 120 minutes." instead of Zod's generic type error.
 - 2026-10-26 (WI-24, Claude Code): the slot picker counts as an open dialog for shortcuts (it is a modal `<dialog>`), so letters do nothing while it is open; Esc closes the dialog if one is open, else stops the picker.
 - 2026-10-26 (WI-24, Claude Code): Esc closes the top dialog even when focus is in one of its fields, matching the native `<dialog>` behaviour; every other shortcut is off in text fields.
-  - 2026-10-26 · Codex · branch `feat/wi-26-accessibility` · done: native responsive panels, nested Esc/focus return, 32 px controls, sample/large-import feedback and error cleanup; 207 UI tests pass; Chromium desktop/drawer/focus check passes · next: complete keyboard-edit browser regression and final gate · note: found custom List content had replaced FullCalendar's keyboard anchor; restoring it with a native event button
-  - 2026-10-26 · Codex · branch `feat/wi-26-accessibility` · done: Chromium drawer and keyboard List edit/move/resize regressions both green; complete event names refresh after edits · next: check remaining dialog types, full gate and merge · note: native List buttons restore keyboard activation removed by the custom renderer

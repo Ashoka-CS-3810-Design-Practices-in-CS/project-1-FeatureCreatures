@@ -229,6 +229,8 @@ Each test does `page.clock.install({ time: new Date('2026-11-02T08:00:00') })` b
 
 ### 7.1 Accessibility
 
+Local automated evidence (WI-25/26): `src/ui/styles/tokens.test.ts` checks light/dark foreground pairs; `e2e/accessibility.spec.ts` checks desktop widths, drawer, minimum control targets, dialog keyboard/focus behavior and List event names/editing. The production devtools and live screen-reader items below still need a human check.
+
 - [ ] Every conflict is identifiable without colour: the ⚠ icon plus the word "Conflict".
 - [ ] Every priority is identifiable without colour: the [H] / [M] / [L] tag.
 - [ ] Text contrast is at least 4.5:1 in light and dark mode, checked with the browser devtools contrast picker on:

@@ -1431,7 +1431,7 @@ FullCalendar is a **controlled, render-only view**. Its `events` prop is always 
 ```
 
 - `conflictMinutes` is the largest overlap minutes among the event's conflicts.
-- Each entry also carries a complete accessible `label` from `format/explain.ts`: title, date/time range, priority, kind and conflict. `EventContent` updates the FullCalendar button's accessible name and native tooltip whenever the label changes. Short blocks keep a 32 px minimum target; the complete text remains available in List view and the dialog.
+- Each entry also carries a complete accessible `label` from `format/explain.ts`: title, date/time range, priority, kind and conflict. `EventContent` updates the FullCalendar button's accessible name and native tooltip whenever the label changes. List custom content supplies a native button to retain the keyboard activation that would otherwise be lost with FullCalendar's default anchor. Short blocks keep a 32 px minimum target; the complete text remains available in List view and the dialog.
 - Barred slots for the visible range are added as `{display: 'background', classNames: ['barred'], title: label}` entries, one per day, built with `buildDayFrames(activeRange, settings)`.
 - The function is pure and memoised on `snapshot.version`, the filter, `activeRange` and `emphasisIds`.
 

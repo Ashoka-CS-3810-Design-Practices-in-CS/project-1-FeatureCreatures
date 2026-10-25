@@ -5,6 +5,12 @@ const VIEWPORT_HEIGHT = 900;
 const DESKTOP_WIDTHS = [1280, 1024];
 const NARROW_WIDTH = 900;
 const MIN_TARGET_SIZE = 32;
+const DIALOG_CASES = [
+  { button: '+ Event', title: 'New event' },
+  { button: '+ Task', title: 'New task' },
+  { button: 'Replan', title: 'Replan' },
+  { button: 'Settings', title: 'Settings' },
+];
 
 // PRE:  page has fresh storage
 // POST: loads the sparse sample in the base week and waits until its loading overlay closes
@@ -93,4 +99,64 @@ test('List event names are complete and keyboard editing can move and resize an 
   await expect(moved).toBeVisible();
   await expect(moved).toBeFocused();
   await expect(page.getByText('No conflicts', { exact: true })).toBeVisible();
+});
+
+test('dialog types keep keyboard focus and restore their connected trigger', async ({ page }) => {
+  await loadSample(page);
+
+  // INVARIANT: each visited toolbar dialog traps focus and returns it to the original trigger
+  for (const dialogCase of DIALOG_CASES) {
+    const trigger = page.getByRole('button', { name: dialogCase.button, exact: true });
+    await trigger.click();
+    const dialog = page.getByRole('dialog', { name: dialogCase.title, exact: true });
+    await expect(dialog).toBeVisible();
+    await page.keyboard.press('Shift+Tab');
+    // Chromium permits browser-chrome focus at the boundary, but no background page control.
+    expect(
+      await dialog.evaluate(
+        (element) =>
+          element.contains(document.activeElement) || document.activeElement === document.body,
+      ),
+    ).toBe(true);
+    await page.keyboard.press('Tab');
+    expect(await dialog.evaluate((element) => element.contains(document.activeElement))).toBe(true);
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+    await expect(trigger).toBeFocused();
+  }
+  // POST: event, task, replan and settings dialogs satisfy keyboard focus and Esc behavior
+
+  await page.keyboard.press('?');
+  await expect(page.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  const settingsTrigger = page.getByRole('button', { name: 'Settings', exact: true });
+  await settingsTrigger.click();
+  await page.getByRole('button', { name: 'Clear all data', exact: true }).click();
+  const confirmation = page.getByRole('dialog', { name: 'Clear all data?' });
+  await expect(confirmation).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(confirmation).toBeHidden();
+  await expect(settingsTrigger).toBeFocused();
+
+  const taskRow = page
+    .locator('.task-row')
+    .filter({ has: page.getByText('Write report', { exact: true }) });
+  const findTime = taskRow.getByRole('button', { name: 'Find time', exact: true });
+  await findTime.click();
+  const picker = page.getByRole('dialog', { name: /^Find time/ });
+  await expect(picker).toBeVisible();
+  await expect(picker.getByRole('group', { name: 'Available slots' })).toBeVisible();
+  await page.keyboard.press('Shift+Tab');
+  expect(
+    await picker.evaluate(
+      (element) =>
+        element.contains(document.activeElement) || document.activeElement === document.body,
+    ),
+  ).toBe(true);
+  await page.keyboard.press('Tab');
+  expect(await picker.evaluate((element) => element.contains(document.activeElement))).toBe(true);
+  await page.keyboard.press('Escape');
+  await expect(picker).toBeHidden();
+  await expect(findTime).toBeFocused();
+  await expect(page.getByLabel('Notifications')).toHaveAttribute('aria-live', 'polite');
 });
