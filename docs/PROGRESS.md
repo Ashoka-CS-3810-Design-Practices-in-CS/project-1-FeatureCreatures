@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** none — next is WI-11 Task order + replan heuristics (WI-12 is also unblocked).
-- **Last session:** 2026-10-26 · Claude Code · finished and merged WI-08, WI-09 and WI-10.
+- **Active WI:** WI-11 Task order + replan heuristics (branch `feat/wi-11-replan`).
+- **Last session:** 2026-10-26 · Claude Code · finished and merged WI-08, WI-09 and WI-10; started WI-11.
 - **Gate status on `main`:** green (typecheck, lint, test; also test:dst, test:coverage, build).
 
 ## Work items
@@ -42,7 +42,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-26 · Claude Code · branch `feat/wi-09-gaps` · done: `algorithms/{merge,segments,gaps}.ts` with the §4.3 unit tests; T33 in `gaps.props.test.ts` (green at 10,000 random-seed runs; a skip-too-far mutation is caught) · next: WI-10 · note: no-working-hours segments are the window minus barred slots in one pass, not per day plus merge (TECH_SPEC v1.5); gap boundaries read `bufferMin` back from the block; `allowedSegments` expects `notBefore` already rounded up to `SNAP_MIN` (the caller's job, WI-13 `search.ts`)
 - [x] **WI-10** Day load + ranking — owner S — depends on 09
   - 2026-10-26 · Claude Code · branch `feat/wi-10-rank` · done: `algorithms/{dayLoad,rank}.ts` with the §4.3 unit tests (T10 orders, clamp, every tie-break); T34 in `rank.props.test.ts` (green at 10,000 runs; a key-order mutation is caught) · next: WI-11 · note: `computeDayLoads` returns an entry for every frame (0 on non-working days); the frame builder moved to `tests/helpers/builders.ts` as `dayFrame()`; ranking criteria are the Strategy pattern (`sortKey` in `rank.ts`)
-- [ ] **WI-11** Task order + replan heuristics — owner S — depends on 10
+- [~] **WI-11** Task order + replan heuristics — owner S — depends on 10
+  - 2026-10-26 · Claude Code · branch `feat/wi-11-replan` · done: claimed · next: `taskOrder.ts`, `replanHeuristics.ts`, unit tests (incl. T22/T23 values at algorithm level), T35
 - [ ] **WI-12** Engine state & commit & history — owner Dv — depends on 06, 08
 - [ ] **WI-13** Facade + Event CRUD — owner Dv — depends on 12, 10
 - [ ] **WI-14** Task Scheduler pipeline — owner Dv — depends on 13
