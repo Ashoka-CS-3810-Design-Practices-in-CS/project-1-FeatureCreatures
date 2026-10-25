@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** none — next is WI-17 Undo/redo, import/export, samples (the last engine WI).
-- **Last session:** 2026-10-26 · Claude Code · finished and merged WI-08–WI-16.
+- **Active WI:** WI-17 Undo/redo, import/export, samples (branch `feat/wi-17-history-io`).
+- **Last session:** 2026-10-26 · Claude Code · finished and merged WI-08–WI-16; started WI-17.
 - **Gate status on `main`:** green (typecheck, lint, test; also test:dst, test:coverage, build).
 
 ## Work items
@@ -54,7 +54,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-26 · Claude Code · branch `feat/wi-15-alternatives` · done: `applyAlternative` in `pipelines/conflictResolution.ts`, wired into the facade; `tests/integration/conflictResolution.test.ts` covers T20 (target, nearest options, apply resolves, the toggle's 3-day window and options) plus StaleResult / wrong length / NotFound · next: WI-16 · note: `eventCrud` ↔ `conflictResolution` import each other (ER4 suggestion ↔ moveEvent); this is safe because the calls happen at run time only, and a comment says why
 - [x] **WI-16** Replan pipeline — owner S — depends on 11, 13
   - 2026-10-26 · Claude Code · branch `feat/wi-16-replan-pipeline` · done: `pipelines/replan.ts` + facade `planReplan` / `applyReplan` with private `lastReplan`; `tests/integration/replan.test.ts` covers T22, T23 (a) and its apply, T27's replan half and T28 (c), plus range/buffer validation · next: WI-17 · note: **T23 (b)'s `undo()` step (Read back at Mon 14:00) belongs in WI-17's tests**; WI-17's `importData` must clear `lastReplan` (§7.4.6); new constant `REPLAN_DST_SLACK_MIN` (TECH_SPEC v1.9)
-- [ ] **WI-17** Undo/redo, import/export, samples — owner Dv — depends on 13
+- [~] **WI-17** Undo/redo, import/export, samples — owner Dv — depends on 13
+  - 2026-10-26 · Claude Code · branch `feat/wi-17-history-io` · done: claimed · next: undo/redo (T24, T23 b), `linkIssues` + import/export (T25), samples + `mulberry32`, T36
 
 ### Phase 4 — UI
 
