@@ -70,7 +70,7 @@ npm i -D vitest @vitest/coverage-v8 jsdom @testing-library/react @testing-librar
 npx playwright install chromium
 ```
 
-Pin whatever versions npm resolves on day one (`package-lock.json` is committed). Exception: `@hookform/resolvers` is pinned to `^5` (v6 has an unresolvable optional-peer conflict on `effect`; v5 supports Zod 4).
+Pin whatever versions npm resolves on day one (`package-lock.json` is committed). Exception: `@hookform/resolvers` is pinned to `^5` (v6 has an unresolvable optional-peer conflict on `effect`; v5 supports Zod 4). Exception: `@fullcalendar/react` is pinned to `^6.1.22`, the version of the other `@fullcalendar/*` plugins. The day-one resolution gave v7, a separate architecture that bundles its own views, needs `temporal-polyfill`, and cannot use the v6 plugins of §11.3.
 
 The code examples here use Zod 4 syntax. If Zod 3 is installed, the equivalent API is identical for everything used in this file.
 
@@ -1682,3 +1682,4 @@ Production URL: https://…vercel.app
 | 2026-10-26 | v1.9 (WI-16): §5 constants gain `REPLAN_DST_SLACK_MIN = 120`; §7.4.4 validates `bufferMin` and gives the range message. |
 | 2026-10-26 | v1.10 (WI-17): §2 adds `samples/build.ts`; §5 constants gain `EXPORT_FORMAT` / `EXPORT_VERSION`; §7.4.6 names `linkIssues` / `parseExportFile`, runs the link checks in `init()`, and takes `exportedAt` from `deps.now()`; §8.6 adds `onLocalDay` and `startOfLocalWeek`. |
 | 2026-10-26 | v1.11 (WI-18): §5 constants gain `TOAST_MS`, `WARNING_TOAST_MS`, `EMPHASIS_MS`; §11.1 gives `createAppStore` its `now` and `resetStorage` options; §2 lists `tests/helpers/render.tsx`. |
+| 2026-10-26 | v1.12 (WI-19): §1.2 pins `@fullcalendar/react` to `^6.1.22`, matching `@fullcalendar/core` and the plugins. v7 is incompatible with the v6 plugin API that §11.3 uses. |
