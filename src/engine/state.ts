@@ -5,7 +5,7 @@ import type { ChangeSet, Repository } from '@/data/repository';
 import { HISTORY_LIMIT } from '@/shared/constants';
 import type { EngineError } from '@/shared/errors';
 import { err, ok, type Result } from '@/shared/result';
-import type { CalendarEvent, Conflict, Settings, Task } from '@/shared/types';
+import type { CalendarEvent, Conflict, Minute, Settings, SlotOption, Task } from '@/shared/types';
 import { compareEvents, insertSorted, removeById } from './algorithms/sortedArray';
 import { detectConflicts } from './algorithms/sweep';
 
@@ -39,6 +39,19 @@ export interface CommitOutcome {
   readonly changedEventIds: readonly string[];
   readonly introducedConflicts: readonly Conflict[];
   readonly resolvedConflicts: readonly Conflict[];
+}
+
+/** What every mutation pipeline reads: the current state and the facade's dependencies. */
+export interface PipelineContext {
+  readonly state: EngineState;
+  readonly repo: Repository;
+  readonly now: Minute;
+  readonly newId: () => string;
+}
+
+/** A mutation pipeline's result: the commit outcome plus the ER4 suggestion, if any. */
+export interface PipelineOutcome extends CommitOutcome {
+  readonly suggestion: SlotOption | null;
 }
 
 // PRE:  events have distinct ids, in any order; tasks have distinct ids

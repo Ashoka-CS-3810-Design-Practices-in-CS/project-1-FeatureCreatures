@@ -183,6 +183,13 @@ export const settingsSchema = z
     }
   });
 
+// What engine.init() accepts from Repository.load(); settings are null on first run.
+export const storedDataSchema = z.object({
+  events: z.array(storedEventSchema),
+  tasks: z.array(storedTaskSchema),
+  settings: settingsSchema.nullable(),
+});
+
 export const exportFileSchema = z.object({
   format: z.literal('feature-creatures-calendar'),
   version: z.literal(1),

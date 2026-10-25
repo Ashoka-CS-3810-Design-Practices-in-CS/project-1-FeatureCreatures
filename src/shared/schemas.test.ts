@@ -7,6 +7,7 @@ import {
   parseInput,
   searchOptionsSchema,
   settingsSchema,
+  storedDataSchema,
   storedEventSchema,
   storedTaskSchema,
   taskInputSchema,
@@ -373,4 +374,16 @@ describe('searchOptionsSchema', () => {
       expect(result.error).toMatchObject({ code: 'InvalidInput', issues: [{ path: 'bufferMin' }] });
     },
   );
+});
+
+describe('storedDataSchema', () => {
+  it('accepts empty first-run data with null settings', () => {
+    expect(parseInput(storedDataSchema, { events: [], tasks: [], settings: null }).ok).toBe(true);
+  });
+
+  it('rejects a damaged event row with its path', () => {
+    const result = storedDataSchema.safeParse({ events: [{ id: 'x' }], tasks: [], settings: null });
+
+    expect(result.error?.issues.map((issue) => issue.path.join('.'))).toContain('events.0.title');
+  });
 });

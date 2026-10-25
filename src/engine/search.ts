@@ -1,9 +1,10 @@
 // The slot search shared by findSlots, suggestAlternatives and Replan (TECH_SPEC §7.5):
 // segments → busy → gaps → rank. It is the only place this pipeline is assembled.
 
+import { SNAP_MIN } from '@/shared/constants';
 import type { EngineError } from '@/shared/errors';
 import { err, ok, type Result } from '@/shared/result';
-import { buildDayFrames } from '@/shared/time';
+import { buildDayFrames, ceilTo } from '@/shared/time';
 import type {
   Criterion,
   Interval,
@@ -97,6 +98,12 @@ export function search(
     fittingCount: fitting.length,
     options,
   });
+}
+
+// PRE:  now is the current Minute
+// POST: returns the earliest minute a search may place time: now rounded up to SNAP_MIN (BR-5)
+export function notBeforeFor(now: Minute): Minute {
+  return ceilTo(now, SNAP_MIN);
 }
 
 // PRE:  state.settings is valid; notBefore is now rounded up to SNAP_MIN

@@ -1,7 +1,7 @@
 import type { CalendarEvent } from '@/shared/types';
 import { ev, iv, settings } from '../../tests/helpers/builders';
 import { t } from '../../tests/helpers/time';
-import { search, segmentsFor, type SearchRequest } from './search';
+import { notBeforeFor, search, segmentsFor, type SearchRequest } from './search';
 import { createState } from './state';
 
 // PRE:  events have distinct ids
@@ -113,6 +113,11 @@ describe('search', () => {
     expect(excluded.ok ? excluded.value.options[0]?.slot : null).toEqual(
       iv('Mon 09:00', 'Mon 10:00'),
     );
+  });
+
+  it('notBeforeFor rounds now up to the next 5 minutes', () => {
+    expect(notBeforeFor(t('Mon 10:01'))).toBe(t('Mon 10:05'));
+    expect(notBeforeFor(t('Mon 10:05'))).toBe(t('Mon 10:05'));
   });
 
   it('segmentsFor gives working-hours segments clipped at notBefore', () => {
