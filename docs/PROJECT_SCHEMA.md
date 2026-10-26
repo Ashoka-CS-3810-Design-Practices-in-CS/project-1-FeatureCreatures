@@ -190,7 +190,7 @@ UI-only preferences (theme and last view) are stored in `localStorage`, not in S
 
 #### Derived (never stored)
 
-These are computed by the engine on demand: Conflict, SlotOption, SlotSearchResult, ReplanPlan, Snapshot.
+These are computed by the engine: Conflict, BarredOverlap, SlotOption, SlotSearchResult, ReplanPlan, Snapshot. BarredOverlap records are separate from event-pair conflicts and never stored/exported.
 
 ---
 
@@ -329,7 +329,7 @@ Every engine command returns either success or a typed error (§5). Errors never
 
 **B3 — Dark mode.** The toolbar toggle cycles System → Light → Dark. The choice persists in `localStorage`. All colours come from CSS tokens. Contrast is at least 4.5:1 in both themes.
 
-**B4 — Keyboard shortcuts.** See §7.6. Shortcuts are ignored while focus is in a text field. `?` opens the help overlay.
+**B4 — Keyboard shortcuts.** See §7.6. Shortcuts are ignored while focus is in a text field. The toolbar button labelled Keyboard shortcuts and the `?` key open the same help overlay.
 
 ---
 
@@ -373,13 +373,6 @@ These rules are normative. The algorithms in TECH_SPEC §8 implement them exactl
 - Conflicts are listed by overlap start, then by key.
 
 **BR-4 Events are capped at 24 h.** This makes "which events can intersect this window" a bounded binary-search slice (TECH_SPEC §8.2).
-
-**BR-15 Barred-slot overlap warnings (WI-32).**
-- An event overlaps a barred slot on each local day it touches iff their absolute, half-open intervals overlap. Touching boundaries produce no warning. A slot applies on its own configured weekdays even when that day is not a working day.
-- Every overlap is a derived `{eventId, label, overlap, minutes}` record, with `overlap = [max(starts), min(ends))` and `minutes = overlap.end − overlap.start`. Existing events remain allowed inside barred slots.
-- These warnings are separate from BR-3 event-pair conflicts: the sweep, conflict counts and replan metrics do not include them. They are recomputed after data changes and settings changes, and are never persisted or exported.
-- Event blocks show a text tag `In <label>` for each distinct overlapping label. A second panel section, **Barred-slot overlaps (N)**, lists every record with event title, label, range, minutes and **Suggest alternatives** for that event (no other-event toggle).
-- When saving settings introduces overlap records, an info toast counts distinct events among the new records: `2 events overlap barred slots` (singular: `1 event overlaps barred slots`). **View** opens the panels drawer when needed and focuses/scrolls the barred-overlap section. An unchanged save or a save only removing overlaps produces no overlap toast.
 
 **BR-5 Allowed segments.**
 - **Inputs:** the search window, plus — when the request respects working hours — the working days and hours.
@@ -492,6 +485,13 @@ Every search result also carries:
 **BR-13 Priorities.** The order is `high > medium > low`. The shorthand tags are `[H]`, `[M]` and `[L]`. Priority is always shown as both a text tag and a colour.
 
 **BR-14 Nothing changes without consent.** Searches, alternatives and replan plans are read-only queries. Only *Apply* buttons and direct edits change data.
+
+**BR-15 Barred-slot overlap warnings (WI-32).**
+- An event overlaps a barred slot on each local day it touches iff their absolute, half-open intervals overlap. Touching boundaries produce no warning. A slot applies on its own configured weekdays even when that day is not a working day.
+- Every overlap is a derived `{eventId, label, overlap, minutes}` record, with `overlap = [max(starts), min(ends))` and `minutes = overlap.end − overlap.start`. Existing events remain allowed inside barred slots.
+- These warnings are separate from BR-3 event-pair conflicts: the sweep, conflict counts and replan metrics do not include them. They are recomputed after data changes and settings changes, and are never persisted or exported.
+- Event blocks show a text tag `In <label>` for each distinct overlapping label. A second panel section, **Barred-slot overlaps (N)**, lists every record with event title, label, range, minutes and **Suggest alternatives** for that event (no other-event toggle).
+- When saving settings introduces overlap records, an info toast counts distinct events among the new records: `2 events overlap barred slots` (singular: `1 event overlaps barred slots`). **View** opens the panels drawer when needed and focuses/scrolls the barred-overlap section. An unchanged save or a save only removing overlaps produces no overlap toast.
 
 ---
 
@@ -678,3 +678,4 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 |---|---|
 | 2026-10-25 | v1.0: unified from A1–A3. |
 | 2026-10-26 | v1.1 (WI-32/33): BR-15 defines independent barred-slot warnings, settings feedback and alternatives; §7 adds text tags, a separate panel section and the accessible toolbar shortcuts button. |
+| 2026-10-26 | v1.2 (WI-31): final derived-model/help-entry sync; WI-32/33 retain independent warning/conflict semantics. Divyam's reported rehearsal evidence and remaining human release steps are recorded in TEST_PLAN/PROGRESS. |
