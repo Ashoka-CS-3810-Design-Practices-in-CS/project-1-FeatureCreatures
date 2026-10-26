@@ -1,56 +1,99 @@
 /* Design tokens (TECH_SPEC §11.4, PROJECT_SCHEMA §7.5). Every colour in the UI comes from here, so
-   the two themes differ only in this file. tokens.test.ts checks the text pairs reach 4.5:1. */
+   the two themes differ only in this file. tokens.test.ts checks the text pairs reach 4.5:1.
+   Light is a "paper notebook" (warm neutrals), dark a "night desk"; Fern / Mint is the one accent. */
 
 :root {
   color-scheme: light;
-  --bg: #ffffff;
-  --surface: #f6f7f9;
-  --text: #1b1f24;
-  --muted: #5b6470;
-  --border: #d6dae0;
-  --accent: #2f5bd3;
+  --bg: #fcfbf8;
+  --surface: #f4f1ea;
+  --text: #22201c;
+  --muted: #5f5a52;
+  --border: #e4dfd5;
+  --accent: #1f6b52;
   --on-accent: #ffffff;
-  --danger: #c0262d;
-  --warning: #a85b06;
-  --success: #1f7a3d;
-  --focus: #2f5bd3;
-  --prio-high: #b42318;
-  --prio-high-bg: #fde8e8;
-  --prio-medium: #a85b06;
-  --prio-medium-bg: #fef3c7;
-  --prio-low: #34558b;
-  --prio-low-bg: #e3ebf7;
-  --barred: #e9ecf1;
-  --nonwork: #f3f4f6;
+  --danger: #b3302a;
+  --warning: #9a5a06;
+  --success: #2f7a4a;
+  --focus: #1f6b52;
+  --prio-high: #b0281f;
+  --prio-high-bg: #fbe9e4;
+  --prio-medium: #8f5506;
+  --prio-medium-bg: #fbefd6;
+  --prio-low: #395883;
+  --prio-low-bg: #e6edf6;
+  --barred: #ece7dd;
+  --nonwork: #f5f2ec;
+  --backdrop: rgb(34 32 28 / 38%);
+  --shadow: rgb(34 32 28 / 16%);
 
-  --radius: 6px;
+  /* Washes are derived from the tokens above, so they follow the theme without repeating it. */
+  --today-wash: color-mix(in srgb, var(--accent) 6%, transparent);
+  --selection-wash: color-mix(in srgb, var(--accent) 18%, transparent);
+  --nonwork-wash: color-mix(in srgb, var(--nonwork) 75%, transparent);
+  --hover-wash: color-mix(in srgb, var(--text) 6%, transparent);
+  --shadow-dialog: 0 24px 64px -24px var(--shadow), 0 2px 8px var(--shadow);
+  --shadow-toast: 0 8px 24px -12px var(--shadow);
+
+  /* Spacing scale: every margin, padding and gap uses one of these steps. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* Type scale (one system family), weights and line heights. */
+  --font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  --text-xs: 0.75rem; /* 12 px: tags, time stamps */
+  --text-sm: 0.8125rem; /* 13 px: secondary lines, event blocks */
+  --text-base: 0.9375rem; /* 15 px: body and controls */
+  --text-md: 1.0625rem; /* 17 px: panel and dialog headings */
+  --text-lg: 1.25rem; /* 20 px: page title, period title */
+  --text-xl: 1.625rem; /* 26 px: week-header date numerals */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-bold: 600;
+  --leading-tight: 1.25;
+  --leading-normal: 1.55;
+
+  /* Shape: containers differ by role, so they do not share one radius. */
+  --radius-sm: 6px; /* event blocks */
+  --radius: 8px; /* buttons and fields */
+  --radius-md: 12px; /* toasts, plan cards */
+  --radius-lg: 16px; /* dialogs */
+  --radius-pill: 999px; /* tags and chips */
+  --edge: 4px; /* priority / state edge on blocks and rows */
+
   --target-min: 32px; /* smallest click target (PROJECT_SCHEMA §7.7) */
-  --side-width: 360px;
-  --backdrop: rgb(0 0 0 / 45%);
-  --shadow: rgb(0 0 0 / 20%);
+  --slot-height: 32px; /* one half-hour row of the time grid */
+  --side-width: 384px;
 }
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --bg: #14171c;
-  --surface: #1c2027;
-  --text: #e7eaee;
-  --muted: #a0a8b3;
-  --border: #343a44;
-  --accent: #7aa2ff;
-  --on-accent: #14171c;
-  --danger: #ff6b6b;
-  --warning: #f5b041;
-  --success: #4cc38a;
-  --focus: #7aa2ff;
-  --prio-high: #ff8a8a;
-  --prio-high-bg: #3a1f22;
-  --prio-medium: #f5b041;
-  --prio-medium-bg: #3a2e14;
-  --prio-low: #8fb0e6;
-  --prio-low-bg: #1f2a3d;
-  --barred: #262b33;
-  --nonwork: #181b21;
+  --bg: #151614;
+  --surface: #1c1e1b;
+  --text: #ebece8;
+  --muted: #a6aba3;
+  --border: #30332e;
+  --accent: #7fd3ab;
+  --on-accent: #0f1411;
+  --danger: #ff8076;
+  --warning: #f0b356;
+  --success: #74cf98;
+  --focus: #7fd3ab;
+  --prio-high: #ff978c;
+  --prio-high-bg: #3b1f1c;
+  --prio-medium: #f0b356;
+  --prio-medium-bg: #372a14;
+  --prio-low: #9cb9e8;
+  --prio-low-bg: #1f2a3b;
+  --barred: #262924;
+  --nonwork: #191b18;
+  --backdrop: rgb(0 0 0 / 55%);
+  --shadow: rgb(0 0 0 / 50%);
 }
 
 /* "System" theme: no data-theme attribute, so follow the OS. CSS cannot share a rule between a
@@ -59,24 +102,26 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     color-scheme: dark;
-    --bg: #14171c;
-    --surface: #1c2027;
-    --text: #e7eaee;
-    --muted: #a0a8b3;
-    --border: #343a44;
-    --accent: #7aa2ff;
-    --on-accent: #14171c;
-    --danger: #ff6b6b;
-    --warning: #f5b041;
-    --success: #4cc38a;
-    --focus: #7aa2ff;
-    --prio-high: #ff8a8a;
-    --prio-high-bg: #3a1f22;
-    --prio-medium: #f5b041;
-    --prio-medium-bg: #3a2e14;
-    --prio-low: #8fb0e6;
-    --prio-low-bg: #1f2a3d;
-    --barred: #262b33;
-    --nonwork: #181b21;
+    --bg: #151614;
+    --surface: #1c1e1b;
+    --text: #ebece8;
+    --muted: #a6aba3;
+    --border: #30332e;
+    --accent: #7fd3ab;
+    --on-accent: #0f1411;
+    --danger: #ff8076;
+    --warning: #f0b356;
+    --success: #74cf98;
+    --focus: #7fd3ab;
+    --prio-high: #ff978c;
+    --prio-high-bg: #3b1f1c;
+    --prio-medium: #f0b356;
+    --prio-medium-bg: #372a14;
+    --prio-low: #9cb9e8;
+    --prio-low-bg: #1f2a3b;
+    --barred: #262924;
+    --nonwork: #191b18;
+    --backdrop: rgb(0 0 0 / 55%);
+    --shadow: rgb(0 0 0 / 50%);
   }
 }

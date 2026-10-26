@@ -11,8 +11,9 @@ const DRAWER_WIDTH = 900;
 const WEEK_WIDTHS = [WIDE_WIDTH, NARROW_DESKTOP_WIDTH];
 const THEMES = ['light', 'dark'] as const;
 const TOAST_WAIT_MS = 10_000;
-// Wednesday mid-morning of TEST_PLAN's base week, so "today" and the now line sit inside the grid.
-const CLOCK_TIME = new Date('2026-11-04T10:20:00');
+// Late Monday morning of TEST_PLAN's base week: "today" and the now line sit inside the grid, and
+// Tuesday's conflict is still ahead, so Replan has a move to show.
+const CLOCK_TIME = new Date('2026-11-02T11:15:00');
 
 type Theme = (typeof THEMES)[number];
 
