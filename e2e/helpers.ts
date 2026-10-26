@@ -1,6 +1,9 @@
 import { expect, type Page } from '@playwright/test';
 
 const BASE_TIME = new Date('2026-11-02T08:00:00');
+const MONDAY_COLUMN = '.fc-timegrid-col[data-date="2026-11-02"]';
+export const DRAG_STEPS = 12;
+export const GRAB_OFFSET_PX = 2;
 
 // PRE:  page has a fresh browser context
 // POST: opens the empty calendar with the clock in TEST_PLAN's base week
@@ -48,4 +51,41 @@ export function collectPageErrors(page: Page): string[] {
     }
   });
   return errors;
+}
+
+// PRE:  time is a visible time-grid row's HH:mm:ss value
+// POST: returns that row's top edge; throws if it has no rendered geometry
+export async function rowTop(page: Page, time: string): Promise<number> {
+  const bounds = await page.locator(`.fc-timegrid-slot[data-time="${time}"]`).first().boundingBox();
+  if (bounds === null) {
+    throw new Error(`No time-grid row rendered for ${time}`);
+  }
+  return bounds.y;
+}
+
+// PRE:  the week view is showing the base week
+// POST: returns the horizontal centre of Monday's time-grid column
+async function mondayCenterX(page: Page): Promise<number> {
+  const bounds = await page.locator(MONDAY_COLUMN).boundingBox();
+  if (bounds === null) {
+    throw new Error('Monday has no rendered time-grid column');
+  }
+  return bounds.x + bounds.width / 2;
+}
+
+// PRE:  the week view shows the base week; time is a visible, empty Monday row (HH:mm:ss)
+// POST: clicks just inside the top of that row
+export async function clickTime(page: Page, time: string): Promise<void> {
+  await page.mouse.click(await mondayCenterX(page), (await rowTop(page, time)) + GRAB_OFFSET_PX);
+}
+
+// PRE:  the week view shows the base week; from < to are visible Monday rows (HH:mm:ss) with
+//       empty time between them
+// POST: drags with the mouse from the top of row from to just above row to (selecting from–to)
+export async function dragSelect(page: Page, from: string, to: string): Promise<void> {
+  const centerX = await mondayCenterX(page);
+  await page.mouse.move(centerX, (await rowTop(page, from)) + GRAB_OFFSET_PX);
+  await page.mouse.down();
+  await page.mouse.move(centerX, (await rowTop(page, to)) - GRAB_OFFSET_PX, { steps: DRAG_STEPS });
+  await page.mouse.up();
 }
