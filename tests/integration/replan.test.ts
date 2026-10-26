@@ -18,6 +18,48 @@ function expectOk<T>(result: Result<T>): T {
 }
 
 describe('planReplan (T22, FR10, BR-12)', () => {
+  it('WI-38: Minimal change moves a future flexible event out of a newly added barred slot', async () => {
+    const { engine } = await makeEngine({
+      events: [flexEv('Study', 'Mon 13:00', 'Mon 14:00', ['Mon 09:00', 'Mon 18:00'])],
+    });
+    expectOk(
+      await engine.updateSettings(
+        settings({
+          barredSlots: [{ id: 'lunch', label: 'Lunch', startMin: 780, endMin: 840, days: [1] }],
+        }),
+      ),
+    );
+    const before = engine.snapshot();
+
+    const result = expectOk(engine.planReplan({ range: RANGE }));
+
+    expect(result.plans[0].moves).toEqual([
+      expect.objectContaining({
+        eventId: 'Study',
+        from: iv('Mon 13:00', 'Mon 14:00'),
+        to: iv('Mon 12:00', 'Mon 13:00'),
+        reason: { kind: 'barred', label: 'Lunch' },
+      }),
+    ]);
+    expect(engine.snapshot()).toEqual(before);
+  });
+
+  it('WI-38: fixed and already-started barred events are static in both plans', async () => {
+    const { engine } = await makeEngine({
+      now: 'Mon 13:15',
+      settings: settings({
+        barredSlots: [{ id: 'lunch', label: 'Lunch', startMin: 780, endMin: 840, days: [1] }],
+      }),
+      events: [
+        ev('Fixed', 'Mon 13:00', 'Mon 13:30'),
+        flexEv('Started', 'Mon 13:00', 'Mon 14:00', WINDOW),
+      ],
+    });
+    const result = expectOk(engine.planReplan({ range: RANGE }));
+    expect(result.movableCount).toBe(0);
+    expect(result.plans.flatMap((plan) => plan.moves)).toEqual([]);
+  });
+
   it('builds both plans over the range with their metrics', async () => {
     const { engine } = await makeEngine({
       events: [

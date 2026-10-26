@@ -148,6 +148,7 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-26 · Codex · branch `feat/wi-37-dialog-polish` · done: 12 dialog captures committed and representative light/dark desktop/drawer images reviewed; PROJECT_SCHEMA §7.1, TECH_SPEC §11.2/§14 and TEST_PLAN synced; typecheck/lint, 565 tests, build and all 17 browser checks green · next: WI-38 · note: schemas and engine unchanged
 - [~] **WI-38** Replan vs barred-slot overlaps — owner S + Dv — depends on 37
   - 2026-10-26 · Codex · branch `feat/wi-38-replan-diagnostics` · done: claimed after WI-37 merge/main gate; inspected BR-12 pipeline and UI · next: prove future flexible barred moves and static exclusions, then per-plan diagnostics and UI regressions · note: keep scheduling heuristic unchanged unless regression proves a bug
+  - 2026-10-26 · Codex · branch `feat/wi-38-replan-diagnostics` · done: new engine regressions pass on the unchanged heuristic: future Study moves Mon 13–14 to 12–13 with reason barred/Lunch after settings change; fixed and started barred events stay static · next: failing classification/UI tests and derived per-plan diagnostics · note: case (i) is correct; no algorithm fix needed
 
 ## Milestones
 
