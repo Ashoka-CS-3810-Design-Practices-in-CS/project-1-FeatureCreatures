@@ -128,30 +128,33 @@ function TaskPicker({ picker }: { picker: TaskPickerState }) {
         <p>{priorityAwareText(task.priority, effective)}</p>
       )}
       <SearchResults result={picker.result} selected={picker.selected} originalStart={null} />
-      <button
-        type="button"
-        disabled={!picker.result.ok || picker.result.value.options.length === 0}
-        onClick={() => void actions.pickerApply()}
-      >
-        Apply selected
-      </button>
-      <button type="button" onClick={actions.pickerSkip}>
-        Skip
-      </button>
-      <button type="button" onClick={actions.pickerStop}>
-        Stop
-      </button>
-      {!picker.result.ok && (
+      <div className="dialog-actions">
         <button
           type="button"
-          onClick={() => {
-            actions.pickerStop();
-            actions.openDialog({ kind: 'task', mode: 'edit', id: task.id });
-          }}
+          className="primary"
+          disabled={!picker.result.ok || picker.result.value.options.length === 0}
+          onClick={() => void actions.pickerApply()}
         >
-          Edit task
+          Apply selected
         </button>
-      )}
+        <button type="button" onClick={actions.pickerSkip}>
+          Skip
+        </button>
+        <button type="button" onClick={actions.pickerStop}>
+          Stop
+        </button>
+        {!picker.result.ok && (
+          <button
+            type="button"
+            onClick={() => {
+              actions.pickerStop();
+              actions.openDialog({ kind: 'task', mode: 'edit', id: task.id });
+            }}
+          >
+            Edit task
+          </button>
+        )}
+      </div>
     </Modal>
   );
 }
@@ -198,16 +201,19 @@ function AlternativesPicker({ picker }: { picker: AlternativesPickerState }) {
         selected={picker.selected}
         originalStart={target.start}
       />
-      <button
-        type="button"
-        disabled={!picker.result.ok || picker.result.value.options.length === 0}
-        onClick={() => void actions.pickerApply()}
-      >
-        Apply
-      </button>
-      <button type="button" onClick={actions.pickerStop}>
-        Cancel
-      </button>
+      <div className="dialog-actions">
+        <button
+          type="button"
+          className="primary"
+          disabled={!picker.result.ok || picker.result.value.options.length === 0}
+          onClick={() => void actions.pickerApply()}
+        >
+          Apply
+        </button>
+        <button type="button" onClick={actions.pickerStop}>
+          Cancel
+        </button>
+      </div>
     </Modal>
   );
 }

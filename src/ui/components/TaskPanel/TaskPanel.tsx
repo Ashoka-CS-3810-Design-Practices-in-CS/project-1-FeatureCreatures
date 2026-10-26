@@ -40,26 +40,32 @@ function TaskRow({
           onChange={() => actions.toggleTaskSelection(task.id)}
         />
       </label>{' '}
-      <strong>{task.name}</strong> <span className="tag">{TAG_FOR[task.priority]}</span>{' '}
-      <span>{fmtDuration(task.durationMin)}</span>{' '}
-      <span>
-        due {fmtDay(task.window.end)} {fmtTime(task.window.end)}
+      <span className="task-heading">
+        <strong>{task.name}</strong> <span className="tag">{TAG_FOR[task.priority]}</span>
       </span>{' '}
-      <span className="task-status">
-        {event === undefined ? 'Unscheduled' : `Scheduled ${fmtRange(event)}`}
+      <span className="task-meta">
+        <span>{fmtDuration(task.durationMin)}</span>{' '}
+        <span>
+          due {fmtDay(task.window.end)} {fmtTime(task.window.end)}
+        </span>{' '}
+        <span className="task-status">
+          {event === undefined ? 'Unscheduled' : `Scheduled ${fmtRange(event)}`}
+        </span>
       </span>{' '}
-      {isUnscheduled && (
-        <button type="button" onClick={() => actions.openTaskPicker([task.id])}>
-          Find time
+      <span className="task-actions">
+        {isUnscheduled && (
+          <button type="button" onClick={() => actions.openTaskPicker([task.id])}>
+            Find time
+          </button>
+        )}
+        <button
+          type="button"
+          aria-label={`Edit ${task.name}`}
+          onClick={() => actions.openDialog({ kind: 'task', mode: 'edit', id: task.id })}
+        >
+          Edit
         </button>
-      )}
-      <button
-        type="button"
-        aria-label={`Edit ${task.name}`}
-        onClick={() => actions.openDialog({ kind: 'task', mode: 'edit', id: task.id })}
-      >
-        Edit
-      </button>
+      </span>
     </li>
   );
 }
@@ -90,51 +96,55 @@ export function TaskPanel() {
 
   return (
     <section aria-labelledby="task-panel-title" className="task-panel">
-      <h2 id="task-panel-title">Tasks</h2>
-      <button type="button" onClick={() => actions.openDialog({ kind: 'task', mode: 'create' })}>
-        New task
-      </button>
+      <div className="panel-heading">
+        <h2 id="task-panel-title">Tasks</h2>
+        <button type="button" onClick={() => actions.openDialog({ kind: 'task', mode: 'create' })}>
+          New task
+        </button>
+      </div>
 
-      <label>
-        Sort by{' '}
-        <select
-          value={panel.sort}
-          onChange={(event) =>
-            actions.setTaskPanel({ sort: event.target.value as PanelState['sort'] })
-          }
-        >
-          <option value="priority">Priority</option>
-          <option value="windowEnd">Window end</option>
-        </select>
-      </label>
-      <fieldset>
-        <legend>Priorities</legend>
-        {PRIORITY_OPTIONS.map((option) => (
-          <label key={option.value}>
-            <input
-              type="checkbox"
-              checked={panel.priorities.includes(option.value)}
-              onChange={() =>
-                actions.setTaskPanel({ priorities: togglePriority(panel, option.value) })
-              }
-            />{' '}
-            {option.label}
-          </label>
-        ))}
-      </fieldset>
-      <label>
-        Show{' '}
-        <select
-          value={panel.status}
-          onChange={(event) =>
-            actions.setTaskPanel({ status: event.target.value as PanelState['status'] })
-          }
-        >
-          <option value="unscheduled">Unscheduled</option>
-          <option value="scheduled">Scheduled</option>
-          <option value="all">All</option>
-        </select>
-      </label>
+      <div className="task-filters">
+        <label>
+          Sort by{' '}
+          <select
+            value={panel.sort}
+            onChange={(event) =>
+              actions.setTaskPanel({ sort: event.target.value as PanelState['sort'] })
+            }
+          >
+            <option value="priority">Priority</option>
+            <option value="windowEnd">Window end</option>
+          </select>
+        </label>
+        <fieldset>
+          <legend>Priorities</legend>
+          {PRIORITY_OPTIONS.map((option) => (
+            <label key={option.value}>
+              <input
+                type="checkbox"
+                checked={panel.priorities.includes(option.value)}
+                onChange={() =>
+                  actions.setTaskPanel({ priorities: togglePriority(panel, option.value) })
+                }
+              />{' '}
+              {option.label}
+            </label>
+          ))}
+        </fieldset>
+        <label>
+          Show{' '}
+          <select
+            value={panel.status}
+            onChange={(event) =>
+              actions.setTaskPanel({ status: event.target.value as PanelState['status'] })
+            }
+          >
+            <option value="unscheduled">Unscheduled</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="all">All</option>
+          </select>
+        </label>
+      </div>
 
       {shown.length === 0 ? (
         <p>No tasks to show.</p>

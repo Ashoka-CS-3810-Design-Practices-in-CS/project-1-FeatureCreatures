@@ -15,18 +15,20 @@ export function ConfirmDialog() {
   return (
     <Modal open title={dialog.title} onClose={closeDialog}>
       <p>{dialog.body}</p>
-      <button
-        type="button"
-        onClick={() => {
-          closeDialog();
-          dialog.onConfirm();
-        }}
-      >
-        {dialog.confirmLabel}
-      </button>
-      <button type="button" onClick={closeDialog}>
-        Cancel
-      </button>
+      <div className="dialog-actions">
+        <button
+          type="button"
+          onClick={() => {
+            closeDialog();
+            dialog.onConfirm();
+          }}
+        >
+          {dialog.confirmLabel}
+        </button>
+        <button type="button" onClick={closeDialog}>
+          Cancel
+        </button>
+      </div>
     </Modal>
   );
 }

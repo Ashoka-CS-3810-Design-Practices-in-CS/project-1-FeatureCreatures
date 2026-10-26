@@ -57,107 +57,118 @@ export function Toolbar({
 
   return (
     <div className="toolbar">
-      {onOpenPanels !== undefined && (
+      <div className="toolbar-period">
+        {onOpenPanels !== undefined && (
+          <button
+            type="button"
+            aria-controls="side-panels"
+            aria-expanded={panelsOpen}
+            onClick={onOpenPanels}
+          >
+            Tasks and conflicts
+          </button>
+        )}
+        <div role="group" aria-label="Navigation">
+          <button type="button" aria-label="Previous period" onClick={() => calendar()?.prev()}>
+            ◀
+          </button>
+          <button type="button" onClick={() => calendar()?.today()}>
+            Today
+          </button>
+          <button type="button" aria-label="Next period" onClick={() => calendar()?.next()}>
+            ▶
+          </button>
+        </div>
+        <h2 className="toolbar-title">{fmtViewTitle(view.type, view.date)}</h2>
+      </div>
+      <div className="toolbar-controls">
+        <div role="group" aria-label="View">
+          {VIEWS.map((option) => (
+            <button
+              key={option.type}
+              type="button"
+              aria-pressed={view.type === option.type}
+              onClick={() => calendar()?.changeView(option.type)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+        <div role="group" aria-label="Priority filter">
+          {PRIORITY_CHIPS.map((chip) => (
+            <button
+              key={chip.priority}
+              type="button"
+              className={`chip prio-${chip.priority}`}
+              title={chip.title}
+              aria-pressed={filter.includes(chip.priority)}
+              onClick={() => actions.toggleEventPriority(chip.priority)}
+            >
+              {chip.tag}
+            </button>
+          ))}
+        </div>
         <button
           type="button"
-          aria-controls="side-panels"
-          aria-expanded={panelsOpen}
-          onClick={onOpenPanels}
+          className="primary"
+          onClick={() => actions.openDialog({ kind: 'event', mode: 'create', defaults: {} })}
         >
-          Tasks and conflicts
+          + Event
         </button>
-      )}
-      <div role="group" aria-label="Navigation">
-        <button type="button" aria-label="Previous period" onClick={() => calendar()?.prev()}>
-          ◀
+        <button
+          type="button"
+          className="primary"
+          onClick={() => actions.openDialog({ kind: 'task', mode: 'create' })}
+        >
+          + Task
         </button>
-        <button type="button" onClick={() => calendar()?.today()}>
-          Today
-        </button>
-        <button type="button" aria-label="Next period" onClick={() => calendar()?.next()}>
-          ▶
+        <button type="button" onClick={() => actions.openDialog({ kind: 'replan' })}>
+          Replan
         </button>
       </div>
-      <h2 className="toolbar-title">{fmtViewTitle(view.type, view.date)}</h2>
-      <div role="group" aria-label="View">
-        {VIEWS.map((option) => (
-          <button
-            key={option.type}
-            type="button"
-            aria-pressed={view.type === option.type}
-            onClick={() => calendar()?.changeView(option.type)}
-          >
-            {option.label}
-          </button>
-        ))}
+      <div className="toolbar-utilities">
+        <button
+          type="button"
+          aria-label="Undo"
+          title={historyTooltip('Undo', undoLabel)}
+          disabled={!canUndo}
+          onClick={() => void actions.undo()}
+        >
+          ↶
+        </button>
+        <button
+          type="button"
+          aria-label="Redo"
+          title={historyTooltip('Redo', redoLabel)}
+          disabled={!canRedo}
+          onClick={() => void actions.redo()}
+        >
+          ↷
+        </button>
+        <button
+          type="button"
+          aria-label={`Theme: ${THEME_NAME[theme]}`}
+          title="Switch theme (System → Light → Dark)"
+          onClick={onCycleTheme}
+        >
+          ◐
+        </button>
+        <button
+          type="button"
+          aria-label="Keyboard shortcuts"
+          title="Keyboard shortcuts (?)"
+          onClick={() => actions.openDialog({ kind: 'shortcuts' })}
+        >
+          ?
+        </button>
+        <button
+          type="button"
+          aria-label="Settings"
+          onClick={() => actions.openDialog({ kind: 'settings' })}
+        >
+          ⚙
+        </button>
       </div>
-      <div role="group" aria-label="Priority filter">
-        {PRIORITY_CHIPS.map((chip) => (
-          <button
-            key={chip.priority}
-            type="button"
-            className={`chip prio-${chip.priority}`}
-            title={chip.title}
-            aria-pressed={filter.includes(chip.priority)}
-            onClick={() => actions.toggleEventPriority(chip.priority)}
-          >
-            {chip.tag}
-          </button>
-        ))}
-      </div>
-      <button
-        type="button"
-        onClick={() => actions.openDialog({ kind: 'event', mode: 'create', defaults: {} })}
-      >
-        + Event
-      </button>
-      <button type="button" onClick={() => actions.openDialog({ kind: 'task', mode: 'create' })}>
-        + Task
-      </button>
-      <button type="button" onClick={() => actions.openDialog({ kind: 'replan' })}>
-        Replan
-      </button>
-      <button
-        type="button"
-        aria-label="Undo"
-        title={historyTooltip('Undo', undoLabel)}
-        disabled={!canUndo}
-        onClick={() => void actions.undo()}
-      >
-        ↶
-      </button>
-      <button
-        type="button"
-        aria-label="Redo"
-        title={historyTooltip('Redo', redoLabel)}
-        disabled={!canRedo}
-        onClick={() => void actions.redo()}
-      >
-        ↷
-      </button>
-      <button
-        type="button"
-        aria-label={`Theme: ${THEME_NAME[theme]}`}
-        title="Switch theme (System → Light → Dark)"
-        onClick={onCycleTheme}
-      >
-        ◐
-      </button>
-      <button
-        type="button"
-        aria-label="Keyboard shortcuts"
-        title="Keyboard shortcuts (?)"
-        onClick={() => actions.openDialog({ kind: 'shortcuts' })}
-      >
-        ?
-      </button>
-      <button
-        type="button"
-        aria-label="Settings"
-        onClick={() => actions.openDialog({ kind: 'settings' })}
-      >
-        ⚙
-      </button>
     </div>
   );
 }

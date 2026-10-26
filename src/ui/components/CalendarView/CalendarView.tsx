@@ -47,7 +47,15 @@ export function CalendarView({ calendarRef }: { calendarRef: RefObject<FullCalen
       firstDay={MONDAY}
       headerToolbar={false}
       views={{
-        timeGrid: { dayHeaderContent: ({ date }) => `${WEEKDAY.format(date)} ${date.getDate()}` },
+        // Separate spans let the week header set the date numeral large; the text stays "Mon 2".
+        timeGrid: {
+          dayHeaderContent: ({ date }) => (
+            <>
+              <span className="day-name">{WEEKDAY.format(date)}</span>{' '}
+              <span className="day-number">{date.getDate()}</span>
+            </>
+          ),
+        },
       }}
       allDaySlot={false}
       height="100%"

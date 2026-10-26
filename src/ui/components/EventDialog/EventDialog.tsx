@@ -185,17 +185,19 @@ function EventForm({
         <label htmlFor={fieldId('description')}>Description</label>
         <textarea id={fieldId('description')} {...register('description')} />
 
-        <button type="submit" disabled={isSubmitting}>
-          Save
-        </button>
-        <button type="button" onClick={actions.closeDialog}>
-          Cancel
-        </button>
-        {existing !== undefined && (
-          <button type="button" onClick={() => confirmDelete(existing)}>
-            Delete
+        <div className="dialog-actions">
+          <button type="submit" disabled={isSubmitting}>
+            Save
           </button>
-        )}
+          <button type="button" onClick={actions.closeDialog}>
+            Cancel
+          </button>
+          {existing !== undefined && (
+            <button type="button" onClick={() => confirmDelete(existing)}>
+              Delete
+            </button>
+          )}
+        </div>
       </form>
     </Modal>
   );
