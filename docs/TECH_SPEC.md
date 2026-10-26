@@ -1411,6 +1411,7 @@ All sample loads and imports with more than `IMPORT_SPINNER_THRESHOLD` events pl
 |---|---|---|---|
 | `App` | Layout grid, empty state, banners, fatal screen, mounts dialogs/toasts, `useShortcuts`, `useTheme` | `status`, `dialog`, `picker` | — |
 | `Toolbar` | Navigation, view switch, priority filter chips, + Event, + Task, Replan, Undo/Redo (disabled per `canUndo/canRedo`, tooltip = label), theme toggle, settings, drawer toggle (< 1024 px) | `view`, `snapshot.canUndo…` | store actions |
+| WI-33 toolbar addition | A `?` icon button between theme and settings, `aria-label="Keyboard shortcuts"`; opens `openDialog({kind: 'shortcuts'})`, retaining the existing `?` shortcut | existing dialog state | `openDialog` |
 | `CalendarView` | FullCalendar wrapper (§11.3) | `snapshot.events`, `conflicts`, `settings`, `eventPriorityFilter`, `emphasisIds` | `moveEvent`, open dialogs |
 | `EventContent` | Renders an event block: title, time, `[H]/[M]/[L]` tag, `Fixed`/`Task` tag, `⚠ Conflict N min` | props | — |
 | `TaskPanel` | Sort/filter controls, task rows with checkbox, status, *Find time*, context menu; "Find time for N selected" | `snapshot.tasks`, `taskPanel` | `openTaskPicker`, dialogs |
