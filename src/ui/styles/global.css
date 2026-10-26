@@ -44,6 +44,12 @@ p {
   margin: var(--space-1) 0;
 }
 
+/* One bold weight everywhere: "bolder" inside an already bold line would jump to 700+. */
+strong,
+b {
+  font-weight: var(--weight-bold);
+}
+
 /* Loading line and the fatal screen render outside the app grid. */
 #root > main,
 #root > p[role='status'] {

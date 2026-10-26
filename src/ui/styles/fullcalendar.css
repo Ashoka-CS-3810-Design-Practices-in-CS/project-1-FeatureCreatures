@@ -261,6 +261,17 @@
 
 /* ── Month and List ── */
 
+/* Day numbers sit top-left, matching the left-aligned headings of every view. */
+.fc .fc-daygrid-day-top {
+  flex-direction: row;
+}
+
+/* Room inside the conflict outline so it never covers the first characters. */
+.fc .fc-daygrid-event.ev {
+  margin: calc(var(--space-1) / 2) var(--space-1);
+  padding: calc(var(--space-1) / 2) var(--space-1);
+}
+
 .fc .fc-daygrid-day-number {
   padding: var(--space-2);
   font-size: var(--text-sm);

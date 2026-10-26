@@ -8,6 +8,7 @@ const VIEWPORT_HEIGHT = 900;
 const WIDE_WIDTH = 1440;
 const NARROW_DESKTOP_WIDTH = 1024;
 const DRAWER_WIDTH = 900;
+const TALL_HEIGHT = 1400; // shows the whole side column, conflicts included
 const WEEK_WIDTHS = [WIDE_WIDTH, NARROW_DESKTOP_WIDTH];
 const THEMES = ['light', 'dark'] as const;
 const TOAST_WAIT_MS = 10_000;
@@ -82,6 +83,30 @@ for (const theme of THEMES) {
   });
 }
 // POST: every scene is registered in both themes
+
+test('month light', async ({ page }) => {
+  await openApp(page, 'light', WIDE_WIDTH);
+  await loadSampleWeek(page);
+  await page.getByRole('button', { name: 'Month', exact: true }).click();
+  await capture(page, 'month-light');
+});
+
+test('list dark', async ({ page }) => {
+  await openApp(page, 'dark', WIDE_WIDTH);
+  await loadSampleWeek(page);
+  await page.getByRole('button', { name: 'List', exact: true }).click();
+  await capture(page, 'list-dark');
+});
+
+test('side panels light', async ({ page }) => {
+  await openApp(page, 'light', WIDE_WIDTH);
+  await page.setViewportSize({ width: WIDE_WIDTH, height: TALL_HEIGHT });
+  await loadSampleWeek(page);
+  await page.getByRole('complementary', { name: 'Tasks and conflicts' }).screenshot({
+    path: `${OUTPUT_DIR}/side-panels-light.png`,
+    animations: 'disabled',
+  });
+});
 
 test('drawer light', async ({ page }) => {
   await openApp(page, 'light', DRAWER_WIDTH);
