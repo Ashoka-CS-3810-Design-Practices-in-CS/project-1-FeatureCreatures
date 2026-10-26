@@ -1,221 +1,201 @@
-# Interactive Calendar — Feature Creatures
+# Interactive Calendar and Intelligent Time Planner
 
-A single-user calendar for CS-3810, by Divyam and Samar. Create, drag and resize events; inspect every overlapping pair; find and explain free time for tasks; compare two replan strategies before applying a change.
+A browser-based week planner that detects every scheduling conflict, finds free time for your tasks and explains *why* each suggested slot fits.
 
-**Production URL:** [int-calendarfeature-creatures.vercel.app](https://int-calendarfeature-creatures.vercel.app). The team handles deployment; local work-item status is in [PROGRESS.md](docs/PROGRESS.md).
+**▶ Live app:** [int-calendarfeature-creatures.vercel.app](https://int-calendarfeature-creatures.vercel.app). Nothing to install; all data stays in your browser.
+
+![Week view with the sample calendar loaded](docs/screenshots/week-light-1440.png)
 
 ## Team
 
-**Feature Creatures** · Project 4: Interactive Calendar and Intelligent Time Planner · CS-3810 Design Practices in Computer Science, Ashoka University (Monsoon 2026)
+**Feature Creatures** · Project 4 of CS-3810 *Design Practices in Computer Science*, Ashoka University, Monsoon 2026
 
 | Member           | Roll number |
 | ---------------- | ----------- |
 | Samar Baskar     | 1020241699  |
 | Divyam Chaudhary | 1020221520  |
 
-## Run locally
+## What it does
 
-Use Node.js 22, matching CI, and npm. From the repository root:
+- **Calendar.** Create, edit, drag, resize and delete events in Day, Week, Month and List views.
+  - Each event has a category, a priority (High, Medium or Low) and an optional *flexible* window. Classes stay fixed; a gym session can move within its window.
+- **Conflict detection.** Every pair of overlapping events is found automatically after each change.
+  - Each conflict shows which events overlap, the exact overlap (e.g. 11:00–11:30) and its length in minutes.
+  - Back-to-back events do not count as conflicts.
+- **Conflict resolution.** *Suggest alternatives* proposes free slots for the event that is better to move, closest to its original time first.
+- **Best-time finder.** Tasks have a duration, a priority and a window, such as "90 minutes, sometime this week".
+  - The app lists free slots that fit, ranked by the criterion you choose: earliest, tightest fit, or priority-aware.
+  - Every slot says which gap it came from and what bounds it. When nothing fits, the app says why and shows the largest gap it found.
+- **Several tasks at once.** Selected tasks are offered one at a time, highest priority first. Each search sees the slots you already accepted.
+- **Replan.** For a chosen week, the app proposes two rearrangements of your flexible events: *Minimal change* and *Balanced week*.
+  - Each plan lists every move with a reason, plus before/after metrics. Apply one or neither.
+  - Events Replan won't move (fixed or already started) are listed with the reason.
+- **Your rules.** Working days and hours, a buffer between events, and barred slots such as lunch. Events sitting inside a barred slot are flagged separately from conflicts.
+- **Comfort features.** Undo/redo, JSON export/import, six built-in sample calendars, light and dark themes, keyboard shortcuts (press **?**), and screen-reader and keyboard support.
+
+Nothing changes without your say-so: suggestions and plans are previews until you click **Apply**.
+
+## Try it in two minutes
+
+1. Open the [live app](https://int-calendarfeature-creatures.vercel.app) and click **Load sample week**.
+2. **Conflicts.** Look at Tuesday: *Lecture* and *Meeting* are flagged *Conflict 30 min*, and the right panel lists the overlap. Click **Suggest alternatives**, pick a slot and **Apply**. The conflict disappears.
+3. **Finding time.** In **Tasks**, click **Find time** on *Write report*. Switch the ranking between *Earliest*, *Best fit* and *Priority-aware* to see the order change, read an explanation, then **Apply**.
+4. **A task that can't fit.** Try **Find time** on *Thesis draft*, a 10-hour task. Lunch splits each day into four-hour stretches, so the app explains that the task can never fit, rather than just finding no slot.
+5. **Replan.** Click **Replan**, then **Compute plans**, and compare the two plans. Apply one and press **Undo** to revert it in a single step.
+6. **Your own events.** Drag across empty time to create an event, or drag an existing event onto another to create a conflict.
+
+More presets (overlap cluster, midnight crossing, fully booked day, a 5,000-event stress test) are under **Settings → Data → Load sample calendar**. Loading a sample replaces your current data, so export first if you want to keep it.
+
+## Run it locally
+
+You need Node.js 22 and npm.
 
 ```bash
 npm ci
-npm run dev
+npm run dev      # development server; open the URL it prints
+npm run build    # production build into dist/
+npm run preview  # serve that build locally
 ```
 
-Open the local URL printed by Vite. For a production build, run `npm run build`; it writes `dist/`. `npm run preview` serves that build locally. Stop a development or preview server with Ctrl+C when finished.
+On Windows PowerShell setups that block npm's script wrappers, use `npm.cmd` and `npx.cmd`.
 
-In Windows PowerShell environments that block npm's `.ps1` wrapper, use `npm.cmd` and `npx.cmd` for the same commands.
+## How it works
 
-## Try the planner
+The app is a static React + TypeScript site with three layers. Each layer may only call the one below it, and ESLint rules enforce that.
 
-1. Click **Load sample week** on an empty calendar. Later, use **Settings → Data → Load sample calendar** to choose a preset.
-2. Create an event with **+ Event** or by selecting empty time. Click an event to edit it; drag to move it, or drag its bottom edge to resize. The event dialog also supports keyboard editing of start and end.
-3. Inspect the conflict panel and choose **Suggest alternatives**. Read the proposed slot and its boundaries, then **Apply**.
-4. Create a task, choose **Find time**, review its ranked options and apply one. Select several unscheduled tasks to schedule them in a queue; **Skip** leaves a task unscheduled.
-5. Open **Replan**, compute the two plans, compare moves and metrics, then apply one. **Undo** reverses the whole applied plan in one step.
+| Layer | What it does |
+| --- | --- |
+| **UI** (React, FullCalendar, zustand) | Draws the calendar and dialogs, and turns clicks and drags into commands. FullCalendar only renders; it makes no scheduling decisions. |
+| **Engine** (plain TypeScript) | Validates every command, runs four pipelines (event changes, conflict resolution, task scheduling, replan) and keeps undo history. Its algorithms are pure functions with no UI or storage code. |
+| **Storage** (Dexie / IndexedDB) | Saves events, tasks and settings in the browser, behind an interface that also has an in-memory version for tests. |
 
-The task and conflict panels move into **Tasks and conflicts** below 1024 px. **List** provides a text agenda. The theme button cycles System → Light → Dark; the toolbar **?** button or `?` key opens the shortcut guide. Priorities and conflicts carry text tags as well as colours.
+**Key algorithms.** Here N is the number of events, n the number in the searched window, m the number of free gaps and k the number of conflicting pairs.
 
-Events can remain inside barred slots. They show **In Lunch** (or the configured label), and **Barred-slot overlaps** lists each overlap with its minutes and an alternatives action. These warnings do not increase event-pair conflict counts or replan metrics. Saving settings that introduces overlaps also shows an info toast; **View** opens/focuses the section.
+- **Conflict detection: a sweep line with a min-heap.**
+  - Events are kept sorted by start time. The sweep holds every still-running event in a heap ordered by end time, and drops each one once it has ended.
+  - Every event still in the heap overlaps the new one, so all pairs are found in O(N log N + k), plus O(k log k) to order the output.
+  - A simpler "running maximum end" sweep was considered and rejected: it misses pairs when three events overlap.
+- **Free time: merge, then complement.**
+  - Events in the window, widened by the buffer, are merged into busy blocks.
+  - What remains of the working hours, after removing barred slots and the busy blocks, is the free gaps.
+  - This takes O(log N + n) once the store is sorted, with no re-sorting.
+- **Ranking: greedy choice over the gaps.**
+  - Each fitting gap gives one candidate slot, sorted by an explicit key: earliest start, smallest leftover (best fit), or lightest day. Priority-aware picks one of these by the task's priority.
+  - This costs O(m log m).
+- **Replan: a one-pass greedy.**
+  - Flexible events are placed in priority order. Each one either keeps a valid spot or takes the best candidate for that plan.
+  - It is fast and every move is explainable, but it is not guaranteed to be globally optimal.
 
-The sparse-week **Thesis draft** is a 10-hour task. Lunch splits working time into four-hour stretches, so it shows **TaskLongerThanWindow (ER2)**: “This needs 10 h, but the longest stretch available in its window is 4 h.” It does not report **NoSlotFound (ER3)**.
+The full algorithm descriptions, correctness arguments and complexity table are in [TECH_SPEC.md](docs/TECH_SPEC.md) (§8 and §10). The data representation of events, tasks, priorities and intervals is in TECH_SPEC §5 and [PROJECT_SCHEMA.md](docs/PROJECT_SCHEMA.md) §3.
 
-All calendar data stays in the current browser's IndexedDB. Export JSON to back it up. Import and sample replacement replace events, tasks and settings and clear undo history. Undo/redo keeps up to 50 steps in memory and does not survive reload. When storage is unavailable, the app warns that changes will be lost after the tab closes.
+**Limitations.**
+- There is no backend, account system, sync or sharing; data lives in one browser.
+- There are no recurring events.
+- Several tasks are scheduled one at a time, not jointly optimised.
+- The phone layout is best effort.
 
-## Screenshots
+## Testing
 
-The sample week (**Load sample week**) in both themes:
+The algorithms are the core of the project, so they are tested hardest:
 
-![Week view, light theme, 1440 px](docs/screenshots/week-light-1440.png)
+- **Exact cases.** Hand-worked examples with exact expected results, such as "10:00–11:30 and 11:00–12:00 overlap from 11:00 to 11:30 for 30 minutes".
+- **Brute-force oracles.** The fast algorithms are compared against deliberately simple, obviously-correct versions on thousands of random calendars.
+- **Integration.** The engine is tested end to end with both storage implementations.
+- **UI.** The interface is tested against the real engine, not a mock.
+- **Browser automation** (Playwright). Real dragging, resizing and the main workflows run in Chromium.
 
-![Week view, dark theme, 1440 px](docs/screenshots/week-dark-1440.png)
+Continuous integration runs these checks on every change to `main`.
 
-More views, all generated with `npm run screenshots` from [scripts/screenshots/](scripts/screenshots/screenshots.spec.ts):
-
-Dialog form captures at 1440 / 1024 / 900 px are in `docs/screenshots/event-dialog-{light,dark}-{width}.png` and `task-dialog-{light,dark}-{width}.png`: [Event light](docs/screenshots/event-dialog-light-1440.png), [Event dark](docs/screenshots/event-dialog-dark-1440.png), [Task light](docs/screenshots/task-dialog-light-1440.png), [Task dark](docs/screenshots/task-dialog-dark-1440.png).
-
-Replan explanations for fixed events still in Lunch: [light desktop](docs/screenshots/replan-not-moved-light-1440.png), [dark desktop](docs/screenshots/replan-not-moved-dark-1440.png), [light drawer width](docs/screenshots/replan-not-moved-light-900.png), [dark drawer width](docs/screenshots/replan-not-moved-dark-900.png).
-
-| Scene                       | Light                                                       | Dark                                                      |
-| --------------------------- | ----------------------------------------------------------- | --------------------------------------------------------- |
-| Week at 1024 px             | [week-light-1024](docs/screenshots/week-light-1024.png)     | [week-dark-1024](docs/screenshots/week-dark-1024.png)     |
-| Slot picker (Find time)     | [slot-picker-light](docs/screenshots/slot-picker-light.png) | [slot-picker-dark](docs/screenshots/slot-picker-dark.png) |
-| Replan, both plans computed | [replan-light](docs/screenshots/replan-light.png)           | [replan-dark](docs/screenshots/replan-dark.png)           |
-| Empty state                 | [empty-light](docs/screenshots/empty-light.png)             | [empty-dark](docs/screenshots/empty-dark.png)             |
-
-Single-theme scenes: [Month view (light)](docs/screenshots/month-light.png), [List view (dark)](docs/screenshots/list-dark.png), [the whole side column with conflicts (light)](docs/screenshots/side-panels-light.png) and [the Tasks and conflicts drawer at 900 px (light)](docs/screenshots/drawer-light-900.png).
-
-## Tests
-
-The algorithms carry the project's correctness claim, so they are tested hardest:
-
-- hand-computed cases with exact expected values
-- brute-force oracles compared against the fast algorithms on thousands of random inputs (fast-check)
-- coverage gates
-
-The engine is tested through its facade with both storage adapters. The UI is tested against the real engine, never a mock, and Playwright drives real dragging, resizing and the main flows in Chromium, on both the production build and a StrictMode dev server. CI (`.github/workflows/ci.yml`) runs the gate on every pull request and push to `main`, plus the browser suite on `main`.
-
-**Results** (local, 2026-10-26, after WI-38):
+**Latest results** (26 October 2026):
 
 | Check | Result |
 | --- | --- |
-| Unit, integration, property and UI tests | 578 passing (T15 opt-in) |
-| Property oracles (T12, T33–T36) | 5 properties × 10,000 random cases, all passing (full run in WI-36; CI runs 1,000 at seed 42) |
-| DST suite (America/New_York) | 7 passing |
-| Browser checks (Playwright, Chromium) | 18 passing |
-| Coverage, overall | 98.55% lines, 93.98% branches (gate: 70%) |
-| Coverage, algorithms | 99.70% lines, 95.93% branches, 100% functions (WI-36; gate: 90%) |
-| Performance, T15 | 5,000 events, 183 conflicting pairs, median 4.188 ms for sweep + slot search (target < 100 ms) |
-| Production rehearsal | Demos D1–D5 passed on the live site; contrast and screen-reader announcements checked |
-| Independent audit | Findings A01–A10 re-verified, then fixed test-first or deferred with reasons ([AUDIT.md](docs/AUDIT.md)) |
+| Unit, integration and UI tests | 582 passing |
+| Randomised oracle tests | 5 properties × 10,000 random calendars each, all passing |
+| Daylight-saving tests (New York time zone) | 7 passing |
+| Browser tests (Chromium) | 18 passing; 360 of 360 runs passed when the suite was repeated 10 times on a warm and a cold start (no flaky tests) |
+| Code coverage | 98.60% of lines and 94.08% of branches overall; 99.70% / 95.93% for the algorithms |
+| Performance | Conflict detection plus a slot search on a 5,000-event calendar: median 4.2 ms (target: under 100 ms) |
+| Manual checks on the live site | All five demo scripts passed; colour contrast and screen-reader announcements checked |
+| Independent code audit | 10 findings re-checked, then fixed with tests or deferred with reasons ([AUDIT.md](docs/AUDIT.md)) |
 
-**Where the full test data lives:**
-
-- [TEST_PLAN.md](docs/TEST_PLAN.md):
-  - every case with its exact inputs and expected outputs (T1–T40, E1–E4 and the smoke flow)
-  - requirement traceability (§3)
-  - manual checklists (§7)
-  - demo scripts with the production rehearsal record (§8)
-  - release checklist (§9)
-- [PROGRESS.md](docs/PROGRESS.md): the gate result recorded for every work item, plus milestone summaries.
-- Generated locally, git-ignored:
-  - `coverage/index.html`, from `npm run test:coverage`
-  - Playwright results, from `npm run e2e`; they print to the terminal, and failure traces land in `test-results/`
-
-**To reproduce:**
+**Reproduce the results.** Install dependencies with `npm ci`, then:
 
 ```bash
-npm run typecheck
-npm run lint
-npm test
-npm run test:coverage
-npm run test:dst
-npm run test:props:full
+npm test                  # unit, integration and UI tests
+npm run test:coverage     # the same, with a coverage report in coverage/index.html
+npm run test:dst          # daylight-saving tests
+npm run test:props:full   # randomised oracle tests at 10,000 cases each
 npx playwright install chromium
-npm run e2e
-npm run test:perf
-npm run bench
-npm run build
+npm run e2e               # browser tests (builds and serves the app itself)
+npm run test:perf         # the 5,000-event performance check
 ```
 
-`npm test` sets `TZ=UTC`. `test:dst` uses America/New_York. The normal property suite uses 1,000 cases with seed 42; `test:props:full` runs 10,000 cases per property with random seeds. Playwright starts its own build/preview server and uses fresh browser storage with the clock fixed to the test week. It checks conflicts, real pointer drag/resize, reload persistence, task scheduling and keyboard/accessibility workflows.
-
-Coverage gates require 90% across algorithm lines, branches, functions and statements, and 70% overall. Manual production checks, including a live screen-reader pass, remain in [TEST_PLAN §7](docs/TEST_PLAN.md#7-manual-checklists-run-on-the-production-url-before-each-milestone).
-
-## Performance (T15)
-
-`npm run test:perf` measures eleven runs of a full conflict sweep plus one facade slot search. `npm run bench` prints the Vitest report. Both use 5,000 events over 100 weeks from `mulberry32(7)` and a 60-minute task over the first four weeks. Generation, validation and engine initialization finish before timing begins.
-
-Local Windows measurement on 2026-10-26 after WI-32/33: **183 conflicting pairs**, eleven-run median **4.188 ms**, against a target below **100 ms** (measured alongside other validation). The earlier WI-28 run measured 1.201 ms; its separate Vitest benchmark reported a **0.2665 ms mean**. The benchmark runner reports module-export getter overhead; these are local test-runner measurements and vary with hardware, JIT warmup and background load.
-
-## Architecture and limits
-
-| Layer                                      | Responsibility                                                                                                              |
-| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
-| React + FullCalendar + zustand             | Render snapshots, collect gestures/forms and explain options; FullCalendar does not decide scheduling                       |
-| Engine facade                              | Validate external inputs, serialize commands, update history and run the CRUD, task, alternatives and replan pipelines      |
-| Pure algorithms                            | Heap sweep for every overlap pair; merged busy blocks, allowed segments and free gaps; ranking and greedy replan heuristics |
-| Repository interface                       | Interchangeable Dexie/IndexedDB and in-memory adapters with atomic changes                                                  |
-| Shared types, Zod schemas and time helpers | Domain contracts and local-time boundaries, including DST                                                                   |
-
-The sorted event array supports bounded window queries. Conflict detection costs `O(N log N + k log k)` including output ordering, where `k` is the number of overlapping pairs. Independent barred warnings use local DayFrames and a pure intersection algorithm; their per-event frame expansion costs `O(N·B log(B+1) + q)` for `B` barred slots and `q` warning records. Ranking strategies are explicit comparison keys. Replan uses a priority-ordered greedy heuristic; it does not guarantee a globally optimal schedule. The facade and ranking/repository strategies are the project's two design patterns.
-
-There is no backend, account system, recurrence, cross-device sync or joint multi-task optimizer. Phone layout is best effort. The production build retains a Vite warning about the FullCalendar-heavy bundle size.
+Every test case, with its exact inputs and expected outputs, is listed in [TEST_PLAN.md](docs/TEST_PLAN.md). The file also has a table mapping each requirement to its tests, the manual checklists and the demo scripts with their recorded outcomes. Timings depend on hardware; coverage and test counts should match.
 
 ## Samples and demonstrations
 
-[docs/samples/](docs/samples/README.md) contains six importable JSON files, including the 5,000-event stress sample. Regenerate and validate them with:
+- **Sample calendars.** [docs/samples/](docs/samples/README.md) has six importable sample calendars: sparse week, back-to-back, overlap cluster, fully booked day, midnight crossing, and a 5,000-event stress test. Import them via **Settings → Data → Import JSON**, or load the same presets directly from the app.
+- **Demo scripts.** Step-by-step scripts for event management, conflict detection, best-time finding, replanning and the extras are in [TEST_PLAN.md](docs/TEST_PLAN.md) §8, demos D1–D5.
+- **Screenshots** (in [docs/screenshots/](docs/screenshots/)):
 
-```bash
-npm run samples:export
-```
-
-Committed files use the week beginning **2 November 2026 in UTC**. The app's sample loader uses the current local week instead. The registered stress sample uses seed 42; the performance benchmark uses seed 7.
-
-Follow [D1–D5 in TEST_PLAN §8](docs/TEST_PLAN.md#8-demonstration-scripts-deliverables-calendar-conflict-and-best-time-demos) for the calendar, conflict, best-time, replan and backup demonstrations. **Divyam reported all five passing on production on 2026-10-26**, with contrast OK in both themes and screen-reader toast announcements. WI-32/33's new D5 steps pass locally and are included in the team's planned redeploy.
-
-## Deployment — team members only
-
-Vercel serves this as a static Vite app: build command `npm run build`, output directory `dist`, with no environment variables or backend. We deploy with the Vercel CLI: run `npx vercel --prod` from a clean `main`. The full procedure, including the optional Git integration, is in [TECH_SPEC §13.2](docs/TECH_SPEC.md#132-hosting-on-vercel).
-
-Under [AGENTS.md §7](AGENTS.md#7-human-only-actions--never-do-these-note-them-in-progressmd-under-human-only-steps), the humans handle pushes, account connections and deployment. After deploying the tested app, open a fresh browser context, confirm the empty state and **Load sample week**, then rehearse D1–D5 and complete the manual release checks.
+| View | Light | Dark |
+| --- | --- | --- |
+| Week | [1440 px](docs/screenshots/week-light-1440.png) · [1024 px](docs/screenshots/week-light-1024.png) | [1440 px](docs/screenshots/week-dark-1440.png) · [1024 px](docs/screenshots/week-dark-1024.png) |
+| Find time (slot picker) | [light](docs/screenshots/slot-picker-light.png) | [dark](docs/screenshots/slot-picker-dark.png) |
+| Replan with both plans | [light](docs/screenshots/replan-light.png) | [dark](docs/screenshots/replan-dark.png) |
+| Event dialog | [light](docs/screenshots/event-dialog-light-1440.png) | [dark](docs/screenshots/event-dialog-dark-1440.png) |
+| Empty state | [light](docs/screenshots/empty-light.png) | [dark](docs/screenshots/empty-dark.png) |
 
 ## Documentation
 
-- [PROJECT_SCHEMA.md](docs/PROJECT_SCHEMA.md): behavior, requirements, business rules and UX.
-- [TECH_SPEC.md](docs/TECH_SPEC.md): architecture, contracts, algorithms and work items.
-- [TEST_PLAN.md](docs/TEST_PLAN.md): exact cases, validation, demos and release checklist.
-- [PROGRESS.md](docs/PROGRESS.md): current branch, completed work and human handoff.
-- [AUDIT.md](docs/AUDIT.md): the independent review and how each finding was resolved.
-- [samples/](docs/samples/README.md) and [screenshots/](docs/screenshots/): sample inputs and UI captures.
+| Document | Read it for |
+| --- | --- |
+| [PROJECT_SCHEMA.md](docs/PROJECT_SCHEMA.md) | What the app does: requirements, error handling, exact scheduling rules, domain model and UX |
+| [TECH_SPEC.md](docs/TECH_SPEC.md) | How it is built: architecture, data types, algorithms with complexity, storage and the build plan |
+| [TEST_PLAN.md](docs/TEST_PLAN.md) | How it is verified: every test case, traceability, manual checks and demo scripts |
+| [AUDIT.md](docs/AUDIT.md) | An independent review of the finished code, and how each finding was resolved |
+| [PROGRESS.md](docs/PROGRESS.md) | The development log: each work item, its test results and the decisions made along the way |
 
-**Deviations from the submitted assignments.** The app follows our Assignments 1–3, which were written separately as design deliverables. Before coding, we unified them into the three documents above, and we deviated where the real constraints required it:
-- **Hosting.** The course requires a hosted URL, so the app is a static site. IndexedDB (Dexie) replaces the planned SQLite, which only made sense for a locally run app.
-- **Conflict sweep.** It uses a min-heap, because the running-maximum sweep in A1/A2 misses conflicting pairs.
-- **Data structures.** In-memory storage stays with plain sorted arrays; the planned BST was dropped.
-- **Underspecified features.** The Replan pipeline, the one-task-at-a-time scheduling queue and the priority-aware ranking were given exact rules.
+**Deviations from our earlier design assignments.** These documents replace our three design assignments, which were written separately before any code existed. Merging them meant settling where they disagreed, and a few changes came from real constraints:
 
-Every such deviation is listed with its reason in [PROJECT_SCHEMA §9](docs/PROJECT_SCHEMA.md#9-deviations-from-the-submitted-assignments). Decisions made later, during implementation, are recorded in the *Decisions log* of [PROGRESS.md](docs/PROGRESS.md) and in each document's change log.
+- The course requires a hosted URL, so the app became a static website. Browser storage (IndexedDB) replaced the SQLite database we had planned for a locally run app.
+- Conflict detection uses a heap-based sweep. The simpler sweep in the early assignments misses some overlapping pairs.
+- Events are stored in plain sorted arrays. A planned binary-search-tree upgrade was unnecessary at realistic sizes and was dropped.
+- Features the assignments described only loosely (Replan, scheduling several tasks, priority-aware ranking) were given exact rules.
 
-Read the repository session protocol and disciplined-coding skill before changing code. The humans should be able to explain every line during the viva.
+Each deviation is listed with its reason in [PROJECT_SCHEMA.md §9](docs/PROJECT_SCHEMA.md#9-deviations-from-the-submitted-assignments). Smaller decisions made during implementation are in the decisions log of [PROGRESS.md](docs/PROGRESS.md) and in each document's change log.
 
-## AI-assisted development
+## How this project was built (AI-assisted development)
 
-The course allows AI for every task, provided each team member can explain every line in the viva. We built the app with AI coding agents (OpenAI Codex and Anthropic Claude Code). The agents took turns, one at a time, and worked inside a framework we designed with Claude so that their output stays consistent, tested and explainable.
+Our course permits AI for any task, on one condition: each student must be able to explain every line in an oral examination.
+
+- **What the team did.** We wrote the requirements and design, made every product decision, reviewed the work, tested the live app and reported problems.
+- **What the AI agents did.** Most of the code was written by AI coding agents (OpenAI Codex and Anthropic Claude Code). They worked one at a time, handing over through the repository.
+- **Why there are guardrails.** To keep code from several agents consistent, correct and explainable, we built a set of rules into the repository. These files show how:
 
 ```text
 .
-├── AGENTS.md                                  # session protocol every agent follows: rebuild state, claim a work item, commit, hand off, merge
-├── CLAUDE.md                                  # imports AGENTS.md for Claude Code
-├── .agents/skills/disciplined-coding/SKILL.md # our coding-contract skill (read by Codex)
-├── .claude/
-│   ├── skills/disciplined-coding/SKILL.md     # identical copy for Claude Code
-│   └── settings.json                          # commands agents may run; push, reset --hard, rebase and deploy are denied
+├── AGENTS.md                         # the rules every agent followed in every session
+├── CLAUDE.md                         # points Claude Code at AGENTS.md
+├── .agents/skills/disciplined-coding/SKILL.md   # our coding standard (the same file is in .claude/skills/)
+├── .claude/settings.json             # commands agents could run; pushing and deploying were reserved for humans
 └── docs/
-    ├── PROJECT_SCHEMA.md · TECH_SPEC.md · TEST_PLAN.md   # the single source of truth agents build against
-    ├── PROGRESS.md                            # work-item checklist, per-session handoff notes, decisions log
-    ├── PROMPTS.md                             # the prompts that drove development
-    └── AUDIT.md                               # independent AI audit (A01–A10) and how each finding was resolved
+    ├── PROJECT_SCHEMA.md, TECH_SPEC.md, TEST_PLAN.md   # the specification agents built against
+    ├── PROGRESS.md                   # the work-item log and handover notes between sessions
+    ├── PROMPTS.md                    # the prompts we gave the agents, in order
+    └── AUDIT.md                      # a separate AI review of the code, and our fixes
 ```
 
-**How it worked:**
+What these rules meant in practice:
 
-1. **Specification first.**
-   - We merged Assignments 1–3 into three documents that settle precedence among themselves and freeze the public contracts: types, schemas, the engine interface and algorithm signatures.
-   - The build was split into work items (WI-01 → WI-38), each with its dependencies, its files and a "done when" list of tests.
-2. **Agents in relay.**
-   - Every session starts with the same [reusable prompt](docs/PROMPTS.md#4-the-reusable-session-prompt). The agent rebuilds the state from git and `PROGRESS.md` rather than from memory, then claims one work item and works on its own branch.
-   - It commits small and often, because a usage limit can stop it at any moment, and merges with `--no-ff` only when the gate is green.
-   - Pushing, deploying and accounts are reserved for the humans.
-3. **Contracts in the code** (the `disciplined-coding` skill):
-   - Every function and component carries `PRE`/`POST` comments, written before its body, and every loop carries `INVARIANT`/`POST`.
-   - "PRE decides who validates": the engine facade validates all outside input with shared Zod schemas, and the pure algorithms trust their stated preconditions.
-   - The skill also requires iteration over recursion, one task per function, intent-revealing names, named constants and why-only comments.
-   - The contract comments double as our study notes for the viva.
-4. **Test-driven, with independent checks.**
-   - Algorithms and engine code were written test-first against the exact values in `TEST_PLAN.md`, then cross-checked by brute-force property oracles.
-   - ESLint enforces the layer boundaries, so algorithms cannot import UI, storage or date libraries.
-   - Coverage gates, CI and Playwright smoke flows guard against regressions.
-5. **Human review loop.**
-   - We rehearsed the demos on production and reported problems.
-   - A separate agent audited the code read-only. Each finding, and each bug we found, was turned into a new work item with failing tests first.
+1. **The specification came first.** Agents built against the three documents above, not a chat history. The work was split into 39 small work items, each with a list of tests that must pass before it counts as done.
+2. **Every function carries a contract.** Our coding standard requires a written precondition and postcondition (`PRE` / `POST`) above every function and component, and an `INVARIANT` above every loop, before the code is written.
+   - Open any file in `src/engine/algorithms/` to see them.
+   - They make the reasoning reviewable, and they are what we study from for the oral exam.
+3. **Tests come before code.** Algorithm and engine code was written test-first against the exact values in TEST_PLAN.md, then cross-checked by the randomised oracle tests.
+4. **The architecture is enforced, not just described.** Lint rules stop the algorithms from importing UI, storage or date libraries, and coverage thresholds and CI stop regressions.
+5. **Humans stayed in the loop.**
+   - We tested every milestone on the live site.
+   - A separate AI audit reviewed the code; each confirmed finding was fixed with a failing test first.
+   - The full history is visible: each work item has its own branch, merged into `main` with its own commits.
