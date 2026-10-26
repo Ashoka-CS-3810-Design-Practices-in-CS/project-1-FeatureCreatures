@@ -4,7 +4,7 @@
 import type { CalendarApi } from '@fullcalendar/core';
 import type FullCalendar from '@fullcalendar/react';
 import { useEffect, type RefObject } from 'react';
-import { useAppStore, type AppActions, type ViewType } from '../store/appStore';
+import { useAppStoreApi, type AppActions, type ViewType } from '../store/appStore';
 
 export interface KeyPress {
   key: string;
@@ -140,26 +140,27 @@ function runShortcut(
 // PRE:  called in a component under StoreProvider (App); calendarRef points at the FullCalendar
 //       component that CalendarView renders
 // POST: while mounted, a keydown on window runs its shortcut (and the browser's default for that
-//       key is prevented); keys that are not shortcuts are left alone
+//       key is prevented), using store state at keypress time; one listener per store/ref mount,
+//       removed on unmount; keys that are not shortcuts are left alone
 export function useShortcuts(calendarRef: RefObject<FullCalendar | null>): void {
-  const dialogOpen = useAppStore((state) => state.dialog !== null);
-  const pickerOpen = useAppStore((state) => state.picker !== null);
-  const busy = useAppStore((state) => state.busy !== null);
-  const actions = useAppStore((state) => state.actions);
+  const store = useAppStoreApi();
 
   useEffect(() => {
     // PRE:  event is a keydown on window
-    // POST: runs the shortcut it means, if any, instead of the browser's default
+    // POST: reads current modal/loading state and runs any permitted shortcut instead of the browser's default
     function onKeyDown(event: KeyboardEvent): void {
+      // A key can follow a store change before React commits or refreshes passive effects.
+      const { dialog, picker, busy, actions } = store.getState();
+      const dialogOpen = dialog !== null;
       const nativeModalOpen = document.querySelector('dialog[open]') !== null;
       // Native Esc closes only the top dialog, including the drawer; a loading dialog cancels it.
-      if (busy || (event.key === 'Escape' && nativeModalOpen)) {
+      if (busy !== null || (event.key === 'Escape' && nativeModalOpen)) {
         return;
       }
       const command = shortcutFor(
         event,
         isTextField(event.target),
-        dialogOpen || pickerOpen || nativeModalOpen,
+        dialogOpen || picker !== null || nativeModalOpen,
       );
       if (command === null) {
         return;
@@ -170,5 +171,5 @@ export function useShortcuts(calendarRef: RefObject<FullCalendar | null>): void 
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [actions, calendarRef, dialogOpen, pickerOpen, busy]);
+  }, [store, calendarRef]);
 }

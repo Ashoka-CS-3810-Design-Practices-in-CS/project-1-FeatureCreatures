@@ -1432,7 +1432,7 @@ interface Toast { id: string; tone: 'success' | 'info' | 'warning' | 'error'; te
                   actions?: { label: string; run: () => void }[]; sticky?: boolean }
 ```
 
-`createAppStore(engine, {storageWarning, init, now, resetStorage, initialView?})` builds the store; `now` dates the samples and `resetStorage` empties the repository for the fatal screen's *Reset local data*. `initialView` is the view remembered in `localStorage['fc-view']` (`storedView()` in `hooks/preferences.ts`); `main.tsx` calls `rememberView(store)` so later view changes are remembered too. `onDatesSet` records `view.type` and `view.date` (the shown period's first day, for the toolbar title) as well as `activeRange`. `StoreProvider` and `useAppStore(selector)` live in `appStore.ts`.
+`createAppStore(engine, {storageWarning, init, now, resetStorage, initialView?})` builds the store; `now` dates the samples and `resetStorage` empties the repository for the fatal screen's *Reset local data*. `initialView` is the view remembered in `localStorage['fc-view']` (`storedView()` in `hooks/preferences.ts`); `main.tsx` calls `rememberView(store)` so later view changes are remembered too. `onDatesSet` records `view.type` and `view.date` (the shown period's first day, for the toolbar title) as well as `activeRange`. `StoreProvider`, `useAppStore(selector)` and `useAppStoreApi()` live in `appStore.ts`; the API hook exposes the provided store without a render subscription for handlers that need current state (WI-39).
 
 `SidePanel` renders the panels once: an `aside` at 1024 px and wider, a native `Modal` drawer below it. `useNarrowLayout` listens for media-query changes. The UI store owns the drawer's open state; App wires its toolbar trigger. Nested dialogs keep the drawer open; native Esc closes only the top dialog. Modal cleanup returns focus to the connected trigger, with the page trigger retained across confirmation replacements.
 
@@ -1574,8 +1574,8 @@ No web font is loaded: the system stack needs no dependency, causes no font flas
 
 ### 11.5 Shortcuts (`hooks/useShortcuts.ts`)
 
-- There is one `keydown` listener on `window`.
-- It returns early when `e.target` is an `input`, `textarea`, `select` or `[contenteditable]`, or when `store.dialog !== null` (except for `Escape`).
+- There is one `keydown` listener on `window`, registered for the mounted store/calendar ref and removed on unmount. It reads `store.getState()` at keypress time for dialog, picker, busy and actions. It must not capture their render-time values: a shortcut immediately after a store change can arrive before React's passive effects (WI-39).
+- It returns early while busy. Except for Escape, shortcuts are off when `event.target` is an `input`, `textarea`, `select` or `[contenteditable]`, or when a store dialog, picker or native dialog is open. Native Escape handling keeps control of the top native dialog.
 - The key map is exactly PROJECT_SCHEMA §7.6. `mod = e.metaKey || e.ctrlKey`.
 - Navigation keys call FullCalendar's API through a ref exposed by `CalendarView` (`calendarRef.current.getApi().prev()` and so on).
 
@@ -1635,6 +1635,7 @@ export default defineConfig({
 
 **`playwright.config.ts`**
 - `testDir: 'e2e'`
+- `retries: process.env.CI ? 1 : 0`; `use.trace: 'retain-on-failure'` keeps the first failed attempt's trace even when its retry passes. CI uses GitHub plus HTML reporters (`open: 'never'`); local runs use the list reporter.
 - Two `webServer`s: the built app (`npm run build && npm run preview -- --port 4173 --strictPort`) and the StrictMode dev server (`npm run dev -- --port 5174 --strictPort`), both with `reuseExistingServer: !process.env.CI`.
 - Project `chromium` runs every spec against `http://localhost:4173`; project `chromium-dev` runs only `smoke.spec.ts` against `http://localhost:5174`, because StrictMode's double mount happens only in development (WI-35).
 
@@ -1670,6 +1671,15 @@ jobs:
         with: { node-version: 22, cache: npm }
       - run: npm ci && npx playwright install --with-deps chromium
       - run: npm run e2e
+      - name: Upload browser failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-failure-diagnostics
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
 ```
 
 `main` is protected: it requires the `check` job and one review.
@@ -1748,7 +1758,6 @@ Phases match A3 §7. Owners follow A3: **S** = Samar, **Dv** = Divyam. Each WI i
 | 36 | Change | Audit findings A01–A10 | S + Dv | per finding, see `docs/AUDIT.md` | 35 | `docs/AUDIT.md` committed; every finding re-verified against `main` with a failing test first and a resolution line (fixed in <commit> / not reproducible / deferred with reason); full gate incl. `npm run e2e` green |
 | 37 | Change | Dialog form polish | S + Dv | EventDialog, TaskDialog, shared PriorityRadioGroup, styles, RTL, e2e, dialog screenshots | 36 | Flex window is a full-width group below End; browser geometry checks at 1440, 1024 and drawer width in both themes; shared tagged/coloured native priority radios support arrow keys; task Working hours only (default) / Any time radios preserve useWorkingHours; schemas/engine unchanged; §7.1 and screenshots refreshed |
 | 38 | Change | Replan vs barred-slot overlaps | S + Dv | replan diagnostics, ReplanDialog, ConflictPanel, engine/UI tests, TEST_PLAN D4 | 37 | T39/T40: Minimal change moves future flexible barred events with reason barred and leaves fixed/started events static; classify unresolved conflicts/barred overlaps with per-event reasons and reused alternatives; no bare No changes needed when problems remain; fixed/flexible panel tags; FR10/BR-12 UX wording and D4 updated; full gate and browser suite green |
-
 | 39 | Change | Fix intermittent CI failures | S + Dv | useShortcuts, store context hook, RTL, Playwright config, ci.yml, test documentation | 38 | A deterministic close-then-immediate-shortcut regression fails on the old closure; one listener reads current dialog/picker/busy/actions at keypress time; 10 repeats with 2 workers pass warm and after deleting node_modules/.vite and restarting dev; CI has one retry, retained failure traces, HTML report and failure artifact; results recorded in PROGRESS/TEST_PLAN; gate and local merge green |
 
 **`docs/PROGRESS.md` format** (already created during repo setup):
@@ -1815,4 +1824,4 @@ Production URL: https://…vercel.app
 | 2026-10-26 | v1.24 (WI-36, `docs/AUDIT.md`): §8.13/§10 replan plans repeat greedy passes with unplaced events pinned (A01, ≤ c + 1 passes); §5/§6 `MIN/MAX_SUPPORTED_MINUTE` bound every Minute (A02) and `slotSchema` validates slots via `requireValidSlot` (A06); §7.4.6 `linkIssues` checks the BR-9 mirror (A04); §7.5 day loads cover whole days (A05); §7.4.3/§7.4.4 `requireNotPast` makes overtaken results stale (A07) and the replan range is 1–14 whole local days; §11.1/§11.2 ER4 Move to uses its own version (A03), Replan inputs drop old plans (A08) and Month defaults to its first full week (A10); §6 description message (A09); §2 lists `docs/AUDIT.md`. |
 | 2026-10-26 | v1.25 (WI-37/38): §14 adds dialog form polish and Replan diagnostics change requests, with regression checks and unchanged scheduling contracts. |
 | 2026-10-26 | v1.26 (WI-38): §5 ReplanResult adds derived notMoved by plan ID and ReplanNotMoved; §7.4.4/§11.2 document post-plan diagnostics and reused alternatives; §14 completion uses T39/T40. Heuristic, schemas and metrics unchanged; regression confirms barred moves work. |
-| 2026-10-26 | v1.27 (WI-39): §14 adds test-first shortcut race repair, current-state keypress handling, CI diagnostics and warm/cold browser repeat verification. |
+| 2026-10-26 | v1.27 (WI-39): §11.1/§11.5 expose useAppStoreApi and read current store state per keypress with one listener; §12/§13.1 add one CI retry, retained failure traces, GitHub/HTML reporters and failure artifacts; §14 adds the test-first race repair and warm/cold 10-repeat browser verification. |

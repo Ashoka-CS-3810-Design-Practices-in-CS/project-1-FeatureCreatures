@@ -248,6 +248,12 @@ Each test does `page.clock.install({ time: new Date('2026-11-02T08:00:00') })` b
 
 **Dev-mode / StrictMode coverage (WI-35).** StrictMode mounts, unmounts and remounts every effect in development only, so the production build cannot show its bugs. It is covered twice: RTL renders `Modal` inside `<StrictMode>` (it stays open; Esc still closes it once), with a dialog polyfill that queues `close` like the browser; and the `chromium-dev` Playwright project runs the smoke flow on `npm run dev`. That project was red with the Modal fix reverted.
 
+**Shortcut race / repeat checks (WI-39).** The deterministic RTL test commits the help dialog open, then closes it and dispatches `?` synchronously in the same `act`, before React can refresh effects. The old listener ignores the key; the repaired listener immediately reopens help from current store state. Picker/busy transitions and one-listener cleanup are also checked. The browser hunt runs `npm run build`, then `npm run e2e -- --repeat-each=10 --workers=2` (18 cases × 10 = 180 executions, including both production and StrictMode smoke). Repeat after stopping the dedicated test dev server and deleting only `node_modules/.vite`, so Playwright starts a cold server. Local retries stay zero; do not add waits to mask races.
+
+**CI failure diagnostics (WI-39).** CI retries once and reports a recovered failure as flaky; `trace: 'retain-on-failure'` retains the failed attempt's trace. GitHub and HTML reporters run in CI, and the failed e2e job uploads `test-results/` plus `playwright-report/` as `playwright-failure-diagnostics`. Open the downloaded HTML report or inspect a trace with `npx playwright show-trace <trace.zip>`.
+
+WI-39 local repeat evidence (2026-10-26, Codex): warm **180/180 passed** and cold **180/180 passed**, each over 10 repeats with 2 workers and zero retries: **360/360 total**, including both projects, with no other browser flakes. Both commands exited 0. The sandboxed warm Windows runner needed its verified test dev-server child terminated after all cases passed; this was server cleanup, not a browser failure. The cold run began with that server stopped and `node_modules/.vite` verified absent, ran with permitted process cleanup, and finished in 4.3 min.
+
 ---
 
 ## 7. Manual checklists (run on the production URL before each milestone)
@@ -313,6 +319,7 @@ WI-31 completes local release preparation. User-reported production outcomes are
 - [x] Typecheck/lint/test gate passes; coverage thresholds met (98.30% overall lines / 93.12% branches; algorithms 99.67% / 95.85%). DST: 7 cases. Production build passes.
 - [x] After WI-35/36 (2026-10-26, local): 563 tests, coverage 98.50% lines / 93.82% branches (algorithms 99.70% / 95.93%), 7 DST, all five properties at 10,000 random-seed cases, build, and 11 browser checks (E1–E4, smoke on the build and on the StrictMode dev server, accessibility, warnings) green. Not yet on production: needs the human redeploy.
 - [x] After WI-37/38 (2026-10-26, local): 578 tests, coverage 98.55% lines / 93.98% branches, 7 DST, build and 18 browser checks green. Dialog geometry/keyboard checks cover both themes at 1440/1024/900 px; D4's barred-replan distinction and per-event alternatives pass locally. The scheduling heuristic is unchanged. Human push/redeploy and the new production D4 steps remain pending.
+- [x] After WI-39 (2026-10-26, local): typecheck/lint, 582 tests, coverage 98.60% lines / 94.08% branches, build, warm 180/180 and cold 180/180 browser executions green (each 10 repeats, 2 workers, no retries); no additional flakes found. Deterministic regression failed before the fix. CI retry/trace/HTML/failure-artifact configuration verified locally; the next remote CI run needs the human push.
 - [x] `npm run test:props:full`: all five properties pass 10,000 random-seed cases each; no failing seed found.
 - [x] `npm run e2e`: all 8 Chromium checks pass, including E1–E3 and the new warning/ER2/help workflows.
 - [x] `npm run test:perf`: N=5000, seed=7, k=183, eleven-run median 4.188 ms < 100 ms; recorded in README.
@@ -346,3 +353,4 @@ WI-31 completes local release preparation. User-reported production outcomes are
 | 2026-10-26 | v1.9 (WI-36): audit regressions — T35 treats unplaced events as busy (A01); T25 adds unsupported dates (A02) and BR-9 mirror mismatches (A04); T21 adds a stale Move to (A03); T18 adds partial days (A05); T27 adds clock-advance cases (A07); §5 adds Replan input edits (A08), description errors (A09) and per-view Replan defaults (A10); §2 `makeEngine` gains `setNow`; §9 records the post-WI-36 local results.
 | 2026-10-26 | v1.10 (WI-37): §5/§6 add dialog radio persistence/defaults and both-theme flex-field geometry plus arrow-key checks at 1440/1024/900 px. |
 | 2026-10-26 | v1.11 (WI-38): T39/T40 cover barred replan moves, exclusion classification, remaining problems and alternatives; D4 adds fixed/started Lunch overlaps. |
+| 2026-10-26 | v1.12 (WI-39): deterministic same-act shortcut state regressions and one-listener lifecycle checks; warm/cold 10-repeat browser hunt; CI retry/trace/HTML/failure-artifact diagnostics. |

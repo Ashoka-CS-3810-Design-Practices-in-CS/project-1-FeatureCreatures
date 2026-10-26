@@ -6,6 +6,9 @@ const DEV_URL = 'http://localhost:5174';
 
 export default defineConfig({
   testDir: 'e2e',
+  retries: process.env.CI ? 1 : 0,
+  reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
+  use: { trace: 'retain-on-failure' },
   webServer: [
     {
       command: 'npm run build && npm run preview -- --port 4173 --strictPort',

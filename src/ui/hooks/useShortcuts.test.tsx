@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import type FullCalendar from '@fullcalendar/react';
-import { screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { RefObject } from 'react';
+import { task } from '../../../tests/helpers/builders';
 import { makeEngine } from '../../../tests/helpers/engine';
 import { renderWithStore, storeFor } from '../../../tests/helpers/render';
 import { t } from '../../../tests/helpers/time';
@@ -74,7 +75,80 @@ describe('shortcutFor', () => {
 });
 
 describe('useShortcuts (T32)', () => {
-  afterEach(() => vi.clearAllMocks());
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.restoreAllMocks();
+  });
+
+  it('WI-39: immediately reopens help after closing it, before React flushes another effect', async () => {
+    const store = await renderHarness();
+    act(() => store.getState().actions.openDialog({ kind: 'shortcuts' }));
+
+    act(() => {
+      store.getState().actions.closeDialog();
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: '?', cancelable: true }));
+      expect(store.getState().dialog).toEqual({ kind: 'shortcuts' });
+    });
+  });
+
+  it('reads picker and busy changes immediately without waiting for another effect', async () => {
+    const { engine } = await makeEngine({ tasks: [task('Read', 60, ['Mon 09:00', 'Mon 18:00'])] });
+    const store = storeFor(engine);
+    renderWithStore(<Harness />, store);
+    act(() => store.getState().actions.openTaskPicker(['Read']));
+
+    act(() => {
+      store.getState().actions.pickerStop();
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: '?', cancelable: true }));
+      expect(store.getState().dialog).toEqual({ kind: 'shortcuts' });
+    });
+    act(() => {
+      store.getState().actions.closeDialog();
+      store.setState({ busy: 'Loading calendar' });
+    });
+    act(() => {
+      store.setState({ busy: null });
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: '?', cancelable: true }));
+      expect(store.getState().dialog).toEqual({ kind: 'shortcuts' });
+    });
+  });
+
+  it('blocks shortcuts immediately when a dialog opens or loading starts', async () => {
+    const store = await renderHarness();
+    act(() => {
+      store.getState().actions.openDialog({ kind: 'shortcuts' });
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'n', cancelable: true }));
+      expect(store.getState().dialog).toEqual({ kind: 'shortcuts' });
+    });
+    act(() => store.getState().actions.closeDialog());
+    act(() => {
+      store.setState({ busy: 'Loading calendar' });
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'n', cancelable: true }));
+      expect(store.getState().dialog).toBeNull();
+    });
+  });
+
+  it('keeps one keydown listener across state changes and removes it on unmount', async () => {
+    const store = storeFor((await makeEngine()).engine);
+    const addListener = vi.spyOn(window, 'addEventListener');
+    const removeListener = vi.spyOn(window, 'removeEventListener');
+    const { unmount } = renderWithStore(<Harness />, store);
+    // PRE:  addListener records calls made during this mount
+    // POST: returns only the keydown listener registrations
+    const keydownCalls = () => addListener.mock.calls.filter(([type]) => type === 'keydown');
+    expect(keydownCalls()).toHaveLength(1);
+    const listener = keydownCalls()[0]?.[1];
+
+    act(() => store.getState().actions.openDialog({ kind: 'shortcuts' }));
+    act(() => store.getState().actions.closeDialog());
+    act(() => store.setState({ busy: 'Loading calendar' }));
+    act(() => store.setState({ busy: null }));
+    expect(keydownCalls()).toHaveLength(1);
+    unmount();
+    expect(removeListener).toHaveBeenCalledWith('keydown', listener);
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: '?' }));
+    expect(store.getState().dialog).toBeNull();
+  });
 
   it('(a) N opens the new-event dialog; (b) N while typing in a text input does nothing', async () => {
     const store = await renderHarness();
