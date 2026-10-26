@@ -174,7 +174,7 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 ## Human-only steps
 
-- [ ] Push WI-39 (`main` and `fix/wi-39-shortcut-race`), inspect the next CI run and deploy the shortcut fix; failed e2e jobs now upload Playwright traces and the HTML report.
+- [x] Push WI-39 (`main` and `fix/wi-39-shortcut-race`), inspect the next CI run and deploy the shortcut fix; failed e2e jobs now upload Playwright traces and the HTML report.
 
 - [x] Divyam, 2026-10-26: production D1–D5 all pass; contrast OK in both themes and screen reader announces toasts (user-reported). WI-32/33 changes will be redeployed by the human afterwards; post-deploy checks remain human-owned.
 - [x] User will push and redeploy after local WI-30/31 completion, then smoke-check the new WI-32/33 D5 steps on production.
