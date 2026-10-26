@@ -266,17 +266,34 @@ function duplicateIdIssues(records: readonly { id: string }[], path: string): Fi
   return issues;
 }
 
+// PRE:  task is scheduled as event, which points back to it
+// POST: returns true iff event mirrors task as BR-9 requires: flexible, title = name, the same
+//       priority, end − start = durationMin and flexWindow = window (description and category are
+//       only copied when scheduling, so they may differ)
+function mirrorsTask(event: CalendarEvent, task: Task): boolean {
+  return (
+    event.flexible &&
+    event.title === task.name &&
+    event.priority === task.priority &&
+    event.end - event.start === task.durationMin &&
+    event.flexWindow !== null &&
+    event.flexWindow.start === task.window.start &&
+    event.flexWindow.end === task.window.end
+  );
+}
+
 // PRE:  events and tasks are shape-valid stored records (storedEventSchema, storedTaskSchema)
 // POST: returns the cross-record issues (TECH_SPEC §7.4.6), empty when the data is consistent:
 //       duplicate event ids ('events'), duplicate task ids ('tasks'), a scheduled task whose event
-//       is missing or does not point back ('tasks.N.scheduledEventId'), and an event whose taskId
-//       does not name a task scheduled as that event ('events.N.taskId')
+//       is missing, does not point back or does not mirror it (BR-9, AUDIT A04)
+//       ('tasks.N.scheduledEventId'), and an event whose taskId does not name a task scheduled as
+//       that event ('events.N.taskId')
 export function linkIssues(events: readonly CalendarEvent[], tasks: readonly Task[]): FieldIssue[] {
   const issues = [...duplicateIdIssues(events, 'events'), ...duplicateIdIssues(tasks, 'tasks')];
   const eventsById = new Map(events.map((event) => [event.id, event]));
   const tasksById = new Map(tasks.map((task) => [task.id, task]));
 
-  // INVARIANT: issues names every broken link of the tasks before taskIndex
+  // INVARIANT: issues names every broken link or mirror of the tasks before taskIndex
   for (const [taskIndex, task] of tasks.entries()) {
     const linked =
       task.scheduledEventId === null ? undefined : eventsById.get(task.scheduledEventId);
@@ -285,9 +302,15 @@ export function linkIssues(events: readonly CalendarEvent[], tasks: readonly Tas
         path: `tasks.${taskIndex}.scheduledEventId`,
         message: 'This scheduled task has no event that points back to it.',
       });
+    } else if (linked !== undefined && !mirrorsTask(linked, task)) {
+      issues.push({
+        path: `tasks.${taskIndex}.scheduledEventId`,
+        message:
+          "This scheduled task's event does not match its name, priority, duration or window, or is not flexible.",
+      });
     }
   }
-  // POST: issues names every task with a broken link
+  // POST: issues names every task with a broken link or mirror
 
   // INVARIANT: issues names every broken link of the events before eventIndex
   for (const [eventIndex, event] of events.entries()) {

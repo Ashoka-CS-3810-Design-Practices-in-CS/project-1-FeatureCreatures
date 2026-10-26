@@ -37,7 +37,7 @@ describe('TaskPanel (T30 UI, FR6)', () => {
     const store = storeFor(
       (
         await makeEngine({
-          events: [flexEv('E', 'Tue 10:00', 'Tue 11:00', week, { taskId: 'S' })],
+          events: [flexEv('E', 'Tue 10:00', 'Tue 11:00', week, { title: 'S', taskId: 'S' })],
           tasks: [
             task('U', 30, week),
             task('S', 60, week, { status: 'scheduled', scheduledEventId: 'E' }),

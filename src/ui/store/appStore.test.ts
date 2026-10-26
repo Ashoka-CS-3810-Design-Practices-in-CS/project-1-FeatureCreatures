@@ -327,6 +327,7 @@ describe('createAppStore', () => {
       const { engine } = await makeEngine({
         events: [
           ev('E', 'Mon 10:00', 'Mon 11:00', {
+            title: 'S',
             taskId: 'S',
             flexible: true,
             flexWindow: iv(...WEEK),
@@ -373,6 +374,7 @@ describe('createAppStore', () => {
       const { engine } = await makeEngine({
         events: [
           ev('E', 'Mon 13:00', 'Mon 14:00', {
+            title: 'S',
             taskId: 'S',
             flexible: true,
             flexWindow: iv(...WEEK),
@@ -408,6 +410,7 @@ describe('createAppStore', () => {
       const { engine } = await makeEngine({
         events: [
           ev('E', 'Mon 13:00', 'Mon 14:00', {
+            title: 'S',
             taskId: 'S',
             flexible: true,
             flexWindow: iv(...WEEK),

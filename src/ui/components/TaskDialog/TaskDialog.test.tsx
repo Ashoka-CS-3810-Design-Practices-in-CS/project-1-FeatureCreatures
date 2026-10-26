@@ -62,7 +62,7 @@ describe('TaskDialog', () => {
 
   it('shows Find time / Unschedule / Delete only in edit mode, as the status allows', async () => {
     const { engine } = await makeEngine({
-      events: [flexEv('E', 'Mon 10:00', 'Mon 11:00', WEEK, { taskId: 'S' })],
+      events: [flexEv('E', 'Mon 10:00', 'Mon 11:00', WEEK, { title: 'S', taskId: 'S' })],
       tasks: [
         task('U', 60, WEEK),
         task('S', 60, WEEK, { status: 'scheduled', scheduledEventId: 'E' }),
@@ -80,7 +80,7 @@ describe('TaskDialog', () => {
 
   it('Find time opens the picker for the task; Unschedule unschedules and closes', async () => {
     const { engine } = await makeEngine({
-      events: [flexEv('E', 'Mon 10:00', 'Mon 11:00', WEEK, { taskId: 'S' })],
+      events: [flexEv('E', 'Mon 10:00', 'Mon 11:00', WEEK, { title: 'S', taskId: 'S' })],
       tasks: [
         task('U', 60, WEEK),
         task('S', 60, WEEK, { status: 'scheduled', scheduledEventId: 'E' }),
@@ -101,7 +101,7 @@ describe('TaskDialog', () => {
 
   it('deletes a scheduled task only after confirming', async () => {
     const { engine } = await makeEngine({
-      events: [flexEv('E', 'Mon 10:00', 'Mon 11:00', WEEK, { taskId: 'S' })],
+      events: [flexEv('E', 'Mon 10:00', 'Mon 11:00', WEEK, { title: 'S', taskId: 'S' })],
       tasks: [task('S', 60, WEEK, { status: 'scheduled', scheduledEventId: 'E' })],
     });
     const store = renderDialogs(engine);

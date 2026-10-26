@@ -132,7 +132,7 @@ describe('EventDialog', () => {
 
   it('disables the flexible toggle for a task-linked event', async () => {
     const { engine } = await makeEngine({
-      events: [flexEv('E', 'Mon 10:00', 'Mon 11:00', WEEK, { taskId: 'T' })],
+      events: [flexEv('E', 'Mon 10:00', 'Mon 11:00', WEEK, { title: 'T', taskId: 'T' })],
       tasks: [task('T', 60, WEEK, { status: 'scheduled', scheduledEventId: 'E' })],
     });
     const store = renderDialogs(engine);

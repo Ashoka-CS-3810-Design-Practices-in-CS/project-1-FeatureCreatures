@@ -3,7 +3,7 @@ import type { Repository } from '@/data/repository';
 import { SAMPLES } from '@/data/samples';
 import { createEngine } from '@/engine';
 import type { Result } from '@/shared/result';
-import type { ExportFile } from '@/shared/types';
+import type { CalendarEvent, ExportFile, Task } from '@/shared/types';
 import { ev, flexEv, iv, task } from '../helpers/builders';
 import { capture, makeEngine } from '../helpers/engine';
 import { BASE_MONDAY, t } from '../helpers/time';
@@ -40,6 +40,33 @@ function fourEvents(): ExportFile {
       ev('D', 'Mon 12:00', 'Mon 13:00'),
     ],
   };
+}
+
+// PRE:  overrides change the linked event and/or task of a consistent scheduled pair
+// POST: returns an export of task "Report" (60 min, window WEEK) scheduled as event E Mon 14:00,
+//       with every BR-9 mirrored field equal unless overridden
+function scheduledPair(
+  eventOverrides: Partial<CalendarEvent> = {},
+  taskOverrides: Partial<Task> = {},
+): string {
+  return JSON.stringify({
+    ...fourEvents(),
+    events: [
+      flexEv('E', 'Mon 14:00', 'Mon 15:00', WEEK, {
+        title: 'Report',
+        taskId: 'T',
+        ...eventOverrides,
+      }),
+    ],
+    tasks: [
+      task('T', 60, WEEK, {
+        name: 'Report',
+        status: 'scheduled',
+        scheduledEventId: 'E',
+        ...taskOverrides,
+      }),
+    ],
+  });
 }
 
 describe('export / import (T25, B2, ER6)', () => {
@@ -158,6 +185,32 @@ describe('export / import (T25, B2, ER6)', () => {
         }),
       'events.0.taskId',
     ],
+    // AUDIT A04: BR-9's mirrored fields, and a scheduled task's event staying flexible.
+    [
+      'a scheduled task whose event has another name',
+      () => scheduledPair({ title: 'Original' }),
+      'tasks.0.scheduledEventId',
+    ],
+    [
+      'a scheduled task whose event has another priority',
+      () => scheduledPair({ priority: 'high' }),
+      'tasks.0.scheduledEventId',
+    ],
+    [
+      'a scheduled task whose event has another length',
+      () => scheduledPair({}, { durationMin: 120 }),
+      'tasks.0.scheduledEventId',
+    ],
+    [
+      'a scheduled task whose event has another window',
+      () => scheduledPair({ flexWindow: iv('Mon 09:00', 'Tue 18:00') }),
+      'tasks.0.scheduledEventId',
+    ],
+    [
+      'a scheduled task whose event is fixed',
+      () => scheduledPair({ flexible: false, flexWindow: null }),
+      'tasks.0.scheduledEventId',
+    ],
   ])('(b) %s is InvalidImport and changes nothing', async (_case, text, path) => {
     const { engine, repo } = await makeEngine({ events: [ev('Keep', 'Mon 09:00', 'Mon 10:00')] });
     expectOk(
@@ -179,6 +232,14 @@ describe('export / import (T25, B2, ER6)', () => {
     expect(result.ok ? null : result.error.code).toBe('InvalidImport');
     expect(issuePaths(result)).toContain(path);
     expect(await capture(engine, repo)).toEqual(before);
+  });
+
+  it('accepts a scheduled task whose event mirrors it (BR-9)', async () => {
+    const { engine } = await makeEngine();
+
+    const snapshot = expectOk(await engine.importData(scheduledPair()));
+
+    expect(snapshot.tasks.map((entry) => entry.status)).toEqual(['scheduled']);
   });
 
   it('import clears the history and the last replan plan', async () => {

@@ -140,7 +140,7 @@ describe('Event CRUD', () => {
 
   describe('a task-linked event (BR-9)', () => {
     const linkedTask = task('T', 60, WEEK, { status: 'scheduled', scheduledEventId: 'E' });
-    const linkedEvent = flexEv('E', 'Mon 10:00', 'Mon 11:00', WEEK, { taskId: 'T' });
+    const linkedEvent = flexEv('E', 'Mon 10:00', 'Mon 11:00', WEEK, { title: 'T', taskId: 'T' });
 
     it('editing it stays flexible and mirrors name, priority, duration and window into the task', async () => {
       const { engine, repo } = await makeEngine({ events: [linkedEvent], tasks: [linkedTask] });
@@ -184,7 +184,7 @@ describe('Event CRUD', () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value).toMatchObject({ label: 'Delete "E"', changedEventIds: [] });
+      expect(result.value).toMatchObject({ label: 'Delete "T"', changedEventIds: [] });
       expect(result.value.snapshot.events).toEqual([]);
       expect(result.value.snapshot.tasks[0]).toMatchObject({
         status: 'unscheduled',

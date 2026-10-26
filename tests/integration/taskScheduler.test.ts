@@ -282,7 +282,7 @@ describe('findSlots (FR5)', () => {
 
   it('rejects an unknown task, a scheduled task and a bad buffer override', async () => {
     const { engine } = await makeEngine({
-      events: [flexEv('E', 'Mon 10:00', 'Mon 11:00', WEEK, { taskId: 'S' })],
+      events: [flexEv('E', 'Mon 10:00', 'Mon 11:00', WEEK, { title: 'S', taskId: 'S' })],
       tasks: [
         task('S', 60, WEEK, { status: 'scheduled', scheduledEventId: 'E' }),
         task('U', 60, WEEK),
@@ -550,7 +550,7 @@ describe('task CRUD', () => {
   it('updateTask rejects a window shorter than the scheduled event, changing nothing', async () => {
     const linked = task('T', 60, WEEK, { status: 'scheduled', scheduledEventId: 'E' });
     const { engine, repo } = await makeEngine({
-      events: [flexEv('E', 'Mon 10:00', 'Mon 11:00', WEEK, { taskId: 'T' })],
+      events: [flexEv('E', 'Mon 10:00', 'Mon 11:00', WEEK, { title: 'T', taskId: 'T' })],
       tasks: [linked],
     });
     const before = await capture(engine, repo);
@@ -569,7 +569,7 @@ describe('task CRUD', () => {
 
   it('unscheduleTask removes the event, and is a no-op for an unscheduled task', async () => {
     const { engine } = await makeEngine({
-      events: [flexEv('E', 'Mon 10:00', 'Mon 11:00', WEEK, { taskId: 'S' })],
+      events: [flexEv('E', 'Mon 10:00', 'Mon 11:00', WEEK, { title: 'S', taskId: 'S' })],
       tasks: [
         task('S', 60, WEEK, { status: 'scheduled', scheduledEventId: 'E' }),
         task('U', 60, WEEK),

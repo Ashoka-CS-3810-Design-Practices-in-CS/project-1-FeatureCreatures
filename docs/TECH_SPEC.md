@@ -851,6 +851,7 @@ There is no history entry, and the conflicts are unchanged.
    - unique event IDs
    - unique task IDs
    - every scheduled task's `scheduledEventId` exists and points back with `taskId`
+   - that event mirrors the task (BR-9, AUDIT A04): it is flexible, `title = name`, the same priority, `end − start = durationMin`, `flexWindow = window` (description and category may differ); path `tasks.N.scheduledEventId`
    - every event `taskId` points to a scheduled task
    - these checks are `linkIssues(events, tasks)` in `schemas.ts`; `parseExportFile(json)` runs steps 1–3, and `engine.init()` runs `linkIssues` on stored data too
 4. Then:
