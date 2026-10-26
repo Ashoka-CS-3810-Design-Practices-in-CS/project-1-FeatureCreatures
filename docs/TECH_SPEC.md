@@ -138,6 +138,7 @@ Every file listed here exists by the end of the project. The WI column says whic
    │  ├─ index.ts          # export { createEngine, type Engine }
    │  ├─ facade.ts         # Engine implementation: command queue, version checks, dispatch
    │  ├─ state.ts          # EngineState, Change, applyChange, commit, history
+   │  ├─ replanDiagnostics.ts # per-plan remaining problems (WI-38); no placement changes
    │  ├─ search.ts         # shared "segments → busy → gaps → rank" helper used by 3 pipelines
    │  ├─ pipelines/
    │  │  ├─ eventCrud.ts           # FR1–FR3 (+ ER4 suggestion)
@@ -1380,7 +1381,8 @@ Each sample uses `atLocal` relative to `weekMonday`. The UI passes `startOfLocal
 | Rank | O(m log m) | O(m) |
 | **findSlots / suggestAlternatives (end to end)** | **O(log N + n + D·B + m log m)** | O(n + s + m) |
 | orderForScheduling | O(T log T) | O(T) |
-| **planReplan** | **O(c·(n + c + s + m log m))** per pass; ≤ c + 1 passes (A01), so O(c²·(…)) worst case | O(n + c + s + m) |
+| **planReplan** | **O(c·(n + c + s + m log m))** per pass; ≤ c + 1 passes (A01), so O(c²·(…)) worst case; plus per-plan diagnostics below | O(n + c + s + m) plus diagnostics below |
+| Replan diagnostics, each plan (WI-38) | O(N log N + k log k + N log(D+1) + N·D·B + q), reusing §8.4/§8.4a | O(N + k + q) |
 | Commit (excluding IndexedDB I/O) | O(N log N + k log k + W) | O(N + k + B + q) |
 | Undo / redo | same as commit | O(changed records) per history entry |
 | Export / import | O(N + T) / O((N + T) log N + W) | O(N + T + B + q) |
@@ -1745,7 +1747,7 @@ Phases match A3 §7. Owners follow A3: **S** = Samar, **Dv** = Divyam. Each WI i
 | 35 | Change | Crash fixes (mirror events, StrictMode dialogs, error boundary) | S + Dv | `CalendarView/*`, `Modal`, `ErrorBoundary`, `main.tsx`, `e2e/*`, `playwright.config.ts` | 34 | A select-mirror event without extendedProps renders (regression test); Modal stays open under `<StrictMode>` and Esc still closes it; the error boundary shows "Something went wrong" with Reload / Export data (UI test); E4 (click and drag-select open New event with times prefilled) and the smoke flow fail on any uncaught page error, on both the built app and the StrictMode dev server |
 | 36 | Change | Audit findings A01–A10 | S + Dv | per finding, see `docs/AUDIT.md` | 35 | `docs/AUDIT.md` committed; every finding re-verified against `main` with a failing test first and a resolution line (fixed in <commit> / not reproducible / deferred with reason); full gate incl. `npm run e2e` green |
 | 37 | Change | Dialog form polish | S + Dv | EventDialog, TaskDialog, shared PriorityRadioGroup, styles, RTL, e2e, dialog screenshots | 36 | Flex window is a full-width group below End; browser geometry checks at 1440, 1024 and drawer width in both themes; shared tagged/coloured native priority radios support arrow keys; task Working hours only (default) / Any time radios preserve useWorkingHours; schemas/engine unchanged; §7.1 and screenshots refreshed |
-| 38 | Change | Replan vs barred-slot overlaps | S + Dv | replan diagnostics, ReplanDialog, ConflictPanel, engine/UI tests, TEST_PLAN D4 | 37 | Tests prove Minimal change moves future flexible barred events with reason barred and leaves fixed/started events static; classify unresolved conflicts/barred overlaps with per-event reasons and reused alternatives; no bare No changes needed when problems remain; fixed/flexible panel tags; FR10/BR-12 UX wording and D4 updated |
+| 38 | Change | Replan vs barred-slot overlaps | S + Dv | replan diagnostics, ReplanDialog, ConflictPanel, engine/UI tests, TEST_PLAN D4 | 37 | T39/T40: Minimal change moves future flexible barred events with reason barred and leaves fixed/started events static; classify unresolved conflicts/barred overlaps with per-event reasons and reused alternatives; no bare No changes needed when problems remain; fixed/flexible panel tags; FR10/BR-12 UX wording and D4 updated; full gate and browser suite green |
 
 **`docs/PROGRESS.md` format** (already created during repo setup):
 

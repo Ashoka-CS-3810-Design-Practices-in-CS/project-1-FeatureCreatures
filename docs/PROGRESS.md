@@ -150,6 +150,7 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-26 · Codex · branch `feat/wi-38-replan-diagnostics` · done: claimed after WI-37 merge/main gate; inspected BR-12 pipeline and UI · next: prove future flexible barred moves and static exclusions, then per-plan diagnostics and UI regressions · note: keep scheduling heuristic unchanged unless regression proves a bug
   - 2026-10-26 · Codex · branch `feat/wi-38-replan-diagnostics` · done: new engine regressions pass on the unchanged heuristic: future Study moves Mon 13–14 to 12–13 with reason barred/Lunch after settings change; fixed and started barred events stay static · next: failing classification/UI tests and derived per-plan diagnostics · note: case (i) is correct; no algorithm fix needed
   - 2026-10-26 · Codex · branch `feat/wi-38-replan-diagnostics` · done: classification/UI tests failed then passed; ReplanResult.notMoved derives per-plan residual conflicts/barred warnings and unplaced reasons; zero-move messages and reused alternatives; Fixed/Flexible panel tags; docs/contracts synced; 24 targeted engine/dialog cases and earlier full gate (574 tests) green · next: browser D4 flow, screenshots, final gate/coverage · note: scheduling heuristic and schemas untouched
+  - 2026-10-26 · Codex · branch `feat/wi-38-replan-diagnostics` · done: T39/T40 exact classification, deduplication and range-boundary checks; browser moves flexible Study out of Lunch and routes fixed Class through alternatives; gate 578 tests, 7 DST, coverage 98.55% lines / 93.98% branches and all 18 browser checks green · next: refresh reviewed diagnostic captures after moving the zero-move summary above the list, finish/merge · note: both plans are explained even when movableCount is zero
 
 ## Milestones
 
@@ -165,7 +166,7 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 - [x] Divyam, 2026-10-26: production D1–D5 all pass; contrast OK in both themes and screen reader announces toasts (user-reported). WI-32/33 changes will be redeployed by the human afterwards; post-deploy checks remain human-owned.
 - [ ] User will push and redeploy after local WI-30/31 completion, then smoke-check the new WI-32/33 D5 steps on production.
 - [ ] Push the finished tested `main` to the configured origin (human-owned).
-- [ ] Redeploy `main` after WI-35/36 (production has the select-mirror crash) and smoke-check: click and drag on empty time open New event; dialogs open; a forced crash would show Something went wrong.
+- [ ] Redeploy `main` after WI-35–38 (production has the select-mirror crash) and smoke-check: click/drag open New event; priority and scheduling-hours radios work; flex-window fields sit below End; D4 distinguishes future flexible moves from fixed/started barred overlaps and opens per-event alternatives. A forced crash would show Something went wrong.
 - [ ] Push the WI branches and milestone tags too: `git push origin --all` and `git push origin --tags` (local milestones `m1`–`m6`).
 - [ ] Complete the unreported List-view screen-reader quick pass and viva preparation in TEST_PLAN §7/§9; do not infer these from the reported toast-announcement check.
 - [x] First Vercel deploy (TECH_SPEC §13.2) and paste the URL at the top of this file.

@@ -45,6 +45,8 @@ More views, all generated with `npm run screenshots` from [scripts/screenshots/]
 
 Dialog form captures at 1440 / 1024 / 900 px are in `docs/screenshots/event-dialog-{light,dark}-{width}.png` and `task-dialog-{light,dark}-{width}.png`: [Event light](docs/screenshots/event-dialog-light-1440.png), [Event dark](docs/screenshots/event-dialog-dark-1440.png), [Task light](docs/screenshots/task-dialog-light-1440.png), [Task dark](docs/screenshots/task-dialog-dark-1440.png).
 
+Replan explanations for fixed events still in Lunch: [light desktop](docs/screenshots/replan-not-moved-light-1440.png), [dark desktop](docs/screenshots/replan-not-moved-dark-1440.png), [light drawer width](docs/screenshots/replan-not-moved-light-900.png), [dark drawer width](docs/screenshots/replan-not-moved-dark-900.png).
+
 | Scene                       | Light                                                       | Dark                                                      |
 | --------------------------- | ----------------------------------------------------------- | --------------------------------------------------------- |
 | Week at 1024 px             | [week-light-1024](docs/screenshots/week-light-1024.png)     | [week-dark-1024](docs/screenshots/week-dark-1024.png)     |

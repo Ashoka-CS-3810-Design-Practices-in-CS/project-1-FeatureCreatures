@@ -69,6 +69,13 @@ function PlanCard({
         </li>
         <li>Unplaced: {metrics.unplaced}</li>
       </ul>
+      {plan.moves.length === 0 && (
+        <p>
+          {notMoved.length === 0
+            ? 'No changes needed'
+            : `No moves in this plan — ${notMoved.length} ${notMoved.length === 1 ? 'event still needs' : 'events still need'} attention.`}
+        </p>
+      )}
       {plan.moves.length > 0 && (
         <ul aria-label={`${name} moves`}>
           {plan.moves.map((move) => (
@@ -77,13 +84,7 @@ function PlanCard({
         </ul>
       )}
       <NotMovedList entries={notMoved} planName={name} onSuggest={onSuggest} />
-      {plan.moves.length === 0 ? (
-        <p>
-          {notMoved.length === 0
-            ? 'No changes needed'
-            : `No moves in this plan — ${notMoved.length} ${notMoved.length === 1 ? 'event still needs' : 'events still need'} attention.`}
-        </p>
-      ) : (
+      {plan.moves.length > 0 && (
         <button type="button" className="primary" aria-label={`Apply ${name}`} onClick={onApply}>
           Apply this plan
         </button>

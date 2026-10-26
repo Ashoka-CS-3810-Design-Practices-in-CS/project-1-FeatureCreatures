@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { createEvent, openCalendar } from './helpers';
+import { addLunchBarredSlot, createEvent, openCalendar } from './helpers';
 
 const NARROW_VIEWPORT = { width: 900, height: 900 };
 
@@ -8,15 +8,7 @@ test('T38: settings warns separately, View opens the drawer, and alternatives cl
 }) => {
   await openCalendar(page);
   await createEvent(page, 'Lunch event', '2026-11-02T13:00', '2026-11-02T14:00');
-  await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  const settings = page.getByRole('dialog', { name: 'Settings', exact: true });
-  await settings.getByRole('button', { name: 'Add barred slot', exact: true }).click();
-  const slot = settings.getByRole('group', { name: 'Barred slot 1', exact: true });
-  await slot.getByLabel('Label', { exact: true }).fill('Lunch');
-  await slot.getByLabel('From', { exact: true }).fill('13:00');
-  await slot.getByLabel('To', { exact: true }).fill('14:00');
-  await settings.getByRole('button', { name: 'Save', exact: true }).click();
-  await expect(settings).toHaveCount(0);
+  await addLunchBarredSlot(page);
   await expect(page.getByText('1 event overlaps barred slots', { exact: true })).toBeVisible();
   const block = page.getByRole('button', { name: /^Lunch event,.*In Lunch$/ });
   await expect(block.getByText('In Lunch', { exact: true })).toBeVisible();
