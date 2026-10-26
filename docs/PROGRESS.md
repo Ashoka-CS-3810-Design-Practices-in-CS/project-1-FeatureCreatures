@@ -136,6 +136,7 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-26 · Claude Code · branch `feat/wi-35-crash-fixes` · done: (a) `renderEventContent` renders an event without block props (the select mirror) as its time only, red-then-green regression test; a plain click (one 5-min snap) now opens a 30-min event (`CLICK_EVENT_MIN`); E4 was red on the old build (crash) and is green. (b) Modal ignores a `close` event while the dialog is open again; the jsdom polyfill now queues `close` like the browser; StrictMode + Esc tests red then green. (c) top-level `ErrorBoundary` (Reload / Export data, export failure message), `downloadJson` moved to `hooks/download.ts`. (d) smoke flow fails on page/console errors and runs on the build and on a StrictMode dev server (port 5174, project `chromium-dev`), which was red with the Modal fix reverted. Gate: 535 tests, 7 DST, 11 browser checks · next: WI-36 · note: overlapping time-grid events are drawn inset, so e2e must click the block on top
 - [~] **WI-36** Audit findings A01–A10 — owner S + Dv — depends on 35
   - 2026-10-26 · Claude Code · branch `feat/wi-36-audit-findings` · done: claimed; WI-35 merged · next: commit `docs/AUDIT.md`, then A01/A02 test-first
+  - 2026-10-26 · Claude Code · branch `feat/wi-36-audit-findings` · done: `docs/AUDIT.md` committed; A01 (replan pins unplaced events, fixed-point passes) and A02 (supported-date `minute` schema) fixed test-first with resolutions recorded · next: A03–A10
 
 ## Milestones
 
