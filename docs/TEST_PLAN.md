@@ -273,7 +273,17 @@ Each demo starts from **Settings → Data → Load sample calendar**.
 
 **Sample inputs deliverable.** `src/data/samples/*` plus an exported JSON of each sample, committed to `docs/samples/` (WI-30).
 
-**Production rehearsal record (reported by user).** Tester **Divyam**, **2026-10-26**, [production URL](https://int-calendarfeature-creatures.vercel.app): **D1 Pass, D2 Pass, D3 Pass, D4 Pass, D5 Pass**. Accessibility: contrast OK in both themes; screen reader announces toasts. This run predates WI-32/33; the new D5 steps are validated locally before the human's planned redeploy, with post-deploy smoke checks still human-owned.
+**Rehearsal setup.** Use a fresh browser context on the production URL after the team deploys the tested `main`. Load samples through Settings for the current local week; committed JSON deliverables instead use 2 November 2026 UTC. For D3, the High-priority 90-minute report is offered before the Medium-priority 45-minute chapter task, regardless of checkbox selection order. Export anything you want to keep before a replacement operation.
+
+**Production rehearsal record (reported by user).** Tester **Divyam**, **2026-10-26**, [production URL](https://int-calendarfeature-creatures.vercel.app): **D1–D5 all pass**. Accessibility: contrast OK in both themes; screen reader announces toasts. This run predates WI-32/33; the new D5 steps pass local tests before the human's planned redeploy, with post-deploy smoke checks still human-owned.
+
+| Demo | Local evidence | Production tester/date/outcome |
+|---|---|---|
+| D1 | E1/E2 create, real drag/resize and reload; CRUD/history integration cases | Divyam · 2026-10-26 · Pass |
+| D2 | E1 flags both events; alternatives integration/UI cases and sample conflict tests | Divyam · 2026-10-26 · Pass |
+| D3 | E3 schedules a linked task; queue, ranking, ER2/ER3 integration/UI cases | Divyam · 2026-10-26 · Pass |
+| D4 | Replan integration/UI cases, atomic apply/undo and T35 properties | Divyam · 2026-10-26 · Pass |
+| D5 | Settings/import/export/theme/shortcuts; WI-32/33 local regressions | Divyam · 2026-10-26 · Pass (pre-change version); new steps await planned redeploy |
 
 ---
 
@@ -306,4 +316,5 @@ Each demo starts from **Settings → Data → Load sample calendar**.
 | 2026-10-26 | v1.2 (WI-14): T16 step (5) schedules at Tue 09:00–10:00, not 10:30. Step (3) set the duration to 60, and `scheduleTask` rejects a slot that does not match it (TECH_SPEC §7.4.3). |
 | 2026-10-26 | v1.3 (WI-25–27): §6 documents executable E1–E3 and their isolated UI fixtures; §7 records local automated accessibility evidence while retaining human production checks. |
 | 2026-10-26 | v1.4 (WI-28): §9 uses the portable `test:perf` script for T15; the gated assertion measures eleven combined-query runs and prints k and the median. |
+| 2026-10-26 | v1.5 (WI-30): §8 links reproducible sample deliverables, distinguishes fixed UTC files from current-local-week presets, and records the pending D1–D5 production rehearsals. |
 | 2026-10-26 | v1.6 (WI-32/33): adds T37/T38 and the toolbar-button regression; extends D5; records Divyam's D1–D5 production passes and contrast/toast-announcement results, distinguishing later change-request checks. |

@@ -17,6 +17,7 @@
     "test:props:full": "cross-env TZ=UTC PROP_RUNS=10000 PROP_SEED=random vitest run props",
     "bench": "cross-env TZ=UTC vitest bench --run --reporter=verbose",
     "test:perf": "cross-env PERF=1 npm test -- perf --reporter=verbose",
+    "samples:export": "cross-env TZ=UTC node scripts/exportSamples.mjs",
     "e2e": "playwright test"
   },
   "dependencies": {

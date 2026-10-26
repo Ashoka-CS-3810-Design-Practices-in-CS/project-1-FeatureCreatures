@@ -91,6 +91,7 @@ The code examples here use Zod 4 syntax. If Zod 3 is installed, the equivalent A
   "test:props:full": "cross-env TZ=UTC PROP_RUNS=10000 PROP_SEED=random vitest run props",
   "bench": "cross-env TZ=UTC vitest bench --run --reporter=verbose",
   "test:perf": "cross-env PERF=1 npm test -- perf --reporter=verbose",
+  "samples:export": "cross-env TZ=UTC node scripts/exportSamples.mjs",
   "e2e": "playwright test"
 }
 ```
@@ -1294,6 +1295,8 @@ Each sample uses `atLocal` relative to `weekMonday`. The UI passes `startOfLocal
 
 `buildStress(weekMonday, seed = 42)` also accepts an integer seed so T15 reuses the same jittered-grid generator with seed 7. The registered stress sample continues to use its default seed 42. `tests/helpers/performance.ts` shares the initialized fixture and combined query between `bench/engine.bench.ts` and the gated eleven-run assertion in `tests/integration/perf.test.ts`. `npm run test:perf` sets `PERF=1` portably on Windows and Unix; setup is outside the measured query.
 
+`npm run samples:export` regenerates the six committed `docs/samples/*.json` files for Monday 2 November 2026 in UTC. `scripts/exportSamples.mjs` uses Vite's module loader for the existing TypeScript/alias configuration and validates each generated file with `parseExportFile`; it adds no dependency and starts no listening server. In-app samples still use the current local week.
+
 | Sample | Contents (must exist so demos D1–D5 work) |
 |---|---|
 | `sparseWeek` | 8 events Mon–Fri. Classes are fixed; "Meeting" (Medium) and "Study" (Low) are flexible with whole-week flex windows, so alternatives and Replan have something to do. 1 conflict: Tue Lecture (fixed, High) 10:00–11:30 ↔ Meeting 11:00–12:00. Lunch barred 13:00–14:00 Mon–Fri. 4 unscheduled tasks, windowed to the sample week: "Write report" 90 min High, "Read chapter 4" 45 min Medium, "Gym" 60 min Low, and "Thesis draft" 600 min Medium (shows ER2). |
@@ -1729,4 +1732,5 @@ Production URL: https://…vercel.app
 | 2026-10-26 | v1.16 (WI-26): §5 adds drawer, target and import-feedback constants; §11.1 documents `busy`, responsive panels, native dialog focus and loading feedback; §11.3 documents complete event names/tooltips and minimum target height. |
 | 2026-10-26 | v1.17 (WI-27): §13.1 removes the CI no-tests escape hatch now that E1–E3 and accessibility smoke tests exist. Focusable FullCalendar event anchors also receive a button role. |
 | 2026-10-26 | v1.18 (WI-28): §1.3 adds portable `test:perf`; §9.5 documents optional stress-generator seed and the shared T15 fixture/query used by benchmark and gated assertion. |
+| 2026-10-26 | v1.19 (WI-30): §1.3/§9.5 document reproducible, validated sample-file generation through the existing Vite module loader. |
 | 2026-10-26 | v1.20 (WI-32/33): §5/§7 add derived BarredOverlap records to state/snapshots; §8.4a/§10 freeze the pure algorithm and complexity; §11 defines settings toast/View and reused alternatives; §14 adds both change requests before WI-30. Production rehearsal is reported complete by Divyam; human push/redeploy follow local completion. |

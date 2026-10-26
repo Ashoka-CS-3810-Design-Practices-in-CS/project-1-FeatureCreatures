@@ -1,0 +1,106 @@
+{
+  "format": "feature-creatures-calendar",
+  "version": 1,
+  "exportedAt": "2026-11-02T00:00:00.000Z",
+  "events": [
+    {
+      "id": "cluster-1",
+      "title": "Overlap 1",
+      "description": "",
+      "category": "meeting",
+      "priority": "medium",
+      "start": 29896440,
+      "end": 29896560,
+      "flexible": false,
+      "flexWindow": null,
+      "taskId": null,
+      "createdAt": 29892960,
+      "updatedAt": 29892960
+    },
+    {
+      "id": "cluster-2",
+      "title": "Overlap 2",
+      "description": "",
+      "category": "meeting",
+      "priority": "medium",
+      "start": 29896455,
+      "end": 29896545,
+      "flexible": false,
+      "flexWindow": null,
+      "taskId": null,
+      "createdAt": 29892960,
+      "updatedAt": 29892960
+    },
+    {
+      "id": "cluster-3",
+      "title": "Overlap 3",
+      "description": "",
+      "category": "meeting",
+      "priority": "medium",
+      "start": 29896470,
+      "end": 29896530,
+      "flexible": false,
+      "flexWindow": null,
+      "taskId": null,
+      "createdAt": 29892960,
+      "updatedAt": 29892960
+    },
+    {
+      "id": "cluster-4",
+      "title": "Overlap 4",
+      "description": "",
+      "category": "meeting",
+      "priority": "medium",
+      "start": 29896485,
+      "end": 29896515,
+      "flexible": false,
+      "flexWindow": null,
+      "taskId": null,
+      "createdAt": 29892960,
+      "updatedAt": 29892960
+    },
+    {
+      "id": "cluster-5",
+      "title": "Overlap 5",
+      "description": "",
+      "category": "meeting",
+      "priority": "medium",
+      "start": 29896500,
+      "end": 29896530,
+      "flexible": false,
+      "flexWindow": null,
+      "taskId": null,
+      "createdAt": 29892960,
+      "updatedAt": 29892960
+    },
+    {
+      "id": "cluster-6",
+      "title": "Overlap 6",
+      "description": "",
+      "category": "meeting",
+      "priority": "medium",
+      "start": 29896440,
+      "end": 29896505,
+      "flexible": false,
+      "flexWindow": null,
+      "taskId": null,
+      "createdAt": 29892960,
+      "updatedAt": 29892960
+    }
+  ],
+  "tasks": [],
+  "settings": {
+    "workDays": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "workStartMin": 540,
+    "workEndMin": 1080,
+    "bufferMin": 0,
+    "barredSlots": [],
+    "defaultCriterion": "earliest"
+  }
+}
