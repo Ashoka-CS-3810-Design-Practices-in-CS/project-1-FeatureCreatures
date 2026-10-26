@@ -248,6 +248,12 @@ Each test does `page.clock.install({ time: new Date('2026-11-02T08:00:00') })` b
 
 **Dev-mode / StrictMode coverage (WI-35).** StrictMode mounts, unmounts and remounts every effect in development only, so the production build cannot show its bugs. It is covered twice: RTL renders `Modal` inside `<StrictMode>` (it stays open; Esc still closes it once), with a dialog polyfill that queues `close` like the browser; and the `chromium-dev` Playwright project runs the smoke flow on `npm run dev`. That project was red with the Modal fix reverted.
 
+**Shortcut race / repeat checks (WI-39).** The deterministic RTL test commits the help dialog open, then closes it and dispatches `?` synchronously in the same `act`, before React can refresh effects. The old listener ignores the key; the repaired listener immediately reopens help from current store state. Picker/busy transitions and one-listener cleanup are also checked. The browser hunt runs `npm run build`, then `npm run e2e -- --repeat-each=10 --workers=2` (18 cases × 10 = 180 executions, including both production and StrictMode smoke). Repeat after stopping the dedicated test dev server and deleting only `node_modules/.vite`, so Playwright starts a cold server. Local retries stay zero; do not add waits to mask races.
+
+**CI failure diagnostics (WI-39).** CI retries once and reports a recovered failure as flaky; `trace: 'retain-on-failure'` retains the failed attempt's trace. GitHub and HTML reporters run in CI, and the failed e2e job uploads `test-results/` plus `playwright-report/` as `playwright-failure-diagnostics`. Open the downloaded HTML report or inspect a trace with `npx playwright show-trace <trace.zip>`.
+
+WI-39 local repeat evidence (2026-10-26, Codex): warm run **180/180 passed** over 10 repeats with 2 workers and zero retries. The sandboxed Windows runner needed its verified test dev-server child terminated after all cases passed, then exited 0; this was server cleanup, not a browser failure. Cold run pending after stopping that server and deleting `node_modules/.vite`.
+
 ---
 
 ## 7. Manual checklists (run on the production URL before each milestone)
