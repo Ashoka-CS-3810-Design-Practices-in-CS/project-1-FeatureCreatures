@@ -131,6 +131,42 @@ describe('createAppStore', () => {
     expect(store.getState().emphasisIds).toEqual(['Meeting', 'Lecture']);
   });
 
+  // AUDIT A03: the toast used to apply its old slot against the current version, so a change made
+  // after the warning could not be detected and the move created a new conflict.
+  it('an ER4 Move to after another change is stale and reopens fresh alternatives', async () => {
+    const { engine } = await makeEngine({
+      events: [
+        ev('Lecture', 'Mon 10:00', 'Mon 12:00'),
+        ev('Meeting', 'Mon 14:00', 'Mon 15:00', {
+          flexible: true,
+          flexWindow: iv('Mon 09:00', 'Mon 18:00'),
+        }),
+      ],
+    });
+    const store = storeFor(engine);
+    await store.getState().actions.applyAlternative('Meeting', iv('Mon 11:00', 'Mon 12:00'));
+    const [warning] = store.getState().toasts;
+    expect(warning?.actions?.[0]?.label).toBe('Move to Mon 2 Nov 12:00–13:00');
+    await store.getState().actions.createEvent({
+      title: 'Blocker',
+      description: '',
+      category: 'meeting',
+      priority: 'medium',
+      start: t('Mon 12:00'),
+      end: t('Mon 13:00'),
+      flexible: false,
+      flexWindow: null,
+    });
+
+    warning?.actions?.[0]?.run();
+
+    await vi.waitFor(() =>
+      expect(store.getState().picker).toMatchObject({ mode: 'alternatives', eventId: 'Meeting' }),
+    );
+    const meeting = store.getState().snapshot.events.find((event) => event.id === 'Meeting');
+    expect(meeting).toMatchObject(iv('Mon 11:00', 'Mon 12:00'));
+  });
+
   it('a storage failure shows a sticky error toast whose Retry runs the command again', async () => {
     const repo = new FailingRepository();
     const { engine } = await makeEngine({ repo });
