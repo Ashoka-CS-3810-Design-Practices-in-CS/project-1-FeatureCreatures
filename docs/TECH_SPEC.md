@@ -1190,9 +1190,17 @@ staticEv ← eventsIntersecting(events, expand(range, bufferMin)).filter(e ∉ m
 
 plans ← [run('minimalChange'), run('balanced')]
 
-run(kind):
-  occupied ← staticEv (sorted array) ; moves ← [] ; unplaced ← []
-  for e in movable:
+run(kind):                                             // AUDIT A01: repeat until no new event is unplaced
+  pinned ← {}                                          // id → unplaced entry; these stay where they are
+  repeat:
+     (moves, newlyUnplaced) ← pass(kind, pinned)
+     add newlyUnplaced to pinned
+  until newlyUnplaced is empty                         // ≤ c + 1 passes: pinned only grows
+  unplaced ← pinned entries in movable order
+
+pass(kind, pinned):
+  occupied ← staticEv ∪ pinned events, sorted ; moves ← [] ; unplaced ← []
+  for e in movable, skipping pinned ones:
      d   ← e.end − e.start
      win ← e.flexWindow ∩ range                         // may be null
      segs ← win ? segmentsFor(win) : []
@@ -1228,13 +1236,14 @@ invalidReason(e, win, segs, occupied, b, frames):   // first failing check, in t
 
 **Design notes for the viva.**
 - **Greedy and priority order:** high-priority events are placed first, so they get the best spots. This is a one-pass greedy with no backtracking, which keeps every move explainable.
-- **Unplaced events** stay where they are and remain busy, so later events still avoid them.
+- **Unplaced events** stay where they are and remain busy for every other event, including those processed before them. One greedy pass cannot know in advance which events will fail, so a plan repeats the pass with each newly unplaced event pinned in place until no new event fails (AUDIT A01: a high-priority event used to move onto a low-priority event's spot, and that event then could not move, turning 0 conflicts into 1).
 - **`staticEv`** uses the range expanded by the buffer, so an event just outside the range still pushes its buffer into it.
 
 **Complexity.**
 - Sorting the c movable events costs O(c log c).
 - Each one costs O(n + c + s + m log m), from merge, gaps, rank and the sorted insert.
-- Total: **O(c·(n + c + s + m log m))**. This is A3's O(c(n + m log m)), with the s and c terms made explicit.
+- One pass: **O(c·(n + c + s + m log m))**. This is A3's O(c(n + m log m)), with the s and c terms made explicit.
+- A plan runs at most c + 1 passes (each extra pass pins ≥ 1 more event), so the worst case is **O(c²·(n + c + s + m log m))**; with no unplaced event it is one pass, as before.
 
 ---
 
@@ -1350,7 +1359,7 @@ Each sample uses `atLocal` relative to `weekMonday`. The UI passes `startOfLocal
 | Rank | O(m log m) | O(m) |
 | **findSlots / suggestAlternatives (end to end)** | **O(log N + n + D·B + m log m)** | O(n + s + m) |
 | orderForScheduling | O(T log T) | O(T) |
-| **planReplan** | **O(c·(n + c + s + m log m))** | O(n + c + s + m) |
+| **planReplan** | **O(c·(n + c + s + m log m))** per pass; ≤ c + 1 passes (A01), so O(c²·(…)) worst case | O(n + c + s + m) |
 | Commit (excluding IndexedDB I/O) | O(N log N + k log k + W) | O(N + k + B + q) |
 | Undo / redo | same as commit | O(changed records) per history entry |
 | Export / import | O(N + T) / O((N + T) log N + W) | O(N + T + B + q) |

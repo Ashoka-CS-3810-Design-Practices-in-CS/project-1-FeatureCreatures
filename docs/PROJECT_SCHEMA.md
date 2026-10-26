@@ -459,7 +459,7 @@ Every search result also carries:
 - **Range:** `[from, to)`, with `from` at a local midnight and `to` at a local midnight, between 1 and 14 days long.
 - **Movable events:** flexible, `start ≥ notBefore`, and intersecting the range.
 - **Static events:** every other event that intersects the range. These are never moved.
-- **Order:** movable events are processed one at a time, by priority (High first), then duration (longest first), then start, then ID. Each placed event becomes busy for the events after it. If an event cannot be placed, it stays where it is and is listed as unplaced (and remains busy).
+- **Order:** movable events are processed one at a time, by priority (High first), then duration (longest first), then start, then ID. Each placed event becomes busy for the events after it. If an event cannot be placed, it stays where it is and is listed as unplaced, and it remains busy for every other movable event, including those processed before it (no placed event may land on it).
 - **Allowed region:** for each movable event, the allowed segments of `flexWindow ∩ range`, respecting working hours (BR-5).
 - **Minimal change:**
   - An event *stays* if its current interval lies entirely inside one free gap (with the buffer applied against everything already busy).

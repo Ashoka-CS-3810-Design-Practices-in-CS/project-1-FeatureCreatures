@@ -224,23 +224,31 @@ function applyMoves(
 }
 
 // PRE:  movable is in processing order (compareMovable); staticEvents is sorted and disjoint from
-//       movable; inRange is sorted
-// POST: returns kind's plan: each movable event in turn is placed by placeEvent against the static
-//       events plus every event placed before it (kept, moved or unplaced), with the plan's metrics
-function runPlan(
+//       movable; pinned maps the ids of some movable events to why they could not be placed
+// POST: returns one greedy pass of kind's rule: pinned events stay where they are and are busy from
+//       the start; every other movable event in turn is placed by placeEvent against the static
+//       events, the pinned ones and every event placed before it; moves and the newly unplaced
+//       events are in processing order
+function greedyPass(
   kind: PlanKind,
   movable: readonly CalendarEvent[],
   staticEvents: readonly CalendarEvent[],
-  inRange: readonly CalendarEvent[],
+  pinned: ReadonlyMap<string, UnplacedEvent>,
   input: ReplanInput,
-): ReplanPlan {
-  let occupied = staticEvents;
+): { moves: ReplanMove[]; unplaced: UnplacedEvent[] } {
+  let occupied = staticEvents
+    .concat(movable.filter((event) => pinned.has(event.id)))
+    .toSorted(compareEvents);
   const moves: ReplanMove[] = [];
   const unplaced: UnplacedEvent[] = [];
 
-  // INVARIANT: occupied is sorted and holds staticEvents plus the placement of every visited event
-  //            ∧ moves / unplaced hold the visited events that moved / could not be placed, in order
+  // INVARIANT: occupied is sorted and holds staticEvents, the pinned events and the placement of
+  //            every visited event ∧ moves / unplaced hold the visited events that moved / could
+  //            not be placed, in order
   for (const event of movable) {
+    if (pinned.has(event.id)) {
+      continue;
+    }
     const placement = placeEvent(kind, event, occupied, input);
     if (placement.move !== null) {
       moves.push(placement.move);
@@ -250,14 +258,46 @@ function runPlan(
     }
     occupied = insertSorted(occupied, placement.placed);
   }
-  // POST: every movable event is placed, and moves / unplaced describe the plan
+  // POST: every unpinned movable event is placed, and moves / unplaced describe the pass
 
-  const after = applyMoves(inRange, moves);
+  return { moves, unplaced };
+}
+
+// PRE:  movable is in processing order (compareMovable); staticEvents is sorted and disjoint from
+//       movable; inRange is sorted
+// POST: returns kind's plan with its metrics. An event that cannot be placed stays where it is and
+//       is busy for every other event (BR-12), including those processed before it, so no placed
+//       event lands on it. A greedy pass cannot know that in advance, so passes repeat with each
+//       newly unplaced event pinned in place until a pass leaves no new one unplaced: at most
+//       movable.length + 1 passes, since pinned only grows
+function runPlan(
+  kind: PlanKind,
+  movable: readonly CalendarEvent[],
+  staticEvents: readonly CalendarEvent[],
+  inRange: readonly CalendarEvent[],
+  input: ReplanInput,
+): ReplanPlan {
+  const pinned = new Map<string, UnplacedEvent>();
+  let pass = greedyPass(kind, movable, staticEvents, pinned, input);
+
+  // INVARIANT: guard:    pinned ⊆ movable ids, and it grows by ≥ 1 per iteration
+  //            behavior: pass is the greedy pass with exactly the pinned events held in place
+  while (pass.unplaced.length > 0) {
+    for (const entry of pass.unplaced) {
+      pinned.set(entry.eventId, entry);
+    }
+    pass = greedyPass(kind, movable, staticEvents, pinned, input);
+  }
+  // POST: pass placed every unpinned event clear of the static, the pinned and the earlier-placed
+  //       events, and the pinned events are exactly the unplaced ones
+
+  const unplaced = movable.flatMap((event) => pinned.get(event.id) ?? []);
+  const after = applyMoves(inRange, pass.moves);
   return {
     id: kind,
-    moves,
+    moves: pass.moves,
     unplaced,
-    metrics: planMetrics(moves, unplaced.length, inRange, after, input),
+    metrics: planMetrics(pass.moves, unplaced.length, inRange, after, input),
   };
 }
 
@@ -266,7 +306,7 @@ function runPlan(
 //       rounded up to SNAP_MIN; input.segmentsFor returns the working-hours allowed segments
 // POST: returns the number of movable events (flexible, start ≥ notBefore, intersecting the range)
 //       and the two BR-12 plans, [Minimal change, Balanced week]; inputs are not mutated;
-//       O(c·(n + c + s + m log m))
+//       O(c·(n + c + s + m log m)) per greedy pass, at most c + 1 passes per plan
 export function planReplan(input: ReplanInput): {
   movableCount: number;
   plans: [ReplanPlan, ReplanPlan];

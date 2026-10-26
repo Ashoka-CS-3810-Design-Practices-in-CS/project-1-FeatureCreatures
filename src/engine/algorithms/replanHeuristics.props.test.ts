@@ -147,16 +147,19 @@ describe('planReplan (property)', () => {
               .filter((event) => !unplacedIds.has(event.id))
               .map((event) => ({ id: event.id, ...(newIntervals.get(event.id) ?? event) }));
 
-            // INVARIANT: every placed event visited so far, grown by the buffer, meets no other
-            //            event and no other placed event
+            // BR-12: an unplaced event stays where it is and remains busy (AUDIT A01).
+            const busy = [...others, ...movable.filter((event) => unplacedIds.has(event.id))];
+
+            // INVARIANT: every placed event visited so far, grown by the buffer, meets no static or
+            //            unplaced event and no other placed event
             for (const event of placed) {
               const buffered = expand(event, input.bufferMin);
-              expect(others.some((other) => overlaps(buffered, other))).toBe(false);
+              expect(busy.some((other) => overlaps(buffered, other))).toBe(false);
               expect(
                 placed.some((other) => other.id !== event.id && overlaps(buffered, other)),
               ).toBe(false);
             }
-            // POST: placed events keep their buffer from every static and every other placed event
+            // POST: placed events keep their buffer from every static, unplaced and other placed event
           }
           // POST: both plans satisfy T35
         }),
