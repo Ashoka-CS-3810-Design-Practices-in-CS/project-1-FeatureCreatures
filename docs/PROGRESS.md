@@ -6,9 +6,9 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-34 Visual refresh, **complete on branch `feat/wi-34-visual-refresh` and waiting for the user's review; not merged into `main`.** On "merge", finish it under AGENTS.md §5 (tick `[x]`, `--no-ff` merge, gate on `main`); on tweaks, keep working on the branch.
-- **Last session:** 2026-10-26 · Claude Code · implemented WI-34 (tokens, scales, restyle, class-only markup, screenshot script), with three screenshot critique rounds.
-- **Gate status (branch):** typecheck/lint, 524 tests (T15 opt-in), 7 DST cases, build and all 8 browser checks (E1–E3 including E2's drag/resize on 32 px rows) green. `main` is unchanged and green.
+- **Active WI:** WI-35 Crash fixes, on branch `feat/wi-35-crash-fixes`. WI-36 (audit findings) follows.
+- **Last session:** 2026-10-26 · Claude Code · merged the approved WI-34 into `main`; claimed WI-35.
+- **Gate status (main):** typecheck/lint and 524 tests green after the WI-34 merge (same tree as the green branch).
 
 ## Work items
 
@@ -128,6 +128,12 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-26 · Claude Code · branch `feat/wi-34-visual-refresh` · done: claimed; `main` gate green · next: design plan in the Decisions log, then tokens, CSS and screenshots · note: appearance only; not to be merged until the user approves
   - 2026-10-26 · Claude Code · branch `feat/wi-34-visual-refresh` · done: Paper/Night palette with Fern/Mint accent, spacing/type/shape scales in `tokens.css` (contrast test extended, lowest pair 5.31:1), roomy restyle of all three stylesheets, class/wrapper-only markup (no label, role or accessible name changed), editorial week header, sticky dialog action rows, `npm run screenshots`; TECH_SPEC §1.3/§2/§11.3/§11.4/§14 + v1.22; README links the captures; full gate incl. e2e green · next: user review (`npm run dev`), then "merge" or tweaks · note: screenshots are `docs/screenshots/{week-light-1440,week-dark-1440,week-light-1024,week-dark-1024,slot-picker-light,slot-picker-dark,replan-light,replan-dark,empty-light,empty-dark,month-light,list-dark,side-panels-light,drawer-light-900}.png`. A stale `vite preview` on port 4173 (not started by this session) is reused by `npm run e2e` and serves whatever is in `dist/`, so run `npm run build` before `npm run e2e`; the screenshot config uses its own port 4174 for that reason
   - 2026-10-26 · Claude Code · branch `feat/wi-34-visual-refresh` · done: user reviewed and approved the design; gate re-run (524 tests) before the merge · next: WI-35 crash fixes, then WI-36 audit findings
+
+### Change requests after WI-34 (user report: production crash on selecting time; no dialog under `npm run dev`)
+
+- [~] **WI-35** Crash fixes (mirror events, StrictMode dialogs, error boundary) — owner S + Dv — depends on 34
+  - 2026-10-26 · Claude Code · branch `feat/wi-35-crash-fixes` · done: claimed; WI-34 merged · next: failing tests for the mirror event and StrictMode Modal, then fixes, error boundary, E4 and the smoke flow
+- [ ] **WI-36** Audit findings A01–A10 — owner S + Dv — depends on 35
 
 ## Milestones
 
