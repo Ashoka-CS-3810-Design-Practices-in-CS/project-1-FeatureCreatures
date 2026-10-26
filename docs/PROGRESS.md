@@ -6,9 +6,9 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-30 README & demo scripts, branch `docs/wi-30-demo`.
-- **Last session:** 2026-10-26 · Codex · WI-32/33 finished and merged; preserving all WI-30 docs/exports while recording Divyam's rehearsal passes.
-- **Gate status on `main`:** verified typecheck/lint and 524 tests pass (T15 opt-in); 7 DST cases, build and all 8 browser checks green.
+- **Active WI:** none; next WI-31 Final docs sync.
+- **Last session:** 2026-10-26 · Codex · finished WI-30 after completing WI-32/33 and recording Divyam's production passes.
+- **Gate status:** typecheck/lint and 524 tests pass (T15 opt-in); coverage 98.30% lines / 93.12% branches overall; all 5 full-property tests, 7 DST cases, build and 8 browser checks green; T15 median 4.188 ms; exports regenerate identically.
 
 ## Work items
 
@@ -101,11 +101,13 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 ### Phase 6 — Docs and demo
 
-- [~] **WI-30** README & demo scripts — owner S + Dv — depends on 29, 32, 33
+- [x] **WI-30** README & demo scripts — owner S + Dv — depends on 29, 32, 33
   - 2026-10-26 · Codex · branch `docs/wi-30-demo` · done: verified WI-29 main gate and read D1–D5/release requirements · next: complete README, reproducible six-sample JSON exports and rehearsal guide; production rehearsal needs the human deployment step
   - 2026-10-26 · Codex · branch `docs/wi-30-demo` · done: generated and schema-validated all six JSON sample deliverables for 2026-11-02 UTC using an existing-Vite-module-loader script · next: README, sample guide, repeat-generation check and local gate; keep WI-30 open until production D1–D5 rehearsal
   - 2026-10-26 · Codex · branch `docs/wi-30-demo` · done: README covers production URL/setup/tests/architecture/deployment/limits; six exports validated and repeat generation is byte-identical; D1–D5 preflight and production record prepared · next: human deploys latest tested main and rehearses D1–D5, records outcomes in TEST_PLAN §8; then finish/merge WI-30 and take WI-31 · note: Node URL import corrected after the export script's first lint pass; no push/account/deploy action taken
   - 2026-10-26 · Codex · branch `docs/wi-30-demo` · done: final typecheck/lint/test gate green (508 pass, T15 intentionally skipped), sample regeneration diff and whitespace checks clean; all local preparation committed · next: production D1–D5 rehearsal; WI-30 remains in progress and unmerged until its production done-when condition is met
+  - 2026-10-26 · Codex · branch `docs/wi-30-demo` · done: merged completed WI-32/33, retained prior docs/exports, recorded Divyam's D1–D5 passes in §8 table and PROGRESS; README explains warnings, shortcuts button and exact ER2 result · next: final validation, finish/merge WI-30 then WI-31 · note: user will push and redeploy afterwards
+  - 2026-10-26 · Codex · branch `docs/wi-30-demo` · done: README/sample guide and six validated/reproducible exports complete; production outcomes recorded; all requested dependencies finished; gate/coverage/full properties/DST and T15 pass (median 4.188 ms) · next: WI-31 · note: production D1–D5 passes are Divyam's reported run; WI-32/33 new steps pass locally and the user will push/redeploy afterwards
 - [ ] **WI-31** Final docs sync — owner S + Dv — depends on 30
 
 ### Change requests before WI-30

@@ -25,7 +25,11 @@ In Windows PowerShell environments that block npm's `.ps1` wrapper, use `npm.cmd
 4. Create a task, choose **Find time**, review its ranked options and apply one. Select several unscheduled tasks to schedule them in a queue; **Skip** leaves a task unscheduled.
 5. Open **Replan**, compute the two plans, compare moves and metrics, then apply one. **Undo** reverses the whole applied plan in one step.
 
-The task and conflict panels move into **Tasks and conflicts** below 1024 px. **List** provides a text agenda. The theme button cycles System → Light → Dark; `?` opens the keyboard shortcut guide. Priorities and conflicts carry text tags as well as colours.
+The task and conflict panels move into **Tasks and conflicts** below 1024 px. **List** provides a text agenda. The theme button cycles System → Light → Dark; the toolbar **?** button or `?` key opens the shortcut guide. Priorities and conflicts carry text tags as well as colours.
+
+Events can remain inside barred slots. They show **In Lunch** (or the configured label), and **Barred-slot overlaps** lists each overlap with its minutes and an alternatives action. These warnings do not increase event-pair conflict counts or replan metrics. Saving settings that introduces overlaps also shows an info toast; **View** opens/focuses the section.
+
+The sparse-week **Thesis draft** is a 10-hour task. Lunch splits working time into four-hour stretches, so it shows **TaskLongerThanWindow (ER2)**: “This needs 10 h, but the longest stretch available in its window is 4 h.” It does not report **NoSlotFound (ER3)**.
 
 All calendar data stays in the current browser's IndexedDB. Export JSON to back it up. Import and sample replacement replace events, tasks and settings and clear undo history. Undo/redo keeps up to 50 steps in memory and does not survive reload. When storage is unavailable, the app warns that changes will be lost after the tab closes.
 
@@ -51,12 +55,12 @@ Local validation on 2026-10-26:
 
 | Check                                    | Result                                             |
 | ---------------------------------------- | -------------------------------------------------- |
-| Unit, integration, property and UI suite | 508 passing; T15 skipped unless explicitly enabled |
+| Unit, integration, property and UI suite | 524 passing; T15 skipped unless explicitly enabled |
 | Full property run                        | All five properties pass 10,000 cases each         |
-| DST suite                                | 6 passing                                          |
-| Chromium suite                           | 6 passing                                          |
-| Overall coverage                         | 98.25% lines, 92.85% branches                      |
-| Algorithm coverage                       | 99.65% lines, 95.76% branches, 100% functions      |
+| DST suite                                | 7 passing                                          |
+| Chromium suite                           | 8 passing                                          |
+| Overall coverage                         | 98.30% lines, 93.12% branches (WI-32 measurement)  |
+| Algorithm coverage                       | 99.67% lines, 95.85% branches, 100% functions      |
 
 Coverage gates require 90% across algorithm lines, branches, functions and statements, and 70% overall. Manual production checks, including a live screen-reader pass, remain in [TEST_PLAN §7](docs/TEST_PLAN.md#7-manual-checklists-run-on-the-production-url-before-each-milestone).
 
@@ -64,7 +68,7 @@ Coverage gates require 90% across algorithm lines, branches, functions and state
 
 `npm run test:perf` measures eleven runs of a full conflict sweep plus one facade slot search. `npm run bench` prints the Vitest report. Both use 5,000 events over 100 weeks from `mulberry32(7)` and a 60-minute task over the first four weeks. Generation, validation and engine initialization finish before timing begins.
 
-Local Windows measurement on 2026-10-26: **183 conflicting pairs**, eleven-run median **1.201 ms**, against a target below **100 ms**. The separate Vitest benchmark reported a **0.2665 ms mean**. Its runner reports module-export getter overhead; these are local test-runner measurements and vary with hardware, JIT warmup and background load.
+Local Windows measurement on 2026-10-26 after WI-32/33: **183 conflicting pairs**, eleven-run median **4.188 ms**, against a target below **100 ms** (measured alongside other validation). The earlier WI-28 run measured 1.201 ms; its separate Vitest benchmark reported a **0.2665 ms mean**. The benchmark runner reports module-export getter overhead; these are local test-runner measurements and vary with hardware, JIT warmup and background load.
 
 ## Architecture and limits
 
@@ -76,7 +80,7 @@ Local Windows measurement on 2026-10-26: **183 conflicting pairs**, eleven-run m
 | Repository interface                       | Interchangeable Dexie/IndexedDB and in-memory adapters with atomic changes                                                  |
 | Shared types, Zod schemas and time helpers | Domain contracts and local-time boundaries, including DST                                                                   |
 
-The sorted event array supports bounded window queries. Conflict detection costs `O(N log N + k log k)` including output ordering, where `k` is the number of overlapping pairs. Ranking strategies are explicit comparison keys. Replan uses a priority-ordered greedy heuristic; it does not guarantee a globally optimal schedule. The facade and ranking/repository strategies are the project's two design patterns.
+The sorted event array supports bounded window queries. Conflict detection costs `O(N log N + k log k)` including output ordering, where `k` is the number of overlapping pairs. Independent barred warnings use local DayFrames and a pure intersection algorithm; their per-event frame expansion costs `O(N·B log(B+1) + q)` for `B` barred slots and `q` warning records. Ranking strategies are explicit comparison keys. Replan uses a priority-ordered greedy heuristic; it does not guarantee a globally optimal schedule. The facade and ranking/repository strategies are the project's two design patterns.
 
 There is no backend, account system, recurrence, cross-device sync or joint multi-task optimizer. Phone layout is best effort. The production build retains a Vite warning about the FullCalendar-heavy bundle size.
 
@@ -90,7 +94,7 @@ npm run samples:export
 
 Committed files use the week beginning **2 November 2026 in UTC**. The app's sample loader uses the current local week instead. The registered stress sample uses seed 42; the performance benchmark uses seed 7.
 
-Follow [D1–D5 in TEST_PLAN §8](docs/TEST_PLAN.md#8-demonstration-scripts-deliverables-calendar-conflict-and-best-time-demos) for the calendar, conflict, best-time, replan and backup demonstrations. The rehearsal record there distinguishes local automated evidence from the required production rehearsal.
+Follow [D1–D5 in TEST_PLAN §8](docs/TEST_PLAN.md#8-demonstration-scripts-deliverables-calendar-conflict-and-best-time-demos) for the calendar, conflict, best-time, replan and backup demonstrations. **Divyam reported all five passing on production on 2026-10-26**, with contrast OK in both themes and screen-reader toast announcements. WI-32/33's new D5 steps pass locally and are included in the team's planned redeploy.
 
 ## Deployment — team members only
 
