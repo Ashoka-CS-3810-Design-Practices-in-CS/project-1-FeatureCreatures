@@ -189,6 +189,30 @@ describe('planReplan (BR-12)', () => {
     // POST: both plans leave X unplaced and move Y to 11:00
   });
 
+  // AUDIT A01: B is processed after A but cannot be placed, so it stays where it is; A must not
+  // already have been moved onto B's spot, which used to turn 0 conflicts into 1.
+  it('keeps an event that ends up unplaced busy for the events processed before it', () => {
+    const first = flexEv('A', 'Mon 10:00', 'Mon 11:00', ['Mon 09:00', 'Mon 10:00'], {
+      priority: 'high',
+    });
+    const stuckLater = flexEv('B', 'Mon 09:00', 'Mon 10:00', ['Sat 09:00', 'Sat 10:00'], {
+      priority: 'low',
+    });
+
+    const { plans } = planReplan(input([first, stuckLater]));
+
+    // INVARIANT: every plan visited so far moves nothing, leaves A and B unplaced, adds no conflict
+    for (const plan of plans) {
+      expect(plan.moves).toEqual([]);
+      expect(plan.unplaced).toEqual([
+        { eventId: 'A', title: 'A', reason: { kind: 'outsideFlexWindow' } },
+        { eventId: 'B', title: 'B', reason: { kind: 'outsideFlexWindow' } },
+      ]);
+      expect(plan.metrics.conflictsAfter).toBe(0);
+    }
+    // POST: both plans keep A and B where they are
+  });
+
   it('treats a flexible event starting before notBefore as static', () => {
     const started = flexEv('P', 'Mon 10:00', 'Mon 11:00', FLEX_WINDOW);
     const upcoming = flexEv('Q', 'Mon 10:30', 'Mon 11:30', FLEX_WINDOW);

@@ -6,7 +6,7 @@ import { err, type Result } from '@/shared/result';
 import { parseInput, searchOptionsSchema } from '@/shared/schemas';
 import { addLocalDays, startOfLocalDay } from '@/shared/time';
 import type { CalendarEvent, Interval, Minute, SlotSearchResult } from '@/shared/types';
-import { requireCurrentVersion, requireSlotLength, search } from '../search';
+import { requireCurrentVersion, requireNotPast, requireValidSlot, search } from '../search';
 import type { EngineState, PipelineContext, PipelineOutcome } from '../state';
 // eventCrud also imports this module (for the ER4 suggestion). The cycle is safe: each side only
 // calls the other's functions at run time, never while the modules load.
@@ -85,8 +85,8 @@ export function suggestAlternatives(
 
 // PRE:  request comes from the UI, normally an option of suggestAlternatives
 // POST: moves the event to request.slot as moveEvent does (label 'Move "<title>"'); err StaleResult
-//       when the state changed since request.baseVersion (ER7), NotFound for an unknown event, or
-//       InvalidTime when the slot is not exactly the event's duration
+//       when the state changed since request.baseVersion or the slot now starts in the past (ER7),
+//       NotFound for an unknown event, or InvalidTime when the slot is not exactly the event's duration
 export async function applyAlternative(
   context: PipelineContext,
   request: ApplyAlternativeRequest,
@@ -99,9 +99,13 @@ export async function applyAlternative(
   if (event === undefined) {
     return err({ code: 'NotFound', entity: 'event', id: request.eventId });
   }
-  const fits = requireSlotLength(request.slot, event.end - event.start);
+  const fits = requireValidSlot(request.slot, event.end - event.start);
   if (!fits.ok) {
     return fits;
+  }
+  const upcoming = requireNotPast(request.slot.start, context.now);
+  if (!upcoming.ok) {
+    return upcoming;
   }
   return moveEvent(context, event.id, request.slot);
 }

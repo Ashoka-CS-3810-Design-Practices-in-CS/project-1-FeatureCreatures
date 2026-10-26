@@ -6,9 +6,9 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-36 Audit findings A01–A10, on branch `feat/wi-36-audit-findings`.
-- **Last session:** 2026-10-26 · Claude Code · merged WI-34; finished and merged WI-35 (crash fixes); claimed WI-36.
-- **Gate status (main):** typecheck/lint, 535 tests (T15 opt-in), 7 DST, build and 11 browser checks (incl. E4 and the smoke flow on the build and the StrictMode dev server) green. Run `npm run build` before `npm run e2e` while a stale `vite preview` holds port 4173.
+- **Active WI:** none. WI-34, WI-35 and WI-36 are merged into `main`; **`main` is ready for the human push and redeploy**.
+- **Last session:** 2026-10-26 · Claude Code · merged WI-34; WI-35 (crash fixes, error boundary, E4, StrictMode smoke) and WI-36 (audit A01–A10) done and merged.
+- **Gate status (main):** typecheck/lint, 563 tests (T15 opt-in), 7 DST, coverage 98.50% lines / 93.82% branches, all five properties at 10,000 cases, build and 11 browser checks green. Run `npm run build` before `npm run e2e` while a stale `vite preview` holds port 4173.
 
 ## Work items
 
@@ -134,8 +134,11 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 - [x] **WI-35** Crash fixes (mirror events, StrictMode dialogs, error boundary) — owner S + Dv — depends on 34
   - 2026-10-26 · Claude Code · branch `feat/wi-35-crash-fixes` · done: claimed; WI-34 merged · next: failing tests for the mirror event and StrictMode Modal, then fixes, error boundary, E4 and the smoke flow
   - 2026-10-26 · Claude Code · branch `feat/wi-35-crash-fixes` · done: (a) `renderEventContent` renders an event without block props (the select mirror) as its time only, red-then-green regression test; a plain click (one 5-min snap) now opens a 30-min event (`CLICK_EVENT_MIN`); E4 was red on the old build (crash) and is green. (b) Modal ignores a `close` event while the dialog is open again; the jsdom polyfill now queues `close` like the browser; StrictMode + Esc tests red then green. (c) top-level `ErrorBoundary` (Reload / Export data, export failure message), `downloadJson` moved to `hooks/download.ts`. (d) smoke flow fails on page/console errors and runs on the build and on a StrictMode dev server (port 5174, project `chromium-dev`), which was red with the Modal fix reverted. Gate: 535 tests, 7 DST, 11 browser checks · next: WI-36 · note: overlapping time-grid events are drawn inset, so e2e must click the block on top
-- [~] **WI-36** Audit findings A01–A10 — owner S + Dv — depends on 35
+- [x] **WI-36** Audit findings A01–A10 — owner S + Dv — depends on 35
   - 2026-10-26 · Claude Code · branch `feat/wi-36-audit-findings` · done: claimed; WI-35 merged · next: commit `docs/AUDIT.md`, then A01/A02 test-first
+  - 2026-10-26 · Claude Code · branch `feat/wi-36-audit-findings` · done: `docs/AUDIT.md` committed; A01 (replan pins unplaced events, fixed-point passes) and A02 (supported-date `minute` schema) fixed test-first with resolutions recorded · next: A03–A10
+  - 2026-10-26 · Claude Code · branch `feat/wi-36-audit-findings` · done: A03 (ER4 Move to version), A04 (BR-9 mirror on import/init), A05 (whole-day loads), A06 (slot schema) fixed test-first, resolutions recorded · next: A07–A10, then cleanup notes
+  - 2026-10-26 · Claude Code · branch `feat/wi-36-audit-findings` · done: A07 (clock-overtaken results are stale), A08 (Replan inputs drop old plans), A09 (description errors shown), A10 (Month Replan default) fixed test-first; cleanup R01 fixed, range validator aligned with BR-12, R02/R03/View-conflict deferred with reasons in `docs/AUDIT.md`; all three docs and change logs synced. Verified: 563 tests, coverage 98.50/93.82 (algorithms 99.70/95.93), 7 DST, 5 properties × 10,000, build, 11 browser checks · next: human push + redeploy · note: the stricter BR-9 import check made several test fixtures name linked events after their tasks; the six sample deliverables still import
 
 ## Milestones
 
@@ -151,6 +154,7 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 - [x] Divyam, 2026-10-26: production D1–D5 all pass; contrast OK in both themes and screen reader announces toasts (user-reported). WI-32/33 changes will be redeployed by the human afterwards; post-deploy checks remain human-owned.
 - [ ] User will push and redeploy after local WI-30/31 completion, then smoke-check the new WI-32/33 D5 steps on production.
 - [ ] Push the finished tested `main` to the configured origin (human-owned).
+- [ ] Redeploy `main` after WI-35/36 (production has the select-mirror crash) and smoke-check: click and drag on empty time open New event; dialogs open; a forced crash would show Something went wrong.
 - [ ] Push the WI branches and milestone tags too: `git push origin --all` and `git push origin --tags` (local milestones `m1`–`m6`).
 - [ ] Complete the unreported List-view screen-reader quick pass and viva preparation in TEST_PLAN §7/§9; do not infer these from the reported toast-announcement check.
 - [x] First Vercel deploy (TECH_SPEC §13.2) and paste the URL at the top of this file.

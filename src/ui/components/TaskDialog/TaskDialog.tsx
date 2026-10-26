@@ -149,7 +149,12 @@ function TaskForm({ existing }: { existing: Task | undefined }) {
         </label>
 
         <label htmlFor={fieldId('description')}>Description</label>
-        <textarea id={fieldId('description')} {...register('description')} />
+        <textarea
+          id={fieldId('description')}
+          {...register('description')}
+          {...described('description')}
+        />
+        <ErrorText id={errorId('description')} error={errors.description} />
 
         <div className="dialog-actions">
           <button type="submit" disabled={isSubmitting}>

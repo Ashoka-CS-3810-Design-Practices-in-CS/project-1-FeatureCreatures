@@ -1,4 +1,5 @@
 import { useId, useState } from 'react';
+import { MAX_REPLAN_DAYS, MINUTES_PER_DAY, REPLAN_DST_SLACK_MIN } from '@/shared/constants';
 import type { Result } from '@/shared/result';
 import { addLocalDays, startOfLocalWeek } from '@/shared/time';
 import type { Interval, Minute, ReplanPlan, ReplanResult } from '@/shared/types';
@@ -10,21 +11,28 @@ import { useAppStore } from '../../store/appStore';
 import { Modal } from '../Modal/Modal';
 
 const LAST_DAY_OF_WEEK = 6; // Sunday, counted from Monday
+// The engine's limit on a replan range (TECH_SPEC §7.4.4), DST slack included.
+const MAX_REPLAN_SPAN_MIN = MAX_REPLAN_DAYS * MINUTES_PER_DAY + REPLAN_DST_SLACK_MIN;
 const PLAN_NAME: Record<ReplanPlan['id'], string> = {
   minimalChange: 'Minimal change',
   balanced: 'Balanced week',
 };
 
-// PRE:  activeRange is the visible range, or null; viewDate is the calendar's date
-// POST: returns the default first and last day: the visible range, or the week of viewDate
+// PRE:  activeRange is the visible range, or null; viewDate is the first day of the shown period
+// POST: returns the default first and last day: the week of viewDate while no range is known;
+//       the visible range when a replan may cover it; else the first full week (Monday–Sunday)
+//       starting on or after viewDate. Month shows 35–42 days, more than MAX_REPLAN_DAYS, so it
+//       gets that week (AUDIT A10)
 function defaultDays(activeRange: Interval | null, viewDate: Minute): { from: string; to: string } {
-  if (activeRange !== null) {
+  if (activeRange !== null && activeRange.end - activeRange.start <= MAX_REPLAN_SPAN_MIN) {
     return {
       from: toDateInput(activeRange.start),
       to: toDateInput(addLocalDays(activeRange.end, -1)),
     };
   }
-  const monday = startOfLocalWeek(viewDate);
+  const monday = startOfLocalWeek(
+    activeRange === null ? viewDate : addLocalDays(viewDate, LAST_DAY_OF_WEEK),
+  );
   return { from: toDateInput(monday), to: toDateInput(addLocalDays(monday, LAST_DAY_OF_WEEK)) };
 }
 
@@ -84,7 +92,8 @@ function PlanCard({ plan, onApply }: { plan: ReplanPlan; onApply: () => void }) 
 //       + additional props from: Modal, PlanCard
 // POST: shows the replan form (first and last day, defaulting to the visible week, and a buffer
 //       override), Compute plans, and then the two plan cards side by side, or "No flexible events
-//       in this range", or the range / buffer problem; applying a plan closes the dialog
+//       in this range", or the range / buffer problem, until an input changes; applying a plan
+//       closes the dialog
 function ReplanForm() {
   const view = useAppStore((state) => state.view);
   const settingsBuffer = useAppStore((state) => state.snapshot.settings.bufferMin);
@@ -93,6 +102,14 @@ function ReplanForm() {
   const [days, setDays] = useState(() => defaultDays(view.activeRange, view.date));
   const [buffer, setBuffer] = useState('');
   const [result, setResult] = useState<Result<ReplanResult> | null>(null);
+
+  // PRE:  update applies one edit of From, To or Buffer
+  // POST: applies it and drops the computed plans: they were made for the old inputs, and Apply
+  //       must never use a plan other than what the form shows (AUDIT A08)
+  function editInput(update: () => void): void {
+    update();
+    setResult(null);
+  }
 
   // PRE:  none
   // POST: computes both plans for [from 00:00, the day after to 00:00) and shows them
@@ -120,14 +137,14 @@ function ReplanForm() {
         id={`${idPrefix}-from`}
         type="date"
         value={days.from}
-        onChange={(event) => setDays({ ...days, from: event.target.value })}
+        onChange={(event) => editInput(() => setDays({ ...days, from: event.target.value }))}
       />
       <label htmlFor={`${idPrefix}-to`}>To</label>
       <input
         id={`${idPrefix}-to`}
         type="date"
         value={days.to}
-        onChange={(event) => setDays({ ...days, to: event.target.value })}
+        onChange={(event) => editInput(() => setDays({ ...days, to: event.target.value }))}
       />
       <label htmlFor={`${idPrefix}-buffer`}>Buffer (min)</label>
       <input
@@ -136,7 +153,7 @@ function ReplanForm() {
         min={0}
         placeholder={String(settingsBuffer)}
         value={buffer}
-        onChange={(event) => setBuffer(event.target.value)}
+        onChange={(event) => editInput(() => setBuffer(event.target.value))}
       />
       <button type="button" onClick={compute}>
         Compute plans

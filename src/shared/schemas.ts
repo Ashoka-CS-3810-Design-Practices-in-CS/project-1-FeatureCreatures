@@ -10,7 +10,9 @@ import {
   MAX_DESCRIPTION_LENGTH,
   MAX_EVENT_MIN,
   MAX_TASK_DURATION_MIN,
+  MAX_SUPPORTED_MINUTE,
   MAX_TITLE_LENGTH,
+  MIN_SUPPORTED_MINUTE,
   MIN_TASK_DURATION_MIN,
   MINUTES_PER_DAY,
 } from './constants';
@@ -21,13 +23,26 @@ import type { CalendarEvent, EventInput, ExportFile, Interval, Task } from './ty
 // Tags ordering issues so they map to InvalidTime rather than InvalidInput.
 const TIME_ISSUE_KIND = 'time';
 
-const minute = z.number().int();
+const DATE_RANGE_MESSAGE = 'Dates must be between the years 1970 and 9999.';
+
+// Every stored, imported or commanded Minute passes here, so no unrepresentable date reaches the
+// state, the repository or the UI's date formatting (AUDIT A02).
+const minute = z
+  .number()
+  .int()
+  .superRefine((value, ctx) => {
+    if (value < MIN_SUPPORTED_MINUTE || value > MAX_SUPPORTED_MINUTE) {
+      addTimeIssue(ctx, [], DATE_RANGE_MESSAGE);
+    }
+  });
 const interval = z.object({ start: minute, end: minute });
 const priority = z.enum(['high', 'medium', 'low']);
 const category = z.enum(['meeting', 'class', 'appointment', 'assignment', 'personal']);
 const weekday = z.literal([0, 1, 2, 3, 4, 5, 6]);
 const entityId = z.string().min(1);
-const description = z.string().max(MAX_DESCRIPTION_LENGTH);
+const description = z
+  .string()
+  .max(MAX_DESCRIPTION_LENGTH, `Description can be at most ${MAX_DESCRIPTION_LENGTH} characters.`);
 
 // PRE:  ctx is the refinement context of the value being checked; path addresses a field of it
 // POST: ctx holds one more custom issue at path with message, tagged params.kind = TIME_ISSUE_KIND
@@ -170,6 +185,9 @@ const bufferMinSchema = z
   .min(0, BUFFER_RANGE_MESSAGE)
   .max(MAX_BUFFER_MIN, BUFFER_RANGE_MESSAGE);
 
+// The slot of scheduleTask / applyAlternative, nested so issue paths read 'slot.start' (AUDIT A06).
+export const slotSchema = z.object({ slot: interval });
+
 // The optional per-search override of the settings buffer (findSlots, suggestAlternatives, planReplan).
 export const searchOptionsSchema = z.object({ bufferMin: bufferMinSchema.optional() });
 
@@ -253,17 +271,34 @@ function duplicateIdIssues(records: readonly { id: string }[], path: string): Fi
   return issues;
 }
 
+// PRE:  task is scheduled as event, which points back to it
+// POST: returns true iff event mirrors task as BR-9 requires: flexible, title = name, the same
+//       priority, end − start = durationMin and flexWindow = window (description and category are
+//       only copied when scheduling, so they may differ)
+function mirrorsTask(event: CalendarEvent, task: Task): boolean {
+  return (
+    event.flexible &&
+    event.title === task.name &&
+    event.priority === task.priority &&
+    event.end - event.start === task.durationMin &&
+    event.flexWindow !== null &&
+    event.flexWindow.start === task.window.start &&
+    event.flexWindow.end === task.window.end
+  );
+}
+
 // PRE:  events and tasks are shape-valid stored records (storedEventSchema, storedTaskSchema)
 // POST: returns the cross-record issues (TECH_SPEC §7.4.6), empty when the data is consistent:
 //       duplicate event ids ('events'), duplicate task ids ('tasks'), a scheduled task whose event
-//       is missing or does not point back ('tasks.N.scheduledEventId'), and an event whose taskId
-//       does not name a task scheduled as that event ('events.N.taskId')
+//       is missing, does not point back or does not mirror it (BR-9, AUDIT A04)
+//       ('tasks.N.scheduledEventId'), and an event whose taskId does not name a task scheduled as
+//       that event ('events.N.taskId')
 export function linkIssues(events: readonly CalendarEvent[], tasks: readonly Task[]): FieldIssue[] {
   const issues = [...duplicateIdIssues(events, 'events'), ...duplicateIdIssues(tasks, 'tasks')];
   const eventsById = new Map(events.map((event) => [event.id, event]));
   const tasksById = new Map(tasks.map((task) => [task.id, task]));
 
-  // INVARIANT: issues names every broken link of the tasks before taskIndex
+  // INVARIANT: issues names every broken link or mirror of the tasks before taskIndex
   for (const [taskIndex, task] of tasks.entries()) {
     const linked =
       task.scheduledEventId === null ? undefined : eventsById.get(task.scheduledEventId);
@@ -272,9 +307,15 @@ export function linkIssues(events: readonly CalendarEvent[], tasks: readonly Tas
         path: `tasks.${taskIndex}.scheduledEventId`,
         message: 'This scheduled task has no event that points back to it.',
       });
+    } else if (linked !== undefined && !mirrorsTask(linked, task)) {
+      issues.push({
+        path: `tasks.${taskIndex}.scheduledEventId`,
+        message:
+          "This scheduled task's event does not match its name, priority, duration or window, or is not flexible.",
+      });
     }
   }
-  // POST: issues names every task with a broken link
+  // POST: issues names every task with a broken link or mirror
 
   // INVARIANT: issues names every broken link of the events before eventIndex
   for (const [eventIndex, event] of events.entries()) {

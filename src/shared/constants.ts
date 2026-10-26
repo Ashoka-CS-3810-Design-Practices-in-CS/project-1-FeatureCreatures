@@ -19,6 +19,10 @@ export const MIN_CLICK_TARGET_PX = 32;
 export const CLICK_EVENT_MIN = 30; // a click on empty time creates one calendar row (WI-35)
 export const IMPORT_SPINNER_THRESHOLD = 1000;
 export const MINUTES_PER_DAY = 1440;
+// Supported dates, 1970-01-01T00:00Z to 9999-12-31T23:59Z: every such minute is a valid JavaScript
+// Date and formats in any time zone (AUDIT A02).
+export const MIN_SUPPORTED_MINUTE = 0;
+export const MAX_SUPPORTED_MINUTE = 4_223_371_679;
 export const MINUTES_PER_HOUR = 60;
 export const MS_PER_MINUTE = 60_000;
 export const MAX_TITLE_LENGTH = 100; // event title and task name

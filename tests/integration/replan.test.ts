@@ -91,6 +91,19 @@ describe('planReplan (T22, FR10, BR-12)', () => {
       },
     });
     expect(tooLong.ok ? null : tooLong.error).toMatchObject(badRange);
+    // AUDIT note: BR-12 wants local-midnight ends and 1–14 whole days; these used to pass.
+    const oneMinute = engine.planReplan({ range: iv('Mon 00:00', 'Mon 00:01') });
+    expect(oneMinute.ok ? null : oneMinute.error).toMatchObject(badRange);
+    const fourteenDaysAndAMinute = engine.planReplan({
+      range: { start: t('Mon 00:00'), end: t('Mon 00:00') + MAX_REPLAN_DAYS * MINUTES_PER_DAY + 1 },
+    });
+    expect(fourteenDaysAndAMinute.ok ? null : fourteenDaysAndAMinute.error).toMatchObject(badRange);
+    const fromMorning = engine.planReplan({ range: iv('Mon 09:00', 'Wed 00:00') });
+    expect(fromMorning.ok ? null : fromMorning.error).toMatchObject(badRange);
+    const fourteenDays = engine.planReplan({
+      range: { start: t('Mon 00:00'), end: t('Mon 00:00') + MAX_REPLAN_DAYS * MINUTES_PER_DAY },
+    });
+    expect(fourteenDays.ok).toBe(true);
     const badBuffer = engine.planReplan({ range: RANGE, bufferMin: 200 });
     expect(badBuffer.ok ? null : badBuffer.error.code).toBe('InvalidInput');
   });
@@ -177,5 +190,31 @@ describe('applyReplan (T23, T27)', () => {
       ok: false,
       error: { code: 'StaleResult' },
     });
+  });
+});
+
+// AUDIT A07: data versions do not change when time passes, so applying used to move an event
+// that had started since, or to place work in the past (FR10, BR-5).
+describe('elapsed time makes a result stale (ER7)', () => {
+  it('applyReplan refuses a plan whose moved event has started since it was computed', async () => {
+    const { engine, repo, setNow } = await makeEngine({
+      now: 'Mon 08:00',
+      events: [
+        ev('Seminar', 'Mon 09:30', 'Mon 10:30'),
+        flexEv('Soon', 'Mon 09:30', 'Mon 10:30', WINDOW),
+      ],
+    });
+    const plans = expectOk(engine.planReplan({ range: RANGE }));
+    expect(plans.plans[0].moves.map((move) => move.eventId)).toEqual(['Soon']);
+    setNow('Mon 09:45');
+    const before = await capture(engine, repo);
+
+    const result = await engine.applyReplan({
+      baseVersion: plans.baseVersion,
+      planId: 'minimalChange',
+    });
+
+    expect(result).toEqual({ ok: false, error: { code: 'StaleResult' } });
+    expect(await capture(engine, repo)).toEqual(before);
   });
 });

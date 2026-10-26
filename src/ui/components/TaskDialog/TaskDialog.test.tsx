@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
-import { act, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { Engine } from '@/engine';
+import { MAX_DESCRIPTION_LENGTH } from '@/shared/constants';
 import { flexEv, task } from '../../../../tests/helpers/builders';
 import { makeEngine } from '../../../../tests/helpers/engine';
 import { renderWithStore, storeFor } from '../../../../tests/helpers/render';
@@ -44,6 +45,26 @@ describe('TaskDialog', () => {
     ]);
   });
 
+  // AUDIT A09: the resolver blocked Save but nothing said why.
+  it('a description over the limit shows its message under Description', async () => {
+    const { engine } = await makeEngine();
+    const createTask = vi.spyOn(engine, 'createTask');
+    const store = renderDialogs(engine);
+    act(() => store.getState().actions.openDialog({ kind: 'task', mode: 'create' }));
+    await userEvent.type(screen.getByLabelText('Name'), 'Read');
+    fireEvent.change(screen.getByLabelText('Description'), {
+      target: { value: 'x'.repeat(MAX_DESCRIPTION_LENGTH + 1) },
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(
+      await screen.findByText('Description can be at most 1000 characters.'),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText('Description')).toHaveAttribute('aria-invalid', 'true');
+    expect(createTask).not.toHaveBeenCalled();
+  });
+
   it('T31 (UI): an empty duration shows "Duration must be a number." under Duration', async () => {
     const { engine } = await makeEngine();
     const createTask = vi.spyOn(engine, 'createTask');
@@ -62,7 +83,7 @@ describe('TaskDialog', () => {
 
   it('shows Find time / Unschedule / Delete only in edit mode, as the status allows', async () => {
     const { engine } = await makeEngine({
-      events: [flexEv('E', 'Mon 10:00', 'Mon 11:00', WEEK, { taskId: 'S' })],
+      events: [flexEv('E', 'Mon 10:00', 'Mon 11:00', WEEK, { title: 'S', taskId: 'S' })],
       tasks: [
         task('U', 60, WEEK),
         task('S', 60, WEEK, { status: 'scheduled', scheduledEventId: 'E' }),
@@ -80,7 +101,7 @@ describe('TaskDialog', () => {
 
   it('Find time opens the picker for the task; Unschedule unschedules and closes', async () => {
     const { engine } = await makeEngine({
-      events: [flexEv('E', 'Mon 10:00', 'Mon 11:00', WEEK, { taskId: 'S' })],
+      events: [flexEv('E', 'Mon 10:00', 'Mon 11:00', WEEK, { title: 'S', taskId: 'S' })],
       tasks: [
         task('U', 60, WEEK),
         task('S', 60, WEEK, { status: 'scheduled', scheduledEventId: 'E' }),
@@ -101,7 +122,7 @@ describe('TaskDialog', () => {
 
   it('deletes a scheduled task only after confirming', async () => {
     const { engine } = await makeEngine({
-      events: [flexEv('E', 'Mon 10:00', 'Mon 11:00', WEEK, { taskId: 'S' })],
+      events: [flexEv('E', 'Mon 10:00', 'Mon 11:00', WEEK, { title: 'S', taskId: 'S' })],
       tasks: [task('S', 60, WEEK, { status: 'scheduled', scheduledEventId: 'E' })],
     });
     const store = renderDialogs(engine);

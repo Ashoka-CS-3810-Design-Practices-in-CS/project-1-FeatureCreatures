@@ -4,8 +4,9 @@ import userEvent from '@testing-library/user-event';
 import type { Engine } from '@/engine';
 import { ev, flexEv, iv } from '../../../../tests/helpers/builders';
 import { makeEngine } from '../../../../tests/helpers/engine';
+import { t } from '../../../../tests/helpers/time';
 import { renderWithStore, storeFor } from '../../../../tests/helpers/render';
-import type { AppStore } from '../../store/appStore';
+import type { AppStore, ViewType } from '../../store/appStore';
 import { ReplanDialog } from './ReplanDialog';
 
 const WINDOW: [string, string] = ['Mon 09:00', 'Fri 18:00'];
@@ -42,6 +43,33 @@ describe('ReplanDialog', () => {
     expect(screen.getByLabelText('To')).toHaveValue('2026-11-08');
   });
 
+  // AUDIT A10: Month's visible grid (35–42 days) was copied into the defaults and then rejected,
+  // because a replan range is at most 14 days.
+  it.each([
+    ['timeGridDay', 'Tue 00:00', ['Tue 00:00', 'Wed 00:00'], '2026-11-03', '2026-11-03'],
+    ['timeGridWeek', 'Mon 00:00', ['Mon 00:00', '2026-11-09 00:00'], '2026-11-02', '2026-11-08'],
+    ['listWeek', 'Mon 00:00', ['Mon 00:00', '2026-11-09 00:00'], '2026-11-02', '2026-11-08'],
+    // November 2026 starts on a Sunday; its first full week is 2–8 November.
+    [
+      'dayGridMonth',
+      '2026-11-01 00:00',
+      ['2026-10-26 00:00', '2026-12-07 00:00'],
+      '2026-11-02',
+      '2026-11-08',
+    ],
+  ] as const)('%s defaults to a valid range', async (type, date, range, from, to) => {
+    const store = storeFor((await makeEngine({ events: t22Events })).engine);
+    store.getState().actions.setView(type as ViewType, t(date));
+    store.getState().actions.setActiveRange(iv(range[0], range[1]));
+    renderWithStore(<ReplanDialog />, store);
+    act(() => store.getState().actions.openDialog({ kind: 'replan' }));
+
+    expect(screen.getByLabelText('From')).toHaveValue(from);
+    expect(screen.getByLabelText('To')).toHaveValue(to);
+    await userEvent.click(screen.getByRole('button', { name: 'Compute plans' }));
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
   it('shows the two plan cards with their metrics and moves (T22 data)', async () => {
     renderOpen((await makeEngine({ events: t22Events })).engine);
 
@@ -73,6 +101,25 @@ describe('ReplanDialog', () => {
     await waitFor(() => expect(store.getState().dialog).toBeNull());
     expect(applyReplan).toHaveBeenCalledWith({ baseVersion: 0, planId: 'balanced' });
     expect(store.getState().toasts.at(-1)?.text).toBe('Plan applied: 1 event moved');
+  });
+
+  // AUDIT A08: the old cards stayed applicable after the inputs changed, so Apply used a plan
+  // computed for other parameters than those shown.
+  it.each([
+    ['Buffer (min)', '30'],
+    ['From', '2026-11-03'],
+    ['To', '2026-11-06'],
+  ])('editing %s hides the computed plans until Compute runs again', async (label, value) => {
+    renderOpen((await makeEngine({ events: t22Events })).engine);
+    await userEvent.click(screen.getByRole('button', { name: 'Compute plans' }));
+    expect(screen.getByRole('button', { name: 'Apply Balanced week' })).toBeInTheDocument();
+
+    const field = screen.getByLabelText(label);
+    await userEvent.clear(field);
+    await userEvent.type(field, value);
+
+    expect(screen.queryByRole('region', { name: 'Balanced week' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Apply / })).not.toBeInTheDocument();
   });
 
   it('says "No flexible events in this range" when nothing can move', async () => {

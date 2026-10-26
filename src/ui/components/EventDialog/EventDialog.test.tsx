@@ -2,6 +2,7 @@
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { Engine } from '@/engine';
+import { MAX_DESCRIPTION_LENGTH } from '@/shared/constants';
 import { ev, flexEv, iv, task } from '../../../../tests/helpers/builders';
 import { makeEngine } from '../../../../tests/helpers/engine';
 import { renderWithStore, storeFor } from '../../../../tests/helpers/render';
@@ -90,6 +91,27 @@ describe('EventDialog', () => {
     expect(createEvent).not.toHaveBeenCalled();
   });
 
+  // AUDIT A09: the resolver blocked Save but nothing said why.
+  it('a description over the limit shows its message under Description and skips the engine', async () => {
+    const { engine } = await makeEngine();
+    const createEvent = vi.spyOn(engine, 'createEvent');
+    const store = renderDialogs(engine);
+    openCreate(store);
+    await userEvent.type(screen.getByLabelText('Title'), 'Standup');
+    fireEvent.change(screen.getByLabelText('Description'), {
+      target: { value: 'x'.repeat(MAX_DESCRIPTION_LENGTH + 1) },
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(
+      await screen.findByText('Description can be at most 1000 characters.'),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText('Description')).toHaveAttribute('aria-invalid', 'true');
+    expect(store.getState().dialog).not.toBeNull();
+    expect(createEvent).not.toHaveBeenCalled();
+  });
+
   it('edits an existing event', async () => {
     const { engine } = await makeEngine({ events: [ev('A', 'Mon 10:00', 'Mon 11:00')] });
     const store = renderDialogs(engine);
@@ -132,7 +154,7 @@ describe('EventDialog', () => {
 
   it('disables the flexible toggle for a task-linked event', async () => {
     const { engine } = await makeEngine({
-      events: [flexEv('E', 'Mon 10:00', 'Mon 11:00', WEEK, { taskId: 'T' })],
+      events: [flexEv('E', 'Mon 10:00', 'Mon 11:00', WEEK, { title: 'T', taskId: 'T' })],
       tasks: [task('T', 60, WEEK, { status: 'scheduled', scheduledEventId: 'E' })],
     });
     const store = renderDialogs(engine);

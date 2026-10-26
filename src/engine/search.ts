@@ -4,9 +4,12 @@
 import { SNAP_MIN } from '@/shared/constants';
 import type { EngineError } from '@/shared/errors';
 import { err, ok, type Result } from '@/shared/result';
+import { parseInput, slotSchema } from '@/shared/schemas';
 import { buildDayFrames, ceilTo } from '@/shared/time';
 import type {
+  CalendarEvent,
   Criterion,
+  DayFrame,
   Interval,
   Minute,
   Priority,
@@ -33,6 +36,19 @@ export interface SearchRequest {
   criterion: Criterion;
   bufferMin: number;
   subject: SearchSubject;
+}
+
+// PRE:  state.events is sorted; frames is non-empty, in order and contiguous
+// POST: returns the events, except excludeIds, that intersect the whole days of frames. A day's
+//       load covers its whole working day (BR-7), so a window that starts or ends mid-day must not
+//       hide the rest of that day's events (AUDIT A05)
+function eventsOnDays(
+  state: EngineState,
+  frames: readonly DayFrame[],
+  excludeIds: readonly string[],
+): CalendarEvent[] {
+  const days = { start: (frames[0] as DayFrame).dayStart, end: (frames.at(-1) as DayFrame).dayEnd };
+  return eventsIntersecting(state.events, days).filter((event) => !excludeIds.includes(event.id));
 }
 
 // PRE:  state.events is sorted; request.window has start < end; request.durationMin > 0;
@@ -82,7 +98,7 @@ export function search(
     criterion: request.criterion,
     priority: request.priority,
     originalStart: request.originalStart,
-    dayLoads: computeDayLoads(near, frames),
+    dayLoads: computeDayLoads(eventsOnDays(state, frames, request.excludeIds), frames),
     frames,
   });
   return ok({
@@ -128,9 +144,22 @@ export function requireCurrentVersion(
   return baseVersion === state.version ? ok(null) : err({ code: 'StaleResult' });
 }
 
-// PRE:  slot comes from the UI; durationMin is the length the slot must have
-// POST: returns ok when slot is exactly durationMin long, else err InvalidTime at path 'slot'
-export function requireSlotLength(slot: Interval, durationMin: number): Result<null, EngineError> {
+// PRE:  start is when an offered slot or planned move begins; now is the current Minute
+// POST: returns ok when start ≥ notBeforeFor(now), else err StaleResult (ER7): time has passed
+//       since the result was computed, and data versions do not change when it does (AUDIT A07)
+export function requireNotPast(start: Minute, now: Minute): Result<null, EngineError> {
+  return start >= notBeforeFor(now) ? ok(null) : err({ code: 'StaleResult' });
+}
+
+// PRE:  slot comes from the UI (untrusted); durationMin is the length the slot must have
+// POST: returns ok when slot's ends are supported integer Minutes (slotSchema) and slot is exactly
+//       durationMin long; else the schema's error at 'slot.start' / 'slot.end' (AUDIT A06), or
+//       err InvalidTime at path 'slot' for a wrong length
+export function requireValidSlot(slot: Interval, durationMin: number): Result<null, EngineError> {
+  const parsed = parseInput(slotSchema, { slot });
+  if (!parsed.ok) {
+    return err(parsed.error);
+  }
   if (slot.end - slot.start === durationMin) {
     return ok(null);
   }

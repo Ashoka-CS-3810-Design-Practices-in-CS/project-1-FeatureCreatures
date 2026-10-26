@@ -110,6 +110,7 @@ Every file listed here exists by the end of the project. The WI column says whic
 ├─ docs/
 │  ├─ PROJECT_SCHEMA.md  TECH_SPEC.md  TEST_PLAN.md   # these specs
 │  ├─ PROGRESS.md                                      # WI checklist + handoff notes (repo setup)
+│  ├─ AUDIT.md                                         # Codex review A01–A10 with resolutions (WI-36)
 │  └─ screenshots/                                     # design-review captures linked from README (WI-34)
 ├─ .github/workflows/ci.yml                            # WI-01
 ├─ index.html  vite.config.ts  vitest.config.ts  vitest.dst.config.ts
@@ -507,6 +508,8 @@ export const MIN_CLICK_TARGET_PX = 32;
 export const CLICK_EVENT_MIN = 30;        // a click on empty time creates one calendar row (WI-35)
 export const IMPORT_SPINNER_THRESHOLD = 1000;
 export const MINUTES_PER_DAY = 1440;
+export const MIN_SUPPORTED_MINUTE = 0;              // 1970-01-01T00:00Z (AUDIT A02)
+export const MAX_SUPPORTED_MINUTE = 4_223_371_679;  // 9999-12-31T23:59Z: always a valid JS Date
 export const MAX_TITLE_LENGTH = 100;          // event title and task name
 export const MAX_DESCRIPTION_LENGTH = 1000;
 export const MAX_BARRED_LABEL_LENGTH = 40;
@@ -532,7 +535,11 @@ The time-ordering rules are added in `superRefine` with `params: { kind: 'time' 
 - **`InvalidInput`:** anything else, including missing fields, wrong types, and out-of-range numbers.
 
 ```ts
-const minute = z.number().int();
+// AUDIT A02: a Minute must be a supported date (1970-01-01T00:00Z … 9999-12-31T23:59Z), a time issue.
+const minute = z.number().int().superRefine((v, ctx) => {
+  if (v < MIN_SUPPORTED_MINUTE || v > MAX_SUPPORTED_MINUTE)
+    timeIssue(ctx, [], 'Dates must be between the years 1970 and 9999.');
+});
 const interval = z.object({ start: minute, end: minute });
 const priority = z.enum(['high', 'medium', 'low']);
 const category = z.enum(['meeting', 'class', 'appointment', 'assignment', 'personal']);
@@ -541,7 +548,7 @@ const timeIssue = (ctx: z.RefinementCtx, path: (string | number)[], message: str
 
 export const eventInputSchema = z.object({
   title: z.string().trim().min(1, 'Title is required.').max(100),
-  description: z.string().max(1000),
+  description: z.string().max(1000, 'Description can be at most 1000 characters.'),   // shown under the field (AUDIT A09)
   category, priority,
   start: minute, end: minute,
   flexible: z.boolean(),
@@ -560,7 +567,7 @@ export const eventInputSchema = z.object({
 
 export const taskInputSchema = z.object({
   name: z.string().trim().min(1, 'Name is required.').max(100),
-  description: z.string().max(1000),
+  description: z.string().max(1000, 'Description can be at most 1000 characters.'),
   category, priority,
   durationMin: z.number({ message: 'Duration must be a number.' }).int()
     .min(5, 'Duration must be at least 5 minutes.').max(1440, 'Duration can be at most 24 hours.'),
@@ -581,7 +588,7 @@ export const exportFileSchema = z.object({
 
 `storedEventSchema` and `storedTaskSchema` extend the input schemas with `id`, `taskId`, `status`, `scheduledEventId`, `createdAt` and `updatedAt`.
 
-`storedDataSchema = {events: storedEvent[], tasks: storedTask[], settings: settings | null}` validates `Repository.load()` in `engine.init()`. `searchOptionsSchema = {bufferMin?: int 0–120}` validates the `bufferMin` override of `findSlots`, `suggestAlternatives` and `planReplan`; it shares one `bufferMinSchema` with `settingsSchema`.
+`storedDataSchema = {events: storedEvent[], tasks: storedTask[], settings: settings | null}` validates `Repository.load()` in `engine.init()`. `searchOptionsSchema = {bufferMin?: int 0–120}` validates the `bufferMin` override of `findSlots`, `suggestAlternatives` and `planReplan`; it shares one `bufferMinSchema` with `settingsSchema`. `slotSchema = {slot: interval}` (AUDIT A06) validates the slot of `scheduleTask` and `applyAlternative` through `requireValidSlot` in `search.ts`.
 
 - Zod 4 cannot `.extend()` a refined object, so each schema is a plain object shape plus a named refine function (`refineEventTiming`, `refineTaskWindow`), and the stored schemas extend the shape and re-apply the same refinements.
 - `storedTaskSchema` also checks `(status = 'scheduled') ⟺ (scheduledEventId ≠ null)` as a shape issue at `scheduledEventId`: "A task has an event id exactly when it is scheduled."
@@ -776,7 +783,7 @@ Every mutation pipeline follows the same skeleton: validate → look up → buil
 **`applyAlternative({eventId, slot, baseVersion})`**
 
 1. If `baseVersion !== state.version`, return `StaleResult`.
-2. If `slot.end − slot.start !== event.end − event.start`, return `InvalidTime`.
+2. Check the slot with `requireValidSlot(slot, event.end − event.start)`: `slotSchema` issues (AUDIT A06), or `InvalidTime` at `slot` when the length differs.
 3. Otherwise behave as `moveEvent(eventId, slot)`, with the label `Move "<title>"`.
 
 #### 7.4.3 Task Scheduler (`pipelines/taskScheduler.ts`)
@@ -796,7 +803,7 @@ Every mutation pipeline follows the same skeleton: validate → look up → buil
   1. Look up the task. If it is scheduled, return `InvalidInput` with the issue `{path: 'status', message: 'Task is already scheduled.'}`.
   2. Return `search({durationMin: task.durationMin, priority: task.priority, window: task.window, useWorkingHours: task.useWorkingHours, excludeIds: [], originalStart: null, criterion: criterion ?? settings.defaultCriterion, bufferMin: bufferMin ?? settings.bufferMin, subject: {kind: 'task', taskId, name}})`.
 - **`scheduleTask({taskId, slot, baseVersion})`**
-  1. Check the version (ER7), look up the task (it must be unscheduled, else the `status` issue of `findSlots`), and check that `slot.end − slot.start === durationMin`, or return `InvalidTime` with the issue `{path: 'slot', message: 'The slot must be exactly as long as the duration.'}`.
+  1. Check the version (ER7), look up the task (it must be unscheduled, else the `status` issue of `findSlots`), check that `slot.start ≥ notBeforeFor(now)` with `requireNotPast` or return `StaleResult` (AUDIT A07; also in `applyAlternative`), and check the slot with `requireValidSlot` (shared with `applyAlternative`): its ends must pass `slotSchema` (supported integer Minutes, issues at `slot.start` / `slot.end`, AUDIT A06), and `slot.end − slot.start === durationMin`, or return `InvalidTime` with the issue `{path: 'slot', message: 'The slot must be exactly as long as the duration.'}`. Whether the slot is still free is guaranteed by the version check against the search it came from (ER7).
   2. Build `event = {id: newId(), title: name, description, category, priority, start, end, flexible: true, flexWindow: task.window, taskId, createdAt, updatedAt}`.
   3. Update the task with `{status: 'scheduled', scheduledEventId: event.id}`.
   4. Put both in one `Change` with the label `Schedule "<name>"`.
@@ -805,7 +812,7 @@ Every mutation pipeline follows the same skeleton: validate → look up → buil
 
 **`planReplan({range, bufferMin})`**
 
-1. Validate `bufferMin` with `searchOptionsSchema`. Validate the range: `end > start` and `end − start ≤ MAX_REPLAN_DAYS × 1440 + REPLAN_DST_SLACK_MIN` (120). Otherwise return `InvalidTime` with the issue `{path: 'range', message: 'The replan range must be 1 to 14 days long.'}`.
+1. Validate `bufferMin` with `searchOptionsSchema`. Validate the range as BR-12 states it (AUDIT contract note): `start` and `end` are local midnights (`startOfLocalDay(x) === x`), `end > start` and `end ≤ addLocalDays(start, MAX_REPLAN_DAYS)`, so DST days count as whole days. (Before WI-36 only `0 < end − start ≤ 14 × 1440 + REPLAN_DST_SLACK_MIN` was checked, which accepted a one-minute range; the UI still uses that span to decide whether the visible range can be the default.) Otherwise return `InvalidTime` with the issue `{path: 'range', message: 'The replan range must be 1 to 14 days long.'}`.
 2. Build the inputs:
    - `frames = buildDayFrames(range, settings)`
    - `notBefore`
@@ -818,6 +825,7 @@ Every mutation pipeline follows the same skeleton: validate → look up → buil
 1. Return `StaleResult` unless `lastReplan` exists and `lastReplan.baseVersion === baseVersion === state.version`.
 2. Look up the plan.
 3. If it has no moves, return `ok` with an unchanged snapshot and the label `''`.
+   Otherwise, if any move's `from.start` or `to.start` is before `notBeforeFor(now)`, return `StaleResult` (`requireNotPast`, AUDIT A07): time passing does not change the version, but it can start an event or put a target in the past.
 4. Otherwise build one `Change` with `before = current event` and `after = {...event, start: to.start, end: to.end, updatedAt: now}` for each move. The label is `Replan: <n> event(s) moved`. Durations are unchanged, so no task mirroring is needed.
 5. Commit.
 
@@ -845,6 +853,7 @@ There is no history entry, and the conflicts are unchanged.
    - unique event IDs
    - unique task IDs
    - every scheduled task's `scheduledEventId` exists and points back with `taskId`
+   - that event mirrors the task (BR-9, AUDIT A04): it is flexible, `title = name`, the same priority, `end − start = durationMin`, `flexWindow = window` (description and category may differ); path `tasks.N.scheduledEventId`
    - every event `taskId` points to a scheduled task
    - these checks are `linkIssues(events, tasks)` in `schemas.ts`; `parseExportFile(json)` runs steps 1–3, and `engine.init()` runs `linkIssues` on stored data too
 4. Then:
@@ -883,7 +892,10 @@ function search(state: EngineState, req: SearchRequest, notBefore: Minute): Resu
     return err({ code: 'NoSlotFound', durationMin: req.durationMin, bufferMin: req.bufferMin,
                  largestGapMin: largest ? largest.end - largest.start : 0, largestGap: largest });  // ER3
   }
-  const loads = computeDayLoads(near, frames);
+  // AUDIT A05: loads cover the frames' whole days, not just the window (a window starting at 17:00
+  // must still see that day's 09:00–17:00 events); gaps above still use the narrow `near` slice.
+  const loads = computeDayLoads(eventsIntersecting(state.events, {start: frames[0].dayStart, end: frames.at(-1).dayEnd})
+                                  .filter(e ⇒ !req.excludeIds.includes(e.id)), frames);
   const options = rankOptions(fitting, { durationMin: req.durationMin, criterion: req.criterion,
                      priority: req.priority, originalStart: req.originalStart, dayLoads: loads, frames });
   return ok({ baseVersion: state.version, subject: req.subject, durationMin: req.durationMin,
@@ -1190,9 +1202,17 @@ staticEv ← eventsIntersecting(events, expand(range, bufferMin)).filter(e ∉ m
 
 plans ← [run('minimalChange'), run('balanced')]
 
-run(kind):
-  occupied ← staticEv (sorted array) ; moves ← [] ; unplaced ← []
-  for e in movable:
+run(kind):                                             // AUDIT A01: repeat until no new event is unplaced
+  pinned ← {}                                          // id → unplaced entry; these stay where they are
+  repeat:
+     (moves, newlyUnplaced) ← pass(kind, pinned)
+     add newlyUnplaced to pinned
+  until newlyUnplaced is empty                         // ≤ c + 1 passes: pinned only grows
+  unplaced ← pinned entries in movable order
+
+pass(kind, pinned):
+  occupied ← staticEv ∪ pinned events, sorted ; moves ← [] ; unplaced ← []
+  for e in movable, skipping pinned ones:
      d   ← e.end − e.start
      win ← e.flexWindow ∩ range                         // may be null
      segs ← win ? segmentsFor(win) : []
@@ -1228,13 +1248,14 @@ invalidReason(e, win, segs, occupied, b, frames):   // first failing check, in t
 
 **Design notes for the viva.**
 - **Greedy and priority order:** high-priority events are placed first, so they get the best spots. This is a one-pass greedy with no backtracking, which keeps every move explainable.
-- **Unplaced events** stay where they are and remain busy, so later events still avoid them.
+- **Unplaced events** stay where they are and remain busy for every other event, including those processed before them. One greedy pass cannot know in advance which events will fail, so a plan repeats the pass with each newly unplaced event pinned in place until no new event fails (AUDIT A01: a high-priority event used to move onto a low-priority event's spot, and that event then could not move, turning 0 conflicts into 1).
 - **`staticEv`** uses the range expanded by the buffer, so an event just outside the range still pushes its buffer into it.
 
 **Complexity.**
 - Sorting the c movable events costs O(c log c).
 - Each one costs O(n + c + s + m log m), from merge, gaps, rank and the sorted insert.
-- Total: **O(c·(n + c + s + m log m))**. This is A3's O(c(n + m log m)), with the s and c terms made explicit.
+- One pass: **O(c·(n + c + s + m log m))**. This is A3's O(c(n + m log m)), with the s and c terms made explicit.
+- A plan runs at most c + 1 passes (each extra pass pins ≥ 1 more event), so the worst case is **O(c²·(n + c + s + m log m))**; with no unplaced event it is one pass, as before.
 
 ---
 
@@ -1350,7 +1371,7 @@ Each sample uses `atLocal` relative to `weekMonday`. The UI passes `startOfLocal
 | Rank | O(m log m) | O(m) |
 | **findSlots / suggestAlternatives (end to end)** | **O(log N + n + D·B + m log m)** | O(n + s + m) |
 | orderForScheduling | O(T log T) | O(T) |
-| **planReplan** | **O(c·(n + c + s + m log m))** | O(n + c + s + m) |
+| **planReplan** | **O(c·(n + c + s + m log m))** per pass; ≤ c + 1 passes (A01), so O(c²·(…)) worst case | O(n + c + s + m) |
 | Commit (excluding IndexedDB I/O) | O(N log N + k log k + W) | O(N + k + B + q) |
 | Undo / redo | same as commit | O(changed records) per history entry |
 | Export / import | O(N + T) / O((N + T) log N + W) | O(N + T + B + q) |
@@ -1411,7 +1432,7 @@ All sample loads and imports with more than `IMPORT_SPINNER_THRESHOLD` events pl
 - **Barred warnings (WI-32).** `openEventAlternatives(eventId)` opens the existing alternatives picker with `otherEventId: null`, reusing `suggestAlternatives`. Settings compares old/new warning tuples `(eventId, label, overlap.start, overlap.end)` and counts distinct event IDs among introduced tuples; after the normal success toast it adds the BR-15 info toast and **View** action. UI-only `panelsOpen: boolean` controls the drawer and `barredViewRequest: number` requests focus/scroll to the separate section; neither belongs to the persisted model. Event text and accessible names include distinct `In <label>` tags. `ConflictPanel` renders both sections; its original conflict heading/count remains event-pair-only.
 
 - **Mutations.** Every mutating action does `const r = await engine.x(...)`.
-  - **On `ok`:** set `snapshot` and `emphasisIds`, then push a success toast built by `format/*`. If `introducedConflicts` is non-empty, push the ER4 warning toast instead. Its actions are *Move to …* (when there is a `suggestion`), which calls `applyAlternative`, and *View conflict*.
+  - **On `ok`:** set `snapshot` and `emphasisIds`, then push a success toast built by `format/*`. If `introducedConflicts` is non-empty, push the ER4 warning toast instead. Its actions are *Move to …* (when there is a `suggestion`), which calls `engine.applyAlternative` with the **suggestion's own** `snapshot.version` as `baseVersion` and, on `StaleResult`, opens the alternatives picker for that event instead (AUDIT A03), and *View conflict*.
   - **On `err`:** push the toast from `format/errors.ts` and return the error, so dialogs can show field issues.
 - **Picker.**
   - `openTaskPicker(ids)` calls `engine.orderForScheduling(ids)`. If any IDs were dropped, it shows an info toast. Then it runs `findSlots` for `queue[0]`.
@@ -1435,7 +1456,7 @@ All sample loads and imports with more than `IMPORT_SPINNER_THRESHOLD` events pl
 | `EventDialog` | RHF form with `eventResolver`, category-based flexible default, flex window fields, delete with confirm | `dialog`, event | `createEvent/updateEvent/deleteEvent` |
 | `TaskDialog` | RHF form with `taskResolver`; Find time / Unschedule / Delete in edit mode | task | task actions |
 | `SlotPicker` | Both picker modes (Figure 2), summary line, options as a radio group, ER2/ER3 blocks with suggestions + "Edit task" | `picker` | picker actions |
-| `ReplanDialog` | Range (date inputs, default `view.activeRange` or the current week), buffer override, Compute, two plan cards (metrics + moves + unplaced), Apply | engine via action | `planReplan`, `applyReplan` |
+| `ReplanDialog` | Range (date inputs, default `view.activeRange` when it is at most 14 days, else the first full Monday–Sunday week from `view.date` (Month, AUDIT A10), or the week of `view.date` before the first `datesSet`), inputs that drop computed plans when edited (A08), buffer override, Compute, two plan cards (metrics + moves + unplaced), Apply | engine via action | `planReplan`, `applyReplan` |
 | `SettingsDialog` | Settings form + Data section (export, import, samples, clear) | `snapshot.settings` | `updateSettings`, `importData` |
 | `ConfirmDialog`, `ShortcutHelp`, `Toasts`, `Modal`, `EmptyState` | as named; `Toasts` is the ARIA live region; `Modal` wraps native `<dialog>` + `showModal()` | | |
 
@@ -1773,3 +1794,4 @@ Production URL: https://…vercel.app
 | 2026-10-26 | v1.21 (WI-31): final layout/UI contract sync; §10 includes warning derivation in boot/commit/import complexity. All local WIs complete, with user-owned push/redeploy and viva checks explicitly retained in the release record. |
 | 2026-10-26 | v1.22 (WI-34): visual refresh, appearance only. §11.4 has the final light/dark token values, the spacing, type and shape scales, and where the single accent is used; §11.3 splits the week-header text into weekday and numeral spans; §1.3/§2 add the `screenshots` script, its config and `docs/screenshots/`; §14 adds WI-34. No new dependency (system font stack). |
 | 2026-10-26 | v1.23 (WI-35): §4 adds the top-level `ErrorBoundary`; §11.3 `onSelect` gives a click-sized selection `CLICK_EVENT_MIN` (new §5 constant) and `renderEventContent` renders an event without block props (FullCalendar's select mirror) as its time only; §12 polyfill queues `close` like the browser, and Playwright adds the `chromium-dev` project on the StrictMode dev server; §2 lists the new files; §14 adds WI-35 and WI-36. |
+| 2026-10-26 | v1.24 (WI-36, `docs/AUDIT.md`): §8.13/§10 replan plans repeat greedy passes with unplaced events pinned (A01, ≤ c + 1 passes); §5/§6 `MIN/MAX_SUPPORTED_MINUTE` bound every Minute (A02) and `slotSchema` validates slots via `requireValidSlot` (A06); §7.4.6 `linkIssues` checks the BR-9 mirror (A04); §7.5 day loads cover whole days (A05); §7.4.3/§7.4.4 `requireNotPast` makes overtaken results stale (A07) and the replan range is 1–14 whole local days; §11.1/§11.2 ER4 Move to uses its own version (A03), Replan inputs drop old plans (A08) and Month defaults to its first full week (A10); §6 description message (A09); §2 lists `docs/AUDIT.md`. |

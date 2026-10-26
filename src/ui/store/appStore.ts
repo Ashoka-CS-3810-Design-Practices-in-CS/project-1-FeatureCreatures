@@ -229,8 +229,28 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
       });
     }
 
+    // PRE:  slot was suggested for eventId at snapshot version baseVersion (ER4); otherEventId is
+    //       the event it conflicted with
+    // POST: moves eventId to slot when nothing changed since baseVersion; when something did
+    //       (StaleResult, ER7) the old slot is not applied and fresh alternatives open instead
+    async function moveToSuggestion(
+      eventId: string,
+      otherEventId: string,
+      slot: Interval,
+      baseVersion: number,
+    ): Promise<void> {
+      const result = await runMutation(
+        () => engine.applyAlternative({ eventId, slot, baseVersion }),
+        (value) => alternativeAppliedText(slot, value.resolvedConflicts.length > 0),
+      );
+      if (!result.ok && result.error.code === 'StaleResult') {
+        openAlternativePicker(eventId, otherEventId);
+      }
+    }
+
     // PRE:  value is a successful mutation with at least one introduced conflict
-    // POST: shows the ER4 warning toast, with Move to … when there is a suggestion
+    // POST: shows the ER4 warning toast, with Move to … when there is a suggestion; that action
+    //       is checked against the version the suggestion was computed for (AUDIT A03)
     function showConflict(value: MutationResult): void {
       const conflict = value.introducedConflicts[0] as Conflict;
       const [subjectId, otherId] = subjectAndOther(conflict, value.changedEventIds);
@@ -244,7 +264,12 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
               {
                 label: moveToLabel(suggestion.slot),
                 run: () => {
-                  void actions.applyAlternative(subjectId, suggestion.slot);
+                  void moveToSuggestion(
+                    subjectId,
+                    otherId,
+                    suggestion.slot,
+                    value.snapshot.version,
+                  );
                 },
               },
             ];
@@ -728,7 +753,7 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
         );
       },
 
-      // PRE:  slot is an option of the current alternatives (or the ER4 suggestion)
+      // PRE:  slot is an option of the current alternatives picker
       // POST: moves eventId to slot through runMutation, against the current version
       applyAlternative(eventId, slot) {
         return runMutation(

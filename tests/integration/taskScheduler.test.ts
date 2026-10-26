@@ -219,6 +219,22 @@ describe('findSlots (FR5)', () => {
     expect(starts('L')).toEqual(as('leastLoaded', wed, mon, tue));
   });
 
+  // AUDIT A05: day loads used only the events inside the search window, so a window starting at
+  // Mon 17:00 saw Monday as empty although it is booked 09:00–17:00.
+  it('T18 partial days: day loads count the whole working day, not just the window', async () => {
+    const { engine } = await makeEngine({
+      events: [ev('Busy', 'Mon 09:00', 'Mon 17:00')],
+      tasks: [task('L', 60, ['Mon 17:00', 'Tue 10:00'], { priority: 'low' })],
+    });
+
+    const options = expectOk(engine.findSlots({ taskId: 'L', criterion: 'priorityAware' })).options;
+
+    expect(options.map(({ slot, dayLoadMin }) => ({ start: slot.start, dayLoadMin }))).toEqual([
+      { start: t('Tue 09:00'), dayLoadMin: 0 },
+      { start: t('Mon 17:00'), dayLoadMin: 480 },
+    ]);
+  });
+
   it('T19: barred slots shape the search but never block manual events', async () => {
     const lunch: BarredSlot = {
       id: 'lunch',
@@ -282,7 +298,7 @@ describe('findSlots (FR5)', () => {
 
   it('rejects an unknown task, a scheduled task and a bad buffer override', async () => {
     const { engine } = await makeEngine({
-      events: [flexEv('E', 'Mon 10:00', 'Mon 11:00', WEEK, { taskId: 'S' })],
+      events: [flexEv('E', 'Mon 10:00', 'Mon 11:00', WEEK, { title: 'S', taskId: 'S' })],
       tasks: [
         task('S', 60, WEEK, { status: 'scheduled', scheduledEventId: 'E' }),
         task('U', 60, WEEK),
@@ -453,6 +469,53 @@ describe('scheduling and sync (FR8, FR9, BR-9)', () => {
     const again = await at('T', 'Mon 11:00', 'Mon 12:00');
     expect(again.ok ? null : again.error.code).toBe('InvalidInput');
   });
+
+  // AUDIT A06: a fractional slot passed the length check, was saved, and the next start failed
+  // with "Saved data is damaged."
+  it('scheduleTask rejects slot endpoints that are not supported integer minutes', async () => {
+    const { engine, repo } = await makeEngine({ tasks: [task('T', 60, MONDAY_HOURS)] });
+    const before = await capture(engine, repo);
+    const baseVersion = engine.snapshot().version;
+    const halfMinute = 0.5;
+    const fractional = { start: t('Mon 09:00') + halfMinute, end: t('Mon 10:00') + halfMinute };
+    const beyond = { start: Number.MAX_SAFE_INTEGER - 60, end: Number.MAX_SAFE_INTEGER };
+
+    const fractionalResult = await engine.scheduleTask({
+      taskId: 'T',
+      slot: fractional,
+      baseVersion,
+    });
+    const beyondResult = await engine.scheduleTask({ taskId: 'T', slot: beyond, baseVersion });
+
+    expect(fractionalResult.ok ? null : fractionalResult.error).toMatchObject({
+      code: 'InvalidInput',
+      issues: [{ path: 'slot.start' }, { path: 'slot.end' }],
+    });
+    expect(beyondResult.ok ? null : beyondResult.error).toMatchObject({
+      code: 'InvalidTime',
+      issues: [{ path: 'slot.start' }, { path: 'slot.end' }],
+    });
+    expect(await capture(engine, repo)).toEqual(before);
+  });
+});
+
+describe('elapsed time makes a result stale (ER7, AUDIT A07)', () => {
+  it('scheduleTask refuses an offered slot whose start has passed', async () => {
+    const { engine, repo, setNow } = await makeEngine({
+      now: 'Mon 08:00',
+      tasks: [task('T', 60, MONDAY_HOURS)],
+    });
+    const found = expectOk(engine.findSlots({ taskId: 'T', criterion: 'earliest' }));
+    const slot = found.options[0]?.slot ?? iv('Mon 09:00', 'Mon 10:00');
+    expect(slot).toEqual(iv('Mon 09:00', 'Mon 10:00'));
+    setNow('Mon 09:30');
+    const before = await capture(engine, repo);
+
+    const result = await engine.scheduleTask({ taskId: 'T', slot, baseVersion: found.baseVersion });
+
+    expect(result).toEqual({ ok: false, error: { code: 'StaleResult' } });
+    expect(await capture(engine, repo)).toEqual(before);
+  });
 });
 
 describe('task CRUD', () => {
@@ -550,7 +613,7 @@ describe('task CRUD', () => {
   it('updateTask rejects a window shorter than the scheduled event, changing nothing', async () => {
     const linked = task('T', 60, WEEK, { status: 'scheduled', scheduledEventId: 'E' });
     const { engine, repo } = await makeEngine({
-      events: [flexEv('E', 'Mon 10:00', 'Mon 11:00', WEEK, { taskId: 'T' })],
+      events: [flexEv('E', 'Mon 10:00', 'Mon 11:00', WEEK, { title: 'T', taskId: 'T' })],
       tasks: [linked],
     });
     const before = await capture(engine, repo);
@@ -569,7 +632,7 @@ describe('task CRUD', () => {
 
   it('unscheduleTask removes the event, and is a no-op for an unscheduled task', async () => {
     const { engine } = await makeEngine({
-      events: [flexEv('E', 'Mon 10:00', 'Mon 11:00', WEEK, { taskId: 'S' })],
+      events: [flexEv('E', 'Mon 10:00', 'Mon 11:00', WEEK, { title: 'S', taskId: 'S' })],
       tasks: [
         task('S', 60, WEEK, { status: 'scheduled', scheduledEventId: 'E' }),
         task('U', 60, WEEK),

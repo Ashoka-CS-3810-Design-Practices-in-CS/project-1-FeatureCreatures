@@ -18,7 +18,7 @@ import type {
   UserCriterion,
 } from '@/shared/types';
 import { compareTasksForQueue } from '../algorithms/taskOrder';
-import { requireCurrentVersion, requireSlotLength, search } from '../search';
+import { requireCurrentVersion, requireNotPast, requireValidSlot, search } from '../search';
 import {
   commit,
   type Change,
@@ -260,7 +260,8 @@ export function findSlots(
 // PRE:  request comes from the UI, normally an option of findSlots
 // POST: persists a new flexible event for the task at request.slot (window = task window, taskId
 //       set) and the task as scheduled, in one change labelled 'Schedule "<name>"'; err StaleResult
-//       when the state changed since request.baseVersion (ER7), NotFound, InvalidInput for a
+//       when the state changed since request.baseVersion or the slot now starts in the past (ER7),
+//       NotFound, InvalidInput for a
 //       scheduled task, or InvalidTime when the slot is not exactly the task's duration
 export async function scheduleTask(
   context: PipelineContext,
@@ -278,9 +279,13 @@ export async function scheduleTask(
   if (task.status === 'scheduled') {
     return err(ALREADY_SCHEDULED);
   }
-  const fits = requireSlotLength(request.slot, task.durationMin);
+  const fits = requireValidSlot(request.slot, task.durationMin);
   if (!fits.ok) {
     return fits;
+  }
+  const upcoming = requireNotPast(request.slot.start, context.now);
+  if (!upcoming.ok) {
+    return upcoming;
   }
 
   const event: CalendarEvent = {
