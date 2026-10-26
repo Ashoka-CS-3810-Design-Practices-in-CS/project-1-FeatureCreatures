@@ -4,7 +4,7 @@ import { useAppStore } from '../../store/appStore';
 
 // PRE:  rendered under StoreProvider; reads snapshot.barredOverlaps/events and barredViewRequest;
 //       uses openEventAlternatives for each warning's event
-// POST: shows every barred overlap separately from event-pair conflicts, with a reused alternatives
+// POST: shows every barred overlap separately from event-pair conflicts, with a Fixed/Flexible tag and reused alternatives
 //       action; a View request focuses and scrolls the heading after the drawer has opened
 export function BarredOverlapPanel() {
   const warnings = useAppStore((state) => state.snapshot.barredOverlaps);
@@ -42,6 +42,9 @@ export function BarredOverlapPanel() {
               <strong>
                 {byId.get(warning.eventId)?.title ?? warning.eventId} · {warning.label}
               </strong>
+              <span className="tag">
+                {byId.get(warning.eventId)?.flexible ? 'Flexible' : 'Fixed'}
+              </span>
               <span>
                 {fmtRange(warning.overlap)} ({fmtDuration(warning.minutes)})
               </span>

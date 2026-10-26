@@ -766,6 +766,19 @@ dialog .flex-window input {
   background: var(--surface);
 }
 
+.replan-not-moved h4 {
+  margin: var(--space-3) 0 var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.replan-not-moved li + li {
+  margin-top: var(--space-4);
+}
+
+.replan-not-moved button {
+  margin-top: var(--space-2);
+}
+
 dialog .plan-card {
   margin: 0;
   padding-top: var(--space-4);

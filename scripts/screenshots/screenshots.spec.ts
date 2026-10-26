@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { addLunchBarredSlot, createEvent } from '../../e2e/helpers';
 
 // Design-review screenshots (WI-34), linked from README.md. Not part of `npm run e2e`: run
 // `npm run screenshots` and look at docs/screenshots/ after any visual change.
@@ -101,6 +102,23 @@ for (const theme of THEMES) {
     await expect(dialog.getByRole('region', { name: 'Balanced week' })).toBeVisible();
     await capture(page, `replan-${theme}`);
   });
+
+  // INVARIANT: diagnostic captures are registered at every visited width for this theme
+  for (const width of [WIDE_WIDTH, DRAWER_WIDTH]) {
+    test(`replan not moved ${theme} ${width}`, async ({ page }) => {
+      await openApp(page, theme, width);
+      await createEvent(page, 'Class', '2026-11-02T13:00', '2026-11-02T14:00');
+      await createEvent(page, 'Meeting', '2026-11-03T13:00', '2026-11-03T14:00');
+      await addLunchBarredSlot(page);
+      await page.getByRole('button', { name: 'Replan', exact: true }).click();
+      const dialog = page.getByRole('dialog', { name: 'Replan', exact: true });
+      await dialog.getByRole('button', { name: 'Compute plans', exact: true }).click();
+      await expect(dialog.getByRole('heading', { name: 'Not moved by Replan' })).toHaveCount(2);
+      await expect(page.locator('.toast')).toHaveCount(0, { timeout: TOAST_WAIT_MS });
+      await capture(page, `replan-not-moved-${theme}-${width}`);
+    });
+  }
+  // POST: fixed-only barred overlaps have captures at desktop and drawer widths in both plans
 }
 // POST: every scene is registered in both themes
 

@@ -30,6 +30,20 @@ export async function createEvent(
   await expect(dialog).toBeHidden();
 }
 
+// PRE:  the calendar is open with no modal dialog
+// POST: adds the default-weekday Lunch barred slot at 13:00–14:00 through Settings
+export async function addLunchBarredSlot(page: Page): Promise<void> {
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  const settings = page.getByRole('dialog', { name: 'Settings', exact: true });
+  await settings.getByRole('button', { name: 'Add barred slot', exact: true }).click();
+  const slot = settings.getByRole('group', { name: 'Barred slot 1', exact: true });
+  await slot.getByLabel('Label', { exact: true }).fill('Lunch');
+  await slot.getByLabel('From', { exact: true }).fill('13:00');
+  await slot.getByLabel('To', { exact: true }).fill('14:00');
+  await settings.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(settings).toHaveCount(0);
+}
+
 // PRE:  page has fresh storage and no installed clock
 // POST: creates E1's A/B conflict through the UI in a new base-week calendar
 export async function createConflict(page: Page): Promise<void> {

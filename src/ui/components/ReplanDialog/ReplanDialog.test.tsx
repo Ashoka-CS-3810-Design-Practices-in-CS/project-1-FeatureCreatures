@@ -2,7 +2,7 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { Engine } from '@/engine';
-import { ev, flexEv, iv } from '../../../../tests/helpers/builders';
+import { ev, flexEv, iv, settings } from '../../../../tests/helpers/builders';
 import { makeEngine } from '../../../../tests/helpers/engine';
 import { t } from '../../../../tests/helpers/time';
 import { renderWithStore, storeFor } from '../../../../tests/helpers/render';
@@ -130,7 +130,7 @@ describe('ReplanDialog', () => {
     expect(screen.getByText('No flexible events in this range')).toBeInTheDocument();
   });
 
-  it('shows "No changes needed" for a plan without moves, and lists unplaced events', async () => {
+  it('explains unresolved conflicts instead of saying No changes needed and reuses alternatives', async () => {
     const { engine } = await makeEngine({
       events: [
         ev('S', 'Mon 10:00', 'Mon 10:30'),
@@ -138,16 +138,89 @@ describe('ReplanDialog', () => {
         flexEv('Read', 'Wed 14:00', 'Wed 15:00', WINDOW),
       ],
     });
-    renderOpen(engine);
+    const store = renderOpen(engine);
 
     await userEvent.click(screen.getByRole('button', { name: 'Compute plans' }));
 
     const minimal = screen.getByRole('region', { name: 'Minimal change' });
-    expect(minimal).toHaveTextContent('"X" stays where it is: conflicts with "S", no free slot');
-    expect(minimal).toHaveTextContent('No changes needed');
+    expect(minimal).toHaveTextContent('"X" — No free slot');
+    expect(minimal).toHaveTextContent('Conflicts with "S".');
+    expect(minimal).toHaveTextContent('No moves in this plan — 2 events still need attention.');
+    expect(
+      within(minimal).getByRole('heading', { name: 'Not moved by Replan' }),
+    ).toBeInTheDocument();
+    expect(minimal).toHaveTextContent('Fixed event');
+    expect(minimal).toHaveTextContent('No free slot');
+    expect(screen.queryByText('No changes needed')).not.toBeInTheDocument();
     expect(
       within(minimal).queryByRole('button', { name: 'Apply Minimal change' }),
     ).not.toBeInTheDocument();
+    await userEvent.click(
+      within(minimal).getByRole('button', { name: 'Suggest alternatives for S' }),
+    );
+    expect(store.getState().picker).toMatchObject({
+      mode: 'alternatives',
+      eventId: 'S',
+      otherEventId: null,
+    });
+    expect(store.getState().dialog).toBeNull();
+  });
+
+  it('shows fixed and started barred overlaps even with zero movable events', async () => {
+    const { engine } = await makeEngine({
+      now: 'Mon 13:15',
+      settings: settings({
+        barredSlots: [{ id: 'lunch', label: 'Lunch', startMin: 780, endMin: 840, days: [1] }],
+      }),
+      events: [
+        ev('Class', 'Mon 13:00', 'Mon 14:00'),
+        flexEv('Study', 'Mon 13:00', 'Mon 14:00', WINDOW),
+      ],
+    });
+    renderOpen(engine);
+    await userEvent.click(screen.getByRole('button', { name: 'Compute plans' }));
+    const minimal = screen.getByRole('region', { name: 'Minimal change' });
+    expect(minimal).toHaveTextContent('Fixed event');
+    expect(minimal).toHaveTextContent('Already started');
+    expect(minimal).toHaveTextContent('Overlaps Lunch');
+    expect(minimal).toHaveTextContent('No moves in this plan — 2 events still need attention.');
+    expect(screen.queryByText('No changes needed')).not.toBeInTheDocument();
+    expect(
+      within(minimal).getAllByRole('button', { name: /^Suggest alternatives for/ }),
+    ).toHaveLength(2);
+  });
+
+  it('retains No changes needed for a healthy plan without unresolved items', async () => {
+    renderOpen(
+      (await makeEngine({ events: [flexEv('Read', 'Wed 14:00', 'Wed 15:00', WINDOW)] })).engine,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Compute plans' }));
+    const minimal = screen.getByRole('region', { name: 'Minimal change' });
+    expect(within(minimal).getByText('No changes needed')).toBeInTheDocument();
+    expect(
+      within(minimal).queryByRole('heading', { name: 'Not moved by Replan' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ['Outside its flex window', ['2026-11-09 09:00', '2026-11-09 10:00']],
+    ['No free slot', ['Wed 13:00', 'Wed 14:00']],
+  ] as const)('shows %s with a singular remaining-event message', async (reason, window) => {
+    const { engine } = await makeEngine({
+      settings: settings({
+        barredSlots: [{ id: 'lunch', label: 'Lunch', startMin: 780, endMin: 840, days: [3] }],
+      }),
+      events: [flexEv('Study', 'Wed 13:00', 'Wed 14:00', [...window])],
+    });
+    renderOpen(engine);
+    await userEvent.click(screen.getByRole('button', { name: 'Compute plans' }));
+    const minimal = screen.getByRole('region', { name: 'Minimal change' });
+    expect(minimal).toHaveTextContent(reason);
+    expect(minimal).toHaveTextContent('No moves in this plan — 1 event still needs attention.');
+    expect(
+      within(minimal).getByRole('button', { name: 'Suggest alternatives for Study' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('No changes needed')).not.toBeInTheDocument();
   });
 
   it('reports a bad range, and uses a buffer override', async () => {

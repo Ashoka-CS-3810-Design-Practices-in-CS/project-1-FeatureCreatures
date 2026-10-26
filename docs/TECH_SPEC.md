@@ -138,6 +138,7 @@ Every file listed here exists by the end of the project. The WI column says whic
    │  ├─ index.ts          # export { createEngine, type Engine }
    │  ├─ facade.ts         # Engine implementation: command queue, version checks, dispatch
    │  ├─ state.ts          # EngineState, Change, applyChange, commit, history
+   │  ├─ replanDiagnostics.ts # per-plan remaining problems (WI-38); no placement changes
    │  ├─ search.ts         # shared "segments → busy → gaps → rank" helper used by 3 pipelines
    │  ├─ pipelines/
    │  │  ├─ eventCrud.ts           # FR1–FR3 (+ ER4 suggestion)
@@ -433,6 +434,14 @@ export interface ReplanResult {
   readonly baseVersion: number; readonly range: Interval; readonly bufferMin: number;
   readonly movableCount: number;
   readonly plans: readonly [ReplanPlan, ReplanPlan];      // [minimalChange, balanced]
+  readonly notMoved: Readonly<Record<ReplanPlan['id'], readonly ReplanNotMoved[]>>;
+}
+
+export interface ReplanNotMoved {
+  readonly eventId: string; readonly title: string;
+  readonly reason: 'fixed' | 'started' | 'outsideFlexWindow' | 'noSlot';
+  readonly barredLabels: readonly string[];
+  readonly conflictTitles: readonly string[];
 }
 
 export interface Snapshot {
@@ -818,7 +827,8 @@ Every mutation pipeline follows the same skeleton: validate → look up → buil
    - `notBefore`
    - `buffer = bufferMin ?? settings.bufferMin`
 3. Call `planReplan(...)` from `algorithms/replanHeuristics.ts` (§8.13) with `state.events`, `state.conflicts`, `frames`, `range`, `buffer`, `notBefore` and `segmentsFor` (§7.5).
-4. Store the result as `lastReplan` (a private engine field, not part of `EngineState`) and return it.
+4. Derive `notMoved` independently for each plan with `engine/replanDiagnostics.ts`: project its moves, reuse the conflict sweep and barred-overlap detector, and retain unchanged events with problems whose overlaps intersect the range plus all unplaced events. Deduplicate by event ID; order by original event order. Reasons follow PROJECT_SCHEMA BR-12 (fixed, started, outsideFlexWindow, noSlot); carry distinct barred labels and conflicting titles. No placement, schema or metric changes. This extra projection/sort/sweep costs O(N log N + k log k + q) per plan, where k and q are projected conflicts and barred-overlap records (plus the barred detector's frame scan, §8.4a).
+5. Store `{baseVersion, range, bufferMin, movableCount, plans, notMoved}` as `lastReplan` (a private engine field, not part of `EngineState`) and return it. `notMoved` is keyed by plan ID and is derived, never persisted/exported.
 
 **`applyReplan({baseVersion, planId})`**
 
@@ -1371,7 +1381,8 @@ Each sample uses `atLocal` relative to `weekMonday`. The UI passes `startOfLocal
 | Rank | O(m log m) | O(m) |
 | **findSlots / suggestAlternatives (end to end)** | **O(log N + n + D·B + m log m)** | O(n + s + m) |
 | orderForScheduling | O(T log T) | O(T) |
-| **planReplan** | **O(c·(n + c + s + m log m))** per pass; ≤ c + 1 passes (A01), so O(c²·(…)) worst case | O(n + c + s + m) |
+| **planReplan** | **O(c·(n + c + s + m log m))** per pass; ≤ c + 1 passes (A01), so O(c²·(…)) worst case; plus per-plan diagnostics below | O(n + c + s + m) plus diagnostics below |
+| Replan diagnostics, each plan (WI-38) | O(N log N + k log k + N log(D+1) + N·D·B + q), reusing §8.4/§8.4a | O(N + k + q) |
 | Commit (excluding IndexedDB I/O) | O(N log N + k log k + W) | O(N + k + B + q) |
 | Undo / redo | same as commit | O(changed records) per history entry |
 | Export / import | O(N + T) / O((N + T) log N + W) | O(N + T + B + q) |
@@ -1460,6 +1471,8 @@ All sample loads and imports with more than `IMPORT_SPINNER_THRESHOLD` events pl
 | `ReplanDialog` | Range (date inputs, default `view.activeRange` when it is at most 14 days, else the first full Monday–Sunday week from `view.date` (Month, AUDIT A10), or the week of `view.date` before the first `datesSet`), inputs that drop computed plans when edited (A08), buffer override, Compute, two plan cards (metrics + moves + unplaced), Apply | engine via action | `planReplan`, `applyReplan` |
 | `SettingsDialog` | Settings form + Data section (export, import, samples, clear) | `snapshot.settings` | `updateSettings`, `importData` |
 | `ConfirmDialog`, `ShortcutHelp`, `Toasts`, `Modal`, `EmptyState` | as named; `Toasts` is the ARIA live region; `Modal` wraps native `<dialog>` + `showModal()` | | |
+
+WI-38: Replan plan cards also show **Not moved by Replan** with the derived per-plan reasons, problem names and per-event alternatives. Zero-move cards count remaining entries instead of saying only "No changes needed"; diagnostic cards appear even with zero movable events. Barred-overlap rows carry Fixed/Flexible tags. The alternatives action uses `openEventAlternatives(eventId)` for any diagnostic event; this is the existing flow, with no target toggle.
 
 ### 11.3 FullCalendar integration (`CalendarView/`)
 
@@ -1734,7 +1747,7 @@ Phases match A3 §7. Owners follow A3: **S** = Samar, **Dv** = Divyam. Each WI i
 | 35 | Change | Crash fixes (mirror events, StrictMode dialogs, error boundary) | S + Dv | `CalendarView/*`, `Modal`, `ErrorBoundary`, `main.tsx`, `e2e/*`, `playwright.config.ts` | 34 | A select-mirror event without extendedProps renders (regression test); Modal stays open under `<StrictMode>` and Esc still closes it; the error boundary shows "Something went wrong" with Reload / Export data (UI test); E4 (click and drag-select open New event with times prefilled) and the smoke flow fail on any uncaught page error, on both the built app and the StrictMode dev server |
 | 36 | Change | Audit findings A01–A10 | S + Dv | per finding, see `docs/AUDIT.md` | 35 | `docs/AUDIT.md` committed; every finding re-verified against `main` with a failing test first and a resolution line (fixed in <commit> / not reproducible / deferred with reason); full gate incl. `npm run e2e` green |
 | 37 | Change | Dialog form polish | S + Dv | EventDialog, TaskDialog, shared PriorityRadioGroup, styles, RTL, e2e, dialog screenshots | 36 | Flex window is a full-width group below End; browser geometry checks at 1440, 1024 and drawer width in both themes; shared tagged/coloured native priority radios support arrow keys; task Working hours only (default) / Any time radios preserve useWorkingHours; schemas/engine unchanged; §7.1 and screenshots refreshed |
-| 38 | Change | Replan vs barred-slot overlaps | S + Dv | replan diagnostics, ReplanDialog, ConflictPanel, engine/UI tests, TEST_PLAN D4 | 37 | Tests prove Minimal change moves future flexible barred events with reason barred and leaves fixed/started events static; classify unresolved conflicts/barred overlaps with per-event reasons and reused alternatives; no bare No changes needed when problems remain; fixed/flexible panel tags; FR10/BR-12 UX wording and D4 updated |
+| 38 | Change | Replan vs barred-slot overlaps | S + Dv | replan diagnostics, ReplanDialog, ConflictPanel, engine/UI tests, TEST_PLAN D4 | 37 | T39/T40: Minimal change moves future flexible barred events with reason barred and leaves fixed/started events static; classify unresolved conflicts/barred overlaps with per-event reasons and reused alternatives; no bare No changes needed when problems remain; fixed/flexible panel tags; FR10/BR-12 UX wording and D4 updated; full gate and browser suite green |
 
 **`docs/PROGRESS.md` format** (already created during repo setup):
 
@@ -1799,3 +1812,4 @@ Production URL: https://…vercel.app
 | 2026-10-26 | v1.23 (WI-35): §4 adds the top-level `ErrorBoundary`; §11.3 `onSelect` gives a click-sized selection `CLICK_EVENT_MIN` (new §5 constant) and `renderEventContent` renders an event without block props (FullCalendar's select mirror) as its time only; §12 polyfill queues `close` like the browser, and Playwright adds the `chromium-dev` project on the StrictMode dev server; §2 lists the new files; §14 adds WI-35 and WI-36. |
 | 2026-10-26 | v1.24 (WI-36, `docs/AUDIT.md`): §8.13/§10 replan plans repeat greedy passes with unplaced events pinned (A01, ≤ c + 1 passes); §5/§6 `MIN/MAX_SUPPORTED_MINUTE` bound every Minute (A02) and `slotSchema` validates slots via `requireValidSlot` (A06); §7.4.6 `linkIssues` checks the BR-9 mirror (A04); §7.5 day loads cover whole days (A05); §7.4.3/§7.4.4 `requireNotPast` makes overtaken results stale (A07) and the replan range is 1–14 whole local days; §11.1/§11.2 ER4 Move to uses its own version (A03), Replan inputs drop old plans (A08) and Month defaults to its first full week (A10); §6 description message (A09); §2 lists `docs/AUDIT.md`. |
 | 2026-10-26 | v1.25 (WI-37/38): §14 adds dialog form polish and Replan diagnostics change requests, with regression checks and unchanged scheduling contracts. |
+| 2026-10-26 | v1.26 (WI-38): §5 ReplanResult adds derived notMoved by plan ID and ReplanNotMoved; §7.4.4/§11.2 document post-plan diagnostics and reused alternatives; §14 completion uses T39/T40. Heuristic, schemas and metrics unchanged; regression confirms barred moves work. |

@@ -2,13 +2,14 @@ import { useId, useState } from 'react';
 import { MAX_REPLAN_DAYS, MINUTES_PER_DAY, REPLAN_DST_SLACK_MIN } from '@/shared/constants';
 import type { Result } from '@/shared/result';
 import { addLocalDays, startOfLocalWeek } from '@/shared/time';
-import type { Interval, Minute, ReplanPlan, ReplanResult } from '@/shared/types';
+import type { Interval, Minute, ReplanNotMoved, ReplanPlan, ReplanResult } from '@/shared/types';
 import { errorMessage } from '../../format/errors';
-import { moveReasonText, moveText } from '../../format/explain';
+import { moveText } from '../../format/explain';
 import { fmtDuration } from '../../format/time';
 import { fromDateInput, toDateInput } from '../../forms/eventForm';
 import { useAppStore } from '../../store/appStore';
 import { Modal } from '../Modal/Modal';
+import { NotMovedList } from './NotMovedList';
 
 const LAST_DAY_OF_WEEK = 6; // Sunday, counted from Monday
 // The engine's limit on a replan range (TECH_SPEC §7.4.4), DST slack included.
@@ -36,10 +37,21 @@ function defaultDays(activeRange: Interval | null, viewDate: Minute): { from: st
   return { from: toDateInput(monday), to: toDateInput(addLocalDays(monday, LAST_DAY_OF_WEEK)) };
 }
 
-// PRE:  plan is one of the computed plans; onApply applies it
-// POST: shows the plan card: its metrics, its moves with their reasons, the events left unplaced,
-//       and Apply this plan (or "No changes needed")
-function PlanCard({ plan, onApply }: { plan: ReplanPlan; onApply: () => void }) {
+// PRE:  plan is one computed plan; notMoved describes its remaining problems; onApply applies it
+//       + additional props from: NotMovedList
+// POST: shows metrics, moves and remaining problems with alternatives; a plan with no moves says
+//       No changes needed only if no diagnostic entries remain
+function PlanCard({
+  plan,
+  notMoved,
+  onApply,
+  onSuggest,
+}: {
+  plan: ReplanPlan;
+  notMoved: readonly ReplanNotMoved[];
+  onApply: () => void;
+  onSuggest: (eventId: string) => void;
+}) {
   const { metrics } = plan;
   const name = PLAN_NAME[plan.id];
   return (
@@ -57,6 +69,13 @@ function PlanCard({ plan, onApply }: { plan: ReplanPlan; onApply: () => void }) 
         </li>
         <li>Unplaced: {metrics.unplaced}</li>
       </ul>
+      {plan.moves.length === 0 && (
+        <p>
+          {notMoved.length === 0
+            ? 'No changes needed'
+            : `No moves in this plan — ${notMoved.length} ${notMoved.length === 1 ? 'event still needs' : 'events still need'} attention.`}
+        </p>
+      )}
       {plan.moves.length > 0 && (
         <ul aria-label={`${name} moves`}>
           {plan.moves.map((move) => (
@@ -64,21 +83,8 @@ function PlanCard({ plan, onApply }: { plan: ReplanPlan; onApply: () => void }) 
           ))}
         </ul>
       )}
-      {plan.unplaced.length > 0 && (
-        <ul aria-label={`${name} unplaced`}>
-          {plan.unplaced.map((entry) => (
-            <li key={entry.eventId}>
-              &quot;{entry.title}&quot; stays where it is:{' '}
-              {entry.reason === null
-                ? 'no free slot'
-                : `${moveReasonText(entry.reason)}, no free slot`}
-            </li>
-          ))}
-        </ul>
-      )}
-      {plan.moves.length === 0 ? (
-        <p>No changes needed</p>
-      ) : (
+      <NotMovedList entries={notMoved} planName={name} onSuggest={onSuggest} />
+      {plan.moves.length > 0 && (
         <button type="button" className="primary" aria-label={`Apply ${name}`} onClick={onApply}>
           Apply this plan
         </button>
@@ -88,7 +94,7 @@ function PlanCard({ plan, onApply }: { plan: ReplanPlan; onApply: () => void }) 
 }
 
 // PRE:  rendered under StoreProvider; reads view and snapshot.settings; uses computeReplan,
-//       applyReplan and closeDialog
+//       applyReplan, openEventAlternatives and closeDialog
 //       + additional props from: Modal, PlanCard
 // POST: shows the replan form (first and last day, defaulting to the visible week, and a buffer
 //       override), Compute plans, and then the two plan cards side by side, or "No flexible events
@@ -160,16 +166,26 @@ function ReplanForm() {
       </button>
 
       {result !== null && !result.ok && <p role="alert">{errorMessage(result.error)}</p>}
-      {result?.ok === true && result.value.movableCount === 0 && (
-        <p>No flexible events in this range</p>
-      )}
-      {result?.ok === true && result.value.movableCount > 0 && (
-        <div className="plan-cards">
-          {result.value.plans.map((plan) => (
-            <PlanCard key={plan.id} plan={plan} onApply={() => void apply(result.value, plan.id)} />
-          ))}
-        </div>
-      )}
+      {result?.ok === true &&
+        result.value.movableCount === 0 &&
+        result.value.plans.every((plan) => result.value.notMoved[plan.id].length === 0) && (
+          <p>No flexible events in this range</p>
+        )}
+      {result?.ok === true &&
+        (result.value.movableCount > 0 ||
+          result.value.plans.some((plan) => result.value.notMoved[plan.id].length > 0)) && (
+          <div className="plan-cards">
+            {result.value.plans.map((plan) => (
+              <PlanCard
+                key={plan.id}
+                plan={plan}
+                notMoved={result.value.notMoved[plan.id]}
+                onApply={() => void apply(result.value, plan.id)}
+                onSuggest={actions.openEventAlternatives}
+              />
+            ))}
+          </div>
+        )}
 
       <div className="dialog-actions">
         <button type="button" onClick={actions.closeDialog}>
