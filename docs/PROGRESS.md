@@ -6,9 +6,9 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** none; all WI-01–33 are complete locally. Human push/redeploy and post-deploy/viva checks remain listed below.
-- **Last session:** 2026-10-26 · Codex · finished WI-32/33 test-first, completed WI-30/31, and recorded Divyam's production rehearsal/accessibility results.
-- **Gate status:** typecheck/lint and 524 tests pass (T15 opt-in); coverage 98.30% lines / 93.12% branches overall; all 5 full-property tests, 7 DST cases, build and 8 browser checks green; T15 median 4.188 ms; exports regenerate identically.
+- **Active WI:** WI-34 Visual refresh (change request, appearance only), branch `feat/wi-34-visual-refresh`. **Do not merge into `main`**: the user reviews it with `npm run dev` first and replies "merge" or sends tweaks.
+- **Last session:** 2026-10-26 · Claude Code · verified `main` (typecheck, lint, 524 tests) and claimed WI-34.
+- **Gate status:** `main` green: typecheck/lint and 524 tests pass (T15 opt-in); coverage 98.30% lines / 93.12% branches overall; build and 8 browser checks green at WI-33.
 
 ## Work items
 
@@ -121,6 +121,11 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 - [x] **WI-33** Shortcuts button — owner S + Dv — depends on 29
   - 2026-10-26 · Codex · branch `feat/wi-33-shortcuts-button` · done: WI-32 merged and main gate verified (523 tests); button requirement/contract/UI test already documented · next: failing UI test, accessible toolbar button, browser click/Escape plus preserved ? key
   - 2026-10-26 · Codex · branch `feat/wi-33-shortcuts-button` · done: UI test failed before implementation, then green; button between theme/settings opens existing help; browser verifies click, Escape/focus return and ? key; gate 524 tests, build and all 8 browser cases pass · next: finish WI-30 then WI-31
+
+### Change requests after WI-31
+
+- [~] **WI-34** Visual refresh (spacing, type, colour) — owner S + Dv — depends on 33
+  - 2026-10-26 · Claude Code · branch `feat/wi-34-visual-refresh` · done: claimed; `main` gate green · next: design plan in the Decisions log, then tokens, CSS and screenshots · note: appearance only; not to be merged until the user approves
 
 ## Milestones
 

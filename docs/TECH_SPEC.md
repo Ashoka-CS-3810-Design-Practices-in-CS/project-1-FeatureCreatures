@@ -1679,6 +1679,7 @@ Phases match A3 §7. Owners follow A3: **S** = Samar, **Dv** = Divyam. Each WI i
 | 31 | 6 | Final docs sync | S + Dv | these three docs | 30 | Change logs synchronized; release checklist accurately records verified checks and remaining human push/redeploy/viva steps |
 | 32 | Change | Barred-slot overlap warnings | S + Dv | `shared/types`, `algorithms/barred`, state/facade, store, calendar/panel | 29 | T37 algorithm/snapshot and T38 UI pass; BR-3 conflicts and replan metrics unchanged |
 | 33 | Change | Shortcuts button | S + Dv | `Toolbar` | 29 | Toolbar `?` button labelled Keyboard shortcuts opens the existing help; `?` key still works |
+| 34 | Change | Visual refresh (spacing, type, colour) | S + Dv | `styles/*`, `App.module.css`, class-only markup, `scripts/screenshots/*`, `docs/screenshots/*` | 33 | Appearance only: spacing/type tokens used instead of raw px, §11.4 updated to the final values, contrast test green in both themes, PROJECT_SCHEMA §7.5/§7.7 still true, full gate incl. `npm run e2e` green, screenshots committed and linked from README |
 
 **`docs/PROGRESS.md` format** (already created during repo setup):
 
