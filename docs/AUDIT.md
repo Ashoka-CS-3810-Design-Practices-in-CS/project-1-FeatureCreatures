@@ -131,10 +131,17 @@ Use a valid week based on the focused calendar date when the visible range excee
 
 `countOverlaps` currently has no production caller, but implements the documented optional drag preview and has a frozen signature/tests. Its presence alone is not evidence that deletion is appropriate. Repository strategies and the facade/pipeline split serve clear purposes; no replacement architecture is warranted by this review.
 
+**Cleanup resolutions (WI-36, Claude Code, 2026-10-26):**
+
+- **R01:** fixed in 983362f. TaskPanel builds an event-ID map (memoised) and a selected-ID set once per render; behaviour unchanged, existing TaskPanel tests green.
+- **R02:** deferred. Reusing the preflight count needs `checkImport` to hand its parsed file to `importData`, a change to two store action signatures and the Settings import flow, for a parse that costs milliseconds on files of normal size. The authoritative engine parse stays either way.
+- **R03:** deferred. The repeated option lists differ on purpose in order and wording; sharing them is a broad UI refactor with no behaviour change, better done with the humans' agreement.
+- `countOverlaps`: no action, as the audit recommends.
+
 ## Additional contract/usability notes
 
-- **Range validator is weaker than BR-12.** [replan.ts:36](../src/engine/pipelines/replan.ts#L36) accepts a one-minute range and, in UTC, 14 days plus one minute; both were reproduced. It checks only positive elapsed duration against a fixed DST allowance, not local-midnight endpoints or 1–14 local calendar days. TECH_SPEC currently describes this weaker check; align the contract and implementation with PROJECT_SCHEMA before treating it as correct.
-- **“View conflict” does not navigate to the panel.** [appStore.ts:256](../src/ui/store/appStore.ts#L256) only emphasizes the event IDs. It does not open the narrow drawer, focus the row, or scroll to a conflict outside the visible period. This limitation was already noted in PROGRESS; the newer barred-warning View action demonstrates the missing drawer/focus behavior.
+- **Range validator is weaker than BR-12.** [replan.ts:36](../src/engine/pipelines/replan.ts#L36) accepts a one-minute range and, in UTC, 14 days plus one minute; both were reproduced. It checks only positive elapsed duration against a fixed DST allowance, not local-midnight endpoints or 1–14 local calendar days. TECH_SPEC currently describes this weaker check; align the contract and implementation with PROJECT_SCHEMA before treating it as correct. **Resolution (WI-36):** reproduced and fixed in f13f109: both ends must be local midnights and the range 1 to `MAX_REPLAN_DAYS` local days (`addLocalDays`), as BR-12 says; integration cases for one minute, 14 days + 1 minute, a 09:00 start and exactly 14 days. TECH_SPEC §7.4.4 updated.
+- **“View conflict” does not navigate to the panel.** [appStore.ts:256](../src/ui/store/appStore.ts#L256) only emphasizes the event IDs. It does not open the narrow drawer, focus the row, or scroll to a conflict outside the visible period. This limitation was already noted in PROGRESS; the newer barred-warning View action demonstrates the missing drawer/focus behavior. **Resolution (WI-36):** deferred. It is a usability gap, not incorrect behaviour: the conflict is still listed and both events are emphasised. Opening the drawer and focusing the conflict row (like the barred-warning View) is a small UI feature for a later WI.
 
 ## Verification and limits
 
