@@ -66,8 +66,10 @@ export const iv = (a: string, b: string): Interval => ({ start: t(a), end: t(b) 
 
 // engine.ts
 export async function makeEngine(o?: { events?: CalendarEvent[]; tasks?: Task[]; settings?: Settings;
-  now?: string /* default 'Mon 00:00' */; repo?: Repository }): Promise<{ engine: Engine; repo: Repository }>;
-//   seeds repo via replaceAll, then engine.init(); newId yields 'id-1', 'id-2', …
+  now?: string /* default 'Mon 00:00' */; repo?: Repository }):
+  Promise<{ engine: Engine; repo: Repository; setNow: (spec: string) => void }>;
+//   seeds repo via replaceAll, then engine.init(); newId yields 'id-1', 'id-2', …;
+//   setNow moves the engine's clock (clock-advance cases, AUDIT A07)
 
 // oracle.ts
 export function bruteForceConflicts(events: CalendarEvent[]): { key: string; overlap: Interval; minutes: number }[]; // O(n²)
@@ -301,6 +303,7 @@ WI-31 completes local release preparation. User-reported production outcomes are
 
 - [x] D1–D5 pass on production per Divyam, 2026-10-26; WI-32/33's new behavior passes T37/T38 and toolbar UI/browser regressions locally.
 - [x] Typecheck/lint/test gate passes; coverage thresholds met (98.30% overall lines / 93.12% branches; algorithms 99.67% / 95.85%). DST: 7 cases. Production build passes.
+- [x] After WI-35/36 (2026-10-26, local): 563 tests, coverage 98.50% lines / 93.82% branches (algorithms 99.70% / 95.93%), 7 DST, all five properties at 10,000 random-seed cases, build, and 11 browser checks (E1–E4, smoke on the build and on the StrictMode dev server, accessibility, warnings) green. Not yet on production: needs the human redeploy.
 - [x] `npm run test:props:full`: all five properties pass 10,000 random-seed cases each; no failing seed found.
 - [x] `npm run e2e`: all 8 Chromium checks pass, including E1–E3 and the new warning/ER2/help workflows.
 - [x] `npm run test:perf`: N=5000, seed=7, k=183, eleven-run median 4.188 ms < 100 ms; recorded in README.
@@ -331,3 +334,4 @@ WI-31 completes local release preparation. User-reported production outcomes are
 | 2026-10-26 | v1.6 (WI-32/33): adds T37/T38 and the toolbar-button regression; extends D5; records Divyam's D1–D5 production passes and contrast/toast-announcement results, distinguishing later change-request checks. |
 | 2026-10-26 | v1.7 (WI-31): final validation/release record (524 tests, 7 DST, 8 browser, full properties, coverage, T15); checks reported contrast/toast announcements and retains unreported List-reader/viva/post-deploy actions as human-owned. |
 | 2026-10-26 | v1.8 (WI-35): adds E4 (click and drag-select create) and the smoke flow, both failing on any page/console error; the smoke flow also runs on the StrictMode dev server; §5 adds Modal-in-StrictMode, select-mirror and error-boundary UI cases; records how dev-mode/StrictMode behaviour is covered. |
+| 2026-10-26 | v1.9 (WI-36): audit regressions — T35 treats unplaced events as busy (A01); T25 adds unsupported dates (A02) and BR-9 mirror mismatches (A04); T21 adds a stale Move to (A03); T18 adds partial days (A05); T27 adds clock-advance cases (A07); §5 adds Replan input edits (A08), description errors (A09) and per-view Replan defaults (A10); §2 `makeEngine` gains `setNow`; §9 records the post-WI-36 local results.

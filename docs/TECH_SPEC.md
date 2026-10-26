@@ -110,6 +110,7 @@ Every file listed here exists by the end of the project. The WI column says whic
 ├─ docs/
 │  ├─ PROJECT_SCHEMA.md  TECH_SPEC.md  TEST_PLAN.md   # these specs
 │  ├─ PROGRESS.md                                      # WI checklist + handoff notes (repo setup)
+│  ├─ AUDIT.md                                         # Codex review A01–A10 with resolutions (WI-36)
 │  └─ screenshots/                                     # design-review captures linked from README (WI-34)
 ├─ .github/workflows/ci.yml                            # WI-01
 ├─ index.html  vite.config.ts  vitest.config.ts  vitest.dst.config.ts
@@ -1793,3 +1794,4 @@ Production URL: https://…vercel.app
 | 2026-10-26 | v1.21 (WI-31): final layout/UI contract sync; §10 includes warning derivation in boot/commit/import complexity. All local WIs complete, with user-owned push/redeploy and viva checks explicitly retained in the release record. |
 | 2026-10-26 | v1.22 (WI-34): visual refresh, appearance only. §11.4 has the final light/dark token values, the spacing, type and shape scales, and where the single accent is used; §11.3 splits the week-header text into weekday and numeral spans; §1.3/§2 add the `screenshots` script, its config and `docs/screenshots/`; §14 adds WI-34. No new dependency (system font stack). |
 | 2026-10-26 | v1.23 (WI-35): §4 adds the top-level `ErrorBoundary`; §11.3 `onSelect` gives a click-sized selection `CLICK_EVENT_MIN` (new §5 constant) and `renderEventContent` renders an event without block props (FullCalendar's select mirror) as its time only; §12 polyfill queues `close` like the browser, and Playwright adds the `chromium-dev` project on the StrictMode dev server; §2 lists the new files; §14 adds WI-35 and WI-36. |
+| 2026-10-26 | v1.24 (WI-36, `docs/AUDIT.md`): §8.13/§10 replan plans repeat greedy passes with unplaced events pinned (A01, ≤ c + 1 passes); §5/§6 `MIN/MAX_SUPPORTED_MINUTE` bound every Minute (A02) and `slotSchema` validates slots via `requireValidSlot` (A06); §7.4.6 `linkIssues` checks the BR-9 mirror (A04); §7.5 day loads cover whole days (A05); §7.4.3/§7.4.4 `requireNotPast` makes overtaken results stale (A07) and the replan range is 1–14 whole local days; §11.1/§11.2 ER4 Move to uses its own version (A03), Replan inputs drop old plans (A08) and Month defaults to its first full week (A10); §6 description message (A09); §2 lists `docs/AUDIT.md`. |
