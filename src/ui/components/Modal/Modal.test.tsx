@@ -1,6 +1,13 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import { StrictMode } from 'react';
 import { Modal } from './Modal';
+
+// PRE:  none
+// POST: resolves after every task queued so far, e.g. a dialog's queued 'close' event, has run
+function flushQueuedTasks(): Promise<void> {
+  return act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+}
 
 describe('Modal', () => {
   it('opens as a dialog named by its title, closes when open turns false', () => {
@@ -23,7 +30,7 @@ describe('Modal', () => {
     expect(dialog).not.toHaveAttribute('open');
   });
 
-  it('reports a close the dialog made itself (e.g. Esc)', () => {
+  it('reports a close the dialog made itself (e.g. Esc)', async () => {
     const onClose = vi.fn();
     render(
       <Modal open title="Help" onClose={onClose}>
@@ -31,7 +38,8 @@ describe('Modal', () => {
       </Modal>,
     );
 
-    fireEvent(screen.getByRole('dialog', { name: 'Help' }), new Event('close'));
+    screen.getByRole<HTMLDialogElement>('dialog', { name: 'Help' }).close();
+    await flushQueuedTasks();
 
     expect(onClose).toHaveBeenCalledOnce();
   });
@@ -52,5 +60,43 @@ describe('Modal', () => {
     expect(trigger).toHaveFocus();
     expect(onClose).not.toHaveBeenCalled();
     trigger.remove();
+  });
+
+  // WI-35 regression: StrictMode mounts, unmounts and remounts the effect; the cleanup's close()
+  // queued a 'close' event that arrived after the remount and closed the dialog under npm run dev.
+  it('stays open under StrictMode', async () => {
+    const onClose = vi.fn();
+    render(
+      <StrictMode>
+        <Modal open title="New event" onClose={onClose}>
+          Body
+        </Modal>
+      </StrictMode>,
+    );
+
+    await flushQueuedTasks();
+
+    expect(screen.getByRole('dialog', { name: 'New event' })).toHaveAttribute('open');
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('still reports Esc under StrictMode', async () => {
+    const onClose = vi.fn();
+    render(
+      <StrictMode>
+        <Modal open title="New event" onClose={onClose}>
+          Body
+        </Modal>
+      </StrictMode>,
+    );
+    await flushQueuedTasks();
+    const dialog = screen.getByRole<HTMLDialogElement>('dialog', { name: 'New event' });
+
+    // Esc on a modal <dialog> fires 'cancel', then closes it, which queues 'close'.
+    fireEvent(dialog, new Event('cancel', { cancelable: true }));
+    dialog.close();
+    await flushQueuedTasks();
+
+    expect(onClose).toHaveBeenCalledOnce();
   });
 });

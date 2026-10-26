@@ -2,7 +2,7 @@ import '@testing-library/jest-dom/vitest';
 
 // PRE:  none (runs in both the node and the jsdom test environments)
 // POST: if HTMLDialogElement exists, its prototype has showModal() and close(); a polyfilled
-//       showModal() sets open, and a polyfilled close() clears open and dispatches 'close'
+//       showModal() sets open, and a polyfilled close() clears open and queues a 'close' event
 function polyfillDialog(): void {
   if (typeof HTMLDialogElement === 'undefined') {
     return;
@@ -15,10 +15,11 @@ function polyfillDialog(): void {
     };
   }
   if (typeof dialogPrototype.close !== 'function') {
-    // The native close() fires 'close'; the Modal wrapper relies on it to sync its state.
+    // Like the native close(), 'close' is queued as a task, not fired synchronously: a StrictMode
+    // remount can reopen the dialog before it arrives (WI-35), and the tests must see that race.
     dialogPrototype.close = function close(this: HTMLDialogElement): void {
       this.open = false;
-      this.dispatchEvent(new Event('close'));
+      setTimeout(() => this.dispatchEvent(new Event('close')), 0);
     };
   }
 }

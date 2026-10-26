@@ -65,7 +65,9 @@ export function Modal({
         if (!dismissible) event.preventDefault();
       }}
       onClose={() => {
-        if (!programmaticClose.current) onClose();
+        // 'close' is queued, so it can arrive after a StrictMode remount reopened the dialog and
+        // reset programmaticClose; an open dialog means that event is stale.
+        if (!programmaticClose.current && dialogRef.current?.open !== true) onClose();
       }}
     >
       <h2 id={titleId}>{title}</h2>
