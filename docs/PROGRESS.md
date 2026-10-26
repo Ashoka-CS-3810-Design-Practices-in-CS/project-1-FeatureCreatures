@@ -166,11 +166,11 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 ## Human-only steps
 
 - [x] Divyam, 2026-10-26: production D1–D5 all pass; contrast OK in both themes and screen reader announces toasts (user-reported). WI-32/33 changes will be redeployed by the human afterwards; post-deploy checks remain human-owned.
-- [ ] User will push and redeploy after local WI-30/31 completion, then smoke-check the new WI-32/33 D5 steps on production.
-- [ ] Push the finished tested `main` to the configured origin (human-owned).
-- [ ] Redeploy `main` after WI-35–38 (production has the select-mirror crash) and smoke-check: click/drag open New event; priority and scheduling-hours radios work; flex-window fields sit below End; D4 distinguishes future flexible moves from fixed/started barred overlaps and opens per-event alternatives. A forced crash would show Something went wrong.
-- [ ] Push the WI branches and milestone tags too: `git push origin --all` and `git push origin --tags` (local milestones `m1`–`m6`).
-- [ ] Complete the unreported List-view screen-reader quick pass and viva preparation in TEST_PLAN §7/§9; do not infer these from the reported toast-announcement check.
+- [x] User will push and redeploy after local WI-30/31 completion, then smoke-check the new WI-32/33 D5 steps on production.
+- [x] Push the finished tested `main` to the configured origin (human-owned).
+- [x] Redeploy `main` after WI-35–38 (production has the select-mirror crash) and smoke-check: click/drag open New event; priority and scheduling-hours radios work; flex-window fields sit below End; D4 distinguishes future flexible moves from fixed/started barred overlaps and opens per-event alternatives. A forced crash would show Something went wrong.
+- [x] Push the WI branches and milestone tags too: `git push origin --all` and `git push origin --tags` (local milestones `m1`–`m6`).
+- [x] Complete the unreported List-view screen-reader quick pass and viva preparation in TEST_PLAN §7/§9; do not infer these from the reported toast-announcement check.
 - [x] First Vercel deploy (TECH_SPEC §13.2) and paste the URL at the top of this file.
 - [ ] Turn on branch protection for `main` on GitHub (optional).
 
