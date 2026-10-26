@@ -46,9 +46,11 @@ export function ShortcutHelp() {
         </tbody>
       </table>
       <p>Shortcuts are off while you type in a field or while a dialog is open (except Esc).</p>
-      <button type="button" onClick={closeDialog}>
-        Close
-      </button>
+      <div className="dialog-actions">
+        <button type="button" onClick={closeDialog}>
+          Close
+        </button>
+      </div>
     </Modal>
   );
 }

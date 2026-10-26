@@ -20,7 +20,8 @@ describe('CalendarView', () => {
 
     expect(await screen.findByText('Lecture')).toBeInTheDocument();
     expect(screen.getByText('Gym')).toBeInTheDocument();
-    expect(screen.getByText('Mon 2')).toBeInTheDocument();
+    // The weekday and date numeral are separate spans; the header still reads "Mon 2".
+    expect(screen.getAllByRole('columnheader')[0]).toHaveTextContent(/^Mon 2$/);
     expect(screen.queryByText('all-day')).not.toBeInTheDocument();
     expect(screen.getAllByText('Fixed').length).toBeGreaterThanOrEqual(2);
     await waitFor(() =>

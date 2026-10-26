@@ -33,6 +33,25 @@ The sparse-week **Thesis draft** is a 10-hour task. Lunch splits working time in
 
 All calendar data stays in the current browser's IndexedDB. Export JSON to back it up. Import and sample replacement replace events, tasks and settings and clear undo history. Undo/redo keeps up to 50 steps in memory and does not survive reload. When storage is unavailable, the app warns that changes will be lost after the tab closes.
 
+## Screenshots
+
+The sample week (**Load sample week**) in both themes:
+
+![Week view, light theme, 1440 px](docs/screenshots/week-light-1440.png)
+
+![Week view, dark theme, 1440 px](docs/screenshots/week-dark-1440.png)
+
+More views, all generated with `npm run screenshots` from [scripts/screenshots/](scripts/screenshots/screenshots.spec.ts):
+
+| Scene                       | Light                                                       | Dark                                                      |
+| --------------------------- | ----------------------------------------------------------- | --------------------------------------------------------- |
+| Week at 1024 px             | [week-light-1024](docs/screenshots/week-light-1024.png)     | [week-dark-1024](docs/screenshots/week-dark-1024.png)     |
+| Slot picker (Find time)     | [slot-picker-light](docs/screenshots/slot-picker-light.png) | [slot-picker-dark](docs/screenshots/slot-picker-dark.png) |
+| Replan, both plans computed | [replan-light](docs/screenshots/replan-light.png)           | [replan-dark](docs/screenshots/replan-dark.png)           |
+| Empty state                 | [empty-light](docs/screenshots/empty-light.png)             | [empty-dark](docs/screenshots/empty-dark.png)             |
+
+Single-theme scenes: [Month view (light)](docs/screenshots/month-light.png), [List view (dark)](docs/screenshots/list-dark.png), [the whole side column with conflicts (light)](docs/screenshots/side-panels-light.png) and [the Tasks and conflicts drawer at 900 px (light)](docs/screenshots/drawer-light-900.png).
+
 ## Tests and validation
 
 ```bash

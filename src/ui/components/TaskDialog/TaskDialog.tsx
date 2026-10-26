@@ -151,36 +151,38 @@ function TaskForm({ existing }: { existing: Task | undefined }) {
         <label htmlFor={fieldId('description')}>Description</label>
         <textarea id={fieldId('description')} {...register('description')} />
 
-        <button type="submit" disabled={isSubmitting}>
-          Save
-        </button>
-        <button type="button" onClick={actions.closeDialog}>
-          Cancel
-        </button>
-        {existing?.status === 'unscheduled' && (
-          <button type="button" onClick={() => actions.openTaskPicker([existing.id])}>
-            Find time
+        <div className="dialog-actions">
+          <button type="submit" disabled={isSubmitting}>
+            Save
           </button>
-        )}
-        {existing?.status === 'scheduled' && (
-          <button
-            type="button"
-            onClick={() =>
-              void actions.unscheduleTask(existing.id).then((result) => {
-                if (result.ok) {
-                  actions.closeDialog();
-                }
-              })
-            }
-          >
-            Unschedule
+          <button type="button" onClick={actions.closeDialog}>
+            Cancel
           </button>
-        )}
-        {existing !== undefined && (
-          <button type="button" onClick={() => confirmDelete(existing)}>
-            Delete
-          </button>
-        )}
+          {existing?.status === 'unscheduled' && (
+            <button type="button" onClick={() => actions.openTaskPicker([existing.id])}>
+              Find time
+            </button>
+          )}
+          {existing?.status === 'scheduled' && (
+            <button
+              type="button"
+              onClick={() =>
+                void actions.unscheduleTask(existing.id).then((result) => {
+                  if (result.ok) {
+                    actions.closeDialog();
+                  }
+                })
+              }
+            >
+              Unschedule
+            </button>
+          )}
+          {existing !== undefined && (
+            <button type="button" onClick={() => confirmDelete(existing)}>
+              Delete
+            </button>
+          )}
+        </div>
       </form>
     </Modal>
   );

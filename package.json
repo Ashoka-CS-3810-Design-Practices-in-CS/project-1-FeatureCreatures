@@ -18,7 +18,8 @@
     "bench": "cross-env TZ=UTC vitest bench --run --reporter=verbose",
     "test:perf": "cross-env PERF=1 npm test -- perf --reporter=verbose",
     "samples:export": "cross-env TZ=UTC node scripts/exportSamples.mjs",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "screenshots": "playwright test --config playwright.screenshots.config.ts"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.22",

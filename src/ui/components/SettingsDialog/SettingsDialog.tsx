@@ -232,12 +232,14 @@ function SettingsForm({ settings }: { settings: Settings }) {
         </button>
       </fieldset>
 
-      <button type="submit" disabled={isSubmitting}>
-        Save
-      </button>
-      <button type="button" onClick={actions.closeDialog}>
-        Cancel
-      </button>
+      <div className="dialog-actions">
+        <button type="submit" disabled={isSubmitting}>
+          Save
+        </button>
+        <button type="button" onClick={actions.closeDialog}>
+          Cancel
+        </button>
+      </div>
     </form>
   );
 }

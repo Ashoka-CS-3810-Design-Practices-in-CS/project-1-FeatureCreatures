@@ -9,7 +9,7 @@ export function EmptyState() {
     <section aria-labelledby="empty-state-title">
       <h2 id="empty-state-title">Your calendar is empty</h2>
       <p>Add an event or a task, or load a sample week to see conflicts and the planner at work.</p>
-      <button type="button" onClick={() => void loadSample('sparseWeek')}>
+      <button type="button" className="primary" onClick={() => void loadSample('sparseWeek')}>
         Load sample week
       </button>
     </section>

@@ -33,12 +33,17 @@ const TEXT_PAIRS: [string, string][] = [
   ['muted', 'bg'],
   ['muted', 'surface'],
   ['muted', 'barred'], // barred-slot labels
+  ['muted', 'nonwork'], // time labels beside non-working hours
+  ['muted', 'prio-high-bg'], // the time line inside each event block
+  ['muted', 'prio-medium-bg'],
+  ['muted', 'prio-low-bg'],
   ['prio-high', 'prio-high-bg'], // [H]/[M]/[L] tags and pressed filter chips
   ['prio-medium', 'prio-medium-bg'],
   ['prio-low', 'prio-low-bg'],
   ['danger', 'bg'], // field errors and the conflict tag
   ['danger', 'surface'],
-  ['accent', 'bg'],
+  ['accent', 'bg'], // today's date numeral
+  ['accent', 'surface'], // links and the focused row in the side column
   ['on-accent', 'accent'], // primary and pressed buttons
 ];
 

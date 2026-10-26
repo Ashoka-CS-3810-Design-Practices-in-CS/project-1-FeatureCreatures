@@ -71,7 +71,7 @@ function PlanCard({ plan, onApply }: { plan: ReplanPlan; onApply: () => void }) 
       {plan.moves.length === 0 ? (
         <p>No changes needed</p>
       ) : (
-        <button type="button" aria-label={`Apply ${name}`} onClick={onApply}>
+        <button type="button" className="primary" aria-label={`Apply ${name}`} onClick={onApply}>
           Apply this plan
         </button>
       )}
@@ -154,9 +154,11 @@ function ReplanForm() {
         </div>
       )}
 
-      <button type="button" onClick={actions.closeDialog}>
-        Cancel
-      </button>
+      <div className="dialog-actions">
+        <button type="button" onClick={actions.closeDialog}>
+          Cancel
+        </button>
+      </div>
     </Modal>
   );
 }
