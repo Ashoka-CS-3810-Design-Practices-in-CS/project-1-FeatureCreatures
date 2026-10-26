@@ -40,7 +40,9 @@ const priority = z.enum(['high', 'medium', 'low']);
 const category = z.enum(['meeting', 'class', 'appointment', 'assignment', 'personal']);
 const weekday = z.literal([0, 1, 2, 3, 4, 5, 6]);
 const entityId = z.string().min(1);
-const description = z.string().max(MAX_DESCRIPTION_LENGTH);
+const description = z
+  .string()
+  .max(MAX_DESCRIPTION_LENGTH, `Description can be at most ${MAX_DESCRIPTION_LENGTH} characters.`);
 
 // PRE:  ctx is the refinement context of the value being checked; path addresses a field of it
 // POST: ctx holds one more custom issue at path with message, tagged params.kind = TIME_ISSUE_KIND

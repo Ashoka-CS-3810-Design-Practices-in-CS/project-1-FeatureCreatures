@@ -1,4 +1,9 @@
-import { DEFAULT_SETTINGS, MAX_SUPPORTED_MINUTE, MIN_SUPPORTED_MINUTE } from './constants';
+import {
+  DEFAULT_SETTINGS,
+  MAX_DESCRIPTION_LENGTH,
+  MAX_SUPPORTED_MINUTE,
+  MIN_SUPPORTED_MINUTE,
+} from './constants';
 import type { EngineError } from './errors';
 import type { Result } from './result';
 import {
@@ -94,6 +99,17 @@ describe('eventInputSchema (T5, schema level)', () => {
     expect(errorOf(parseInput(eventInputSchema, beforeFirst))).toEqual({
       code: 'InvalidTime',
       issues: [{ path: 'start', message }],
+    });
+  });
+
+  it('limits the description to 1000 characters with a readable message (AUDIT A09)', () => {
+    const atLimit = { ...validEvent, description: 'x'.repeat(MAX_DESCRIPTION_LENGTH) };
+    const overLimit = { ...validEvent, description: 'x'.repeat(MAX_DESCRIPTION_LENGTH + 1) };
+
+    expect(parseInput(eventInputSchema, atLimit).ok).toBe(true);
+    expect(errorOf(parseInput(eventInputSchema, overLimit))).toEqual({
+      code: 'InvalidInput',
+      issues: [{ path: 'description', message: 'Description can be at most 1000 characters.' }],
     });
   });
 

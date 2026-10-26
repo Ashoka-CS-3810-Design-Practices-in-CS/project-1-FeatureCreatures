@@ -208,7 +208,7 @@ These are part of their WI's definition of done in TECH_SPEC §14.
 
 | Component | Case |
 |---|---|
-| EventDialog | The category "class" defaults to fixed and "assignment" to flexible. Flex window fields appear only when flexible is on. Delete asks for confirmation. Editing a task-linked event disables the flexible toggle. |
+| EventDialog | The category "class" defaults to fixed and "assignment" to flexible. Flex window fields appear only when flexible is on. Delete asks for confirmation. Editing a task-linked event disables the flexible toggle. A description of 1,001 characters shows "Description can be at most 1000 characters." under Description, marks it `aria-invalid` and skips the engine (AUDIT A09; TaskDialog too). |
 | TaskDialog | Duration hours + minutes map to `durationMin`. Find time / Unschedule / Delete are only shown in edit mode, as appropriate. |
 | SlotPicker (task) | The summary line reads "3 free gaps in window (30 min, 1 h, 4 h) — 1 fits 1 h 30 min" (T6 data). The options are a radio group with an accessible name. Switching the criterion re-orders the options (T10 data). |
 | SlotPicker (alternatives) | Shows the target. The toggle switches the target and the options (T20 data). Each option states "N min earlier/later". |

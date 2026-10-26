@@ -547,7 +547,7 @@ const timeIssue = (ctx: z.RefinementCtx, path: (string | number)[], message: str
 
 export const eventInputSchema = z.object({
   title: z.string().trim().min(1, 'Title is required.').max(100),
-  description: z.string().max(1000),
+  description: z.string().max(1000, 'Description can be at most 1000 characters.'),   // shown under the field (AUDIT A09)
   category, priority,
   start: minute, end: minute,
   flexible: z.boolean(),
@@ -566,7 +566,7 @@ export const eventInputSchema = z.object({
 
 export const taskInputSchema = z.object({
   name: z.string().trim().min(1, 'Name is required.').max(100),
-  description: z.string().max(1000),
+  description: z.string().max(1000, 'Description can be at most 1000 characters.'),
   category, priority,
   durationMin: z.number({ message: 'Duration must be a number.' }).int()
     .min(5, 'Duration must be at least 5 minutes.').max(1440, 'Duration can be at most 24 hours.'),
