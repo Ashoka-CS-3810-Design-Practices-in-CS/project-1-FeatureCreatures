@@ -1455,7 +1455,7 @@ All sample loads and imports with more than `IMPORT_SPINNER_THRESHOLD` events pl
 | `EventDialog` | RHF form with `eventResolver`, category-based flexible default, flex window fields, delete with confirm | `dialog`, event | `createEvent/updateEvent/deleteEvent` |
 | `TaskDialog` | RHF form with `taskResolver`; Find time / Unschedule / Delete in edit mode | task | task actions |
 | `SlotPicker` | Both picker modes (Figure 2), summary line, options as a radio group, ER2/ER3 blocks with suggestions + "Edit task" | `picker` | picker actions |
-| `ReplanDialog` | Range (date inputs, default `view.activeRange` or the current week), buffer override, Compute, two plan cards (metrics + moves + unplaced), Apply | engine via action | `planReplan`, `applyReplan` |
+| `ReplanDialog` | Range (date inputs, default `view.activeRange` when it is at most 14 days, else the first full Monday–Sunday week from `view.date` (Month, AUDIT A10), or the week of `view.date` before the first `datesSet`), inputs that drop computed plans when edited (A08), buffer override, Compute, two plan cards (metrics + moves + unplaced), Apply | engine via action | `planReplan`, `applyReplan` |
 | `SettingsDialog` | Settings form + Data section (export, import, samples, clear) | `snapshot.settings` | `updateSettings`, `importData` |
 | `ConfirmDialog`, `ShortcutHelp`, `Toasts`, `Modal`, `EmptyState` | as named; `Toasts` is the ARIA live region; `Modal` wraps native `<dialog>` + `showModal()` | | |
 

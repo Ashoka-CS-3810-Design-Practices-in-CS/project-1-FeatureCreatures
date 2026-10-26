@@ -1,4 +1,5 @@
 import { useId, useState } from 'react';
+import { MAX_REPLAN_DAYS, MINUTES_PER_DAY, REPLAN_DST_SLACK_MIN } from '@/shared/constants';
 import type { Result } from '@/shared/result';
 import { addLocalDays, startOfLocalWeek } from '@/shared/time';
 import type { Interval, Minute, ReplanPlan, ReplanResult } from '@/shared/types';
@@ -10,21 +11,28 @@ import { useAppStore } from '../../store/appStore';
 import { Modal } from '../Modal/Modal';
 
 const LAST_DAY_OF_WEEK = 6; // Sunday, counted from Monday
+// The engine's limit on a replan range (TECH_SPEC §7.4.4), DST slack included.
+const MAX_REPLAN_SPAN_MIN = MAX_REPLAN_DAYS * MINUTES_PER_DAY + REPLAN_DST_SLACK_MIN;
 const PLAN_NAME: Record<ReplanPlan['id'], string> = {
   minimalChange: 'Minimal change',
   balanced: 'Balanced week',
 };
 
-// PRE:  activeRange is the visible range, or null; viewDate is the calendar's date
-// POST: returns the default first and last day: the visible range, or the week of viewDate
+// PRE:  activeRange is the visible range, or null; viewDate is the first day of the shown period
+// POST: returns the default first and last day: the week of viewDate while no range is known;
+//       the visible range when a replan may cover it; else the first full week (Monday–Sunday)
+//       starting on or after viewDate. Month shows 35–42 days, more than MAX_REPLAN_DAYS, so it
+//       gets that week (AUDIT A10)
 function defaultDays(activeRange: Interval | null, viewDate: Minute): { from: string; to: string } {
-  if (activeRange !== null) {
+  if (activeRange !== null && activeRange.end - activeRange.start <= MAX_REPLAN_SPAN_MIN) {
     return {
       from: toDateInput(activeRange.start),
       to: toDateInput(addLocalDays(activeRange.end, -1)),
     };
   }
-  const monday = startOfLocalWeek(viewDate);
+  const monday = startOfLocalWeek(
+    activeRange === null ? viewDate : addLocalDays(viewDate, LAST_DAY_OF_WEEK),
+  );
   return { from: toDateInput(monday), to: toDateInput(addLocalDays(monday, LAST_DAY_OF_WEEK)) };
 }
 

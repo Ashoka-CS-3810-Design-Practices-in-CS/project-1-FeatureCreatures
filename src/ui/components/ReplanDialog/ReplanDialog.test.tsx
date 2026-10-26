@@ -4,8 +4,9 @@ import userEvent from '@testing-library/user-event';
 import type { Engine } from '@/engine';
 import { ev, flexEv, iv } from '../../../../tests/helpers/builders';
 import { makeEngine } from '../../../../tests/helpers/engine';
+import { t } from '../../../../tests/helpers/time';
 import { renderWithStore, storeFor } from '../../../../tests/helpers/render';
-import type { AppStore } from '../../store/appStore';
+import type { AppStore, ViewType } from '../../store/appStore';
 import { ReplanDialog } from './ReplanDialog';
 
 const WINDOW: [string, string] = ['Mon 09:00', 'Fri 18:00'];
@@ -40,6 +41,33 @@ describe('ReplanDialog', () => {
 
     expect(screen.getByLabelText('From')).toHaveValue('2026-11-02');
     expect(screen.getByLabelText('To')).toHaveValue('2026-11-08');
+  });
+
+  // AUDIT A10: Month's visible grid (35–42 days) was copied into the defaults and then rejected,
+  // because a replan range is at most 14 days.
+  it.each([
+    ['timeGridDay', 'Tue 00:00', ['Tue 00:00', 'Wed 00:00'], '2026-11-03', '2026-11-03'],
+    ['timeGridWeek', 'Mon 00:00', ['Mon 00:00', '2026-11-09 00:00'], '2026-11-02', '2026-11-08'],
+    ['listWeek', 'Mon 00:00', ['Mon 00:00', '2026-11-09 00:00'], '2026-11-02', '2026-11-08'],
+    // November 2026 starts on a Sunday; its first full week is 2–8 November.
+    [
+      'dayGridMonth',
+      '2026-11-01 00:00',
+      ['2026-10-26 00:00', '2026-12-07 00:00'],
+      '2026-11-02',
+      '2026-11-08',
+    ],
+  ] as const)('%s defaults to a valid range', async (type, date, range, from, to) => {
+    const store = storeFor((await makeEngine({ events: t22Events })).engine);
+    store.getState().actions.setView(type as ViewType, t(date));
+    store.getState().actions.setActiveRange(iv(range[0], range[1]));
+    renderWithStore(<ReplanDialog />, store);
+    act(() => store.getState().actions.openDialog({ kind: 'replan' }));
+
+    expect(screen.getByLabelText('From')).toHaveValue(from);
+    expect(screen.getByLabelText('To')).toHaveValue(to);
+    await userEvent.click(screen.getByRole('button', { name: 'Compute plans' }));
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('shows the two plan cards with their metrics and moves (T22 data)', async () => {
