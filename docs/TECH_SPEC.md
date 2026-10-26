@@ -92,9 +92,12 @@ The code examples here use Zod 4 syntax. If Zod 3 is installed, the equivalent A
   "bench": "cross-env TZ=UTC vitest bench --run --reporter=verbose",
   "test:perf": "cross-env PERF=1 npm test -- perf --reporter=verbose",
   "samples:export": "cross-env TZ=UTC node scripts/exportSamples.mjs",
-  "e2e": "playwright test"
+  "e2e": "playwright test",
+  "screenshots": "playwright test --config playwright.screenshots.config.ts"
 }
 ```
+
+`screenshots` (WI-34) is a design-review aid, not a test: it builds the app, serves it on its own port (4174, never reusing a running server) and writes the scenes in `scripts/screenshots/screenshots.spec.ts` to `docs/screenshots/`. Rerun it after any visual change and look at the images.
 
 ---
 
@@ -106,10 +109,12 @@ Every file listed here exists by the end of the project. The WI column says whic
 /
 ├─ docs/
 │  ├─ PROJECT_SCHEMA.md  TECH_SPEC.md  TEST_PLAN.md   # these specs
-│  └─ PROGRESS.md                                      # WI checklist + handoff notes (repo setup)
+│  ├─ PROGRESS.md                                      # WI checklist + handoff notes (repo setup)
+│  └─ screenshots/                                     # design-review captures linked from README (WI-34)
 ├─ .github/workflows/ci.yml                            # WI-01
 ├─ index.html  vite.config.ts  vitest.config.ts  vitest.dst.config.ts
-├─ playwright.config.ts  eslint.config.js  tsconfig.json  .prettierrc  README.md
+├─ playwright.config.ts  playwright.screenshots.config.ts  eslint.config.js  tsconfig.json  .prettierrc  README.md
+├─ scripts/                # exportSamples.mjs (WI-30), screenshots/screenshots.spec.ts (WI-34)
 ├─ public/favicon.svg
 ├─ e2e/                    # Playwright E1–E3 (WI-27)
 ├─ bench/engine.bench.ts   # T15 (WI-28)
@@ -1437,7 +1442,8 @@ FullCalendar is a **controlled, render-only view**. Its `events` prop is always 
 <FullCalendar
   plugins={[timeGridPlugin, dayGridPlugin, listPlugin, interactionPlugin]}
   initialView="timeGridWeek" firstDay={1} headerToolbar={false} height="100%"
-  views={{ timeGrid: { dayHeaderContent: ({date}) => `${weekdayName(date)} ${date.getDate()}` } }}
+  views={{ timeGrid: { dayHeaderContent: ({date}) => <><span className="day-name">{weekdayName(date)}</span>{' '}<span className="day-number">{date.getDate()}</span></> } }}
+  // two spans so the week header can set the numeral large (§11.4); the header text stays "Mon 2"
   allDaySlot={false}   // events are never all-day; Month retains weekday-only headers
   slotDuration="00:30:00" snapDuration="00:05:00" scrollTime="08:00:00" nowIndicator
   slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
@@ -1478,30 +1484,48 @@ FullCalendar is a **controlled, render-only view**. Its `events` prop is always 
 
 ### 11.4 Theming (`styles/tokens.css`)
 
+Every colour lives in `tokens.css`; the two themes differ only there. Light is a warm "paper notebook", dark a "night desk"; Fern / Mint is the single accent (WI-34 design plan in `PROGRESS.md`). Washes and shadows are derived from these tokens with `color-mix`, inside `tokens.css`, so they follow the theme without repeating it.
+
 ```css
 :root {
-  --bg:#ffffff; --surface:#f6f7f9; --text:#1b1f24; --muted:#5b6470; --border:#d6dae0; --accent:#2f5bd3;
-  --danger:#c0262d; --warning:#a85b06; --success:#1f7a3d; --focus:#2f5bd3;
-  --prio-high:#b42318; --prio-high-bg:#fde8e8; --prio-medium:#a85b06; --prio-medium-bg:#fef3c7;
-  --prio-low:#34558b; --prio-low-bg:#e3ebf7; --barred:#e9ecf1; --nonwork:#f3f4f6;
-  --fc-border-color:var(--border); --fc-page-bg-color:var(--bg); --fc-neutral-bg-color:var(--nonwork);
-  --fc-today-bg-color:color-mix(in srgb, var(--accent) 8%, transparent); --fc-now-indicator-color:var(--danger);
+  --bg:#fcfbf8; --surface:#f4f1ea; --text:#22201c; --muted:#5f5a52; --border:#e4dfd5;
+  --accent:#1f6b52; --on-accent:#ffffff; --focus:#1f6b52;
+  --danger:#b3302a; --warning:#9a5a06; --success:#2f7a4a;
+  --prio-high:#b0281f; --prio-high-bg:#fbe9e4; --prio-medium:#8f5506; --prio-medium-bg:#fbefd6;
+  --prio-low:#395883; --prio-low-bg:#e6edf6; --barred:#ece7dd; --nonwork:#f1ede5;
+  --backdrop:rgb(34 32 28 / 38%); --shadow:rgb(34 32 28 / 16%);
+  /* derived: --accent-strong (hover), --accent-wash (today, selected option, empty state),
+     --selection-wash, --nonwork-wash, --hover-wash, --shadow-dialog, --shadow-toast */
 }
 :root[data-theme="dark"] {
-  --bg:#14171c; --surface:#1c2027; --text:#e7eaee; --muted:#a0a8b3; --border:#343a44; --accent:#7aa2ff;
-  --danger:#ff6b6b; --warning:#f5b041; --success:#4cc38a; --focus:#7aa2ff;
-  --prio-high:#ff8a8a; --prio-high-bg:#3a1f22; --prio-medium:#f5b041; --prio-medium-bg:#3a2e14;
-  --prio-low:#8fb0e6; --prio-low-bg:#1f2a3d; --barred:#262b33; --nonwork:#181b21;
+  --bg:#151614; --surface:#1c1e1b; --text:#ebece8; --muted:#a6aba3; --border:#30332e;
+  --accent:#7fd3ab; --on-accent:#0f1411; --focus:#7fd3ab;
+  --danger:#ff8076; --warning:#f0b356; --success:#74cf98;
+  --prio-high:#ff978c; --prio-high-bg:#3b1f1c; --prio-medium:#f0b356; --prio-medium-bg:#372a14;
+  --prio-low:#9cb9e8; --prio-low-bg:#1f2a3b; --barred:#262924; --nonwork:#1c1e1b;
+  --backdrop:rgb(0 0 0 / 55%); --shadow:rgb(0 0 0 / 50%);
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { /* same values as [data-theme="dark"] */ } }
 ```
 
+**Scales (theme-independent, in `:root`).** Stylesheets use these steps instead of raw px.
+
+| Group | Tokens |
+|---|---|
+| Spacing | `--space-1`…`--space-7` = 4 / 8 / 12 / 16 / 24 / 32 / 48 px |
+| Type (system font stack, `--font-family`) | `--text-xs` 12, `--text-sm` 13, `--text-base` 15, `--text-md` 17, `--text-lg` 20, `--text-xl` 26 px; weights `--weight-regular` 400, `--weight-medium` 500, `--weight-bold` 600; `--leading-tight` 1.25, `--leading-normal` 1.55 |
+| Shape | `--radius-sm` 6 (events), `--radius` 8 (controls), `--radius-md` 12 (toasts, plan cards), `--radius-lg` 16 (dialogs), `--radius-pill` (tags, chips), `--edge` 4 px (priority / state edge) |
+| Sizes | `--target-min` 32 px (PROJECT_SCHEMA §7.7), `--control-height` 36 px, `--check-size` 18 px, `--slot-height` 32 px (one half-hour row), `--side-width` 384 px (336 px from 1024 to 1279 px) |
+
+No web font is loaded: the system stack needs no dependency, causes no font flash and works offline.
+
 **Event and slot styles.**
-- `App.module.css` scopes the application layout. `global.css` shares control, tag, panel, dialog and toast rules; `fullcalendar.css` overrides FullCalendar's injected styles. `main.tsx` imports the three global stylesheets in tokens → controls → calendar order.
-- Primary controls use `--on-accent` (`#ffffff` in light mode, `#14171c` in dark mode) over `--accent`. Backdrop and shadow colours also come from tokens.
-- An event block has `background: var(--prio-X-bg)`, `border-left: 4px solid var(--prio-X)` and `color: var(--text)`.
+- `App.module.css` scopes the application layout (the header is a grid of the title and the toolbar's period / controls / utilities groups). `global.css` shares control, tag, panel, dialog and toast rules; `fullcalendar.css` overrides FullCalendar's injected styles. `main.tsx` imports the three global stylesheets in tokens → controls → calendar order.
+- The accent is used only for primary actions (`button.primary`, submit buttons: + Event, + Task, Save, Apply, Load sample week), the selected view, today's column and header, the now line and focus rings. `--on-accent` is the text over it.
+- An event block has `background: var(--prio-X-bg)`, a `var(--edge)` inset left edge in `var(--prio-X)` and `color: var(--text)`; in the time grid its title leads, then the time and tags, with the conflict and barred tags first.
 - `.is-conflict` adds `outline: 2px dashed var(--danger)` and `outline-offset: -2px`.
 - `.barred` uses a 45° repeating-linear-gradient hatch over `var(--barred)`.
+- The week header (the one bold element) is left-aligned: a small muted weekday over a `--text-xl` date numeral; today's numeral is the accent and sits on a 3 px accent bar. Side-column rows are hairline-separated with a short rounded state edge, not boxed cards; only dialogs and toasts float, each with its own radius and shadow.
 
 **Theme toggle.** `useTheme` cycles `system → light → dark`:
 - It sets `document.documentElement.dataset.theme`. For `system`, it deletes the attribute.
@@ -1740,3 +1764,4 @@ Production URL: https://…vercel.app
 | 2026-10-26 | v1.19 (WI-30): §1.3/§9.5 document reproducible, validated sample-file generation through the existing Vite module loader. |
 | 2026-10-26 | v1.20 (WI-32/33): §5/§7 add derived BarredOverlap records to state/snapshots; §8.4a/§10 freeze the pure algorithm and complexity; §11 defines settings toast/View and reused alternatives; §14 adds both change requests before WI-30. Production rehearsal is reported complete by Divyam; human push/redeploy follow local completion. |
 | 2026-10-26 | v1.21 (WI-31): final layout/UI contract sync; §10 includes warning derivation in boot/commit/import complexity. All local WIs complete, with user-owned push/redeploy and viva checks explicitly retained in the release record. |
+| 2026-10-26 | v1.22 (WI-34): visual refresh, appearance only. §11.4 has the final light/dark token values, the spacing, type and shape scales, and where the single accent is used; §11.3 splits the week-header text into weekday and numeral spans; §1.3/§2 add the `screenshots` script, its config and `docs/screenshots/`; §14 adds WI-34. No new dependency (system font stack). |

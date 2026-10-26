@@ -6,9 +6,9 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-34 Visual refresh (change request, appearance only), branch `feat/wi-34-visual-refresh`. **Do not merge into `main`**: the user reviews it with `npm run dev` first and replies "merge" or sends tweaks.
-- **Last session:** 2026-10-26 · Claude Code · verified `main` (typecheck, lint, 524 tests) and claimed WI-34.
-- **Gate status:** `main` green: typecheck/lint and 524 tests pass (T15 opt-in); coverage 98.30% lines / 93.12% branches overall; build and 8 browser checks green at WI-33.
+- **Active WI:** WI-34 Visual refresh, **complete on branch `feat/wi-34-visual-refresh` and waiting for the user's review; not merged into `main`.** On "merge", finish it under AGENTS.md §5 (tick `[x]`, `--no-ff` merge, gate on `main`); on tweaks, keep working on the branch.
+- **Last session:** 2026-10-26 · Claude Code · implemented WI-34 (tokens, scales, restyle, class-only markup, screenshot script), with three screenshot critique rounds.
+- **Gate status (branch):** typecheck/lint, 524 tests (T15 opt-in), 7 DST cases, build and all 8 browser checks (E1–E3 including E2's drag/resize on 32 px rows) green. `main` is unchanged and green.
 
 ## Work items
 
@@ -126,6 +126,7 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 - [~] **WI-34** Visual refresh (spacing, type, colour) — owner S + Dv — depends on 33
   - 2026-10-26 · Claude Code · branch `feat/wi-34-visual-refresh` · done: claimed; `main` gate green · next: design plan in the Decisions log, then tokens, CSS and screenshots · note: appearance only; not to be merged until the user approves
+  - 2026-10-26 · Claude Code · branch `feat/wi-34-visual-refresh` · done: Paper/Night palette with Fern/Mint accent, spacing/type/shape scales in `tokens.css` (contrast test extended, lowest pair 5.31:1), roomy restyle of all three stylesheets, class/wrapper-only markup (no label, role or accessible name changed), editorial week header, sticky dialog action rows, `npm run screenshots`; TECH_SPEC §1.3/§2/§11.3/§11.4/§14 + v1.22; README links the captures; full gate incl. e2e green · next: user review (`npm run dev`), then "merge" or tweaks · note: screenshots are `docs/screenshots/{week-light-1440,week-dark-1440,week-light-1024,week-dark-1024,slot-picker-light,slot-picker-dark,replan-light,replan-dark,empty-light,empty-dark,month-light,list-dark,side-panels-light,drawer-light-900}.png`. A stale `vite preview` on port 4173 (not started by this session) is reused by `npm run e2e` and serves whatever is in `dist/`, so run `npm run build` before `npm run e2e`; the screenshot config uses its own port 4174 for that reason
 
 ## Milestones
 
@@ -177,3 +178,4 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - *Memorable element:* the week header. Left-aligned like a notebook page: small Stone weekday, then a large (26 px) tabular date numeral. Today's numeral turns Fern and sits on a 3 px Fern bar that runs into a faint Fern column wash; the now line is Fern with a dot. All other elements stay disciplined.
   - *Containers differ by role:* the side column is a flat Oat plane with no cards; task and conflict rows are hairline-separated, with a short priority/danger edge and text tags; dialogs get the large radius (16 px) and the only deep shadow; toasts get a medium radius and a small shadow; buttons and fields 8 px; events 6 px; tags are pills. No gradient washes, no all-caps, no eyebrows.
   - *Review against the brief:* the first draft used an indigo accent on cool grey. That is the default look of most apps, and indigo sits too close to the Low slate blue. It was replaced by Fern on warm paper, which no priority family uses, and the "circled today" default was replaced by the left-aligned numeral and bar.
+- 2026-10-26 (WI-34, Claude Code): screenshot critique rounds. (1) Hour labels centred on their line clipped the first visible label, so they now hang just under it; weekend/non-working shading was too faint (`--nonwork` deepened in both themes); task-row edges ran the full row height, so they became a short tick beside the name; "Sort by" wrapped in the drawer; "Compute plans" was glued to the buffer field. (2) `<strong>` inside bold lines rendered at 700+, so there is now one bold weight; Month day numbers were right-aligned against left-aligned headings; the conflict outline covered the first characters of Month events. (3) Month, List and full side-column scenes were added and checked. Kept on purpose: long event titles in 1024 px columns end in an ellipsis rather than breaking mid-word, and today's Month number is Fern bold, which reads nearly black at 13 px.
