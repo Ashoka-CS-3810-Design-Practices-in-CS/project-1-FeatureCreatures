@@ -89,6 +89,8 @@ Compute a plan at 08:00 for a flexible event starting at 09:30. Advance the cloc
 
 Recheck time-sensitive eligibility inside the queued apply operation. Refresh expired results without moving an already-started event or placing new work in the past. Add clock-advance variants of T27/T28.
 
+**Resolution (WI-36, Claude Code, 2026-10-26):** reproduced with an advancing test clock (`makeEngine` now returns `setNow`) and fixed in 9078703. A shared `requireNotPast` returns `StaleResult` (ER7) when `scheduleTask` / `applyAlternative` get a slot starting before `notBeforeFor(now)`, or when `applyReplan`'s plan moves an event or targets a time before it; the UI's existing ER7 handling recomputes. Three clock-advance regressions; ER7, T27 and TECH_SPEC §7.4.3/§7.4.4 updated.
+
 ### A08 · P2 · Replan input edits leave old plans applicable
 
 **Locations:** [ReplanDialog.tsx:93](../src/ui/components/ReplanDialog/ReplanDialog.tsx#L93), [ReplanDialog.tsx:123](../src/ui/components/ReplanDialog/ReplanDialog.tsx#L123). **Evidence: source-confirmed.**
@@ -96,6 +98,8 @@ Recheck time-sensitive eligibility inside the queued apply operation. Refresh ex
 Compute plans, then change From, To or Buffer without pressing Compute again. The old cards and Apply buttons remain. Apply uses the old result's version/plan ID, so an unchanged calendar accepts a plan computed for different parameters than those currently displayed.
 
 Invalidate the result whenever a planning parameter changes, or bind the preview visibly to immutable computed parameters and require recomputation. Test that changing the buffer from 0 to 30 cannot apply the old zero-buffer plan.
+
+**Resolution (WI-36, Claude Code, 2026-10-26):** confirmed and fixed in 1a01f49. Editing From, To or Buffer clears the computed result, so no card or Apply button outlives the inputs it was computed for; UI regressions for all three fields. PROJECT_SCHEMA §7.1 and the TEST_PLAN ReplanDialog row updated.
 
 ### A09 · P2 · Description validation errors are invisible
 
@@ -105,6 +109,8 @@ Enter a description longer than 1,000 characters and Save. The resolver returns 
 
 Render the description error and accessible invalid-field attributes in both forms; consider a visible character limit. Add UI cases covering the shared schema's description boundary.
 
+**Resolution (WI-36, Claude Code, 2026-10-26):** reproduced and fixed in 4a49a7d. Both dialogs render the description error under the textarea and set `aria-invalid` / `aria-describedby`; the schema message is now "Description can be at most 1000 characters.". UI regressions in both dialogs plus the schema boundary; TECH_SPEC §6 and TEST_PLAN §5 updated. No visible counter was added.
+
 ### A10 · P2 · Opening Replan from Month defaults to an invalid range
 
 **Locations:** [ReplanDialog.tsx:20](../src/ui/components/ReplanDialog/ReplanDialog.tsx#L20), [calendarHandlers.ts:75](../src/ui/components/CalendarView/calendarHandlers.ts#L75). **Evidence: source-confirmed.**
@@ -112,6 +118,8 @@ Render the description error and accessible invalid-field attributes in both for
 Month view supplies its entire visible grid as `activeRange`, normally 35 or 42 days. Replan copies that range into its defaults, then rejects it because the maximum is 14 days. The documented default is the visible week; a user entering the feature from Month immediately encounters an avoidable validation failure.
 
 Use a valid week based on the focused calendar date when the visible range exceeds the supported span. Reconcile TECH_SPEC's `activeRange` default with PROJECT_SCHEMA FR10/§7.1, and test all four calendar views.
+
+**Resolution (WI-36, Claude Code, 2026-10-26):** confirmed and fixed in c8128fd. A visible range longer than the replan limit (Month) defaults to the first full Monday–Sunday week of the shown period; shorter ranges are kept, and before the first `datesSet` the week of `view.date` is used. UI regressions for Day, Week, List and Month (no range error on Compute); PROJECT_SCHEMA §7.1, TECH_SPEC §11.2 and TEST_PLAN §5 reconciled.
 
 ## Redundancy and efficiency opportunities
 
