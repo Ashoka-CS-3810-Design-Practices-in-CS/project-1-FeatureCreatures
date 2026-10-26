@@ -9,6 +9,7 @@ import { renderWithStore, storeFor } from '../../../../tests/helpers/render';
 import { t } from '../../../../tests/helpers/time';
 import type { AppStore } from '../../store/appStore';
 import { Toolbar } from './Toolbar';
+import { ShortcutHelp } from '../ShortcutHelp/ShortcutHelp';
 
 const fakeApi = { today: vi.fn(), prev: vi.fn(), next: vi.fn(), changeView: vi.fn() };
 // The toolbar only calls getApi() on the ref, so a stand-in calendar is enough here.
@@ -25,6 +26,24 @@ function renderToolbar(store: AppStore, onCycleTheme = vi.fn()): void {
 
 describe('Toolbar', () => {
   afterEach(() => vi.clearAllMocks());
+
+  it('WI-33: the ? button opens the existing labelled keyboard shortcut help', async () => {
+    const store = storeFor((await makeEngine()).engine);
+    renderWithStore(
+      <>
+        <Toolbar calendarRef={calendarRef} theme="system" onCycleTheme={() => {}} />
+        <ShortcutHelp />
+      </>,
+      store,
+    );
+    const button = screen.getByRole('button', { name: 'Keyboard shortcuts' });
+    expect(button).toHaveTextContent('?');
+    await userEvent.click(button);
+    const help = screen.getByRole('dialog', { name: 'Keyboard shortcuts' });
+    expect(help).toBeInTheDocument();
+    expect(help).toHaveTextContent('New event');
+    expect(store.getState().dialog).toEqual({ kind: 'shortcuts' });
+  });
 
   it('names the shown period and marks the active view', async () => {
     const store = storeFor((await makeEngine()).engine);

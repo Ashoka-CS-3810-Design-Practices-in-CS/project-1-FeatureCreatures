@@ -32,7 +32,7 @@ function historyTooltip(verb: 'Undo' | 'Redo', label: string | null): string {
 //       onOpenPanels, when supplied, opens the narrow-screen drawer; panelsOpen is its state
 // POST: shows the toolbar of Figure 1: previous / Today / next, the period title, the view switch,
 //       the priority filter chips, + Event, + Task, Replan, Undo / Redo (disabled when there is
-//       nothing to do, tooltip = the change), the theme toggle and Settings
+//       nothing to do, tooltip = the change), theme, Keyboard shortcuts and Settings
 export function Toolbar({
   calendarRef,
   theme,
@@ -142,6 +142,14 @@ export function Toolbar({
         onClick={onCycleTheme}
       >
         ◐
+      </button>
+      <button
+        type="button"
+        aria-label="Keyboard shortcuts"
+        title="Keyboard shortcuts (?)"
+        onClick={() => actions.openDialog({ kind: 'shortcuts' })}
+      >
+        ?
       </button>
       <button
         type="button"
