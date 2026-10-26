@@ -6,9 +6,9 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-38 Replan vs barred-slot overlaps on `feat/wi-38-replan-diagnostics`; WI-37 merged and main gate green.
-- **Last session:** 2026-10-26 · Codex · WI-37 complete; claiming WI-38 with baseline/main gate verified (565 tests).
-- **Gate status:** WI-37 typecheck/lint, 565 tests (T15 opt-in), build, 17 browser checks and 12 dialog captures green. Baseline WI-36 additionally verified 7 DST, 98.50% lines / 93.82% branches and five properties at 10,000 cases. Run `npm run build` before `npm run e2e` while an existing `vite preview` holds port 4173.
+- **Active WI:** none. WI-37 merged; WI-38 finished and ready for its local merge and main gate.
+- **Last session:** 2026-10-26 · Codex · completed dialog form polish and Replan remaining-problem explanations; final merge/main verification next.
+- **Gate status:** typecheck/lint, 578 tests (T15 opt-in), 7 DST, coverage 98.55% lines / 93.98% branches, build and 18 browser checks green. Twelve dialog and four diagnostic captures reviewed. The unchanged heuristic's five 10,000-case properties were last verified in WI-36. Run `npm run build` before `npm run e2e` while an existing `vite preview` holds port 4173.
 
 ## Work items
 
@@ -146,11 +146,12 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-26 · Codex · branch `feat/wi-37-dialog-polish` · done: clean main and merged WI-36 verified; requirements added to TECH_SPEC §14 · next: failing RTL/browser controls and geometry checks, UI fixes, screenshots · note: UI only; preserve schemas/engine
   - 2026-10-26 · Codex · branch `feat/wi-37-dialog-polish` · done: red-then-green RTL radios/defaults/persistence; shared tagged priority fieldset and boolean task-hours radios; flexible toggle and full-width window are block groups below End; gate 565 tests and all six both-theme geometry/arrow-key browser checks green · next: review 12 dialog screenshots, full browser suite, finish/merge · note: npm.cmd/npx.cmd avoid this host's blocked PowerShell shims
   - 2026-10-26 · Codex · branch `feat/wi-37-dialog-polish` · done: 12 dialog captures committed and representative light/dark desktop/drawer images reviewed; PROJECT_SCHEMA §7.1, TECH_SPEC §11.2/§14 and TEST_PLAN synced; typecheck/lint, 565 tests, build and all 17 browser checks green · next: WI-38 · note: schemas and engine unchanged
-- [~] **WI-38** Replan vs barred-slot overlaps — owner S + Dv — depends on 37
+- [x] **WI-38** Replan vs barred-slot overlaps — owner S + Dv — depends on 37
   - 2026-10-26 · Codex · branch `feat/wi-38-replan-diagnostics` · done: claimed after WI-37 merge/main gate; inspected BR-12 pipeline and UI · next: prove future flexible barred moves and static exclusions, then per-plan diagnostics and UI regressions · note: keep scheduling heuristic unchanged unless regression proves a bug
   - 2026-10-26 · Codex · branch `feat/wi-38-replan-diagnostics` · done: new engine regressions pass on the unchanged heuristic: future Study moves Mon 13–14 to 12–13 with reason barred/Lunch after settings change; fixed and started barred events stay static · next: failing classification/UI tests and derived per-plan diagnostics · note: case (i) is correct; no algorithm fix needed
   - 2026-10-26 · Codex · branch `feat/wi-38-replan-diagnostics` · done: classification/UI tests failed then passed; ReplanResult.notMoved derives per-plan residual conflicts/barred warnings and unplaced reasons; zero-move messages and reused alternatives; Fixed/Flexible panel tags; docs/contracts synced; 24 targeted engine/dialog cases and earlier full gate (574 tests) green · next: browser D4 flow, screenshots, final gate/coverage · note: scheduling heuristic and schemas untouched
   - 2026-10-26 · Codex · branch `feat/wi-38-replan-diagnostics` · done: T39/T40 exact classification, deduplication and range-boundary checks; browser moves flexible Study out of Lunch and routes fixed Class through alternatives; gate 578 tests, 7 DST, coverage 98.55% lines / 93.98% branches and all 18 browser checks green · next: refresh reviewed diagnostic captures after moving the zero-move summary above the list, finish/merge · note: both plans are explained even when movableCount is zero
+  - 2026-10-26 · Codex · branch `feat/wi-38-replan-diagnostics` · done: final gate 578 tests plus refreshed/reviewed both-theme desktop/drawer diagnostic captures; zero-move summary visible above the list; D4 and all docs/change logs synced; strengthened geometry helper also checks End is fully inside the dialog · next: merge/main gate, human push/redeploy · note: the future-flexible barred regression passed before implementation, so only derived diagnostics/UI changed; schemas/heuristic/metrics remain unchanged
 
 ## Milestones
 
@@ -173,6 +174,7 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 - [ ] Turn on branch protection for `main` on GitHub (optional).
 
 ## Decisions log (append-only)
+
 
 - 2026-10-25: Repo initialised with the three spec docs, AGENTS.md, CLAUDE.md and the `disciplined-coding` skill. TECH_SPEC v1.1 aligns the spec with the skill.
 - 2026-10-25 (WI-01, Claude Code): the current create-vite template ships oxlint and a split tsconfig; both were dropped for ESLint (§1.1) and a single `tsconfig.json` (§12).
@@ -204,3 +206,4 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - *Containers differ by role:* the side column is a flat Oat plane with no cards; task and conflict rows are hairline-separated, with a short priority/danger edge and text tags; dialogs get the large radius (16 px) and the only deep shadow; toasts get a medium radius and a small shadow; buttons and fields 8 px; events 6 px; tags are pills. No gradient washes, no all-caps, no eyebrows.
   - *Review against the brief:* the first draft used an indigo accent on cool grey. That is the default look of most apps, and indigo sits too close to the Low slate blue. It was replaced by Fern on warm paper, which no priority family uses, and the "circled today" default was replaced by the left-aligned numeral and bar.
 - 2026-10-26 (WI-34, Claude Code): screenshot critique rounds. (1) Hour labels centred on their line clipped the first visible label, so they now hang just under it; weekend/non-working shading was too faint (`--nonwork` deepened in both themes); task-row edges ran the full row height, so they became a short tick beside the name; "Sort by" wrapped in the drawer; "Compute plans" was glued to the buffer field. (2) `<strong>` inside bold lines rendered at 700+, so there is now one bold weight; Month day numbers were right-aligned against left-aligned headings; the conflict outline covered the first characters of Month events. (3) Month, List and full side-column scenes were added and checked. Kept on purpose: long event titles in 1024 px columns end in an ellipsis rather than breaking mid-word, and today's Month number is Fern bold, which reads nearly black at 13 px.
+- 2026-10-26 (WI-38, Codex): the unchanged engine moves a future flexible barred event with reason barred; fixed/started events are intentionally static. Derive diagnostics after projecting each plan so conflicts resolved by flexible moves are omitted. Precedence is fixed, started, outside-flex failed placement, no-slot; names and event IDs are deduplicated. ReplanResult gains read-only notMoved lists by plan ID; no persisted/exported data or placement rule changes.
