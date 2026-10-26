@@ -93,6 +93,9 @@ export function TaskPanel() {
     tasks.filter((task) => task.status === 'unscheduled').map((task) => task.id),
   );
   const selected = panel.selectedIds.filter((id) => unscheduledIds.has(id));
+  // Built once per render so each row's lookup is O(1), not a scan (AUDIT R01).
+  const eventsById = useMemo(() => new Map(events.map((event) => [event.id, event])), [events]);
+  const selectedIds = new Set(selected);
 
   return (
     <section aria-labelledby="task-panel-title" className="task-panel">
@@ -154,8 +157,10 @@ export function TaskPanel() {
             <TaskRow
               key={task.id}
               task={task}
-              event={events.find((event) => event.id === task.scheduledEventId)}
-              selected={selected.includes(task.id)}
+              event={
+                task.scheduledEventId === null ? undefined : eventsById.get(task.scheduledEventId)
+              }
+              selected={selectedIds.has(task.id)}
               actions={actions}
             />
           ))}
