@@ -6,7 +6,7 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** none; next WI-31 Final docs sync.
+- **Active WI:** WI-31 Final docs sync, branch `docs/wi-31-final-sync`.
 - **Last session:** 2026-10-26 · Codex · finished WI-30 after completing WI-32/33 and recording Divyam's production passes.
 - **Gate status:** typecheck/lint and 524 tests pass (T15 opt-in); coverage 98.30% lines / 93.12% branches overall; all 5 full-property tests, 7 DST cases, build and 8 browser checks green; T15 median 4.188 ms; exports regenerate identically.
 
@@ -108,7 +108,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-26 · Codex · branch `docs/wi-30-demo` · done: final typecheck/lint/test gate green (508 pass, T15 intentionally skipped), sample regeneration diff and whitespace checks clean; all local preparation committed · next: production D1–D5 rehearsal; WI-30 remains in progress and unmerged until its production done-when condition is met
   - 2026-10-26 · Codex · branch `docs/wi-30-demo` · done: merged completed WI-32/33, retained prior docs/exports, recorded Divyam's D1–D5 passes in §8 table and PROGRESS; README explains warnings, shortcuts button and exact ER2 result · next: final validation, finish/merge WI-30 then WI-31 · note: user will push and redeploy afterwards
   - 2026-10-26 · Codex · branch `docs/wi-30-demo` · done: README/sample guide and six validated/reproducible exports complete; production outcomes recorded; all requested dependencies finished; gate/coverage/full properties/DST and T15 pass (median 4.188 ms) · next: WI-31 · note: production D1–D5 passes are Divyam's reported run; WI-32/33 new steps pass locally and the user will push/redeploy afterwards
-- [ ] **WI-31** Final docs sync — owner S + Dv — depends on 30
+- [~] **WI-31** Final docs sync — owner S + Dv — depends on 30
+  - 2026-10-26 · Codex · branch `docs/wi-31-final-sync` · done: WI-30 and WI-32/33 merged, post-merge main gate verified; final runtime validation/coverage/properties/DST/ER2 all green · next: sync model/UI/complexity docs, mark verified release evidence and explicit human post-deploy/viva steps, merge and tag m6
 
 ### Change requests before WI-30
 
