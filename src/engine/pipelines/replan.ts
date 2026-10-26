@@ -1,11 +1,11 @@
 // Replan pipeline (TECH_SPEC §7.4.4, FR10): build the inputs for the pure replan heuristics, and
 // apply one of the two plans as a single undoable change.
 
-import { MAX_REPLAN_DAYS, MINUTES_PER_DAY, REPLAN_DST_SLACK_MIN } from '@/shared/constants';
+import { MAX_REPLAN_DAYS } from '@/shared/constants';
 import type { EngineError } from '@/shared/errors';
 import { err, ok, type Result } from '@/shared/result';
 import { parseInput, searchOptionsSchema } from '@/shared/schemas';
-import { buildDayFrames } from '@/shared/time';
+import { addLocalDays, buildDayFrames, startOfLocalDay } from '@/shared/time';
 import type { CalendarEvent, Interval, Minute, ReplanPlan, ReplanResult } from '@/shared/types';
 import { planReplan as planWithHeuristics } from '../algorithms/replanHeuristics';
 import { requireCurrentVersion, requireNotPast, segmentsFor } from '../search';
@@ -18,8 +18,6 @@ import {
   unchangedOutcome,
 } from '../state';
 
-const MAX_RANGE_MIN = MAX_REPLAN_DAYS * MINUTES_PER_DAY + REPLAN_DST_SLACK_MIN;
-
 export interface PlanReplanRequest {
   range: Interval;
   bufferMin?: number;
@@ -30,12 +28,22 @@ export interface ApplyReplanRequest {
   planId: ReplanPlan['id'];
 }
 
+// PRE:  minute is a number
+// POST: returns true iff minute is a local midnight
+function isLocalMidnight(minute: Minute): boolean {
+  return startOfLocalDay(minute) === minute;
+}
+
 // PRE:  range comes from the UI
-// POST: returns ok when range has end > start and spans at most 14 days (plus DST slack), else
-//       err InvalidTime at path 'range'
+// POST: returns ok when range is BR-12's: both ends at a local midnight and 1 to MAX_REPLAN_DAYS
+//       local days long (so DST days count as days, AUDIT note), else err InvalidTime at 'range'
 function requireReplanRange(range: Interval): Result<null, EngineError> {
-  const span = range.end - range.start;
-  if (span > 0 && span <= MAX_RANGE_MIN) {
+  if (
+    isLocalMidnight(range.start) &&
+    isLocalMidnight(range.end) &&
+    range.end > range.start &&
+    range.end <= addLocalDays(range.start, MAX_REPLAN_DAYS)
+  ) {
     return ok(null);
   }
   return err({

@@ -811,7 +811,7 @@ Every mutation pipeline follows the same skeleton: validate → look up → buil
 
 **`planReplan({range, bufferMin})`**
 
-1. Validate `bufferMin` with `searchOptionsSchema`. Validate the range: `end > start` and `end − start ≤ MAX_REPLAN_DAYS × 1440 + REPLAN_DST_SLACK_MIN` (120). Otherwise return `InvalidTime` with the issue `{path: 'range', message: 'The replan range must be 1 to 14 days long.'}`.
+1. Validate `bufferMin` with `searchOptionsSchema`. Validate the range as BR-12 states it (AUDIT contract note): `start` and `end` are local midnights (`startOfLocalDay(x) === x`), `end > start` and `end ≤ addLocalDays(start, MAX_REPLAN_DAYS)`, so DST days count as whole days. (Before WI-36 only `0 < end − start ≤ 14 × 1440 + REPLAN_DST_SLACK_MIN` was checked, which accepted a one-minute range; the UI still uses that span to decide whether the visible range can be the default.) Otherwise return `InvalidTime` with the issue `{path: 'range', message: 'The replan range must be 1 to 14 days long.'}`.
 2. Build the inputs:
    - `frames = buildDayFrames(range, settings)`
    - `notBefore`

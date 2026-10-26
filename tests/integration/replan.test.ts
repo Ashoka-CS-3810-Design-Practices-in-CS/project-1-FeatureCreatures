@@ -91,6 +91,19 @@ describe('planReplan (T22, FR10, BR-12)', () => {
       },
     });
     expect(tooLong.ok ? null : tooLong.error).toMatchObject(badRange);
+    // AUDIT note: BR-12 wants local-midnight ends and 1–14 whole days; these used to pass.
+    const oneMinute = engine.planReplan({ range: iv('Mon 00:00', 'Mon 00:01') });
+    expect(oneMinute.ok ? null : oneMinute.error).toMatchObject(badRange);
+    const fourteenDaysAndAMinute = engine.planReplan({
+      range: { start: t('Mon 00:00'), end: t('Mon 00:00') + MAX_REPLAN_DAYS * MINUTES_PER_DAY + 1 },
+    });
+    expect(fourteenDaysAndAMinute.ok ? null : fourteenDaysAndAMinute.error).toMatchObject(badRange);
+    const fromMorning = engine.planReplan({ range: iv('Mon 09:00', 'Wed 00:00') });
+    expect(fromMorning.ok ? null : fromMorning.error).toMatchObject(badRange);
+    const fourteenDays = engine.planReplan({
+      range: { start: t('Mon 00:00'), end: t('Mon 00:00') + MAX_REPLAN_DAYS * MINUTES_PER_DAY },
+    });
+    expect(fourteenDays.ok).toBe(true);
     const badBuffer = engine.planReplan({ range: RANGE, bufferMin: 200 });
     expect(badBuffer.ok ? null : badBuffer.error.code).toBe('InvalidInput');
   });
