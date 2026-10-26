@@ -16,6 +16,7 @@ export const WARNING_TOAST_MS = 8000; // ER4 warning toasts
 export const EMPHASIS_MS = 1500; // how long changed events stay emphasised
 export const DRAWER_BREAKPOINT_PX = 1024;
 export const MIN_CLICK_TARGET_PX = 32;
+export const CLICK_EVENT_MIN = 30; // a click on empty time creates one calendar row (WI-35)
 export const IMPORT_SPINNER_THRESHOLD = 1000;
 export const MINUTES_PER_DAY = 1440;
 export const MINUTES_PER_HOUR = 60;

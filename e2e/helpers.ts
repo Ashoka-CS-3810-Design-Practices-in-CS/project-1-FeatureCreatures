@@ -35,3 +35,17 @@ export async function createConflict(page: Page): Promise<void> {
   await createEvent(page, 'B', '2026-11-02T11:00', '2026-11-02T12:00');
   await expect(page.getByRole('heading', { name: 'Conflicts (1)' })).toBeVisible();
 }
+
+// PRE:  page has not navigated yet
+// POST: returns a list that collects every uncaught page error and console error from now on;
+//       the error boundary catches render crashes, so console errors must count as failures too
+export function collectPageErrors(page: Page): string[] {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(`pageerror: ${error.message}`));
+  page.on('console', (message) => {
+    if (message.type() === 'error') {
+      errors.push(`console: ${message.text()}`);
+    }
+  });
+  return errors;
+}
