@@ -144,6 +144,13 @@ export function requireCurrentVersion(
   return baseVersion === state.version ? ok(null) : err({ code: 'StaleResult' });
 }
 
+// PRE:  start is when an offered slot or planned move begins; now is the current Minute
+// POST: returns ok when start ≥ notBeforeFor(now), else err StaleResult (ER7): time has passed
+//       since the result was computed, and data versions do not change when it does (AUDIT A07)
+export function requireNotPast(start: Minute, now: Minute): Result<null, EngineError> {
+  return start >= notBeforeFor(now) ? ok(null) : err({ code: 'StaleResult' });
+}
+
 // PRE:  slot comes from the UI (untrusted); durationMin is the length the slot must have
 // POST: returns ok when slot's ends are supported integer Minutes (slotSchema) and slot is exactly
 //       durationMin long; else the schema's error at 'slot.start' / 'slot.end' (AUDIT A06), or

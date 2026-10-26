@@ -117,6 +117,25 @@ describe('Conflict Resolution (T20, FR7, BR-10)', () => {
     expect(await capture(engine, repo)).toEqual(before);
   });
 
+  it('applyAlternative refuses an option whose start has passed (ER7, AUDIT A07)', async () => {
+    const { engine, repo, setNow } = await makeEngine({
+      now: 'Mon 08:00',
+      events: [lecture, meeting],
+    });
+    const version = engine.snapshot().version;
+    setNow('Mon 12:30');
+    const before = await capture(engine, repo);
+
+    const result = await engine.applyAlternative({
+      eventId: 'Meeting',
+      slot: iv('Mon 12:00', 'Mon 13:00'),
+      baseVersion: version,
+    });
+
+    expect(result).toEqual({ ok: false, error: { code: 'StaleResult' } });
+    expect(await capture(engine, repo)).toEqual(before);
+  });
+
   it('suggestAlternatives rejects an unknown event and a bad buffer override', async () => {
     const { engine } = await makeEngine({ events: [lecture] });
 

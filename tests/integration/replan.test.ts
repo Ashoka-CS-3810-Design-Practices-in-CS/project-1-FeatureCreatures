@@ -179,3 +179,29 @@ describe('applyReplan (T23, T27)', () => {
     });
   });
 });
+
+// AUDIT A07: data versions do not change when time passes, so applying used to move an event
+// that had started since, or to place work in the past (FR10, BR-5).
+describe('elapsed time makes a result stale (ER7)', () => {
+  it('applyReplan refuses a plan whose moved event has started since it was computed', async () => {
+    const { engine, repo, setNow } = await makeEngine({
+      now: 'Mon 08:00',
+      events: [
+        ev('Seminar', 'Mon 09:30', 'Mon 10:30'),
+        flexEv('Soon', 'Mon 09:30', 'Mon 10:30', WINDOW),
+      ],
+    });
+    const plans = expectOk(engine.planReplan({ range: RANGE }));
+    expect(plans.plans[0].moves.map((move) => move.eventId)).toEqual(['Soon']);
+    setNow('Mon 09:45');
+    const before = await capture(engine, repo);
+
+    const result = await engine.applyReplan({
+      baseVersion: plans.baseVersion,
+      planId: 'minimalChange',
+    });
+
+    expect(result).toEqual({ ok: false, error: { code: 'StaleResult' } });
+    expect(await capture(engine, repo)).toEqual(before);
+  });
+});

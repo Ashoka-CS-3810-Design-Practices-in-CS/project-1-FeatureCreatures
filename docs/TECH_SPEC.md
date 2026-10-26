@@ -802,7 +802,7 @@ Every mutation pipeline follows the same skeleton: validate → look up → buil
   1. Look up the task. If it is scheduled, return `InvalidInput` with the issue `{path: 'status', message: 'Task is already scheduled.'}`.
   2. Return `search({durationMin: task.durationMin, priority: task.priority, window: task.window, useWorkingHours: task.useWorkingHours, excludeIds: [], originalStart: null, criterion: criterion ?? settings.defaultCriterion, bufferMin: bufferMin ?? settings.bufferMin, subject: {kind: 'task', taskId, name}})`.
 - **`scheduleTask({taskId, slot, baseVersion})`**
-  1. Check the version (ER7), look up the task (it must be unscheduled, else the `status` issue of `findSlots`), and check the slot with `requireValidSlot` (shared with `applyAlternative`): its ends must pass `slotSchema` (supported integer Minutes, issues at `slot.start` / `slot.end`, AUDIT A06), and `slot.end − slot.start === durationMin`, or return `InvalidTime` with the issue `{path: 'slot', message: 'The slot must be exactly as long as the duration.'}`. Whether the slot is still free is guaranteed by the version check against the search it came from (ER7).
+  1. Check the version (ER7), look up the task (it must be unscheduled, else the `status` issue of `findSlots`), check that `slot.start ≥ notBeforeFor(now)` with `requireNotPast` or return `StaleResult` (AUDIT A07; also in `applyAlternative`), and check the slot with `requireValidSlot` (shared with `applyAlternative`): its ends must pass `slotSchema` (supported integer Minutes, issues at `slot.start` / `slot.end`, AUDIT A06), and `slot.end − slot.start === durationMin`, or return `InvalidTime` with the issue `{path: 'slot', message: 'The slot must be exactly as long as the duration.'}`. Whether the slot is still free is guaranteed by the version check against the search it came from (ER7).
   2. Build `event = {id: newId(), title: name, description, category, priority, start, end, flexible: true, flexWindow: task.window, taskId, createdAt, updatedAt}`.
   3. Update the task with `{status: 'scheduled', scheduledEventId: event.id}`.
   4. Put both in one `Change` with the label `Schedule "<name>"`.
@@ -824,6 +824,7 @@ Every mutation pipeline follows the same skeleton: validate → look up → buil
 1. Return `StaleResult` unless `lastReplan` exists and `lastReplan.baseVersion === baseVersion === state.version`.
 2. Look up the plan.
 3. If it has no moves, return `ok` with an unchanged snapshot and the label `''`.
+   Otherwise, if any move's `from.start` or `to.start` is before `notBeforeFor(now)`, return `StaleResult` (`requireNotPast`, AUDIT A07): time passing does not change the version, but it can start an event or put a target in the past.
 4. Otherwise build one `Change` with `before = current event` and `after = {...event, start: to.start, end: to.end, updatedAt: now}` for each move. The label is `Replan: <n> event(s) moved`. Durations are unchanged, so no task mirroring is needed.
 5. Commit.
 

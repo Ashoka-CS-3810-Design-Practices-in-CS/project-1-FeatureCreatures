@@ -499,6 +499,25 @@ describe('scheduling and sync (FR8, FR9, BR-9)', () => {
   });
 });
 
+describe('elapsed time makes a result stale (ER7, AUDIT A07)', () => {
+  it('scheduleTask refuses an offered slot whose start has passed', async () => {
+    const { engine, repo, setNow } = await makeEngine({
+      now: 'Mon 08:00',
+      tasks: [task('T', 60, MONDAY_HOURS)],
+    });
+    const found = expectOk(engine.findSlots({ taskId: 'T', criterion: 'earliest' }));
+    const slot = found.options[0]?.slot ?? iv('Mon 09:00', 'Mon 10:00');
+    expect(slot).toEqual(iv('Mon 09:00', 'Mon 10:00'));
+    setNow('Mon 09:30');
+    const before = await capture(engine, repo);
+
+    const result = await engine.scheduleTask({ taskId: 'T', slot, baseVersion: found.baseVersion });
+
+    expect(result).toEqual({ ok: false, error: { code: 'StaleResult' } });
+    expect(await capture(engine, repo)).toEqual(before);
+  });
+});
+
 describe('task CRUD', () => {
   it('createTask stores an unscheduled task', async () => {
     const { engine } = await makeEngine({ now: 'Mon 08:00' });

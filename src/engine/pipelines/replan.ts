@@ -8,7 +8,7 @@ import { parseInput, searchOptionsSchema } from '@/shared/schemas';
 import { buildDayFrames } from '@/shared/time';
 import type { CalendarEvent, Interval, Minute, ReplanPlan, ReplanResult } from '@/shared/types';
 import { planReplan as planWithHeuristics } from '../algorithms/replanHeuristics';
-import { requireCurrentVersion, segmentsFor } from '../search';
+import { requireCurrentVersion, requireNotPast, segmentsFor } from '../search';
 import {
   commit,
   type EngineState,
@@ -77,7 +77,8 @@ export function planReplan(
 // PRE:  lastReplan is the engine's latest planReplan result, or null; request comes from the UI
 // POST: moves every event of the chosen plan in one change labelled 'Replan: <n> event(s) moved'
 //       (a plan without moves returns ok with the state unchanged and the label ''); err
-//       StaleResult unless lastReplan exists and was computed at the current version (ER7)
+//       StaleResult unless lastReplan exists and was computed at the current version, and no
+//       moved event or move target starts before notBeforeFor(now) any more (ER7, AUDIT A07)
 export async function applyReplan(
   context: PipelineContext,
   lastReplan: ReplanResult | null,
@@ -94,6 +95,12 @@ export async function applyReplan(
   const plan = request.planId === 'balanced' ? balanced : minimalChange;
   if (plan.moves.length === 0) {
     return ok(unchangedOutcome(context.state));
+  }
+  // A moved event that has started since, or a target already past, makes the plan stale (FR10).
+  const earliestStart = Math.min(...plan.moves.flatMap((move) => [move.from.start, move.to.start]));
+  const upcoming = requireNotPast(earliestStart, context.now);
+  if (!upcoming.ok) {
+    return upcoming;
   }
 
   const byId = new Map(context.state.events.map((event) => [event.id, event]));
