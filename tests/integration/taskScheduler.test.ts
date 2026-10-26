@@ -219,6 +219,22 @@ describe('findSlots (FR5)', () => {
     expect(starts('L')).toEqual(as('leastLoaded', wed, mon, tue));
   });
 
+  // AUDIT A05: day loads used only the events inside the search window, so a window starting at
+  // Mon 17:00 saw Monday as empty although it is booked 09:00–17:00.
+  it('T18 partial days: day loads count the whole working day, not just the window', async () => {
+    const { engine } = await makeEngine({
+      events: [ev('Busy', 'Mon 09:00', 'Mon 17:00')],
+      tasks: [task('L', 60, ['Mon 17:00', 'Tue 10:00'], { priority: 'low' })],
+    });
+
+    const options = expectOk(engine.findSlots({ taskId: 'L', criterion: 'priorityAware' })).options;
+
+    expect(options.map(({ slot, dayLoadMin }) => ({ start: slot.start, dayLoadMin }))).toEqual([
+      { start: t('Tue 09:00'), dayLoadMin: 0 },
+      { start: t('Mon 17:00'), dayLoadMin: 480 },
+    ]);
+  });
+
   it('T19: barred slots shape the search but never block manual events', async () => {
     const lunch: BarredSlot = {
       id: 'lunch',

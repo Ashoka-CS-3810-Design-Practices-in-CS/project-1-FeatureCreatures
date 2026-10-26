@@ -890,7 +890,10 @@ function search(state: EngineState, req: SearchRequest, notBefore: Minute): Resu
     return err({ code: 'NoSlotFound', durationMin: req.durationMin, bufferMin: req.bufferMin,
                  largestGapMin: largest ? largest.end - largest.start : 0, largestGap: largest });  // ER3
   }
-  const loads = computeDayLoads(near, frames);
+  // AUDIT A05: loads cover the frames' whole days, not just the window (a window starting at 17:00
+  // must still see that day's 09:00–17:00 events); gaps above still use the narrow `near` slice.
+  const loads = computeDayLoads(eventsIntersecting(state.events, {start: frames[0].dayStart, end: frames.at(-1).dayEnd})
+                                  .filter(e ⇒ !req.excludeIds.includes(e.id)), frames);
   const options = rankOptions(fitting, { durationMin: req.durationMin, criterion: req.criterion,
                      priority: req.priority, originalStart: req.originalStart, dayLoads: loads, frames });
   return ok({ baseVersion: state.version, subject: req.subject, durationMin: req.durationMin,

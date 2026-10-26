@@ -6,7 +6,9 @@ import type { EngineError } from '@/shared/errors';
 import { err, ok, type Result } from '@/shared/result';
 import { buildDayFrames, ceilTo } from '@/shared/time';
 import type {
+  CalendarEvent,
   Criterion,
+  DayFrame,
   Interval,
   Minute,
   Priority,
@@ -33,6 +35,19 @@ export interface SearchRequest {
   criterion: Criterion;
   bufferMin: number;
   subject: SearchSubject;
+}
+
+// PRE:  state.events is sorted; frames is non-empty, in order and contiguous
+// POST: returns the events, except excludeIds, that intersect the whole days of frames. A day's
+//       load covers its whole working day (BR-7), so a window that starts or ends mid-day must not
+//       hide the rest of that day's events (AUDIT A05)
+function eventsOnDays(
+  state: EngineState,
+  frames: readonly DayFrame[],
+  excludeIds: readonly string[],
+): CalendarEvent[] {
+  const days = { start: (frames[0] as DayFrame).dayStart, end: (frames.at(-1) as DayFrame).dayEnd };
+  return eventsIntersecting(state.events, days).filter((event) => !excludeIds.includes(event.id));
 }
 
 // PRE:  state.events is sorted; request.window has start < end; request.durationMin > 0;
@@ -82,7 +97,7 @@ export function search(
     criterion: request.criterion,
     priority: request.priority,
     originalStart: request.originalStart,
-    dayLoads: computeDayLoads(near, frames),
+    dayLoads: computeDayLoads(eventsOnDays(state, frames, request.excludeIds), frames),
     frames,
   });
   return ok({
