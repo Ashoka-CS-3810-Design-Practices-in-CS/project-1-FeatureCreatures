@@ -6,6 +6,7 @@ import { buildDayFrames, fromMinute } from '@/shared/time';
 import { eventAccessibleText } from '../../format/explain';
 import type {
   CalendarEvent,
+  BarredOverlap,
   Category,
   Conflict,
   Interval,
@@ -14,6 +15,7 @@ import type {
 } from '@/shared/types';
 
 export interface EventBlockProps {
+  barredLabels: readonly string[];
   label: string;
   priority: Priority;
   category: Category;
@@ -40,10 +42,30 @@ function largestOverlaps(conflicts: readonly Conflict[]): Map<string, number> {
   return largest;
 }
 
-// PRE:  event is an event; conflictMinutes ≥ 0; emphasised says whether it was just changed
+// PRE:  warnings are snapshot barred overlaps
+// POST: returns distinct labels per event in first-occurrence order; O(q) expected time/space
+function labelsByEvent(warnings: readonly BarredOverlap[]): Map<string, Set<string>> {
+  const labels = new Map<string, Set<string>>();
+  // INVARIANT: labels contains each visited record's label under its event id
+  for (const warning of warnings) {
+    const eventLabels = labels.get(warning.eventId) ?? new Set<string>();
+    eventLabels.add(warning.label);
+    labels.set(warning.eventId, eventLabels);
+  }
+  // POST: labels contains every distinct event/label pair once
+  return labels;
+}
+
+// PRE:  event is an event; conflictMinutes ≥ 0; emphasised says whether it was just changed;
+//       barredLabels contains its distinct overlapping labels
 // POST: returns its FullCalendar entry with priority / conflict / emphasis classes and the
 //       props EventContent renders
-function toEntry(event: CalendarEvent, conflictMinutes: number, emphasised: boolean): EventInput {
+function toEntry(
+  event: CalendarEvent,
+  conflictMinutes: number,
+  emphasised: boolean,
+  barredLabels: readonly string[],
+): EventInput {
   const classNames = ['ev', `prio-${event.priority}`];
   if (conflictMinutes > 0) {
     classNames.push('is-conflict');
@@ -52,7 +74,8 @@ function toEntry(event: CalendarEvent, conflictMinutes: number, emphasised: bool
     classNames.push('is-emphasised');
   }
   const extendedProps: EventBlockProps = {
-    label: eventAccessibleText(event, conflictMinutes),
+    label: eventAccessibleText(event, conflictMinutes, barredLabels),
+    barredLabels,
     priority: event.priority,
     category: event.category,
     flexible: event.flexible,
@@ -99,9 +122,14 @@ export function toFullCalendar(
   emphasisIds: readonly string[],
 ): EventInput[] {
   const overlaps = largestOverlaps(snapshot.conflicts);
+  const barredLabels = labelsByEvent(snapshot.barredOverlaps);
   const emphasised = new Set(emphasisIds);
   const events = snapshot.events
     .filter((event) => filter.includes(event.priority))
-    .map((event) => toEntry(event, overlaps.get(event.id) ?? 0, emphasised.has(event.id)));
+    .map((event) =>
+      toEntry(event, overlaps.get(event.id) ?? 0, emphasised.has(event.id), [
+        ...(barredLabels.get(event.id) ?? []),
+      ]),
+    );
   return [...events, ...barredEntries(snapshot, activeRange)];
 }

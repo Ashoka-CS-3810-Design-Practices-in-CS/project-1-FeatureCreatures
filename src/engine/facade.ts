@@ -42,6 +42,7 @@ import {
 import { notBeforeFor } from './search';
 import {
   createState,
+  barredOverlapsFor,
   replay,
   type EngineState,
   type PipelineContext,
@@ -208,13 +209,14 @@ class CalendarEngine implements Engine {
   // PRE:  none
   // POST: returns the read-only view of the current state the UI renders
   snapshot(): Snapshot {
-    const { version, events, tasks, settings, conflicts, undo, redo } = this.state;
+    const { version, events, tasks, settings, conflicts, barredOverlaps, undo, redo } = this.state;
     return {
       version,
       events,
       tasks,
       settings,
       conflicts,
+      barredOverlaps,
       canUndo: undo.length > 0,
       canRedo: redo.length > 0,
       undoLabel: undo.at(-1)?.label ?? null,
@@ -338,7 +340,7 @@ class CalendarEngine implements Engine {
 
   // PRE:  settings comes from the UI (any shape)
   // POST: on valid settings, persists them, adopts them and bumps the version (no history entry,
-  //       conflicts unchanged, §7.4.5); err InvalidInput / InvalidTime, or StorageError when saving
+  //       conflicts unchanged, barred warnings recomputed, §7.4.5); err InvalidInput / InvalidTime, or StorageError when saving
   //       fails, leaving the state unchanged
   updateSettings(settings: Settings): Promise<Result<Snapshot>> {
     return this.run(async () => {
@@ -351,7 +353,12 @@ class CalendarEngine implements Engine {
       } catch (error) {
         return storageError(error);
       }
-      this.state = { ...this.state, settings: parsed.value, version: this.state.version + 1 };
+      this.state = {
+        ...this.state,
+        settings: parsed.value,
+        barredOverlaps: barredOverlapsFor(this.state.events, parsed.value),
+        version: this.state.version + 1,
+      };
       return ok(this.snapshot());
     });
   }

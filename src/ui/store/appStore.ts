@@ -19,6 +19,7 @@ import { parseExportFile } from '@/shared/schemas';
 import { fromMinute, startOfLocalWeek } from '@/shared/time';
 import type {
   Conflict,
+  BarredOverlap,
   EventInput,
   ExportFile,
   Interval,
@@ -51,6 +52,7 @@ import {
   scheduledText,
   sampleLoadedText,
   SETTINGS_SAVED_TEXT,
+  barredOverlapToastText,
   taskCreatedText,
   taskDeletedText,
   taskSavedText,
@@ -93,6 +95,9 @@ export interface AppActions {
   toggleTaskSelection(id: string): void;
   openTaskPicker(taskIds: readonly string[]): void;
   openAlternatives(conflict: Conflict): void;
+  openEventAlternatives(eventId: string): void;
+  setPanelsOpen(open: boolean): void;
+  viewBarredOverlaps(): void;
   computeReplan(range: Interval, bufferMin: number | undefined): Result<ReplanResult>;
   applyReplan(baseVersion: number, planId: ReplanPlan['id']): Promise<Result<MutationResult>>;
   pickerSelect(index: number): void;
@@ -132,6 +137,8 @@ export interface AppState {
   dialog: Dialog;
   picker: PickerState | null;
   emphasisIds: string[];
+  panelsOpen: boolean;
+  barredViewRequest: number;
   toasts: Toast[];
   actions: AppActions;
 }
@@ -154,6 +161,31 @@ function subjectAndOther(conflict: Conflict, changedIds: readonly string[]): [st
   return changedIds.includes(conflict.bId)
     ? [conflict.bId, conflict.aId]
     : [conflict.aId, conflict.bId];
+}
+
+// PRE:  overlap is a derived barred warning
+// POST: returns a collision-free identity for comparing settings warning records
+function barredOverlapKey(overlap: BarredOverlap): string {
+  return JSON.stringify([
+    overlap.eventId,
+    overlap.label,
+    overlap.overlap.start,
+    overlap.overlap.end,
+  ]);
+}
+
+// PRE:  before/after are warning lists from successive settings snapshots
+// POST: returns the count of distinct event IDs in records introduced by the settings save
+function newlyWarnedEventCount(
+  before: readonly BarredOverlap[],
+  after: readonly BarredOverlap[],
+): number {
+  const previous = new Set(before.map(barredOverlapKey));
+  return new Set(
+    after
+      .filter((warning) => !previous.has(barredOverlapKey(warning)))
+      .map((warning) => warning.eventId),
+  ).size;
 }
 
 // PRE:  engine is initialised (or failed to); options.init is its init result
@@ -346,7 +378,32 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
       return result;
     }
 
+    // PRE:  eventId names the event to search; otherEventId is the optional conflict counterpart
+    // POST: opens the existing alternatives picker and refreshes via engine.suggestAlternatives
+    function openAlternativePicker(eventId: string, otherEventId: string | null): void {
+      set({ dialog: null });
+      refresh({
+        mode: 'alternatives',
+        eventId,
+        otherEventId,
+        bufferMin: get().snapshot.settings.bufferMin,
+        result: { ok: false, error: { code: 'StaleResult' } },
+        selected: 0,
+      });
+    }
+
     const actions: AppActions = {
+      // PRE:  open is the desired drawer state
+      // POST: the panels drawer state is open
+      setPanelsOpen(open) {
+        set({ panelsOpen: open });
+      },
+
+      // PRE:  none
+      // POST: opens panels and requests focus/scroll to their barred-warning section
+      viewBarredOverlaps() {
+        set({ panelsOpen: true, barredViewRequest: get().barredViewRequest + 1 });
+      },
       // PRE:  id is any string
       // POST: removes that toast if present
       dismissToast(id) {
@@ -519,16 +576,13 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
       //       event as the toggle and the settings buffer (FR7)
       openAlternatives(conflict) {
         const otherEventId = conflict.targetId === conflict.aId ? conflict.bId : conflict.aId;
-        set({ dialog: null });
-        refresh({
-          mode: 'alternatives',
-          eventId: conflict.targetId,
-          otherEventId,
-          bufferMin: get().snapshot.settings.bufferMin,
-          // A placeholder: refresh replaces it with the real search before anything renders.
-          result: { ok: false, error: { code: 'StaleResult' } },
-          selected: 0,
-        });
+        openAlternativePicker(conflict.targetId, otherEventId);
+      },
+
+      // PRE:  eventId names a snapshot event overlapping a barred slot
+      // POST: searches that event through the existing alternatives picker, with no target toggle
+      openEventAlternatives(eventId) {
+        openAlternativePicker(eventId, null);
       },
 
       // PRE:  range and bufferMin come from the replan dialog (validated by the engine)
@@ -696,8 +750,10 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
 
       // PRE:  settings come from the settings dialog (validated by the engine)
       // POST: saves them (not undoable, FR11); on ok adopts the snapshot and toasts "Settings
-      //       saved."; on err shows the error toast and keeps the old settings
+      //       saved." plus info/View for newly introduced barred warnings; on err shows the error
+      //       toast and keeps the old settings
       async updateSettings(settings) {
+        const previous = get().snapshot.barredOverlaps;
         const result = await engine.updateSettings(settings);
         if (!result.ok) {
           showError(result.error, () => {
@@ -707,6 +763,14 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
         }
         set({ snapshot: result.value });
         pushToast({ tone: 'success', text: SETTINGS_SAVED_TEXT });
+        const count = newlyWarnedEventCount(previous, result.value.barredOverlaps);
+        if (count > 0) {
+          pushToast({
+            tone: 'info',
+            text: barredOverlapToastText(count),
+            actions: [{ label: 'View', run: actions.viewBarredOverlaps }],
+          });
+        }
         return result;
       },
 
@@ -804,6 +868,8 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
       dialog: null,
       picker: null,
       emphasisIds: [],
+      panelsOpen: false,
+      barredViewRequest: 0,
       toasts: [],
       actions,
     };
