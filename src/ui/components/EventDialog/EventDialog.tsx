@@ -2,7 +2,7 @@ import { useId } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { MINUTES_PER_HOUR } from '@/shared/constants';
 import { ceilTo } from '@/shared/time';
-import type { CalendarEvent, Category, Interval, Priority } from '@/shared/types';
+import type { CalendarEvent, Category, Interval } from '@/shared/types';
 import {
   eventFormValues,
   eventResolver,
@@ -13,6 +13,7 @@ import {
 import { useAppStore, type Dialog } from '../../store/appStore';
 import { ErrorText } from '../Modal/ErrorText';
 import { Modal } from '../Modal/Modal';
+import { PriorityRadioGroup } from '../PriorityRadioGroup/PriorityRadioGroup';
 
 type EventDialogState = Extract<Exclude<Dialog, null>, { kind: 'event' }>;
 
@@ -22,11 +23,6 @@ const CATEGORIES: { value: Category; label: string }[] = [
   { value: 'appointment', label: 'Appointment' },
   { value: 'assignment', label: 'Assignment' },
   { value: 'personal', label: 'Personal' },
-];
-const PRIORITIES: { value: Priority; label: string }[] = [
-  { value: 'high', label: 'High' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'low', label: 'Low' },
 ];
 
 // PRE:  viewDate is the calendar's current date (a Minute)
@@ -38,7 +34,7 @@ function nextHourSlot(viewDate: number): Interval {
 
 // PRE:  rendered under StoreProvider; dialog is the open event dialog; existing is the event being
 //       edited (undefined when creating); reads settings and view.date; uses event actions
-//       + additional props from: Modal
+//       + additional props from: Modal, PriorityRadioGroup
 // POST: shows the event form (title, category, priority, start, end, flexible, flex window when
 //       flexible, description); Save validates with eventResolver and only then calls the engine,
 //       closing on success; Delete asks for confirmation first
@@ -127,14 +123,7 @@ function EventForm({
           ))}
         </select>
 
-        <label htmlFor={fieldId('priority')}>Priority</label>
-        <select id={fieldId('priority')} {...register('priority')}>
-          {PRIORITIES.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+        <PriorityRadioGroup registration={register('priority')} />
 
         <label htmlFor={fieldId('start')}>Start</label>
         <input
@@ -154,14 +143,16 @@ function EventForm({
         />
         <ErrorText id={errorId('end')} error={errors.end} />
 
-        <label>
-          <input type="checkbox" disabled={isTaskEvent} {...register('flexible')} /> Flexible (the
-          planner may move it)
-        </label>
-        {isTaskEvent && <p className="hint">Events of scheduled tasks always stay flexible.</p>}
+        <div className="form-group">
+          <label>
+            <input type="checkbox" disabled={isTaskEvent} {...register('flexible')} /> Flexible (the
+            planner may move it)
+          </label>
+          {isTaskEvent && <p className="hint">Events of scheduled tasks always stay flexible.</p>}
+        </div>
 
         {flexible && (
-          <fieldset>
+          <fieldset className="form-group flex-window">
             <legend>Flex window</legend>
             <label htmlFor={fieldId('flexStart')}>Window start</label>
             <input

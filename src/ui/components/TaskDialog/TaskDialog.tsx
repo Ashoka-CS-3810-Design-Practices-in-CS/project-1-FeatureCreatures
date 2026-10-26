@@ -1,6 +1,6 @@
 import { useId } from 'react';
-import { useForm } from 'react-hook-form';
-import type { Category, Priority, Task } from '@/shared/types';
+import { Controller, useForm } from 'react-hook-form';
+import type { Category, Task } from '@/shared/types';
 import {
   taskFormValues,
   taskResolver,
@@ -10,6 +10,7 @@ import {
 import { useAppStore } from '../../store/appStore';
 import { ErrorText } from '../Modal/ErrorText';
 import { Modal } from '../Modal/Modal';
+import { PriorityRadioGroup } from '../PriorityRadioGroup/PriorityRadioGroup';
 
 const CATEGORIES: { value: Category; label: string }[] = [
   { value: 'assignment', label: 'Assignment' },
@@ -18,17 +19,12 @@ const CATEGORIES: { value: Category; label: string }[] = [
   { value: 'class', label: 'Class' },
   { value: 'appointment', label: 'Appointment' },
 ];
-const PRIORITIES: { value: Priority; label: string }[] = [
-  { value: 'high', label: 'High' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'low', label: 'Low' },
-];
 
 // PRE:  rendered under StoreProvider; existing is the task being edited (undefined when creating);
 //       reads view.date; uses the task actions, openTaskPicker, openDialog and closeDialog
-//       + additional props from: Modal, ErrorText
+//       + additional props from: Modal, ErrorText, PriorityRadioGroup
 // POST: shows the task form (name, duration in hours + minutes, priority, category, window,
-//       working-hours toggle, description); Save validates with taskResolver before calling the
+//       scheduling-hours radios, description); Save validates with taskResolver before calling the
 //       engine; in edit mode it also offers Find time (unscheduled), Unschedule (scheduled) and
 //       Delete (after confirmation)
 function TaskForm({ existing }: { existing: Task | undefined }) {
@@ -37,6 +33,7 @@ function TaskForm({ existing }: { existing: Task | undefined }) {
   const idPrefix = useId();
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<TaskFormValues>({
@@ -109,14 +106,7 @@ function TaskForm({ existing }: { existing: Task | undefined }) {
           <ErrorText id={errorId('hours')} error={errors.hours} />
         </fieldset>
 
-        <label htmlFor={fieldId('priority')}>Priority</label>
-        <select id={fieldId('priority')} {...register('priority')}>
-          {PRIORITIES.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+        <PriorityRadioGroup registration={register('priority')} />
 
         <label htmlFor={fieldId('category')}>Category</label>
         <select id={fieldId('category')} {...register('category')}>
@@ -144,9 +134,38 @@ function TaskForm({ existing }: { existing: Task | undefined }) {
         />
         <ErrorText id={errorId('windowEnd')} error={errors.windowEnd} />
 
-        <label>
-          <input type="checkbox" {...register('useWorkingHours')} /> Only during working hours
-        </label>
+        <Controller
+          control={control}
+          name="useWorkingHours"
+          render={({ field }) => (
+            <fieldset className="form-group">
+              <legend>Scheduling hours</legend>
+              <div className="choice-options">
+                <label>
+                  <input
+                    type="radio"
+                    name={field.name}
+                    ref={field.ref}
+                    checked={field.value}
+                    onBlur={field.onBlur}
+                    onChange={() => field.onChange(true)}
+                  />{' '}
+                  Working hours only
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name={field.name}
+                    checked={!field.value}
+                    onBlur={field.onBlur}
+                    onChange={() => field.onChange(false)}
+                  />{' '}
+                  Any time
+                </label>
+              </div>
+            </fieldset>
+          )}
+        />
 
         <label htmlFor={fieldId('description')}>Description</label>
         <textarea

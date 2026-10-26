@@ -56,6 +56,26 @@ for (const theme of THEMES) {
   }
   // POST: this theme's week is captured at every width
 
+  // INVARIANT: dialog captures are registered for every visited width in this theme
+  for (const width of [...WEEK_WIDTHS, DRAWER_WIDTH]) {
+    test(`event dialog ${theme} ${width}`, async ({ page }) => {
+      await openApp(page, theme, width);
+      await page.getByRole('button', { name: '+ Event', exact: true }).click();
+      const dialog = page.getByRole('dialog', { name: 'New event' });
+      await dialog.getByLabel('Title', { exact: true }).fill('Study session');
+      await dialog.getByRole('checkbox', { name: /Flexible/ }).check();
+      await capture(page, `event-dialog-${theme}-${width}`);
+    });
+
+    test(`task dialog ${theme} ${width}`, async ({ page }) => {
+      await openApp(page, theme, width);
+      await page.getByRole('button', { name: '+ Task', exact: true }).click();
+      await page.getByRole('dialog', { name: 'New task' }).getByLabel('Name').fill('Write report');
+      await capture(page, `task-dialog-${theme}-${width}`);
+    });
+  }
+  // POST: event and task forms have captures at desktop and drawer widths in this theme
+
   test(`empty state ${theme}`, async ({ page }) => {
     await openApp(page, theme, WIDE_WIDTH);
     await capture(page, `empty-${theme}`);

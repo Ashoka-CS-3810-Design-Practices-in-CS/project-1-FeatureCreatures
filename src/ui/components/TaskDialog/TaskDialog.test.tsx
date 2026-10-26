@@ -29,6 +29,32 @@ function renderDialogs(engine: Engine): AppStore {
 const buttonNames = () => screen.getAllByRole('button').map((button) => button.textContent);
 
 describe('TaskDialog', () => {
+  it('defaults to Working hours only and saves Any time as useWorkingHours false', async () => {
+    const { engine } = await makeEngine();
+    const store = renderDialogs(engine);
+    act(() => store.getState().actions.openDialog({ kind: 'task', mode: 'create' }));
+    expect(screen.getByRole('group', { name: 'Scheduling hours' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Working hours only' })).toBeChecked();
+    await userEvent.click(screen.getByRole('radio', { name: 'Any time' }));
+    await userEvent.click(screen.getByRole('radio', { name: '[L] Low' }));
+    await userEvent.type(screen.getByLabelText('Name'), 'Read');
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(store.getState().dialog).toBeNull());
+    expect(store.getState().snapshot.tasks[0]).toMatchObject({
+      useWorkingHours: false,
+      priority: 'low',
+    });
+    const savedTask = store.getState().snapshot.tasks[0];
+    act(() =>
+      store.getState().actions.openDialog({ kind: 'task', mode: 'edit', id: savedTask?.id ?? '' }),
+    );
+    expect(screen.getByRole('radio', { name: 'Any time' })).toBeChecked();
+    await userEvent.click(screen.getByRole('radio', { name: 'Working hours only' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(store.getState().dialog).toBeNull());
+    expect(store.getState().snapshot.tasks[0]?.useWorkingHours).toBe(true);
+  });
+
   it('creates a task with hours + minutes mapped to durationMin', async () => {
     const { engine } = await makeEngine();
     const store = renderDialogs(engine);
@@ -143,7 +169,7 @@ describe('TaskDialog', () => {
     const store = renderDialogs(engine);
     act(() => store.getState().actions.openDialog({ kind: 'task', mode: 'edit', id: 'U' }));
 
-    await userEvent.selectOptions(screen.getByLabelText('Priority'), 'high');
+    await userEvent.click(screen.getByRole('radio', { name: '[H] High' }));
     await userEvent.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(store.getState().dialog).toBeNull());
     expect(store.getState().snapshot.tasks[0]?.priority).toBe('high');

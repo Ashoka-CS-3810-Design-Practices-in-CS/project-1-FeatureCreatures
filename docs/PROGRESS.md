@@ -6,9 +6,9 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-37 Dialog form polish; WI-38 follows. WI-01–36 are merged; clean start on `main`.
-- **Last session:** 2026-10-26 · Codex · reconstructing and verifying baseline; claiming WI-37, then WI-38.
-- **Gate status (main):** typecheck/lint, 563 tests (T15 opt-in), 7 DST, coverage 98.50% lines / 93.82% branches, all five properties at 10,000 cases, build and 11 browser checks green. Run `npm run build` before `npm run e2e` while a stale `vite preview` holds port 4173.
+- **Active WI:** next WI-38 Replan vs barred-slot overlaps; WI-37 finished and ready to merge.
+- **Last session:** 2026-10-26 · Codex · WI-37 implemented and visually reviewed; proceeding to WI-38 after main gate.
+- **Gate status:** WI-37 typecheck/lint, 565 tests (T15 opt-in), build, 17 browser checks and 12 dialog captures green. Baseline WI-36 additionally verified 7 DST, 98.50% lines / 93.82% branches and five properties at 10,000 cases. Run `npm run build` before `npm run e2e` while an existing `vite preview` holds port 4173.
 
 ## Work items
 
@@ -142,8 +142,10 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 ### Change requests after WI-36
 
-- [~] **WI-37** Dialog form polish — owner S + Dv — depends on 36
+- [x] **WI-37** Dialog form polish — owner S + Dv — depends on 36
   - 2026-10-26 · Codex · branch `feat/wi-37-dialog-polish` · done: clean main and merged WI-36 verified; requirements added to TECH_SPEC §14 · next: failing RTL/browser controls and geometry checks, UI fixes, screenshots · note: UI only; preserve schemas/engine
+  - 2026-10-26 · Codex · branch `feat/wi-37-dialog-polish` · done: red-then-green RTL radios/defaults/persistence; shared tagged priority fieldset and boolean task-hours radios; flexible toggle and full-width window are block groups below End; gate 565 tests and all six both-theme geometry/arrow-key browser checks green · next: review 12 dialog screenshots, full browser suite, finish/merge · note: npm.cmd/npx.cmd avoid this host's blocked PowerShell shims
+  - 2026-10-26 · Codex · branch `feat/wi-37-dialog-polish` · done: 12 dialog captures committed and representative light/dark desktop/drawer images reviewed; PROJECT_SCHEMA §7.1, TECH_SPEC §11.2/§14 and TEST_PLAN synced; typecheck/lint, 565 tests, build and all 17 browser checks green · next: WI-38 · note: schemas and engine unchanged
 - [ ] **WI-38** Replan vs barred-slot overlaps — owner S + Dv — depends on 37
 
 ## Milestones
