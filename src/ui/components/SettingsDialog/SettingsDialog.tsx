@@ -16,6 +16,7 @@ import {
   toSettings,
   type SettingsFormValues,
 } from '../../forms/settingsForm';
+import { downloadJson, EXPORT_MIME_TYPE } from '../../hooks/download';
 import { useAppStore } from '../../store/appStore';
 import { ErrorText } from '../Modal/ErrorText';
 import { Modal } from '../Modal/Modal';
@@ -32,7 +33,6 @@ const WEEKDAYS: { value: string; label: string }[] = [
 ];
 const SAMPLE_IDS = Object.keys(SAMPLES) as SampleId[];
 const DEFAULT_SAMPLE: SampleId = 'sparseWeek';
-const EXPORT_MIME_TYPE = 'application/json';
 const REPLACE_ALL_BODY = 'This replaces all your events, tasks and settings.';
 
 // PRE:  legend names the group; registration is RHF's register() result for a string[] field;
@@ -242,18 +242,6 @@ function SettingsForm({ settings }: { settings: Settings }) {
       </div>
     </form>
   );
-}
-
-// PRE:  fileName is the download's name; json is its content
-// POST: makes the browser download json as fileName (Blob + object URL, TECH_SPEC §9.4)
-function downloadJson(fileName: string, json: string): void {
-  const url = URL.createObjectURL(new Blob([json], { type: EXPORT_MIME_TYPE }));
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = fileName;
-  link.click();
-  // Revoking on the next tick lets the browser start the download first.
-  setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 // PRE:  rendered under StoreProvider; reads whether the calendar is empty; uses the data actions,

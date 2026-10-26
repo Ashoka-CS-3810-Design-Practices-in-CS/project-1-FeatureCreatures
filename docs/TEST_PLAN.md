@@ -26,7 +26,7 @@
 | DST | Vitest | node, `TZ=America/New_York` | `src/**/*.dst.test.ts` | every PR (`npm run test:dst`) |
 | Integration (facade + repository) | Vitest | node (+ `fake-indexeddb/auto`) | `tests/integration/*.test.ts` | every PR |
 | UI | Vitest + RTL + user-event | jsdom (`// @vitest-environment jsdom`) | `src/ui/**/*.test.tsx` | every PR |
-| End-to-end smoke | Playwright (Chromium) | built app via `vite preview` | `e2e/*.spec.ts` | push to `main` + manual |
+| End-to-end smoke | Playwright (Chromium) | built app via `vite preview`; `smoke.spec.ts` also on the StrictMode dev server (`vite`, project `chromium-dev`) | `e2e/*.spec.ts` | push to `main` + manual |
 | Performance | `vitest bench` + gated assertion | node | `bench/`, `tests/integration/perf.test.ts` | manual / before each milestone |
 | Manual | checklists §7, demos §8 | production URL | — | before each milestone |
 
@@ -39,7 +39,7 @@ These are carried over from A3.
   - CI: all pass with `PROP_RUNS=1000` and `PROP_SEED=42`.
   - Before each milestone tag: `npm run test:props:full`, which runs 10,000 cases with a random seed. Any failing seed is printed, then added as a fixed regression case.
 - **Performance.** T15 has a median under 100 ms.
-- **End-to-end.** E1–E3 all pass on `main` before each milestone.
+- **End-to-end.** E1–E4 and the smoke flow (both projects) all pass on `main` before each milestone.
 
 ---
 
@@ -214,6 +214,9 @@ These are part of their WI's definition of done in TECH_SPEC §14.
 | SlotPicker (alternatives) | Shows the target. The toggle switches the target and the options (T20 data). Each option states "N min earlier/later". |
 | ReplanDialog | It defaults to the visible week, shows two cards with their metrics, Apply calls `applyReplan`, and the empty case says "No flexible events in this range". |
 | SettingsDialog | Rejects work end ≤ start inline. Adds and removes a barred slot. Export triggers a download (spy on `URL.createObjectURL`). |
+| Modal (WI-35) | Inside `<StrictMode>` the dialog stays open after the double mount and `onClose` is not called; Esc (cancel, then close) still calls `onClose` exactly once. |
+| renderEventContent (WI-35) | A select-mirror event with empty `extendedProps` renders its time only (it used to throw in `barredLabels.map`); a drag mirror keeps its props; background and List cases. |
+| ErrorBoundary (WI-35) | A child that throws while rendering is replaced by "Something went wrong" with Reload and Export data, which call their callbacks; a failing export shows "The export failed too.". |
 | Toasts | Live region: error toasts are `aria-live="assertive"`, others `polite`. The ER5 toast is sticky with Retry. |
 | App | Empty state shows "Load sample week"; clicking it loads `sparseWeek` and shows 1 conflict. The degraded-mode banner shows when the store is created with `storageWarning`. |
 
@@ -223,13 +226,17 @@ These are part of their WI's definition of done in TECH_SPEC §14.
 
 Each test does `page.clock.install({ time: new Date('2026-11-02T08:00:00') })` before `goto('/')`, so "this week" is the base week. Each test starts with fresh storage (new context).
 
-`e2e/calendar.spec.ts` implements E1–E3; shared UI setup lives in `e2e/helpers.ts`. E2 creates E1's fixture independently, then uses real pointer gestures whose distances come from rendered time rows; no engine or store calls drive the gestures. E3 selects the panel's All status filter so the newly scheduled row remains visible.
+`e2e/calendar.spec.ts` implements E1–E4; `e2e/smoke.spec.ts` the smoke flow; shared UI setup and grid geometry live in `e2e/helpers.ts`. E2 creates E1's fixture independently, then uses real pointer gestures whose distances come from rendered time rows; no engine or store calls drive the gestures. E3 selects the panel's All status filter so the newly scheduled row remains visible.
 
 | ID | Flow | Assertions |
 |---|---|---|
 | **E1** | + Event "A", Mon 10:00–11:30 → Save. + Event "B", Mon 11:00–12:00 → Save. | Both blocks contain the text "Conflict". The conflict panel shows "11:00–11:30 (30 min)". |
 | **E2** | Continuing E1: drag B's block to Mon 13:00, then drag its bottom edge to 14:30. | The conflict panel shows "No conflicts". B's block reads "13:00–14:30". After a reload the position persists (IndexedDB). |
 | **E3** | + Task "Report", 1 h 30 min, window this week → Save → Find time → Apply the first option. | The task row shows "Scheduled". A block "Report" with the tag "Task" appears at the slot shown in the picker. |
+| **E4** (WI-35) | Click empty time Mon 09:00 → Cancel. Drag-select Mon 10:00–11:30 → Cancel. | Each opens **New event** with Start/End prefilled: 09:00–09:30 (a click is one 30-minute row), then 10:00–11:30. No page or console error. |
+| **Smoke** (WI-35) | Open and Esc every toolbar dialog (+ Event, + Task, Replan, Settings, Keyboard shortcuts); click-create "Clicked" at 09:00; drag-create "Dragged" and move its start to 09:15; open "Dragged" (Edit event) → Cancel; Suggest alternatives → Apply; + Task "Report" → Find time → Apply selected; Replan → Compute plans → Esc. | Every dialog stays open until closed; Conflicts (1), then No conflicts; both plan cards show. Fails on any uncaught page error, console error or the crash screen. Runs on the built app **and** on the StrictMode dev server. |
+
+**Dev-mode / StrictMode coverage (WI-35).** StrictMode mounts, unmounts and remounts every effect in development only, so the production build cannot show its bugs. It is covered twice: RTL renders `Modal` inside `<StrictMode>` (it stays open; Esc still closes it once), with a dialog polyfill that queues `close` like the browser; and the `chromium-dev` Playwright project runs the smoke flow on `npm run dev`. That project was red with the Modal fix reverted.
 
 ---
 
@@ -323,3 +330,4 @@ WI-31 completes local release preparation. User-reported production outcomes are
 | 2026-10-26 | v1.5 (WI-30): §8 links reproducible sample deliverables, distinguishes fixed UTC files from current-local-week presets, and records the pending D1–D5 production rehearsals. |
 | 2026-10-26 | v1.6 (WI-32/33): adds T37/T38 and the toolbar-button regression; extends D5; records Divyam's D1–D5 production passes and contrast/toast-announcement results, distinguishing later change-request checks. |
 | 2026-10-26 | v1.7 (WI-31): final validation/release record (524 tests, 7 DST, 8 browser, full properties, coverage, T15); checks reported contrast/toast announcements and retains unreported List-reader/viva/post-deploy actions as human-owned. |
+| 2026-10-26 | v1.8 (WI-35): adds E4 (click and drag-select create) and the smoke flow, both failing on any page/console error; the smoke flow also runs on the StrictMode dev server; §5 adds Modal-in-StrictMode, select-mirror and error-boundary UI cases; records how dev-mode/StrictMode behaviour is covered. |

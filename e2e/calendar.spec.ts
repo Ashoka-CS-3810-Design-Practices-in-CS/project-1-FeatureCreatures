@@ -1,19 +1,16 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { createConflict, openCalendar } from './helpers';
+import {
+  clickTime,
+  collectPageErrors,
+  createConflict,
+  DRAG_STEPS,
+  dragSelect,
+  GRAB_OFFSET_PX,
+  openCalendar,
+  rowTop,
+} from './helpers';
 
-const DRAG_STEPS = 12;
-const GRAB_OFFSET_PX = 2;
 const EXPECTED_REPORT_SLOT = 'Mon 2 Nov 09:00–10:30';
-
-// PRE:  time is a visible time-grid row's HH:mm:ss value
-// POST: returns that row's top edge; throws if it has no rendered geometry
-async function rowTop(page: Page, time: string): Promise<number> {
-  const bounds = await page.locator(`.fc-timegrid-slot[data-time="${time}"]`).first().boundingBox();
-  if (bounds === null) {
-    throw new Error(`No time-grid row rendered for ${time}`);
-  }
-  return bounds.y;
-}
 
 // PRE:  target locates the event or resize handle to drag; deltaY is a pixel distance
 // POST: waits for its visible geometry and completes a real pointer drag by deltaY
@@ -101,4 +98,28 @@ test('E3: scheduling Report applies the offered slot and creates a linked Task e
   });
   await expect(placed).toBeVisible();
   await expect(placed).toContainText('Task');
+});
+
+// PRE:  page shows the New event dialog
+// POST: checks its Start and End fields, then cancels the dialog
+async function expectNewEventTimes(page: Page, start: string, end: string): Promise<void> {
+  const dialog = page.getByRole('dialog', { name: 'New event' });
+  await expect(dialog.getByLabel('Start', { exact: true })).toHaveValue(start);
+  await expect(dialog.getByLabel('End', { exact: true })).toHaveValue(end);
+  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+}
+
+test('E4: clicking and drag-selecting empty time open New event with those times', async ({
+  page,
+}) => {
+  const errors = collectPageErrors(page);
+  await openCalendar(page);
+  await clickTime(page, '09:00:00');
+  await expectNewEventTimes(page, '2026-11-02T09:00', '2026-11-02T09:30');
+
+  await dragSelect(page, '10:00:00', '11:30:00');
+  await expectNewEventTimes(page, '2026-11-02T10:00', '2026-11-02T11:30');
+
+  expect(errors).toEqual([]);
 });

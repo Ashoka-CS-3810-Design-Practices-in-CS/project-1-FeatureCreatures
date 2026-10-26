@@ -1,6 +1,7 @@
 // FullCalendar callbacks as plain functions (TECH_SPEC §11.3), so tests can call them with fake
 // info objects (T14). The info types below are the parts of FullCalendar's arguments they read.
 
+import { CLICK_EVENT_MIN, SNAP_MIN } from '@/shared/constants';
 import { toMinute } from '@/shared/time';
 import type { AppActions, ViewType } from '../../store/appStore';
 
@@ -35,7 +36,8 @@ export interface CalendarHandlers {
 
 // PRE:  actions are the store's actions
 // POST: returns FullCalendar's handlers: a drag or resize moves the event and snaps it back when
-//       the engine refuses (ER5); a selection opens the create dialog; a click on an event opens
+//       the engine refuses (ER5); a selection opens the create dialog for its times (a plain click,
+//       which selects one SNAP_MIN step, gets CLICK_EVENT_MIN instead); a click on an event opens
 //       its edit dialog (background blocks are ignored); a date change records the view, its
 //       period start and the visible range
 export function createCalendarHandlers(
@@ -59,11 +61,10 @@ export function createCalendarHandlers(
     onDrop: moveOrRevert,
     onResize: moveOrRevert,
     onSelect(info) {
-      actions.openDialog({
-        kind: 'event',
-        mode: 'create',
-        defaults: { start: toMinute(info.start), end: toMinute(info.end) },
-      });
+      const start = toMinute(info.start);
+      const selectedEnd = toMinute(info.end);
+      const end = selectedEnd - start <= SNAP_MIN ? start + CLICK_EVENT_MIN : selectedEnd;
+      actions.openDialog({ kind: 'event', mode: 'create', defaults: { start, end } });
       info.view.calendar.unselect();
     },
     onClick(info) {

@@ -87,6 +87,20 @@ describe('calendar handlers ↔ engine (T14, ER4, ER5)', () => {
     expect(info.revert).toHaveBeenCalledOnce();
   });
 
+  // WI-35: a plain click selects one 5-minute snap step; it creates a 30-minute (one row) event.
+  it('a click-sized selection opens the create dialog with one 30-minute row', async () => {
+    const { engine } = await makeEngine();
+    const store = storeFor(engine);
+    const handlers = createCalendarHandlers(store.getState().actions);
+    const view = { calendar: { unselect: vi.fn() } };
+
+    handlers.onSelect({ start: fromMinute(t('Tue 09:00')), end: fromMinute(t('Tue 09:05')), view });
+    expect(store.getState().dialog).toMatchObject({ defaults: iv('Tue 09:00', 'Tue 09:30') });
+
+    handlers.onSelect({ start: fromMinute(t('Tue 09:00')), end: fromMinute(t('Tue 09:10')), view });
+    expect(store.getState().dialog).toMatchObject({ defaults: iv('Tue 09:00', 'Tue 09:10') });
+  });
+
   it('select opens the create dialog; click opens edit unless it is a background block', async () => {
     const { engine } = await makeEngine({ events: seed });
     const store = storeFor(engine);

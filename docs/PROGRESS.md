@@ -6,9 +6,9 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-35 Crash fixes, on branch `feat/wi-35-crash-fixes`. WI-36 (audit findings) follows.
-- **Last session:** 2026-10-26 · Claude Code · merged the approved WI-34 into `main`; claimed WI-35.
-- **Gate status (main):** typecheck/lint and 524 tests green after the WI-34 merge (same tree as the green branch).
+- **Active WI:** WI-36 Audit findings A01–A10, on branch `feat/wi-36-audit-findings`.
+- **Last session:** 2026-10-26 · Claude Code · merged WI-34; finished and merged WI-35 (crash fixes); claimed WI-36.
+- **Gate status (main):** typecheck/lint, 535 tests (T15 opt-in), 7 DST, build and 11 browser checks (incl. E4 and the smoke flow on the build and the StrictMode dev server) green. Run `npm run build` before `npm run e2e` while a stale `vite preview` holds port 4173.
 
 ## Work items
 
@@ -131,9 +131,11 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 ### Change requests after WI-34 (user report: production crash on selecting time; no dialog under `npm run dev`)
 
-- [~] **WI-35** Crash fixes (mirror events, StrictMode dialogs, error boundary) — owner S + Dv — depends on 34
+- [x] **WI-35** Crash fixes (mirror events, StrictMode dialogs, error boundary) — owner S + Dv — depends on 34
   - 2026-10-26 · Claude Code · branch `feat/wi-35-crash-fixes` · done: claimed; WI-34 merged · next: failing tests for the mirror event and StrictMode Modal, then fixes, error boundary, E4 and the smoke flow
-- [ ] **WI-36** Audit findings A01–A10 — owner S + Dv — depends on 35
+  - 2026-10-26 · Claude Code · branch `feat/wi-35-crash-fixes` · done: (a) `renderEventContent` renders an event without block props (the select mirror) as its time only, red-then-green regression test; a plain click (one 5-min snap) now opens a 30-min event (`CLICK_EVENT_MIN`); E4 was red on the old build (crash) and is green. (b) Modal ignores a `close` event while the dialog is open again; the jsdom polyfill now queues `close` like the browser; StrictMode + Esc tests red then green. (c) top-level `ErrorBoundary` (Reload / Export data, export failure message), `downloadJson` moved to `hooks/download.ts`. (d) smoke flow fails on page/console errors and runs on the build and on a StrictMode dev server (port 5174, project `chromium-dev`), which was red with the Modal fix reverted. Gate: 535 tests, 7 DST, 11 browser checks · next: WI-36 · note: overlapping time-grid events are drawn inset, so e2e must click the block on top
+- [~] **WI-36** Audit findings A01–A10 — owner S + Dv — depends on 35
+  - 2026-10-26 · Claude Code · branch `feat/wi-36-audit-findings` · done: claimed; WI-35 merged · next: commit `docs/AUDIT.md`, then A01/A02 test-first
 
 ## Milestones
 
