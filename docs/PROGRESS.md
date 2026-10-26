@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** none. WI-34, WI-35 and WI-36 are merged into `main`; **`main` is ready for the human push and redeploy**.
-- **Last session:** 2026-10-26 · Claude Code · merged WI-34; WI-35 (crash fixes, error boundary, E4, StrictMode smoke) and WI-36 (audit A01–A10) done and merged.
+- **Active WI:** WI-37 Dialog form polish; WI-38 follows. WI-01–36 are merged; clean start on `main`.
+- **Last session:** 2026-10-26 · Codex · reconstructing and verifying baseline; claiming WI-37, then WI-38.
 - **Gate status (main):** typecheck/lint, 563 tests (T15 opt-in), 7 DST, coverage 98.50% lines / 93.82% branches, all five properties at 10,000 cases, build and 11 browser checks green. Run `npm run build` before `npm run e2e` while a stale `vite preview` holds port 4173.
 
 ## Work items
@@ -139,6 +139,12 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-26 · Claude Code · branch `feat/wi-36-audit-findings` · done: `docs/AUDIT.md` committed; A01 (replan pins unplaced events, fixed-point passes) and A02 (supported-date `minute` schema) fixed test-first with resolutions recorded · next: A03–A10
   - 2026-10-26 · Claude Code · branch `feat/wi-36-audit-findings` · done: A03 (ER4 Move to version), A04 (BR-9 mirror on import/init), A05 (whole-day loads), A06 (slot schema) fixed test-first, resolutions recorded · next: A07–A10, then cleanup notes
   - 2026-10-26 · Claude Code · branch `feat/wi-36-audit-findings` · done: A07 (clock-overtaken results are stale), A08 (Replan inputs drop old plans), A09 (description errors shown), A10 (Month Replan default) fixed test-first; cleanup R01 fixed, range validator aligned with BR-12, R02/R03/View-conflict deferred with reasons in `docs/AUDIT.md`; all three docs and change logs synced. Verified: 563 tests, coverage 98.50/93.82 (algorithms 99.70/95.93), 7 DST, 5 properties × 10,000, build, 11 browser checks · next: human push + redeploy · note: the stricter BR-9 import check made several test fixtures name linked events after their tasks; the six sample deliverables still import
+
+### Change requests after WI-36
+
+- [~] **WI-37** Dialog form polish — owner S + Dv — depends on 36
+  - 2026-10-26 · Codex · branch `feat/wi-37-dialog-polish` · done: clean main and merged WI-36 verified; requirements added to TECH_SPEC §14 · next: failing RTL/browser controls and geometry checks, UI fixes, screenshots · note: UI only; preserve schemas/engine
+- [ ] **WI-38** Replan vs barred-slot overlaps — owner S + Dv — depends on 37
 
 ## Milestones
 
