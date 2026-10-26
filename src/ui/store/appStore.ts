@@ -909,8 +909,8 @@ export function StoreProvider({ store, children }: { store: AppStore; children: 
   return createElement(StoreContext.Provider, { value: store }, children);
 }
 
-// PRE:  called in a component under StoreProvider
-// POST: returns the provided store API without subscribing to render-time state
+// PRE:  called in a React component
+// POST: returns the provided store API without subscribing; throws if StoreProvider is missing
 export function useAppStoreApi(): AppStore {
   const store = useContext(StoreContext);
   if (store === null) {
