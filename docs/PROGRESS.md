@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** none. WI-01–38 are complete and merged into `main`; ready for the human push and redeploy.
-- **Last session:** 2026-10-26 · Codex · WI-37/38 merged; final main gate verified (578 tests); working tree committed.
+- **Active WI:** WI-39 Fix intermittent CI failures on `fix/wi-39-shortcut-race`; WI-01–38 are merged.
+- **Last session:** 2026-10-26 · Codex · clean main and baseline gate verified (578 tests); claiming WI-39 after the human documentation updates.
 - **Gate status:** typecheck/lint, 578 tests (T15 opt-in), 7 DST, coverage 98.55% lines / 93.98% branches, build and 18 browser checks green. Twelve dialog and four diagnostic captures reviewed. The unchanged heuristic's five 10,000-case properties were last verified in WI-36. Run `npm run build` before `npm run e2e` while an existing `vite preview` holds port 4173.
 
 ## Work items
@@ -153,6 +153,11 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-26 · Codex · branch `feat/wi-38-replan-diagnostics` · done: T39/T40 exact classification, deduplication and range-boundary checks; browser moves flexible Study out of Lunch and routes fixed Class through alternatives; gate 578 tests, 7 DST, coverage 98.55% lines / 93.98% branches and all 18 browser checks green · next: refresh reviewed diagnostic captures after moving the zero-move summary above the list, finish/merge · note: both plans are explained even when movableCount is zero
   - 2026-10-26 · Codex · branch `feat/wi-38-replan-diagnostics` · done: final gate 578 tests plus refreshed/reviewed both-theme desktop/drawer diagnostic captures; zero-move summary visible above the list; D4 and all docs/change logs synced; strengthened geometry helper also checks End is fully inside the dialog · next: merge/main gate, human push/redeploy · note: the future-flexible barred regression passed before implementation, so only derived diagnostics/UI changed; schemas/heuristic/metrics remain unchanged
   - 2026-10-26 · Codex · branch `main` · done: WI-37 and WI-38 merged with branches retained; final main typecheck/lint and 578 tests green · next: human push/redeploy and production D4 smoke · note: no active or uncommitted work remains
+
+### Change requests after WI-38
+
+- [~] **WI-39** Fix intermittent CI failures — owner S + Dv — depends on 38
+  - 2026-10-26 · Codex · branch `fix/wi-39-shortcut-race` · done: clean main, branches/log and baseline typecheck/lint/578 tests verified; confirmed render-time shortcut closure · next: failing synchronous close/keypress regression, current-state listener, CI diagnostics, warm/cold 10-repeat browser hunts · note: preserve the human's README and completed release checklist updates
 
 ## Milestones
 
