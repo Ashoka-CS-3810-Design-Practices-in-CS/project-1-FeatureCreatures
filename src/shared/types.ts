@@ -195,6 +195,15 @@ export interface ReplanResult {
   readonly bufferMin: number;
   readonly movableCount: number;
   readonly plans: readonly [ReplanPlan, ReplanPlan]; // [minimalChange, balanced]
+  readonly notMoved: Readonly<Record<ReplanPlan['id'], readonly ReplanNotMoved[]>>;
+}
+
+export interface ReplanNotMoved {
+  readonly eventId: string;
+  readonly title: string;
+  readonly reason: 'fixed' | 'started' | 'outsideFlexWindow' | 'noSlot';
+  readonly barredLabels: readonly string[];
+  readonly conflictTitles: readonly string[];
 }
 
 export interface Snapshot {

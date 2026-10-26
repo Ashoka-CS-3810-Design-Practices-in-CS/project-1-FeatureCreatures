@@ -149,6 +149,7 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 - [~] **WI-38** Replan vs barred-slot overlaps — owner S + Dv — depends on 37
   - 2026-10-26 · Codex · branch `feat/wi-38-replan-diagnostics` · done: claimed after WI-37 merge/main gate; inspected BR-12 pipeline and UI · next: prove future flexible barred moves and static exclusions, then per-plan diagnostics and UI regressions · note: keep scheduling heuristic unchanged unless regression proves a bug
   - 2026-10-26 · Codex · branch `feat/wi-38-replan-diagnostics` · done: new engine regressions pass on the unchanged heuristic: future Study moves Mon 13–14 to 12–13 with reason barred/Lunch after settings change; fixed and started barred events stay static · next: failing classification/UI tests and derived per-plan diagnostics · note: case (i) is correct; no algorithm fix needed
+  - 2026-10-26 · Codex · branch `feat/wi-38-replan-diagnostics` · done: classification/UI tests failed then passed; ReplanResult.notMoved derives per-plan residual conflicts/barred warnings and unplaced reasons; zero-move messages and reused alternatives; Fixed/Flexible panel tags; docs/contracts synced; 24 targeted engine/dialog cases and earlier full gate (574 tests) green · next: browser D4 flow, screenshots, final gate/coverage · note: scheduling heuristic and schemas untouched
 
 ## Milestones
 

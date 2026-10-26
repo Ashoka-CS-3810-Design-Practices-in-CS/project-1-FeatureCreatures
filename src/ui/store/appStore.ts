@@ -604,7 +604,7 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
         openAlternativePicker(conflict.targetId, otherEventId);
       },
 
-      // PRE:  eventId names a snapshot event overlapping a barred slot
+      // PRE:  eventId names a snapshot event requiring alternatives (barred overlap or Replan diagnostic)
       // POST: searches that event through the existing alternatives picker, with no target toggle
       openEventAlternatives(eventId) {
         openAlternativePicker(eventId, null);

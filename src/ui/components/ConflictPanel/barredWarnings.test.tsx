@@ -2,17 +2,36 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SAMPLES } from '@/data/samples';
-import { ev, settings } from '../../../../tests/helpers/builders';
+import { ev, flexEv, settings } from '../../../../tests/helpers/builders';
 import { makeEngine } from '../../../../tests/helpers/engine';
 import { renderWithStore, storeFor } from '../../../../tests/helpers/render';
 import { BASE_MONDAY } from '../../../../tests/helpers/time';
 import { App } from '../../App';
 import { SlotPicker } from '../SlotPicker/SlotPicker';
+import { ConflictPanel } from './ConflictPanel';
 
 const LUNCH = { id: 'lunch', label: 'Lunch', startMin: 780, endMin: 840, days: [1] as const };
 
 describe('T38 barred warning UI', () => {
   afterEach(() => vi.restoreAllMocks());
+
+  it.each([false, true])(
+    'marks barred rows as Fixed or Flexible (flexible=%s)',
+    async (flexible) => {
+      const event = flexible
+        ? flexEv('Study', 'Mon 13:00', 'Mon 14:00', ['Mon 09:00', 'Mon 18:00'])
+        : ev('Class', 'Mon 13:00', 'Mon 14:00');
+      const { engine } = await makeEngine({
+        events: [event],
+        settings: settings({ barredSlots: [LUNCH] }),
+      });
+      renderWithStore(<ConflictPanel />, storeFor(engine));
+      const section = screen.getByRole('region', { name: 'Barred-slot overlaps (1)' });
+      expect(
+        within(section).getByText(flexible ? 'Flexible' : 'Fixed', { exact: true }),
+      ).toBeInTheDocument();
+    },
+  );
 
   it('shows a text tag and separate section, reusing alternatives for that event without a toggle', async () => {
     const { engine } = await makeEngine({

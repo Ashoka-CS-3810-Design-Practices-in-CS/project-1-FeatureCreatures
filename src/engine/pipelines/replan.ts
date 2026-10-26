@@ -8,6 +8,7 @@ import { parseInput, searchOptionsSchema } from '@/shared/schemas';
 import { addLocalDays, buildDayFrames, startOfLocalDay } from '@/shared/time';
 import type { CalendarEvent, Interval, Minute, ReplanPlan, ReplanResult } from '@/shared/types';
 import { planReplan as planWithHeuristics } from '../algorithms/replanHeuristics';
+import { diagnoseReplan } from '../replanDiagnostics';
 import { requireCurrentVersion, requireNotPast, segmentsFor } from '../search';
 import {
   commit,
@@ -54,7 +55,7 @@ function requireReplanRange(range: Interval): Result<null, EngineError> {
 
 // PRE:  state.events is sorted; request comes from outside; notBefore is now rounded up to SNAP_MIN
 // POST: returns both BR-12 plans for request.range (buffer = request.bufferMin ?? settings.bufferMin)
-//       with the version they were computed at; err InvalidInput for a bad bufferMin, or
+//       with the version and per-plan remaining-problem diagnostics; err InvalidInput for a bad bufferMin, or
 //       InvalidTime for a bad range
 export function planReplan(
   state: EngineState,
@@ -70,16 +71,27 @@ export function planReplan(
     return range;
   }
   const bufferMin = options.value.bufferMin ?? state.settings.bufferMin;
+  const frames = buildDayFrames(request.range, state.settings);
   const { movableCount, plans } = planWithHeuristics({
     events: state.events,
     conflicts: state.conflicts,
-    frames: buildDayFrames(request.range, state.settings),
+    frames,
     range: request.range,
     bufferMin,
     notBefore,
     segmentsFor: segmentsFor(state, notBefore),
   });
-  return ok({ baseVersion: state.version, range: request.range, bufferMin, movableCount, plans });
+  return ok({
+    baseVersion: state.version,
+    range: request.range,
+    bufferMin,
+    movableCount,
+    plans,
+    notMoved: {
+      minimalChange: diagnoseReplan(state.events, frames, request.range, notBefore, plans[0]),
+      balanced: diagnoseReplan(state.events, frames, request.range, notBefore, plans[1]),
+    },
+  });
 }
 
 // PRE:  lastReplan is the engine's latest planReplan result, or null; request comes from the UI

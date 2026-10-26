@@ -291,12 +291,14 @@ Each requirement lists its acceptance criteria. The tests that prove it are in `
   - its moves (from → to, with the reason)
   - the events it could not place
   - its metrics: moved count, total shift, conflicts before → after, day-load spread before → after
+  - **Not moved by Replan:** events with conflicts or barred-slot overlaps remaining after that plan, plus events left unplaced. Each appears once with its reason (Fixed event / Already started / Outside its flex window / No free slot), overlapping barred labels or conflicting titles, and **Suggest alternatives** using the existing per-event flow.
 - The user can apply one plan as a single step, or cancel.
 - **Acceptance:**
   - Fixed events are never moved.
   - Events that have already started are never moved.
   - Moved events never overlap each other or static events, and respect the buffer.
   - If there are no flexible events in the range, the dialog says so.
+  - Remaining problems are shown even with no movable events. A plan with zero moves and remaining problems says "No moves in this plan — N events still need attention." (singular as appropriate), never a bare "No changes needed". Problems resolved by that plan are omitted.
 
 **FR11 — Settings.**
 - **Editable:** working days and hours, default buffer, barred slots (add, edit, remove), default criterion.
@@ -459,6 +461,7 @@ Every search result also carries:
 - **Range:** `[from, to)`, with `from` at a local midnight and `to` at a local midnight, between 1 and 14 days long.
 - **Movable events:** flexible, `start ≥ notBefore`, and intersecting the range.
 - **Static events:** every other event that intersects the range. These are never moved.
+- **UX diagnostics (no change to placement rules):** after projecting each plan, list unchanged events with conflicts/barred overlaps whose overlap intersects the range, plus its unplaced events. Classify in order: fixed → "Fixed event"; flexible with `start < notBefore` → "Already started"; unplaced with move reason `outsideFlexWindow` → "Outside its flex window"; otherwise → "No free slot". Unplaced events have no fitting allowed free gap within `flexWindow ∩ range` with the buffer. Reasons describe the current request and can differ after changing the range/settings. Every entry offers the existing per-event Suggest alternatives action; applying alternatives still needs consent (BR-14).
 - **Order:** movable events are processed one at a time, by priority (High first), then duration (longest first), then start, then ID. Each placed event becomes busy for the events after it. If an event cannot be placed, it stays where it is and is listed as unplaced, and it remains busy for every other movable event, including those processed before it (no placed event may land on it).
 - **Allowed region:** for each movable event, the allowed segments of `flexWindow ∩ range`, respecting working hours (BR-5).
 - **Minimal change:**
@@ -491,6 +494,7 @@ Every search result also carries:
 - Every overlap is a derived `{eventId, label, overlap, minutes}` record, with `overlap = [max(starts), min(ends))` and `minutes = overlap.end − overlap.start`. Existing events remain allowed inside barred slots.
 - These warnings are separate from BR-3 event-pair conflicts: the sweep, conflict counts and replan metrics do not include them. They are recomputed after data changes and settings changes, and are never persisted or exported.
 - Event blocks show a text tag `In <label>` for each distinct overlapping label. A second panel section, **Barred-slot overlaps (N)**, lists every record with event title, label, range, minutes and **Suggest alternatives** for that event (no other-event toggle).
+- Each barred-overlap row also shows **Fixed** or **Flexible**. Flexible events can be replanned only when not already started and a free placement exists within the range and flex window (BR-12).
 - When saving settings introduces overlap records, an info toast counts distinct events among the new records: `2 events overlap barred slots` (singular: `1 event overlaps barred slots`). **View** opens the panels drawer when needed and focuses/scrolls the barred-overlap section. An unchanged save or a save only removing overlaps produces no overlap toast.
 
 ---
@@ -684,3 +688,4 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 | 2026-10-26 | v1.3 (WI-35): §7.2 a plain click on empty time pre-fills a 30-minute event; §7.4 an unexpected crash shows Something went wrong with Reload / Export data. |
 | 2026-10-26 | v1.4 (WI-36, `docs/AUDIT.md`): BR-12 an unplaced event is busy for every other movable event (A01); ER1 dates must be in 1970–9999 (A02); ER4 a stale Move to opens fresh alternatives (A03); ER6 includes BR-9 mirror mismatches (A04); ER7 includes results overtaken by time (A07); §7.1 Replan inputs drop computed plans (A08) and Month defaults to its first full week (A10). |
 | 2026-10-26 | v1.5 (WI-37): §7.1 specifies shared tagged/coloured priority radios, task scheduling-hours radios and a full-width flex-window group below End. UI only; schemas and engine unchanged. |
+| 2026-10-26 | v1.6 (WI-38): FR10/BR-12 define per-plan remaining-problem explanations and alternatives, including zero movable events; BR-15 adds Fixed/Flexible row tags. Placement rules unchanged. |
