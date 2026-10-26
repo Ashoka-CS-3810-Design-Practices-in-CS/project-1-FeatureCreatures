@@ -319,6 +319,10 @@ td {
   border-left-color: var(--danger);
 }
 
+.conflict-panel .barred-overlaps li {
+  border-left-color: var(--warning);
+}
+
 /* ── Dialogs ──────────────────────────────────────────────────────────── */
 
 dialog {

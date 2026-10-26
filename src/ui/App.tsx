@@ -1,5 +1,5 @@
 import type FullCalendar from '@fullcalendar/react';
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { CalendarView } from './components/CalendarView/CalendarView';
 import { ConfirmDialog } from './components/ConfirmDialog/ConfirmDialog';
 import { BusyOverlay } from './components/BusyOverlay/BusyOverlay';
@@ -47,7 +47,8 @@ function FatalScreen() {
   );
 }
 
-// PRE:  rendered under StoreProvider; reads status, storageWarning and snapshot
+// PRE:  rendered under StoreProvider; reads status, storageWarning, snapshot and panelsOpen;
+//       uses setPanelsOpen to control the responsive drawer
 //       + additional props from: Toolbar, EmptyState, CalendarView, SidePanel, BusyOverlay,
 //       EventDialog, TaskDialog, ReplanDialog, SettingsDialog, ShortcutHelp, ConfirmDialog,
 //       SlotPicker, Toasts, FatalScreen
@@ -58,7 +59,8 @@ function FatalScreen() {
 export function App() {
   const calendarRef = useRef<FullCalendar>(null);
   const narrow = useNarrowLayout();
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const drawerOpen = useAppStore((state) => state.panelsOpen);
+  const setPanelsOpen = useAppStore((state) => state.actions.setPanelsOpen);
   const { theme, cycleTheme } = useTheme();
   useShortcuts(calendarRef);
   const status = useAppStore((state) => state.status);
@@ -87,7 +89,7 @@ export function App() {
           theme={theme}
           onCycleTheme={cycleTheme}
           panelsOpen={narrow && drawerOpen}
-          onOpenPanels={narrow ? () => setDrawerOpen(true) : undefined}
+          onOpenPanels={narrow ? () => setPanelsOpen(true) : undefined}
         />
       </header>
       <main>
@@ -98,7 +100,7 @@ export function App() {
         </p>
         <CalendarView calendarRef={calendarRef} />
       </main>
-      <SidePanel narrow={narrow} open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      <SidePanel narrow={narrow} open={drawerOpen} onClose={() => setPanelsOpen(false)} />
       <EventDialog />
       <TaskDialog />
       <ReplanDialog />

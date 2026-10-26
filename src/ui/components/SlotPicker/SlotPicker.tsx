@@ -176,20 +176,22 @@ function AlternativesPicker({ picker }: { picker: AlternativesPickerState }) {
       title={`Alternatives for "${target.title}" (${fmtDuration(target.end - target.start)})`}
       onClose={actions.pickerStop}
     >
-      <fieldset>
-        <legend>Move</legend>
-        {choices.map((event) => (
-          <label key={event.id}>
-            <input
-              type="radio"
-              name={toggleName}
-              checked={event.id === target.id}
-              onChange={actions.pickerToggleTarget}
-            />{' '}
-            {event.title}
-          </label>
-        ))}
-      </fieldset>
+      {choices.length > 1 && (
+        <fieldset>
+          <legend>Move</legend>
+          {choices.map((event) => (
+            <label key={event.id}>
+              <input
+                type="radio"
+                name={toggleName}
+                checked={event.id === target.id}
+                onChange={actions.pickerToggleTarget}
+              />{' '}
+              {event.title}
+            </label>
+          ))}
+        </fieldset>
+      )}
       <BufferField bufferMin={picker.bufferMin} />
       <SearchResults
         result={picker.result}

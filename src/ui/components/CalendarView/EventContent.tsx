@@ -16,6 +16,7 @@ export function EventContent({
   flexible,
   isTask,
   conflictMinutes,
+  barredLabels,
   label,
   onOpen,
 }: EventBlockProps & { title: string; timeText: string; onOpen?: () => void }) {
@@ -34,6 +35,9 @@ export function EventContent({
       {conflictMinutes > 0 && (
         <span className="tag tag-conflict">⚠ Conflict {fmtDuration(conflictMinutes)}</span>
       )}{' '}
+      {barredLabels.map((label) => (
+        <span key={label} className="tag tag-barred">In {label}</span>
+      ))}{' '}
       <span className="event-time">{timeText}</span>{' '}
       <strong className="event-title">{title}</strong>{' '}
       <span className={`tag prio-${priority}`}>{PRIORITY_TAG[priority]}</span>

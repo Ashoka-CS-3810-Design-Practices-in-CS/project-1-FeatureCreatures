@@ -135,6 +135,7 @@ describe('calendar handlers ↔ engine (T14, ER4, ER5)', () => {
         <EventContent
           title="Essay"
           label="Essay, Low priority, Task"
+          barredLabels={[]}
           timeText="09:00"
           priority="low"
           category="assignment"
@@ -145,6 +146,7 @@ describe('calendar handlers ↔ engine (T14, ER4, ER5)', () => {
         <EventContent
           title="Walk"
           label="Walk, Low priority, Flexible"
+          barredLabels={[]}
           timeText="10:00"
           priority="low"
           category="personal"

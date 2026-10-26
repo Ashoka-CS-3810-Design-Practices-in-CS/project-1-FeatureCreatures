@@ -109,6 +109,7 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 - [~] **WI-32** Barred-slot overlap warnings — owner S + Dv — depends on 29
   - 2026-10-26 · Codex · branch `feat/wi-32-barred-warnings` · done: requirements/contracts/T37/T38 and complexity documented in all three docs before code · next: algorithm/snapshot and UI tests first, separate warning records, settings toast/View and reused alternatives
+  - 2026-10-26 · Codex · branch `feat/wi-32-barred-warnings` · done: T37/T38 tests written red then green (14 tests), typecheck/lint and all 7 DST cases green; derived warnings, settings diff toast/View, tags/panel and reused alternatives implemented · next: browser warning workflow and full gate/coverage · note: sparseWeek thesis confirmed exactly TaskLongerThanWindow, 600 min vs longest allowed stretch 240 min, in engine and UI
 - [ ] **WI-33** Shortcuts button — owner S + Dv — depends on 29
 
 ## Milestones

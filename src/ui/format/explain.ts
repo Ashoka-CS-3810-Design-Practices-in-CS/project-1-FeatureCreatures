@@ -129,12 +129,24 @@ export const CRITERIA: { value: UserCriterion; label: string }[] = [
 ];
 const PRIORITY_NAME: Record<Priority, string> = { high: 'High', medium: 'Medium', low: 'Low' };
 
-// PRE:  event is a stored calendar event; conflictMinutes is its largest overlap, or zero
+// PRE:  event is a stored calendar event; conflictMinutes is its largest overlap, or zero;
+//       barredLabels are distinct overlapping slot labels
 // POST: returns its complete accessible name, including the date, priority, kind and conflict
-export function eventAccessibleText(event: CalendarEvent, conflictMinutes: number): string {
+export function eventAccessibleText(
+  event: CalendarEvent,
+  conflictMinutes: number,
+  barredLabels: readonly string[] = [],
+): string {
   const kind = event.taskId !== null ? 'Task' : event.flexible ? 'Flexible' : 'Fixed';
   const conflict = conflictMinutes > 0 ? `, Conflict ${fmtDuration(conflictMinutes)}` : '';
-  return `${event.title}, ${fmtRange(event)}, ${PRIORITY_NAME[event.priority]} priority, ${kind}${conflict}`;
+  const barred = barredLabels.map((label) => `, In ${label}`).join('');
+  return `${event.title}, ${fmtRange(event)}, ${PRIORITY_NAME[event.priority]} priority, ${kind}${conflict}${barred}`;
+}
+
+// PRE:  count is a positive count of distinct newly warned events
+// POST: returns the settings info message with singular/plural agreement
+export function barredOverlapToastText(count: number): string {
+  return count === 1 ? '1 event overlaps barred slots' : `${count} events overlap barred slots`;
 }
 const EFFECTIVE_NAME: Record<EffectiveCriterion, string> = {
   earliest: 'earliest slot',

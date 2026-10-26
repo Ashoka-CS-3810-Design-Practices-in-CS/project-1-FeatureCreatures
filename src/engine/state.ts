@@ -5,7 +5,17 @@ import type { ChangeSet, Repository } from '@/data/repository';
 import { HISTORY_LIMIT } from '@/shared/constants';
 import type { EngineError } from '@/shared/errors';
 import { err, ok, type Result } from '@/shared/result';
-import type { CalendarEvent, Conflict, Minute, Settings, SlotOption, Task } from '@/shared/types';
+import type {
+  BarredOverlap,
+  CalendarEvent,
+  Conflict,
+  Minute,
+  Settings,
+  SlotOption,
+  Task,
+} from '@/shared/types';
+import { buildDayFrames } from '@/shared/time';
+import { detectBarredOverlaps } from './algorithms/barred';
 import { compareEvents, insertSorted, removeById } from './algorithms/sortedArray';
 import { detectConflicts } from './algorithms/sweep';
 
@@ -15,6 +25,7 @@ export interface EngineState {
   readonly tasks: readonly Task[];
   readonly settings: Settings;
   readonly conflicts: readonly Conflict[];
+  readonly barredOverlaps: readonly BarredOverlap[];
   readonly undo: readonly Change[]; // ≤ HISTORY_LIMIT, newest last
   readonly redo: readonly Change[];
 }
@@ -54,7 +65,24 @@ export interface PipelineOutcome extends CommitOutcome {
   readonly suggestion: SlotOption | null;
 }
 
-// PRE:  events have distinct ids, in any order; tasks have distinct ids
+// PRE:  events satisfy stored event constraints; settings satisfies settingsSchema
+// POST: derives warning records in event/day/slot order, expanding only touched local days;
+//       O(N·B log(B+1) + q) time and O(B + q) space; no warnings when slots are absent
+export function barredOverlapsFor(
+  events: readonly CalendarEvent[],
+  settings: Settings,
+): BarredOverlap[] {
+  if (settings.barredSlots.length === 0) return [];
+  const warnings: BarredOverlap[] = [];
+  // INVARIANT: warnings contains exactly the overlaps for the visited events in their input order
+  for (const event of events) {
+    warnings.push(...detectBarredOverlaps([event], buildDayFrames(event, settings)));
+  }
+  // POST: warnings contains all event/slot intersections without expanding gaps between events
+  return warnings;
+}
+
+// PRE:  events have distinct ids, in any order; tasks have distinct ids; records/settings are valid
 // POST: returns version 0 over these records: events sorted by compareEvents, their conflicts
 //       detected, and empty undo / redo stacks
 export function createState(data: {
@@ -69,6 +97,7 @@ export function createState(data: {
     tasks: [...data.tasks],
     settings: data.settings,
     conflicts: detectConflicts(events),
+    barredOverlaps: barredOverlapsFor(events, data.settings),
     undo: [],
     redo: [],
   };
@@ -218,6 +247,7 @@ export async function commit(
       ...next,
       ...nextHistory(state, change, mode),
       conflicts,
+      barredOverlaps: barredOverlapsFor(next.events, state.settings),
       version: state.version + 1,
     },
     label: change.label,
