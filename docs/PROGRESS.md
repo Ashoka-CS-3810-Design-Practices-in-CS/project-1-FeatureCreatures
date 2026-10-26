@@ -6,9 +6,9 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-39 Fix intermittent CI failures on `fix/wi-39-shortcut-race`; WI-01–38 are merged.
-- **Last session:** 2026-10-26 · Codex · clean main and baseline gate verified (578 tests); claiming WI-39 after the human documentation updates.
-- **Gate status:** typecheck/lint, 578 tests (T15 opt-in), 7 DST, coverage 98.55% lines / 93.98% branches, build and 18 browser checks green. Twelve dialog and four diagnostic captures reviewed. The unchanged heuristic's five 10,000-case properties were last verified in WI-36. Run `npm run build` before `npm run e2e` while an existing `vite preview` holds port 4173.
+- **Active WI:** none. WI-39 finished; local merge and final main gate next. WI-01–38 are merged.
+- **Last session:** 2026-10-26 · Codex · live-state shortcut fix and CI diagnostics verified; warm and cold 180-case browser hunts both passed with no additional flakes.
+- **Gate status:** typecheck/lint, 582 tests (T15 opt-in), coverage 98.60% lines / 94.08% branches, build and 360/360 browser executions green (180 warm + 180 cold; each 10 repeats, 2 workers, zero retries). Seven DST and five 10,000-case properties were last verified before this UI-only fix. Run `npm run build` before `npm run e2e` while an existing `vite preview` holds port 4173.
 
 ## Work items
 
@@ -156,10 +156,11 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 ### Change requests after WI-38
 
-- [~] **WI-39** Fix intermittent CI failures — owner S + Dv — depends on 38
+- [x] **WI-39** Fix intermittent CI failures — owner S + Dv — depends on 38
   - 2026-10-26 · Codex · branch `fix/wi-39-shortcut-race` · done: clean main, branches/log and baseline typecheck/lint/578 tests verified; confirmed render-time shortcut closure · next: failing synchronous close/keypress regression, current-state listener, CI diagnostics, warm/cold 10-repeat browser hunts · note: preserve the human's README and completed release checklist updates
   - 2026-10-26 · Codex · branch `fix/wi-39-shortcut-race` · done: four regressions failed on old code then passed (same-act close/keypress, picker/busy transitions, immediate suppression and listener lifecycle); one listener reads live state through useAppStoreApi/getState; CI retry/trace/HTML/failure-artifact configured · next: full gate and two 10-repeat/2-worker browser hunts · note: warm/cold counts pending; no waits added
   - 2026-10-26 · Codex · branch `fix/wi-39-shortcut-race` · done: full gate 582 tests, coverage 98.60% lines / 94.08% branches; warm browser hunt 180/180 passed over 10 repeats with 2 workers and zero retries; CI config import assertions pass · next: cold 180-case hunt after verified test-server stop and node_modules/.vite deletion · note: warm runner exited 0 after manually terminating only its verified dev-server child (Windows sandbox cleanup); cold run uses permitted process cleanup
+  - 2026-10-26 · Codex · branch `fix/wi-39-shortcut-race` · done: cold run 180/180 passed (4.3 min, exit 0) after server stop and verified cache deletion; combined 360/360 over two 10-repeat/2-worker runs, zero retries and no other flakes; one CI retry, retained traces, HTML report and failure artifact configured; docs synced · next: merge/main gate, human push/CI/deploy · note: no waits or timeouts added; human README/release updates preserved
 
 ## Milestones
 
@@ -171,6 +172,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 - **m2** (2026-10-25) — Phase 2 Core types and data: frozen shared types/constants/result/errors, Zod schemas with `parseInput`, DST-safe local-time module, interval/sortedArray/minHeap, Memory + Dexie repositories (atomic), test helpers and brute-force oracles. 105 unit tests + 4 DST tests, 100% coverage of `src/`.
 
 ## Human-only steps
+
+- [ ] Push WI-39 (`main` and `fix/wi-39-shortcut-race`), inspect the next CI run and deploy the shortcut fix; failed e2e jobs now upload Playwright traces and the HTML report.
 
 - [x] Divyam, 2026-10-26: production D1–D5 all pass; contrast OK in both themes and screen reader announces toasts (user-reported). WI-32/33 changes will be redeployed by the human afterwards; post-deploy checks remain human-owned.
 - [x] User will push and redeploy after local WI-30/31 completion, then smoke-check the new WI-32/33 D5 steps on production.

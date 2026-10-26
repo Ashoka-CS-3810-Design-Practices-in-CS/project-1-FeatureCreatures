@@ -252,7 +252,7 @@ Each test does `page.clock.install({ time: new Date('2026-11-02T08:00:00') })` b
 
 **CI failure diagnostics (WI-39).** CI retries once and reports a recovered failure as flaky; `trace: 'retain-on-failure'` retains the failed attempt's trace. GitHub and HTML reporters run in CI, and the failed e2e job uploads `test-results/` plus `playwright-report/` as `playwright-failure-diagnostics`. Open the downloaded HTML report or inspect a trace with `npx playwright show-trace <trace.zip>`.
 
-WI-39 local repeat evidence (2026-10-26, Codex): warm run **180/180 passed** over 10 repeats with 2 workers and zero retries. The sandboxed Windows runner needed its verified test dev-server child terminated after all cases passed, then exited 0; this was server cleanup, not a browser failure. Cold run pending after stopping that server and deleting `node_modules/.vite`.
+WI-39 local repeat evidence (2026-10-26, Codex): warm **180/180 passed** and cold **180/180 passed**, each over 10 repeats with 2 workers and zero retries: **360/360 total**, including both projects, with no other browser flakes. Both commands exited 0. The sandboxed warm Windows runner needed its verified test dev-server child terminated after all cases passed; this was server cleanup, not a browser failure. The cold run began with that server stopped and `node_modules/.vite` verified absent, ran with permitted process cleanup, and finished in 4.3 min.
 
 ---
 
@@ -319,6 +319,7 @@ WI-31 completes local release preparation. User-reported production outcomes are
 - [x] Typecheck/lint/test gate passes; coverage thresholds met (98.30% overall lines / 93.12% branches; algorithms 99.67% / 95.85%). DST: 7 cases. Production build passes.
 - [x] After WI-35/36 (2026-10-26, local): 563 tests, coverage 98.50% lines / 93.82% branches (algorithms 99.70% / 95.93%), 7 DST, all five properties at 10,000 random-seed cases, build, and 11 browser checks (E1–E4, smoke on the build and on the StrictMode dev server, accessibility, warnings) green. Not yet on production: needs the human redeploy.
 - [x] After WI-37/38 (2026-10-26, local): 578 tests, coverage 98.55% lines / 93.98% branches, 7 DST, build and 18 browser checks green. Dialog geometry/keyboard checks cover both themes at 1440/1024/900 px; D4's barred-replan distinction and per-event alternatives pass locally. The scheduling heuristic is unchanged. Human push/redeploy and the new production D4 steps remain pending.
+- [x] After WI-39 (2026-10-26, local): typecheck/lint, 582 tests, coverage 98.60% lines / 94.08% branches, build, warm 180/180 and cold 180/180 browser executions green (each 10 repeats, 2 workers, no retries); no additional flakes found. Deterministic regression failed before the fix. CI retry/trace/HTML/failure-artifact configuration verified locally; the next remote CI run needs the human push.
 - [x] `npm run test:props:full`: all five properties pass 10,000 random-seed cases each; no failing seed found.
 - [x] `npm run e2e`: all 8 Chromium checks pass, including E1–E3 and the new warning/ER2/help workflows.
 - [x] `npm run test:perf`: N=5000, seed=7, k=183, eleven-run median 4.188 ms < 100 ms; recorded in README.

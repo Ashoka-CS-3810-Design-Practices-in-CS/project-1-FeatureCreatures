@@ -1575,7 +1575,7 @@ No web font is loaded: the system stack needs no dependency, causes no font flas
 ### 11.5 Shortcuts (`hooks/useShortcuts.ts`)
 
 - There is one `keydown` listener on `window`, registered for the mounted store/calendar ref and removed on unmount. It reads `store.getState()` at keypress time for dialog, picker, busy and actions. It must not capture their render-time values: a shortcut immediately after a store change can arrive before React's passive effects (WI-39).
-- It returns early when `e.target` is an `input`, `textarea`, `select` or `[contenteditable]`, or when `store.dialog !== null` (except for `Escape`).
+- It returns early while busy. Except for Escape, shortcuts are off when `event.target` is an `input`, `textarea`, `select` or `[contenteditable]`, or when a store dialog, picker or native dialog is open. Native Escape handling keeps control of the top native dialog.
 - The key map is exactly PROJECT_SCHEMA §7.6. `mod = e.metaKey || e.ctrlKey`.
 - Navigation keys call FullCalendar's API through a ref exposed by `CalendarView` (`calendarRef.current.getApi().prev()` and so on).
 
@@ -1824,4 +1824,4 @@ Production URL: https://…vercel.app
 | 2026-10-26 | v1.24 (WI-36, `docs/AUDIT.md`): §8.13/§10 replan plans repeat greedy passes with unplaced events pinned (A01, ≤ c + 1 passes); §5/§6 `MIN/MAX_SUPPORTED_MINUTE` bound every Minute (A02) and `slotSchema` validates slots via `requireValidSlot` (A06); §7.4.6 `linkIssues` checks the BR-9 mirror (A04); §7.5 day loads cover whole days (A05); §7.4.3/§7.4.4 `requireNotPast` makes overtaken results stale (A07) and the replan range is 1–14 whole local days; §11.1/§11.2 ER4 Move to uses its own version (A03), Replan inputs drop old plans (A08) and Month defaults to its first full week (A10); §6 description message (A09); §2 lists `docs/AUDIT.md`. |
 | 2026-10-26 | v1.25 (WI-37/38): §14 adds dialog form polish and Replan diagnostics change requests, with regression checks and unchanged scheduling contracts. |
 | 2026-10-26 | v1.26 (WI-38): §5 ReplanResult adds derived notMoved by plan ID and ReplanNotMoved; §7.4.4/§11.2 document post-plan diagnostics and reused alternatives; §14 completion uses T39/T40. Heuristic, schemas and metrics unchanged; regression confirms barred moves work. |
-| 2026-10-26 | v1.27 (WI-39): §14 adds test-first shortcut race repair, current-state keypress handling, CI diagnostics and warm/cold browser repeat verification. |
+| 2026-10-26 | v1.27 (WI-39): §11.1/§11.5 expose useAppStoreApi and read current store state per keypress with one listener; §12/§13.1 add one CI retry, retained failure traces, GitHub/HTML reporters and failure artifacts; §14 adds the test-first race repair and warm/cold 10-repeat browser verification. |
