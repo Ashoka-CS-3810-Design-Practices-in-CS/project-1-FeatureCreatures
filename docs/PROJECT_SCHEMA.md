@@ -509,7 +509,7 @@ Every search result also carries:
 4. **Slot picker:**
    - **Task mode:** the header shows the task name, duration, priority and "Task i of N". It contains the criterion selector, a buffer override, a summary line, ranked options with explanations, and the Apply, Skip and Stop buttons.
    - **Alternatives mode:** the header shows the target and a toggle for which event to move. The criterion is fixed to "Closest to original time". There are Apply and Cancel buttons.
-5. **Replan dialog:** range from/to (default the visible week), a buffer override, and a *Compute plans* button. Below them are two plan cards side by side (stacked when narrow). Each card shows its metrics and list of moves, with an *Apply this plan* button. Cancel closes the dialog.
+5. **Replan dialog:** range from/to (default the visible week), a buffer override, and a *Compute plans* button. Below them are two plan cards side by side (stacked when narrow). Each card shows its metrics and list of moves, with an *Apply this plan* button. Changing the range or buffer removes the cards until *Compute plans* runs again, so a plan is only applied for the inputs shown (AUDIT A08). Cancel closes the dialog.
 6. **Settings dialog:**
    - Working days and hours, default buffer, barred slots table, default criterion.
    - A **Data** section: Export JSON, Import JSON, Load sample calendar (menu), Clear all data (with confirmation).

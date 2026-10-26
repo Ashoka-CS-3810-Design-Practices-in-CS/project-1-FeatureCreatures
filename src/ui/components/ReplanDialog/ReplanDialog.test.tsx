@@ -75,6 +75,25 @@ describe('ReplanDialog', () => {
     expect(store.getState().toasts.at(-1)?.text).toBe('Plan applied: 1 event moved');
   });
 
+  // AUDIT A08: the old cards stayed applicable after the inputs changed, so Apply used a plan
+  // computed for other parameters than those shown.
+  it.each([
+    ['Buffer (min)', '30'],
+    ['From', '2026-11-03'],
+    ['To', '2026-11-06'],
+  ])('editing %s hides the computed plans until Compute runs again', async (label, value) => {
+    renderOpen((await makeEngine({ events: t22Events })).engine);
+    await userEvent.click(screen.getByRole('button', { name: 'Compute plans' }));
+    expect(screen.getByRole('button', { name: 'Apply Balanced week' })).toBeInTheDocument();
+
+    const field = screen.getByLabelText(label);
+    await userEvent.clear(field);
+    await userEvent.type(field, value);
+
+    expect(screen.queryByRole('region', { name: 'Balanced week' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Apply / })).not.toBeInTheDocument();
+  });
+
   it('says "No flexible events in this range" when nothing can move', async () => {
     renderOpen((await makeEngine({ events: [ev('Lecture', 'Mon 10:00', 'Mon 12:00')] })).engine);
 
