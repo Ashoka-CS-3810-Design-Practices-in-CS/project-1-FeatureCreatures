@@ -116,7 +116,7 @@ Every file listed here exists by the end of the project. The WI column says whic
 ├─ playwright.config.ts  playwright.screenshots.config.ts  eslint.config.js  tsconfig.json  .prettierrc  README.md
 ├─ scripts/                # exportSamples.mjs (WI-30), screenshots/screenshots.spec.ts (WI-34)
 ├─ public/favicon.svg
-├─ e2e/                    # Playwright E1–E3 (WI-27)
+├─ e2e/                    # Playwright E1–E3 (WI-27), E4 and smoke.spec.ts (WI-35)
 ├─ bench/engine.bench.ts   # T15 (WI-28)
 ├─ tests/
 │  ├─ setup.ts             # jest-dom, <dialog> polyfill, ResizeObserver stub
@@ -158,11 +158,12 @@ Every file listed here exists by the end of the project. The WI column says whic
       ├─ App.tsx  App.module.css
       ├─ store/appStore.ts  store/selectors.ts  store/pickerSlice.ts  store/toastSlice.ts
       ├─ components/
-      │  ├─ Toolbar/  CalendarView/ (CalendarView.tsx, calendarHandlers.ts, toFullCalendar.ts, EventContent.tsx)
+      │  ├─ Toolbar/  CalendarView/ (CalendarView.tsx, calendarHandlers.ts, toFullCalendar.ts, EventContent.tsx, renderEventContent.tsx)
       │  ├─ TaskPanel/  ConflictPanel/  EventDialog/  TaskDialog/  SlotPicker/  ReplanDialog/
       │  ├─ SettingsDialog/  ConfirmDialog/  ShortcutHelp/  Toasts/  Modal/ (native <dialog> wrapper)
-      │  └─ EmptyState/
+      │  └─ EmptyState/  ErrorBoundary/ (top-level crash screen, WI-35)
       ├─ hooks/useShortcuts.ts  hooks/useTheme.ts  hooks/preferences.ts  # guarded localStorage (theme, last view)
+      │  hooks/download.ts     # downloadJson(): Settings export and the crash screen's Export data
       ├─ format/time.ts  format/explain.ts  format/errors.ts   # all user-facing strings built here
       ├─ forms/eventForm.ts  forms/taskForm.ts  forms/settingsForm.ts  # form ⇄ input converters + resolvers
       └─ styles/tokens.css  styles/global.css  styles/fullcalendar.css
@@ -263,12 +264,15 @@ async function bootstrap() {
   });
   const init = await engine.init();                                     // loads + sorts + sweeps
   const store = createAppStore(engine, { storageWarning, init });
-  createRoot(document.getElementById('root')!).render(<StoreProvider store={store}><App /></StoreProvider>);
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode><ErrorBoundary onReload={…} onExport={…}><StoreProvider store={store}><App /></StoreProvider></ErrorBoundary></StrictMode>);
 }
 bootstrap();
 ```
 
 If `init` returns an error, `App` shows a full-page error with the buttons **Retry** and **Reset local data**. Reset calls `repo.replaceAll(empty)` and then `init` again.
+
+`ErrorBoundary` (WI-35, `components/ErrorBoundary/`) wraps everything, outside the store provider, so any render crash shows **Something went wrong** with **Reload** (`location.reload()`) and **Export data** (`store.getState().actions.exportFile()` through `hooks/download.ts`; a failed export says so) instead of an unmounted, blank page. It is the only class component, because React offers error boundaries only as classes.
 
 ---
 
@@ -500,6 +504,7 @@ export const WARNING_TOAST_MS = 8000;  // ER4 warning toasts
 export const EMPHASIS_MS = 1500;       // changed events stay emphasised
 export const DRAWER_BREAKPOINT_PX = 1024;
 export const MIN_CLICK_TARGET_PX = 32;
+export const CLICK_EVENT_MIN = 30;        // a click on empty time creates one calendar row (WI-35)
 export const IMPORT_SPINNER_THRESHOLD = 1000;
 export const MINUTES_PER_DAY = 1440;
 export const MAX_TITLE_LENGTH = 100;          // event title and task name
@@ -1451,7 +1456,8 @@ FullCalendar is a **controlled, render-only view**. Its `events` prop is always 
   editable selectable selectMirror eventOverlap   // overlaps allowed (ER4: allow with warning)
   businessHours={{ daysOfWeek: settings.workDays, startTime: hhmm(workStartMin), endTime: hhmm(workEndMin) }}
   events={fcEvents}                                // toFullCalendar(snapshot, filter) — memoised
-  eventContent={(arg) => <EventContent {...arg.event.extendedProps} timeText={arg.timeText} title={arg.event.title} />}
+  eventContent={(arg) => renderEventContent(arg, (id) => actions.openDialog({ kind: 'event', mode: 'edit', id }))}
+  // renderEventContent: background → barred label; no block props (the select mirror) → time only; else <EventContent/>
   eventDrop={handlers.onDrop} eventResize={handlers.onResize}
   select={handlers.onSelect} eventClick={handlers.onClick} datesSet={handlers.onDatesSet}
 />
@@ -1476,7 +1482,7 @@ FullCalendar is a **controlled, render-only view**. Its `events` prop is always 
 **`calendarHandlers.ts`** contains plain functions (not hooks), so tests can call them with fake `info` objects (T14):
 
 - **`onDrop(info)` / `onResize(info)`:** call `actions.moveEvent(info.event.id, {start: toMinute(info.event.start!), end: toMinute(info.event.end!)})`. If the result is an error, call `info.revert()`.
-- **`onSelect(info)`:** open the create dialog with `defaults.start/end` from the selection, then call `info.view.calendar.unselect()`.
+- **`onSelect(info)`:** open the create dialog with `defaults.start/end` from the selection, then call `info.view.calendar.unselect()`. A plain click selects one `SNAP_MIN` step; a selection that short gets `end = start + CLICK_EVENT_MIN` instead (WI-35).
 - **`onClick(info)`:** do nothing for background events. Otherwise open the edit dialog.
 - **`onDatesSet(info)`:** store `activeRange = {start: toMinute(info.start), end: toMinute(info.end)}`.
 
@@ -1589,14 +1595,13 @@ export default defineConfig({
 
 **`tests/setup.ts`**
 - Imports `@testing-library/jest-dom/vitest`.
-- When `HTMLDialogElement` exists but lacks them, polyfills `showModal()` and `close()` (they set and clear `open`).
+- When `HTMLDialogElement` exists but lacks them, polyfills `showModal()` and `close()` (they set and clear `open`). Like the browser, `close()` queues the `close` event as a task instead of firing it synchronously, so StrictMode tests see the same race as `npm run dev` (WI-35).
 - Stubs `ResizeObserver` and `window.matchMedia`.
 
 **`playwright.config.ts`**
 - `testDir: 'e2e'`
-- `webServer: {command: 'npm run build && npm run preview -- --port 4173 --strictPort', url: 'http://localhost:4173', reuseExistingServer: !process.env.CI}`
-- `use: {baseURL: 'http://localhost:4173'}`
-- Only the `chromium` project.
+- Two `webServer`s: the built app (`npm run build && npm run preview -- --port 4173 --strictPort`) and the StrictMode dev server (`npm run dev -- --port 5174 --strictPort`), both with `reuseExistingServer: !process.env.CI`.
+- Project `chromium` runs every spec against `http://localhost:4173`; project `chromium-dev` runs only `smoke.spec.ts` against `http://localhost:5174`, because StrictMode's double mount happens only in development (WI-35).
 
 ---
 
@@ -1767,3 +1772,4 @@ Production URL: https://…vercel.app
 | 2026-10-26 | v1.20 (WI-32/33): §5/§7 add derived BarredOverlap records to state/snapshots; §8.4a/§10 freeze the pure algorithm and complexity; §11 defines settings toast/View and reused alternatives; §14 adds both change requests before WI-30. Production rehearsal is reported complete by Divyam; human push/redeploy follow local completion. |
 | 2026-10-26 | v1.21 (WI-31): final layout/UI contract sync; §10 includes warning derivation in boot/commit/import complexity. All local WIs complete, with user-owned push/redeploy and viva checks explicitly retained in the release record. |
 | 2026-10-26 | v1.22 (WI-34): visual refresh, appearance only. §11.4 has the final light/dark token values, the spacing, type and shape scales, and where the single accent is used; §11.3 splits the week-header text into weekday and numeral spans; §1.3/§2 add the `screenshots` script, its config and `docs/screenshots/`; §14 adds WI-34. No new dependency (system font stack). |
+| 2026-10-26 | v1.23 (WI-35): §4 adds the top-level `ErrorBoundary`; §11.3 `onSelect` gives a click-sized selection `CLICK_EVENT_MIN` (new §5 constant) and `renderEventContent` renders an event without block props (FullCalendar's select mirror) as its time only; §12 polyfill queues `close` like the browser, and Playwright adds the `chromium-dev` project on the StrictMode dev server; §2 lists the new files; §14 adds WI-35 and WI-36. |

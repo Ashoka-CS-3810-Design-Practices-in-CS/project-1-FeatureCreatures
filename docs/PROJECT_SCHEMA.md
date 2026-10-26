@@ -559,7 +559,7 @@ Every search result also carries:
 - Toolbar buttons as in Figure 1.
 - A `?` icon button labelled **Keyboard shortcuts** sits next to the theme and settings buttons and opens the same help as the `?` key (WI-33).
 - The calendar supports:
-  - click-drag on empty time to create an event (with times pre-filled)
+  - click-drag on empty time to create an event (with times pre-filled); a plain click on empty time pre-fills one 30-minute row (WI-35)
   - click an event to edit it
   - drag to move and drag the bottom edge to resize, snapping to 5 minutes
 - Task rows have a checkbox, a *Find time* button and a context menu (Edit, Unschedule, Delete).
@@ -592,6 +592,8 @@ Every search result also carries:
 | ER5 | An error toast with *Retry* (it stays until dismissed). |
 | ER7 | A brief info toast, then the options are recomputed automatically. |
 | Long operations | Loading a sample or importing more than 1,000 records shows a spinner overlay. Every other operation is instant. |
+
+| Unexpected crash | A full page saying **Something went wrong** with **Reload** and **Export data**, never a blank page (WI-35). Saved changes are kept in the browser. |
 
 All toasts are announced through an ARIA live region. Errors use `assertive`; everything else uses `polite`.
 
@@ -679,3 +681,4 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 | 2026-10-25 | v1.0: unified from A1–A3. |
 | 2026-10-26 | v1.1 (WI-32/33): BR-15 defines independent barred-slot warnings, settings feedback and alternatives; §7 adds text tags, a separate panel section and the accessible toolbar shortcuts button. |
 | 2026-10-26 | v1.2 (WI-31): final derived-model/help-entry sync; WI-32/33 retain independent warning/conflict semantics. Divyam's reported rehearsal evidence and remaining human release steps are recorded in TEST_PLAN/PROGRESS. |
+| 2026-10-26 | v1.3 (WI-35): §7.2 a plain click on empty time pre-fills a 30-minute event; §7.4 an unexpected crash shows Something went wrong with Reload / Export data. |
