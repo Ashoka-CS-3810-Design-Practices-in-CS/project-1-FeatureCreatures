@@ -469,6 +469,34 @@ describe('scheduling and sync (FR8, FR9, BR-9)', () => {
     const again = await at('T', 'Mon 11:00', 'Mon 12:00');
     expect(again.ok ? null : again.error.code).toBe('InvalidInput');
   });
+
+  // AUDIT A06: a fractional slot passed the length check, was saved, and the next start failed
+  // with "Saved data is damaged."
+  it('scheduleTask rejects slot endpoints that are not supported integer minutes', async () => {
+    const { engine, repo } = await makeEngine({ tasks: [task('T', 60, MONDAY_HOURS)] });
+    const before = await capture(engine, repo);
+    const baseVersion = engine.snapshot().version;
+    const halfMinute = 0.5;
+    const fractional = { start: t('Mon 09:00') + halfMinute, end: t('Mon 10:00') + halfMinute };
+    const beyond = { start: Number.MAX_SAFE_INTEGER - 60, end: Number.MAX_SAFE_INTEGER };
+
+    const fractionalResult = await engine.scheduleTask({
+      taskId: 'T',
+      slot: fractional,
+      baseVersion,
+    });
+    const beyondResult = await engine.scheduleTask({ taskId: 'T', slot: beyond, baseVersion });
+
+    expect(fractionalResult.ok ? null : fractionalResult.error).toMatchObject({
+      code: 'InvalidInput',
+      issues: [{ path: 'slot.start' }, { path: 'slot.end' }],
+    });
+    expect(beyondResult.ok ? null : beyondResult.error).toMatchObject({
+      code: 'InvalidTime',
+      issues: [{ path: 'slot.start' }, { path: 'slot.end' }],
+    });
+    expect(await capture(engine, repo)).toEqual(before);
+  });
 });
 
 describe('task CRUD', () => {

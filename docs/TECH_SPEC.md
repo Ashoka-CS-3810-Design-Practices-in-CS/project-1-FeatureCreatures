@@ -587,7 +587,7 @@ export const exportFileSchema = z.object({
 
 `storedEventSchema` and `storedTaskSchema` extend the input schemas with `id`, `taskId`, `status`, `scheduledEventId`, `createdAt` and `updatedAt`.
 
-`storedDataSchema = {events: storedEvent[], tasks: storedTask[], settings: settings | null}` validates `Repository.load()` in `engine.init()`. `searchOptionsSchema = {bufferMin?: int 0–120}` validates the `bufferMin` override of `findSlots`, `suggestAlternatives` and `planReplan`; it shares one `bufferMinSchema` with `settingsSchema`.
+`storedDataSchema = {events: storedEvent[], tasks: storedTask[], settings: settings | null}` validates `Repository.load()` in `engine.init()`. `searchOptionsSchema = {bufferMin?: int 0–120}` validates the `bufferMin` override of `findSlots`, `suggestAlternatives` and `planReplan`; it shares one `bufferMinSchema` with `settingsSchema`. `slotSchema = {slot: interval}` (AUDIT A06) validates the slot of `scheduleTask` and `applyAlternative` through `requireValidSlot` in `search.ts`.
 
 - Zod 4 cannot `.extend()` a refined object, so each schema is a plain object shape plus a named refine function (`refineEventTiming`, `refineTaskWindow`), and the stored schemas extend the shape and re-apply the same refinements.
 - `storedTaskSchema` also checks `(status = 'scheduled') ⟺ (scheduledEventId ≠ null)` as a shape issue at `scheduledEventId`: "A task has an event id exactly when it is scheduled."
@@ -782,7 +782,7 @@ Every mutation pipeline follows the same skeleton: validate → look up → buil
 **`applyAlternative({eventId, slot, baseVersion})`**
 
 1. If `baseVersion !== state.version`, return `StaleResult`.
-2. If `slot.end − slot.start !== event.end − event.start`, return `InvalidTime`.
+2. Check the slot with `requireValidSlot(slot, event.end − event.start)`: `slotSchema` issues (AUDIT A06), or `InvalidTime` at `slot` when the length differs.
 3. Otherwise behave as `moveEvent(eventId, slot)`, with the label `Move "<title>"`.
 
 #### 7.4.3 Task Scheduler (`pipelines/taskScheduler.ts`)
@@ -802,7 +802,7 @@ Every mutation pipeline follows the same skeleton: validate → look up → buil
   1. Look up the task. If it is scheduled, return `InvalidInput` with the issue `{path: 'status', message: 'Task is already scheduled.'}`.
   2. Return `search({durationMin: task.durationMin, priority: task.priority, window: task.window, useWorkingHours: task.useWorkingHours, excludeIds: [], originalStart: null, criterion: criterion ?? settings.defaultCriterion, bufferMin: bufferMin ?? settings.bufferMin, subject: {kind: 'task', taskId, name}})`.
 - **`scheduleTask({taskId, slot, baseVersion})`**
-  1. Check the version (ER7), look up the task (it must be unscheduled, else the `status` issue of `findSlots`), and check that `slot.end − slot.start === durationMin`, or return `InvalidTime` with the issue `{path: 'slot', message: 'The slot must be exactly as long as the duration.'}`.
+  1. Check the version (ER7), look up the task (it must be unscheduled, else the `status` issue of `findSlots`), and check the slot with `requireValidSlot` (shared with `applyAlternative`): its ends must pass `slotSchema` (supported integer Minutes, issues at `slot.start` / `slot.end`, AUDIT A06), and `slot.end − slot.start === durationMin`, or return `InvalidTime` with the issue `{path: 'slot', message: 'The slot must be exactly as long as the duration.'}`. Whether the slot is still free is guaranteed by the version check against the search it came from (ER7).
   2. Build `event = {id: newId(), title: name, description, category, priority, start, end, flexible: true, flexWindow: task.window, taskId, createdAt, updatedAt}`.
   3. Update the task with `{status: 'scheduled', scheduledEventId: event.id}`.
   4. Put both in one `Change` with the label `Schedule "<name>"`.

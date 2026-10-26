@@ -18,7 +18,7 @@ import type {
   UserCriterion,
 } from '@/shared/types';
 import { compareTasksForQueue } from '../algorithms/taskOrder';
-import { requireCurrentVersion, requireSlotLength, search } from '../search';
+import { requireCurrentVersion, requireValidSlot, search } from '../search';
 import {
   commit,
   type Change,
@@ -278,7 +278,7 @@ export async function scheduleTask(
   if (task.status === 'scheduled') {
     return err(ALREADY_SCHEDULED);
   }
-  const fits = requireSlotLength(request.slot, task.durationMin);
+  const fits = requireValidSlot(request.slot, task.durationMin);
   if (!fits.ok) {
     return fits;
   }

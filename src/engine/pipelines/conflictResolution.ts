@@ -6,7 +6,7 @@ import { err, type Result } from '@/shared/result';
 import { parseInput, searchOptionsSchema } from '@/shared/schemas';
 import { addLocalDays, startOfLocalDay } from '@/shared/time';
 import type { CalendarEvent, Interval, Minute, SlotSearchResult } from '@/shared/types';
-import { requireCurrentVersion, requireSlotLength, search } from '../search';
+import { requireCurrentVersion, requireValidSlot, search } from '../search';
 import type { EngineState, PipelineContext, PipelineOutcome } from '../state';
 // eventCrud also imports this module (for the ER4 suggestion). The cycle is safe: each side only
 // calls the other's functions at run time, never while the modules load.
@@ -99,7 +99,7 @@ export async function applyAlternative(
   if (event === undefined) {
     return err({ code: 'NotFound', entity: 'event', id: request.eventId });
   }
-  const fits = requireSlotLength(request.slot, event.end - event.start);
+  const fits = requireValidSlot(request.slot, event.end - event.start);
   if (!fits.ok) {
     return fits;
   }

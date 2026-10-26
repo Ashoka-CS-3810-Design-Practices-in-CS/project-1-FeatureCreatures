@@ -4,6 +4,7 @@
 import { SNAP_MIN } from '@/shared/constants';
 import type { EngineError } from '@/shared/errors';
 import { err, ok, type Result } from '@/shared/result';
+import { parseInput, slotSchema } from '@/shared/schemas';
 import { buildDayFrames, ceilTo } from '@/shared/time';
 import type {
   CalendarEvent,
@@ -143,9 +144,15 @@ export function requireCurrentVersion(
   return baseVersion === state.version ? ok(null) : err({ code: 'StaleResult' });
 }
 
-// PRE:  slot comes from the UI; durationMin is the length the slot must have
-// POST: returns ok when slot is exactly durationMin long, else err InvalidTime at path 'slot'
-export function requireSlotLength(slot: Interval, durationMin: number): Result<null, EngineError> {
+// PRE:  slot comes from the UI (untrusted); durationMin is the length the slot must have
+// POST: returns ok when slot's ends are supported integer Minutes (slotSchema) and slot is exactly
+//       durationMin long; else the schema's error at 'slot.start' / 'slot.end' (AUDIT A06), or
+//       err InvalidTime at path 'slot' for a wrong length
+export function requireValidSlot(slot: Interval, durationMin: number): Result<null, EngineError> {
+  const parsed = parseInput(slotSchema, { slot });
+  if (!parsed.ok) {
+    return err(parsed.error);
+  }
   if (slot.end - slot.start === durationMin) {
     return ok(null);
   }

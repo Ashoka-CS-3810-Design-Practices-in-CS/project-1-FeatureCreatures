@@ -99,6 +99,24 @@ describe('Conflict Resolution (T20, FR7, BR-10)', () => {
     expect(await capture(engine, repo)).toEqual(before);
   });
 
+  it('applyAlternative rejects slot endpoints that are not integer minutes (AUDIT A06)', async () => {
+    const { engine, repo } = await makeEngine({ events: [lecture, meeting] });
+    const before = await capture(engine, repo);
+    const halfMinute = 0.5;
+
+    const result = await engine.applyAlternative({
+      eventId: 'Meeting',
+      slot: { start: t('Mon 12:00') + halfMinute, end: t('Mon 13:00') + halfMinute },
+      baseVersion: engine.snapshot().version,
+    });
+
+    expect(result.ok ? null : result.error).toMatchObject({
+      code: 'InvalidInput',
+      issues: [{ path: 'slot.start' }, { path: 'slot.end' }],
+    });
+    expect(await capture(engine, repo)).toEqual(before);
+  });
+
   it('suggestAlternatives rejects an unknown event and a bad buffer override', async () => {
     const { engine } = await makeEngine({ events: [lecture] });
 

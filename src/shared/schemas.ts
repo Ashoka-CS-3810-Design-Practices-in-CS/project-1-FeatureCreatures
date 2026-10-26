@@ -183,6 +183,9 @@ const bufferMinSchema = z
   .min(0, BUFFER_RANGE_MESSAGE)
   .max(MAX_BUFFER_MIN, BUFFER_RANGE_MESSAGE);
 
+// The slot of scheduleTask / applyAlternative, nested so issue paths read 'slot.start' (AUDIT A06).
+export const slotSchema = z.object({ slot: interval });
+
 // The optional per-search override of the settings buffer (findSlots, suggestAlternatives, planReplan).
 export const searchOptionsSchema = z.object({ bufferMin: bufferMinSchema.optional() });
 
