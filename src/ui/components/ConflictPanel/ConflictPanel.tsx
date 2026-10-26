@@ -1,9 +1,11 @@
 import { CONFLICT_LIST_LIMIT } from '@/shared/constants';
 import { fmtDuration, fmtRange } from '../../format/time';
 import { useAppStore } from '../../store/appStore';
+import { BarredOverlapPanel } from './BarredOverlapPanel';
 
 // PRE:  rendered under StoreProvider; reads snapshot.conflicts, snapshot.events and
 //       eventPriorityFilter; uses actions.openAlternatives
+//       + additional props from: BarredOverlapPanel
 // POST: lists the first CONFLICT_LIST_LIMIT conflicts ("⚠ A ↔ B", overlap and minutes), notes
 //       "(hidden by filter)" when either event is filtered out of the calendar (FR6), and offers
 //       Suggest alternatives for each; says "No conflicts" when there are none
@@ -51,6 +53,7 @@ export function ConflictPanel() {
       {conflicts.length > CONFLICT_LIST_LIMIT && (
         <p>and {conflicts.length - CONFLICT_LIST_LIMIT} more</p>
       )}
+      <BarredOverlapPanel />
     </section>
   );
 }

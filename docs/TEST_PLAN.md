@@ -177,6 +177,12 @@ All times are on Mon 2 Nov 2026 unless a day is given. Intervals are half-open.
 
 ### 4.3 Module unit tests (not numbered; required by coverage)
 
+**T37 — Barred overlaps (WI-32).** Algorithm and snapshot integration must prove: backToBack plus Monday Lunch 13:00–14:00 returns exactly one record for its 13:00 event, 60 min, with zero event-pair conflicts; a 12:30–13:30 event returns Lunch overlap 13:00–13:30 (30 min); 12:00–13:00 touches and returns none. Slots apply only on their own days, including a barred Sunday when Sunday is not a working day. Cover cross-midnight and DST local frames, empty inputs, multiple slots and no mutation. Snapshots recompute after create/move/delete, undo/redo, init/import and updateSettings; failed persistence leaves warnings unchanged. Existing conflict lists and replan metrics stay event-pair-only.
+
+**T38 — Barred warning UI (WI-32).** Event blocks and accessible names show `In Lunch`; the separate `Barred-slot overlaps (N)` section lists title, label, exact range/minutes and Suggest alternatives. That action searches the selected event via the existing picker with no other-event toggle; apply removes the warning. Settings introducing warnings shows info `2 events overlap barred slots` (distinct events, with correct singular form), and View focuses the section and opens the narrow drawer. Saving unchanged settings, removing warnings or failing storage shows no new-warning info toast. Keep the original conflict heading/count unchanged. Also regress sparseWeek's `sparse-thesis`: findSlots returns exactly TaskLongerThanWindow (ER2), durationMin 600, longestStretchMin 240; the UI shows the ER2 explanation, never ER3/NoSlotFound.
+
+**WI-33 UI regression.** The toolbar has a `?` icon button with aria-label `Keyboard shortcuts`, adjacent to theme/settings. Clicking it opens the existing help listing §7.6; Escape returns focus, and the `?` key remains functional.
+
 | File | Must cover |
 |---|---|
 | `interval.test.ts` | `overlaps` for touching, nested, identical and disjoint intervals; `overlapOf` returning null; `contains` at its edges |
@@ -231,7 +237,7 @@ Each test does `page.clock.install({ time: new Date('2026-11-02T08:00:00') })` b
 
 ### 7.1 Accessibility
 
-Local automated evidence (WI-25/26): `src/ui/styles/tokens.test.ts` checks light/dark foreground pairs; `e2e/accessibility.spec.ts` checks desktop widths, drawer, minimum control targets, dialog keyboard/focus behavior and List event names/editing. The production devtools and live screen-reader items below still need a human check.
+Local automated evidence (WI-25/26): `src/ui/styles/tokens.test.ts` checks light/dark foreground pairs; `e2e/accessibility.spec.ts` checks desktop widths, drawer, minimum control targets, dialog keyboard/focus behavior and List event names/editing. Divyam reported on 2026-10-26 that production contrast is OK in both themes and the screen reader announces toasts; these are human-reported results, not a new agent-run production audit.
 
 - [ ] Every conflict is identifiable without colour: the ⚠ icon plus the word "Conflict".
 - [ ] Every priority is identifiable without colour: the [H] / [M] / [L] tag.
@@ -263,21 +269,21 @@ Each demo starts from **Settings → Data → Load sample calendar**.
 | **D2** Conflicts | `sparseWeek`, then `overlapCluster`, `midnight`, `backToBack` | Point at the Tue Lecture ↔ Meeting conflict: icon, label, overlap and minutes. Suggest alternatives → Apply. `overlapCluster` shows 15 pairs listed. `midnight` shows a conflict across midnight. `backToBack` shows touching events with 0 conflicts. | FR4, FR7, ER4 |
 | **D3** Best time | `sparseWeek`, then `fullyBooked` | Select the 45 min and 90 min tasks → Find time for 2 → the queue applies the first and skips the second. On a third task, switch the criterion between Earliest, Best fit and Priority-aware and show the order changing, then read one explanation aloud. Show the 10 h task (ER2). On `fullyBooked`, the 30 min Thursday task gives ER3 with "largest gap 15 min". | FR5, FR9, ER2, ER3 |
 | **D4** Replan | `sparseWeek` | Replan → set buffer 10 → Compute. Compare Minimal change vs Balanced week (moves, reasons, spread). Apply Balanced, then Undo. | FR10, B1 |
-| **D5** Extras | any | Add Lunch 13:00–14:00 as a barred slot and show the hatching on the calendar and the "Lunch" boundary in an explanation. Show dark mode, then `?` shortcuts, then Export, Clear all data, Import. | FR11, B2–B4 |
+| **D5** Extras | any | Add Lunch 13:00–14:00 as a barred slot and show hatching and the "Lunch" boundary. With an event inside Lunch, show `In Lunch`, the separate overlap section, settings info toast/View and Suggest alternatives; conflict counts stay unchanged (WI-32). Show dark mode, then the toolbar `?` button and `?` key (WI-33), then Export, Clear all data, Import. | FR11, BR-15, B2–B4 |
 
 **Sample inputs deliverable.** `src/data/samples/*` plus an exported JSON of each sample, committed to `docs/samples/` (WI-30).
 
 **Rehearsal setup.** Use a fresh browser context on the production URL after the team deploys the tested `main`. Load samples through Settings for the current local week; committed JSON deliverables instead use 2 November 2026 UTC. For D3, the High-priority 90-minute report is offered before the Medium-priority 45-minute chapter task, regardless of checkbox selection order. Export anything you want to keep before a replacement operation.
 
-**Production rehearsal record.** Local automated tests support these flows but do not replace this production run. Keep WI-30 open until all five outcomes below are recorded.
+**Production rehearsal record (reported by user).** Tester **Divyam**, **2026-10-26**, [production URL](https://int-calendarfeature-creatures.vercel.app): **D1–D5 all pass**. Accessibility: contrast OK in both themes; screen reader announces toasts. This run predates WI-32/33; the new D5 steps pass local tests before the human's planned redeploy, with post-deploy smoke checks still human-owned.
 
 | Demo | Local evidence | Production tester/date/outcome |
 |---|---|---|
-| D1 | E1/E2 create, real drag/resize and reload; CRUD/history integration cases | Pending human rehearsal |
-| D2 | E1 flags both events; alternatives integration/UI cases and sample conflict tests | Pending human rehearsal |
-| D3 | E3 schedules a linked task; queue, ranking, ER2/ER3 integration/UI cases | Pending human rehearsal |
-| D4 | Replan integration/UI cases, atomic apply/undo and T35 properties | Pending human rehearsal |
-| D5 | Settings/import/export UI cases, theme/shortcut tests and browser focus checks | Pending human rehearsal |
+| D1 | E1/E2 create, real drag/resize and reload; CRUD/history integration cases | Divyam · 2026-10-26 · Pass |
+| D2 | E1 flags both events; alternatives integration/UI cases and sample conflict tests | Divyam · 2026-10-26 · Pass |
+| D3 | E3 schedules a linked task; queue, ranking, ER2/ER3 integration/UI cases | Divyam · 2026-10-26 · Pass |
+| D4 | Replan integration/UI cases, atomic apply/undo and T35 properties | Divyam · 2026-10-26 · Pass |
+| D5 | Settings/import/export/theme/shortcuts; WI-32/33 local regressions | Divyam · 2026-10-26 · Pass (pre-change version); new steps await planned redeploy |
 
 ---
 
@@ -311,3 +317,4 @@ Each demo starts from **Settings → Data → Load sample calendar**.
 | 2026-10-26 | v1.3 (WI-25–27): §6 documents executable E1–E3 and their isolated UI fixtures; §7 records local automated accessibility evidence while retaining human production checks. |
 | 2026-10-26 | v1.4 (WI-28): §9 uses the portable `test:perf` script for T15; the gated assertion measures eleven combined-query runs and prints k and the median. |
 | 2026-10-26 | v1.5 (WI-30): §8 links reproducible sample deliverables, distinguishes fixed UTC files from current-local-week presets, and records the pending D1–D5 production rehearsals. |
+| 2026-10-26 | v1.6 (WI-32/33): adds T37/T38 and the toolbar-button regression; extends D5; records Divyam's D1–D5 production passes and contrast/toast-announcement results, distinguishing later change-request checks. |

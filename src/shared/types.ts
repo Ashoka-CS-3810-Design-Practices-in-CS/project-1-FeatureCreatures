@@ -75,6 +75,12 @@ export interface Conflict {
 }
 
 export type UserCriterion = 'earliest' | 'bestFit' | 'priorityAware';
+export interface BarredOverlap {
+  readonly eventId: string;
+  readonly label: string;
+  readonly overlap: Interval;
+  readonly minutes: number;
+}
 export type Criterion = UserCriterion | 'nearest' | 'leastLoaded';
 export type EffectiveCriterion = Exclude<Criterion, 'priorityAware'>;
 
@@ -197,6 +203,7 @@ export interface Snapshot {
   readonly tasks: readonly Task[]; // creation order
   readonly settings: Settings;
   readonly conflicts: readonly Conflict[]; // sorted by (overlap.start, key)
+  readonly barredOverlaps: readonly BarredOverlap[];
   readonly canUndo: boolean;
   readonly canRedo: boolean;
   readonly undoLabel: string | null;

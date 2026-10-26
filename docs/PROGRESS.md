@@ -7,8 +7,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 ## Current state
 
 - **Active WI:** WI-30 README & demo scripts, branch `docs/wi-30-demo`.
-- **Last session:** 2026-10-26 · Codex · finished and merged WI-25–29; prepared WI-30 README and all sample deliverables; production rehearsal pending.
-- **Gate status:** `main` verified green after WI-29; WI-30 branch also green (typecheck, lint, 508 tests; T15 opt-in). Coverage, 5 full-property tests, 6 DST cases, build and 6 Chromium checks pass; sample exports validate and regenerate identically.
+- **Last session:** 2026-10-26 · Codex · WI-32/33 finished and merged; preserving all WI-30 docs/exports while recording Divyam's rehearsal passes.
+- **Gate status on `main`:** verified typecheck/lint and 524 tests pass (T15 opt-in); 7 DST cases, build and all 8 browser checks green.
 
 ## Work items
 
@@ -101,12 +101,22 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 ### Phase 6 — Docs and demo
 
-- [~] **WI-30** README & demo scripts — owner S + Dv — depends on 29
+- [~] **WI-30** README & demo scripts — owner S + Dv — depends on 29, 32, 33
   - 2026-10-26 · Codex · branch `docs/wi-30-demo` · done: verified WI-29 main gate and read D1–D5/release requirements · next: complete README, reproducible six-sample JSON exports and rehearsal guide; production rehearsal needs the human deployment step
   - 2026-10-26 · Codex · branch `docs/wi-30-demo` · done: generated and schema-validated all six JSON sample deliverables for 2026-11-02 UTC using an existing-Vite-module-loader script · next: README, sample guide, repeat-generation check and local gate; keep WI-30 open until production D1–D5 rehearsal
   - 2026-10-26 · Codex · branch `docs/wi-30-demo` · done: README covers production URL/setup/tests/architecture/deployment/limits; six exports validated and repeat generation is byte-identical; D1–D5 preflight and production record prepared · next: human deploys latest tested main and rehearses D1–D5, records outcomes in TEST_PLAN §8; then finish/merge WI-30 and take WI-31 · note: Node URL import corrected after the export script's first lint pass; no push/account/deploy action taken
   - 2026-10-26 · Codex · branch `docs/wi-30-demo` · done: final typecheck/lint/test gate green (508 pass, T15 intentionally skipped), sample regeneration diff and whitespace checks clean; all local preparation committed · next: production D1–D5 rehearsal; WI-30 remains in progress and unmerged until its production done-when condition is met
 - [ ] **WI-31** Final docs sync — owner S + Dv — depends on 30
+
+### Change requests before WI-30
+
+- [x] **WI-32** Barred-slot overlap warnings — owner S + Dv — depends on 29
+  - 2026-10-26 · Codex · branch `feat/wi-32-barred-warnings` · done: requirements/contracts/T37/T38 and complexity documented in all three docs before code · next: algorithm/snapshot and UI tests first, separate warning records, settings toast/View and reused alternatives
+  - 2026-10-26 · Codex · branch `feat/wi-32-barred-warnings` · done: T37/T38 tests written red then green (14 tests), typecheck/lint and all 7 DST cases green; derived warnings, settings diff toast/View, tags/panel and reused alternatives implemented · next: browser warning workflow and full gate/coverage · note: sparseWeek thesis confirmed exactly TaskLongerThanWindow, 600 min vs longest allowed stretch 240 min, in engine and UI
+  - 2026-10-26 · Codex · branch `feat/wi-32-barred-warnings` · done: gate and coverage green (523 tests; 98.30% lines overall, 99.67% algorithm lines), 7 DST cases, build and all 8 browser cases green, including visible tag/View drawer/alternative apply and ER2 · next: WI-33 · note: warnings remain derived/non-persisted; conflict counts and replan metrics retain BR-3 semantics
+- [x] **WI-33** Shortcuts button — owner S + Dv — depends on 29
+  - 2026-10-26 · Codex · branch `feat/wi-33-shortcuts-button` · done: WI-32 merged and main gate verified (523 tests); button requirement/contract/UI test already documented · next: failing UI test, accessible toolbar button, browser click/Escape plus preserved ? key
+  - 2026-10-26 · Codex · branch `feat/wi-33-shortcuts-button` · done: UI test failed before implementation, then green; button between theme/settings opens existing help; browser verifies click, Escape/focus return and ? key; gate 524 tests, build and all 8 browser cases pass · next: finish WI-30 then WI-31
 
 ## Milestones
 
@@ -118,8 +128,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 ## Human-only steps
 
-- [ ] **WI-30 blocker:** deploy the latest tested `main` (WI-25–29) to the existing production URL, then rehearse D1–D5 and record tester/date/outcome in TEST_PLAN §8 on `docs/wi-30-demo`. README and sample exports are ready on that branch; do not mark WI-30 complete until rehearsal passes. WI-31 depends on WI-30.
-- [ ] Before presenting the release, run TEST_PLAN §7 on production, including the devtools contrast picker and an NVDA/VoiceOver announcement check. Local Chromium layout/focus/semantic-name checks and both-theme contrast-token tests pass; live screen-reader control is unavailable in this environment.
+- [x] Divyam, 2026-10-26: production D1–D5 all pass; contrast OK in both themes and screen reader announces toasts (user-reported). WI-32/33 changes will be redeployed by the human afterwards; post-deploy checks remain human-owned.
+- [ ] User will push and redeploy after local WI-30/31 completion, then smoke-check the new WI-32/33 D5 steps on production.
 - [ ] Connect the GitHub Classroom repo as `origin` and push `main`.
 - [ ] Push the WI branches and milestone tags too: `git push origin --all` and `git push origin --tags` (tags `m1`–`m5` exist locally).
 - [x] First Vercel deploy (TECH_SPEC §13.2) and paste the URL at the top of this file.

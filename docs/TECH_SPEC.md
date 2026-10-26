@@ -335,6 +335,12 @@ export interface Conflict {
 }
 
 export type UserCriterion = 'earliest' | 'bestFit' | 'priorityAware';
+export interface BarredOverlap {
+  readonly eventId: string;
+  readonly label: string;
+  readonly overlap: Interval;
+  readonly minutes: number;
+}
 export type Criterion = UserCriterion | 'nearest' | 'leastLoaded';
 export type EffectiveCriterion = Exclude<Criterion, 'priorityAware'>;
 
@@ -425,6 +431,7 @@ export interface Snapshot {
   readonly tasks: readonly Task[];             // creation order
   readonly settings: Settings;
   readonly conflicts: readonly Conflict[];     // sorted by (overlap.start, key)
+  readonly barredOverlaps: readonly BarredOverlap[]; // event order, local day, slot order; derived
   readonly canUndo: boolean; readonly canRedo: boolean;
   readonly undoLabel: string | null; readonly redoLabel: string | null;
 }
@@ -609,6 +616,7 @@ export interface EngineState {
   readonly tasks: readonly Task[];
   readonly settings: Settings;
   readonly conflicts: readonly Conflict[];
+  readonly barredOverlaps: readonly BarredOverlap[];
   readonly undo: readonly Change[];            // ≤ HISTORY_LIMIT, newest last
   readonly redo: readonly Change[];
 }
@@ -638,7 +646,7 @@ It returns the new `{events, tasks}`.
 1. Set `direction` to `'backward'` when `mode === 'undo'`, and to `'forward'` otherwise.
 2. Compute `next = applyChange(state, change, direction)`.
 3. Build `changeSet` (§9.1) from the images for that direction, and `await repo.apply(changeSet)`. On a throw, return `err({code:'StorageError', message})`. The state is untouched.
-4. Compute `conflicts = detectConflicts(next.events)` (§8.4).
+4. Compute `conflicts = detectConflicts(next.events)` (§8.4) and `barredOverlaps = barredOverlapsFor(next.events, settings)` (§8.4a).
 5. `introduced` = new conflicts whose key is not among the old keys. `resolved` = the reverse.
 6. Update the history:
    - `do`: push to `undo` (dropping the oldest beyond 50) and clear `redo`.
@@ -805,6 +813,8 @@ Every mutation pipeline follows the same skeleton: validate → look up → buil
 
 #### 7.4.5 Settings
 
+WI-32: after a successful settings save, recompute `barredOverlapsFor(events, settings)` and bump the version. BR-3 conflicts remain unchanged. Initialization, import and every successful commit (including undo/redo) also populate `barredOverlaps`. Neither repository nor JSON export schemas change, since warnings are derived.
+
 `updateSettings(s)`:
 
 1. Validate with `settingsSchema`.
@@ -966,6 +976,14 @@ This fixes the A1/A2 running-max version, which only compared against the single
 - For a personal calendar k is small, so this behaves as O(N log N).
 
 `countOverlaps(candidate: Interval, events: readonly Interval[]): number` is also exported. It counts the events that overlap `candidate` (BR-2). It is an O(n) linear check, used only by the optional drag preview (§11.3); the caller leaves the dragged event out of `events`.
+
+### 8.4a `barred.ts` — barred-slot warnings (BR-15), frozen contract
+
+`detectBarredOverlaps(events: readonly CalendarEvent[], frames: readonly DayFrame[]): BarredOverlap[]` is pure. PRE: events are valid; frames are ordered, disjoint local days covering each event's touched days, with their applicable slots pre-expanded by shared/time. POST: returns one record per positive event/slot intersection, in event input order, then frame order, then slot order. It ignores `frame.work`, does not mutate inputs and uses half-open intersection. No warning enters `detectConflicts` or replan metrics.
+
+Use `lowerBound` to start at the first frame whose `dayEnd > event.start`, visit intersecting frames until `dayStart >= event.end`, and reuse interval intersection/length helpers. Cost: `O(N log(D+1) + F·B + q)` time, `O(q)` output space, where F is visited event/day pairs, B is the maximum slot count per frame and q is returned records.
+
+`state.barredOverlapsFor(events, settings)` builds DayFrames separately for each event through `buildDayFrames(event, settings)` and calls the pure algorithm. This avoids expanding empty years between sparse events. BR-4 bounds each event to at most three local days across DST; including frame slot sorting, cost is `O(N·B log(B+1) + q)` time and `O(B + q)` space. Return immediately when no barred slots exist.
 
 ### 8.5 `merge.ts` — busy blocks (BR-6)
 
@@ -1308,6 +1326,7 @@ Each sample uses `atLocal` relative to `weekMonday`. The UI passes `startOfLocal
 
 | Operation | Time | Space |
 |---|---|---|
+| Barred warnings, including per-event local frames | O(N·B log(B+1) + q) | O(B + q) |
 | Validate a command (Zod) | O(1) | O(1) |
 | Boot: load + sort + sweep | O(N log N + k log k) | O(N + T + k) |
 | Insert / move / delete in the sorted array | O(log N + N) | O(N) (new array) |
@@ -1369,11 +1388,13 @@ interface Toast { id: string; tone: 'success' | 'info' | 'warning' | 'error'; te
 
 `createAppStore(engine, {storageWarning, init, now, resetStorage, initialView?})` builds the store; `now` dates the samples and `resetStorage` empties the repository for the fatal screen's *Reset local data*. `initialView` is the view remembered in `localStorage['fc-view']` (`storedView()` in `hooks/preferences.ts`); `main.tsx` calls `rememberView(store)` so later view changes are remembered too. `onDatesSet` records `view.type` and `view.date` (the shown period's first day, for the toolbar title) as well as `activeRange`. `StoreProvider` and `useAppStore(selector)` live in `appStore.ts`.
 
-`SidePanel` renders the panels once: an `aside` at 1024 px and wider, a native `Modal` drawer below it. `useNarrowLayout` listens for media-query changes. App owns the drawer's open state and the toolbar trigger. Nested dialogs keep the drawer open; native Esc closes only the top dialog. Modal cleanup returns focus to the connected trigger, with the page trigger retained across confirmation replacements.
+`SidePanel` renders the panels once: an `aside` at 1024 px and wider, a native `Modal` drawer below it. `useNarrowLayout` listens for media-query changes. The UI store owns the drawer's open state; App wires its toolbar trigger. Nested dialogs keep the drawer open; native Esc closes only the top dialog. Modal cleanup returns focus to the connected trigger, with the page trigger retained across confirmation replacements.
 
 All sample loads and imports with more than `IMPORT_SPINNER_THRESHOLD` events plus tasks set `busy`. `BusyOverlay` is a non-dismissible native modal with a polite status and a reduced-motion-aware spinner. Sample generation is deferred until after a rendering frame and task so the feedback can paint first. The shared replace-all helper clears `busy` in `finally`, including storage failures; Retry repeats the same loading feedback.
 
 **Rules for actions.**
+
+- **Barred warnings (WI-32).** `openEventAlternatives(eventId)` opens the existing alternatives picker with `otherEventId: null`, reusing `suggestAlternatives`. Settings compares old/new warning tuples `(eventId, label, overlap.start, overlap.end)` and counts distinct event IDs among introduced tuples; after the normal success toast it adds the BR-15 info toast and **View** action. UI-only `panelsOpen: boolean` controls the drawer and `barredViewRequest: number` requests focus/scroll to the separate section; neither belongs to the persisted model. Event text and accessible names include distinct `In <label>` tags. `ConflictPanel` renders both sections; its original conflict heading/count remains event-pair-only.
 
 - **Mutations.** Every mutating action does `const r = await engine.x(...)`.
   - **On `ok`:** set `snapshot` and `emphasisIds`, then push a success toast built by `format/*`. If `introducedConflicts` is non-empty, push the ER4 warning toast instead. Its actions are *Move to …* (when there is a `suggestion`), which calls `applyAlternative`, and *View conflict*.
@@ -1393,6 +1414,7 @@ All sample loads and imports with more than `IMPORT_SPINNER_THRESHOLD` events pl
 |---|---|---|---|
 | `App` | Layout grid, empty state, banners, fatal screen, mounts dialogs/toasts, `useShortcuts`, `useTheme` | `status`, `dialog`, `picker` | — |
 | `Toolbar` | Navigation, view switch, priority filter chips, + Event, + Task, Replan, Undo/Redo (disabled per `canUndo/canRedo`, tooltip = label), theme toggle, settings, drawer toggle (< 1024 px) | `view`, `snapshot.canUndo…` | store actions |
+| WI-33 toolbar addition | A `?` icon button between theme and settings, `aria-label="Keyboard shortcuts"`; opens `openDialog({kind: 'shortcuts'})`, retaining the existing `?` shortcut | existing dialog state | `openDialog` |
 | `CalendarView` | FullCalendar wrapper (§11.3) | `snapshot.events`, `conflicts`, `settings`, `eventPriorityFilter`, `emphasisIds` | `moveEvent`, open dialogs |
 | `EventContent` | Renders an event block: title, time, `[H]/[M]/[L]` tag, `Fixed`/`Task` tag, `⚠ Conflict N min` | props | — |
 | `TaskPanel` | Sort/filter controls, task rows with checkbox, status, *Find time*, context menu; "Find time for N selected" | `snapshot.tasks`, `taskPanel` | `openTaskPicker`, dialogs |
@@ -1616,7 +1638,7 @@ Data lives in each visitor's own browser. A grader opening the URL sees the empt
 
 Phases match A3 §7. Owners follow A3: **S** = Samar, **Dv** = Divyam. Each WI is done only when its tests pass and `docs/PROGRESS.md` is updated.
 
-**Start at WI-01 and finish at WI-31.**
+**Follow dependencies: WI-32 and WI-33 are change requests that must finish before WI-30 and WI-31.**
 
 | WI | Phase | Title | Owner | Files | Depends | Done when |
 |---|---|---|---|---|---|---|
@@ -1649,8 +1671,10 @@ Phases match A3 §7. Owners follow A3: **S** = Samar, **Dv** = Divyam. Each WI i
 | 27 | 5 | Playwright E1–E3 | Dv | `e2e/*` | 26 | `npm run e2e` green |
 | 28 | 5 | Benchmarks | S | `bench/engine.bench.ts` | 17 | T15 median < 100 ms |
 | 29 | 5 | Coverage & bug bash | S + Dv | — | 27, 28 | Thresholds met; `test:props:full` green |
-| 30 | 6 | README & demo scripts | S + Dv | `README.md`, TEST_PLAN §8 | 29 | D1–D5 rehearsed on the production URL |
-| 31 | 6 | Final docs sync | S + Dv | these three docs | 30 | Change logs updated; the release checklist (TEST_PLAN §9) is all ticked |
+| 30 | 6 | README & demo scripts | S + Dv | `README.md`, TEST_PLAN §8 | 29, 32, 33 | D1–D5 production results recorded; change requests pass locally; humans redeploy afterwards |
+| 31 | 6 | Final docs sync | S + Dv | these three docs | 30 | Change logs synchronized; release checklist accurately records verified checks and remaining human push/redeploy/viva steps |
+| 32 | Change | Barred-slot overlap warnings | S + Dv | `shared/types`, `algorithms/barred`, state/facade, store, calendar/panel | 29 | T37 algorithm/snapshot and T38 UI pass; BR-3 conflicts and replan metrics unchanged |
+| 33 | Change | Shortcuts button | S + Dv | `Toolbar` | 29 | Toolbar `?` button labelled Keyboard shortcuts opens the existing help; `?` key still works |
 
 **`docs/PROGRESS.md` format** (already created during repo setup):
 
@@ -1709,3 +1733,4 @@ Production URL: https://…vercel.app
 | 2026-10-26 | v1.17 (WI-27): §13.1 removes the CI no-tests escape hatch now that E1–E3 and accessibility smoke tests exist. Focusable FullCalendar event anchors also receive a button role. |
 | 2026-10-26 | v1.18 (WI-28): §1.3 adds portable `test:perf`; §9.5 documents optional stress-generator seed and the shared T15 fixture/query used by benchmark and gated assertion. |
 | 2026-10-26 | v1.19 (WI-30): §1.3/§9.5 document reproducible, validated sample-file generation through the existing Vite module loader. |
+| 2026-10-26 | v1.20 (WI-32/33): §5/§7 add derived BarredOverlap records to state/snapshots; §8.4a/§10 freeze the pure algorithm and complexity; §11 defines settings toast/View and reused alternatives; §14 adds both change requests before WI-30. Production rehearsal is reported complete by Divyam; human push/redeploy follow local completion. |

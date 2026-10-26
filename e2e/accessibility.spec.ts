@@ -125,6 +125,13 @@ test('dialog types keep keyboard focus and restore their connected trigger', asy
   }
   // POST: event, task, replan and settings dialogs satisfy keyboard focus and Esc behavior
 
+  const helpButton = page.getByRole('button', { name: 'Keyboard shortcuts', exact: true });
+  await helpButton.click();
+  const help = page.getByRole('dialog', { name: 'Keyboard shortcuts', exact: true });
+  await expect(help).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(help).toHaveCount(0);
+  await expect(helpButton).toBeFocused();
   await page.keyboard.press('?');
   await expect(page.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeVisible();
   await page.keyboard.press('Escape');
