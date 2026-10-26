@@ -1,4 +1,4 @@
-import { DEFAULT_SETTINGS } from './constants';
+import { DEFAULT_SETTINGS, MAX_SUPPORTED_MINUTE, MIN_SUPPORTED_MINUTE } from './constants';
 import type { EngineError } from './errors';
 import type { Result } from './result';
 import {
@@ -62,6 +62,47 @@ describe('eventInputSchema (T5, schema level)', () => {
     const parsed: Result<EventInput> = parseInput(eventInputSchema, validEvent);
 
     expect(parsed).toEqual({ ok: true, value: validEvent });
+  });
+
+  // AUDIT A02: integer minutes beyond JavaScript's Date range used to pass and then crash rendering.
+  it('rejects minutes outside the supported dates as InvalidTime at that field', () => {
+    const beyond = {
+      ...validEvent,
+      start: MAX_SUPPORTED_MINUTE + 1,
+      end: MAX_SUPPORTED_MINUTE + 61,
+    };
+    const unsafe = {
+      ...validEvent,
+      start: Number.MAX_SAFE_INTEGER - 60,
+      end: Number.MAX_SAFE_INTEGER,
+    };
+    const message = 'Dates must be between the years 1970 and 9999.';
+
+    expect(errorOf(parseInput(eventInputSchema, beyond))).toEqual({
+      code: 'InvalidTime',
+      issues: [
+        { path: 'start', message },
+        { path: 'end', message },
+      ],
+    });
+    expect(errorOf(parseInput(eventInputSchema, unsafe)).code).toBe('InvalidTime');
+    const beforeFirst = {
+      ...validEvent,
+      start: MIN_SUPPORTED_MINUTE - 1,
+      end: MIN_SUPPORTED_MINUTE,
+    };
+    expect(errorOf(parseInput(eventInputSchema, beforeFirst))).toEqual({
+      code: 'InvalidTime',
+      issues: [{ path: 'start', message }],
+    });
+  });
+
+  it('accepts the first and last supported minutes', () => {
+    const first = { ...validEvent, start: MIN_SUPPORTED_MINUTE, end: MIN_SUPPORTED_MINUTE + HOUR };
+    const last = { ...validEvent, start: MAX_SUPPORTED_MINUTE - HOUR, end: MAX_SUPPORTED_MINUTE };
+
+    expect(parseInput(eventInputSchema, first).ok).toBe(true);
+    expect(parseInput(eventInputSchema, last).ok).toBe(true);
   });
 
   it('(a) end before start is InvalidTime at end', () => {

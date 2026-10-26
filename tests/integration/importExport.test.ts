@@ -111,6 +111,21 @@ describe('export / import (T25, B2, ER6)', () => {
       'events.3.end',
     ],
     [
+      // AUDIT A02: these dates passed import, then crashed rendering and stayed saved.
+      'events[0] at minutes beyond the supported dates',
+      () => {
+        const file = fourEvents();
+        const unsafe = { start: Number.MAX_SAFE_INTEGER - 60, end: Number.MAX_SAFE_INTEGER };
+        return JSON.stringify({
+          ...file,
+          events: file.events.map((event, index) =>
+            index === 0 ? { ...event, ...unsafe } : event,
+          ),
+        });
+      },
+      'events.0.start',
+    ],
+    [
       'two events with the same id',
       () => {
         const file = fourEvents();
@@ -209,6 +224,22 @@ describe('export / import (T25, B2, ER6)', () => {
 });
 
 describe('init and stored links', () => {
+  it('reports StorageError when a stored event has dates beyond the supported range (A02)', async () => {
+    const repo = new MemoryRepository();
+    const keep = ev('Keep', 'Mon 09:00', 'Mon 10:00');
+    await repo.replaceAll({
+      events: [{ ...keep, start: Number.MAX_SAFE_INTEGER - 60, end: Number.MAX_SAFE_INTEGER }],
+      tasks: [],
+      settings: SAMPLES.backToBack.build(BASE_MONDAY).settings,
+    });
+    const engine = createEngine({ repo, now: () => 0, newId: () => 'x' });
+
+    expect(await engine.init()).toEqual({
+      ok: false,
+      error: { code: 'StorageError', message: 'Saved data is damaged.' },
+    });
+  });
+
   it('reports StorageError when stored task ↔ event links are broken', async () => {
     const repo = new MemoryRepository();
     await repo.replaceAll({

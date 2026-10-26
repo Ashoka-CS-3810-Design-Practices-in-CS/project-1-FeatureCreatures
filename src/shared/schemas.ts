@@ -10,7 +10,9 @@ import {
   MAX_DESCRIPTION_LENGTH,
   MAX_EVENT_MIN,
   MAX_TASK_DURATION_MIN,
+  MAX_SUPPORTED_MINUTE,
   MAX_TITLE_LENGTH,
+  MIN_SUPPORTED_MINUTE,
   MIN_TASK_DURATION_MIN,
   MINUTES_PER_DAY,
 } from './constants';
@@ -21,7 +23,18 @@ import type { CalendarEvent, EventInput, ExportFile, Interval, Task } from './ty
 // Tags ordering issues so they map to InvalidTime rather than InvalidInput.
 const TIME_ISSUE_KIND = 'time';
 
-const minute = z.number().int();
+const DATE_RANGE_MESSAGE = 'Dates must be between the years 1970 and 9999.';
+
+// Every stored, imported or commanded Minute passes here, so no unrepresentable date reaches the
+// state, the repository or the UI's date formatting (AUDIT A02).
+const minute = z
+  .number()
+  .int()
+  .superRefine((value, ctx) => {
+    if (value < MIN_SUPPORTED_MINUTE || value > MAX_SUPPORTED_MINUTE) {
+      addTimeIssue(ctx, [], DATE_RANGE_MESSAGE);
+    }
+  });
 const interval = z.object({ start: minute, end: minute });
 const priority = z.enum(['high', 'medium', 'low']);
 const category = z.enum(['meeting', 'class', 'appointment', 'assignment', 'personal']);

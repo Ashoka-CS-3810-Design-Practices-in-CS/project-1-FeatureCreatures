@@ -507,6 +507,8 @@ export const MIN_CLICK_TARGET_PX = 32;
 export const CLICK_EVENT_MIN = 30;        // a click on empty time creates one calendar row (WI-35)
 export const IMPORT_SPINNER_THRESHOLD = 1000;
 export const MINUTES_PER_DAY = 1440;
+export const MIN_SUPPORTED_MINUTE = 0;              // 1970-01-01T00:00Z (AUDIT A02)
+export const MAX_SUPPORTED_MINUTE = 4_223_371_679;  // 9999-12-31T23:59Z: always a valid JS Date
 export const MAX_TITLE_LENGTH = 100;          // event title and task name
 export const MAX_DESCRIPTION_LENGTH = 1000;
 export const MAX_BARRED_LABEL_LENGTH = 40;
@@ -532,7 +534,11 @@ The time-ordering rules are added in `superRefine` with `params: { kind: 'time' 
 - **`InvalidInput`:** anything else, including missing fields, wrong types, and out-of-range numbers.
 
 ```ts
-const minute = z.number().int();
+// AUDIT A02: a Minute must be a supported date (1970-01-01T00:00Z … 9999-12-31T23:59Z), a time issue.
+const minute = z.number().int().superRefine((v, ctx) => {
+  if (v < MIN_SUPPORTED_MINUTE || v > MAX_SUPPORTED_MINUTE)
+    timeIssue(ctx, [], 'Dates must be between the years 1970 and 9999.');
+});
 const interval = z.object({ start: minute, end: minute });
 const priority = z.enum(['high', 'medium', 'low']);
 const category = z.enum(['meeting', 'class', 'appointment', 'assignment', 'personal']);
