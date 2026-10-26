@@ -137,6 +137,7 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 - [~] **WI-36** Audit findings A01–A10 — owner S + Dv — depends on 35
   - 2026-10-26 · Claude Code · branch `feat/wi-36-audit-findings` · done: claimed; WI-35 merged · next: commit `docs/AUDIT.md`, then A01/A02 test-first
   - 2026-10-26 · Claude Code · branch `feat/wi-36-audit-findings` · done: `docs/AUDIT.md` committed; A01 (replan pins unplaced events, fixed-point passes) and A02 (supported-date `minute` schema) fixed test-first with resolutions recorded · next: A03–A10
+  - 2026-10-26 · Claude Code · branch `feat/wi-36-audit-findings` · done: A03 (ER4 Move to version), A04 (BR-9 mirror on import/init), A05 (whole-day loads), A06 (slot schema) fixed test-first, resolutions recorded · next: A07–A10, then cleanup notes
 
 ## Milestones
 

@@ -49,6 +49,8 @@ Create A 10:00–11:00 and B 10:30–11:30. B's warning offers 11:00–12:00. Ad
 
 Capture the suggestion's original snapshot version in the toast action. On `StaleResult`, recompute alternatives instead of applying the obsolete slot. Extend T21/T27 with an intervening mutation.
 
+**Resolution (WI-36, Claude Code, 2026-10-26):** reproduced and fixed in bf5170b. The toast's *Move to* now applies with the suggestion's own `snapshot.version`; on `StaleResult` it leaves the event alone and opens the alternatives picker for it. Store regression with an intervening Blocker event; T21, ER4 and TECH_SPEC §11.1 updated.
+
 ### A04 · P2 · Import validates links but not linked-record invariants
 
 **Locations:** [schemas.ts:261](../src/shared/schemas.ts#L261), [facade.ts:193](../src/engine/facade.ts#L193). **Evidence: reproduced.**
@@ -56,6 +58,8 @@ Capture the suggestion's original snapshot version in the toast action. On `Stal
 Export a scheduled task and edit the JSON so its name/duration differ from the linked event; make that event fixed with a null flex window. Import still succeeds when the IDs point back correctly. The reproduced pair had a 120-minute task named “Different” linked to a fixed 60-minute event named “Original”. Startup uses the same checks and accepts it too.
 
 Extend cross-record validation to BR-9's mirrored name/title, priority, duration and window, and require scheduled-task events to stay flexible. Description/category are initially copied but are not among BR-9's four mirrored fields; do not accidentally impose additional synchronization rules.
+
+**Resolution (WI-36, Claude Code, 2026-10-26):** reproduced and fixed in fd28e32. `linkIssues` (import and `init`) now also requires the linked event to be flexible and to mirror the task's name, priority, duration and window (description/category untouched). Five new import cases plus an accepted consistent pair; test fixtures that named linked events 'E' were made BR-9-consistent; the six sample deliverables still import. ER6, T25 and TECH_SPEC §7.4.6 updated.
 
 ### A05 · P2 · Partial-day windows produce incorrect day loads and ranking
 
@@ -65,6 +69,8 @@ Book Monday 09:00–17:00. Search for a low-priority 60-minute task whose window
 
 Busy-gap selection correctly uses the narrow search window, but day-load computation wrongly reuses that same event slice. Compute loads from all events intersecting the relevant working days. Add a partial-first/last-day variant of T18.
 
+**Resolution (WI-36, Claude Code, 2026-10-26):** reproduced and fixed in 33ab1cb. `search` computes day loads from every event on the frames' whole days (excluding `excludeIds`); gaps still use the window slice. Facade regression (partial-day T18 variant: Tue 09:00 load 0 before Mon 17:00 load 480); T18 and TECH_SPEC §7.5 updated.
+
 ### A06 · P2 · Scheduling can persist invalid minute values
 
 **Locations:** [search.ts:133](../src/engine/search.ts#L133), [taskScheduler.ts:281](../src/engine/pipelines/taskScheduler.ts#L281). **Evidence: reproduced through the facade.**
@@ -72,6 +78,8 @@ Busy-gap selection correctly uses the narrow search window, but day-load computa
 `scheduleTask` checks version, task status and slot length, then constructs an event without schema validation. A 60-minute slot starting at 09:00:30 and ending at 10:00:30—fractional epoch minutes—succeeds. Initializing another engine from that repository then fails with `StorageError: Saved data is damaged.`
 
 Validate slot endpoints as supported integer Minutes and validate the constructed stored/event input before committing. Length equality alone also does not establish containment or availability. Normal picker options are integer-valued; this finding concerns the facade's promised validation boundary, not the current picker generating fractional slots.
+
+**Resolution (WI-36, Claude Code, 2026-10-26):** reproduced and fixed in 03e3a21. The shared slot check (`requireValidSlot`, formerly `requireSlotLength`) validates the slot with the new `slotSchema` (supported integer Minutes) before the length, for both `scheduleTask` and `applyAlternative`; regressions for fractional and out-of-range slots. Availability stays guaranteed by the version check against the search the slot came from (ER7); TECH_SPEC §6/§7.4.2/§7.4.3 updated.
 
 ### A07 · P2 · Elapsed time does not invalidate options or plans
 
