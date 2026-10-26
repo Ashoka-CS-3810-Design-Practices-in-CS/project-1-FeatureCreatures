@@ -38,4 +38,14 @@ describe('T37 barred-slot intersections', () => {
       detectBarredOverlaps([ev('Monday', 'Mon 12:00', 'Mon 13:00')], [dayFrame('Mon', null)]),
     ).toEqual([]);
   });
+
+  it('skips earlier days and stops before later days', () => {
+    const frames = [
+      dayFrame('Sun', null),
+      { ...monday, dayStart: monday.dayStart, dayEnd: monday.dayEnd },
+    ];
+    const ordered = frames.toSorted((first, second) => first.dayStart - second.dayStart);
+    expect(detectBarredOverlaps([ev('A', 'Mon 13:00', 'Mon 14:00')], ordered)).toHaveLength(1);
+    expect(detectBarredOverlaps([ev('B', 'Sun 13:00', 'Sun 14:00')], ordered)).toEqual([]);
+  });
 });

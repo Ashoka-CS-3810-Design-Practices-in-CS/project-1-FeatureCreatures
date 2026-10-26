@@ -84,7 +84,7 @@ export function barredOverlapsFor(
 
 // PRE:  events have distinct ids, in any order; tasks have distinct ids; records/settings are valid
 // POST: returns version 0 over these records: events sorted by compareEvents, their conflicts
-//       detected, and empty undo / redo stacks
+//       and barred overlaps detected, and empty undo / redo stacks
 export function createState(data: {
   events: readonly CalendarEvent[];
   tasks: readonly Task[];
@@ -222,7 +222,7 @@ function messageOf(error: unknown): string {
 // PRE:  state.events is sorted; change touches each record at most once and has been validated by the
 //       caller; mode 'undo' / 'redo' ⟹ change is the last entry of state.undo / state.redo
 // POST: on success, the repository holds change's images for the direction (backward for 'undo',
-//       forward otherwise) and returns the next state (records written, conflicts re-detected,
+//       forward otherwise) and returns the next state (records written, conflicts and barred overlaps re-detected,
 //       history updated, version + 1) with the changed event ids and the introduced / resolved
 //       conflicts; when repo.apply rejects, returns StorageError and neither state nor repo change
 export async function commit(

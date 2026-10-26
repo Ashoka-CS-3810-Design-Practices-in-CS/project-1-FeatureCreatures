@@ -750,7 +750,8 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
 
       // PRE:  settings come from the settings dialog (validated by the engine)
       // POST: saves them (not undoable, FR11); on ok adopts the snapshot and toasts "Settings
-      //       saved."; on err shows the error toast and keeps the old settings
+      //       saved." plus info/View for newly introduced barred warnings; on err shows the error
+      //       toast and keeps the old settings
       async updateSettings(settings) {
         const previous = get().snapshot.barredOverlaps;
         const result = await engine.updateSettings(settings);

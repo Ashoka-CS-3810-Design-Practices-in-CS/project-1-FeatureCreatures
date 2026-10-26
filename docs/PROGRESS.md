@@ -6,7 +6,7 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-32 Barred-slot overlap warnings, branch `feat/wi-32-barred-warnings`; WI-30 waits for 32/33, then resumes its preserved `docs/wi-30-demo` branch.
+- **Active WI:** none; next WI-33 Shortcuts button, then resume WI-30 on its preserved `docs/wi-30-demo` branch.
 - **Last session:** 2026-10-26 · Codex · recorded Divyam's production D1–D5 passes and contrast/toast screen-reader checks; documented WI-32/33 before implementation.
 - **Gate status on `main`:** verified typecheck/lint and 508 tests pass (T15 opt-in). No uncommitted leftovers found.
 
@@ -107,9 +107,10 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 ### Change requests before WI-30
 
-- [~] **WI-32** Barred-slot overlap warnings — owner S + Dv — depends on 29
+- [x] **WI-32** Barred-slot overlap warnings — owner S + Dv — depends on 29
   - 2026-10-26 · Codex · branch `feat/wi-32-barred-warnings` · done: requirements/contracts/T37/T38 and complexity documented in all three docs before code · next: algorithm/snapshot and UI tests first, separate warning records, settings toast/View and reused alternatives
   - 2026-10-26 · Codex · branch `feat/wi-32-barred-warnings` · done: T37/T38 tests written red then green (14 tests), typecheck/lint and all 7 DST cases green; derived warnings, settings diff toast/View, tags/panel and reused alternatives implemented · next: browser warning workflow and full gate/coverage · note: sparseWeek thesis confirmed exactly TaskLongerThanWindow, 600 min vs longest allowed stretch 240 min, in engine and UI
+  - 2026-10-26 · Codex · branch `feat/wi-32-barred-warnings` · done: gate and coverage green (523 tests; 98.30% lines overall, 99.67% algorithm lines), 7 DST cases, build and all 8 browser cases green, including visible tag/View drawer/alternative apply and ER2 · next: WI-33 · note: warnings remain derived/non-persisted; conflict counts and replan metrics retain BR-3 semantics
 - [ ] **WI-33** Shortcuts button — owner S + Dv — depends on 29
 
 ## Milestones
