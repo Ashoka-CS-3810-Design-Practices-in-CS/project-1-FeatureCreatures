@@ -4,6 +4,15 @@ A single-user calendar for CS-3810, by Divyam and Samar. Create, drag and resize
 
 **Production URL:** [int-calendarfeature-creatures.vercel.app](https://int-calendarfeature-creatures.vercel.app). The team handles deployment; local work-item status is in [PROGRESS.md](docs/PROGRESS.md).
 
+## Team
+
+**Feature Creatures** · Project 4: Interactive Calendar and Intelligent Time Planner · CS-3810 Design Practices in Computer Science, Ashoka University (Monsoon 2026)
+
+| Member           | Roll number |
+| ---------------- | ----------- |
+| Samar Baskar     | 1020241699  |
+| Divyam Chaudhary | 1020221520  |
+
 ## Run locally
 
 Use Node.js 22, matching CI, and npm. From the repository root:
@@ -56,7 +65,44 @@ Replan explanations for fixed events still in Lunch: [light desktop](docs/screen
 
 Single-theme scenes: [Month view (light)](docs/screenshots/month-light.png), [List view (dark)](docs/screenshots/list-dark.png), [the whole side column with conflicts (light)](docs/screenshots/side-panels-light.png) and [the Tasks and conflicts drawer at 900 px (light)](docs/screenshots/drawer-light-900.png).
 
-## Tests and validation
+## Tests
+
+The algorithms carry the project's correctness claim, so they are tested hardest:
+
+- hand-computed cases with exact expected values
+- brute-force oracles compared against the fast algorithms on thousands of random inputs (fast-check)
+- coverage gates
+
+The engine is tested through its facade with both storage adapters. The UI is tested against the real engine, never a mock, and Playwright drives real dragging, resizing and the main flows in Chromium, on both the production build and a StrictMode dev server. CI (`.github/workflows/ci.yml`) runs the gate on every pull request and push to `main`, plus the browser suite on `main`.
+
+**Results** (local, 2026-10-26, after WI-38):
+
+| Check | Result |
+| --- | --- |
+| Unit, integration, property and UI tests | 578 passing (T15 opt-in) |
+| Property oracles (T12, T33–T36) | 5 properties × 10,000 random cases, all passing (full run in WI-36; CI runs 1,000 at seed 42) |
+| DST suite (America/New_York) | 7 passing |
+| Browser checks (Playwright, Chromium) | 18 passing |
+| Coverage, overall | 98.55% lines, 93.98% branches (gate: 70%) |
+| Coverage, algorithms | 99.70% lines, 95.93% branches, 100% functions (WI-36; gate: 90%) |
+| Performance, T15 | 5,000 events, 183 conflicting pairs, median 4.188 ms for sweep + slot search (target < 100 ms) |
+| Production rehearsal | Demos D1–D5 passed on the live site; contrast and screen-reader announcements checked |
+| Independent audit | Findings A01–A10 re-verified, then fixed test-first or deferred with reasons ([AUDIT.md](docs/AUDIT.md)) |
+
+**Where the full test data lives:**
+
+- [TEST_PLAN.md](docs/TEST_PLAN.md):
+  - every case with its exact inputs and expected outputs (T1–T40, E1–E4 and the smoke flow)
+  - requirement traceability (§3)
+  - manual checklists (§7)
+  - demo scripts with the production rehearsal record (§8)
+  - release checklist (§9)
+- [PROGRESS.md](docs/PROGRESS.md): the gate result recorded for every work item, plus milestone summaries.
+- Generated locally, git-ignored:
+  - `coverage/index.html`, from `npm run test:coverage`
+  - Playwright results, from `npm run e2e`; they print to the terminal, and failure traces land in `test-results/`
+
+**To reproduce:**
 
 ```bash
 npm run typecheck
@@ -73,17 +119,6 @@ npm run build
 ```
 
 `npm test` sets `TZ=UTC`. `test:dst` uses America/New_York. The normal property suite uses 1,000 cases with seed 42; `test:props:full` runs 10,000 cases per property with random seeds. Playwright starts its own build/preview server and uses fresh browser storage with the clock fixed to the test week. It checks conflicts, real pointer drag/resize, reload persistence, task scheduling and keyboard/accessibility workflows.
-
-Local validation on 2026-10-26:
-
-| Check                                    | Result                                             |
-| ---------------------------------------- | -------------------------------------------------- |
-| Unit, integration, property and UI suite | 524 passing; T15 skipped unless explicitly enabled |
-| Full property run                        | All five properties pass 10,000 cases each         |
-| DST suite                                | 7 passing                                          |
-| Chromium suite                           | 8 passing                                          |
-| Overall coverage                         | 98.30% lines, 93.12% branches (WI-32 measurement)  |
-| Algorithm coverage                       | 99.67% lines, 95.85% branches, 100% functions      |
 
 Coverage gates require 90% across algorithm lines, branches, functions and statements, and 70% overall. Manual production checks, including a live screen-reader pass, remain in [TEST_PLAN §7](docs/TEST_PLAN.md#7-manual-checklists-run-on-the-production-url-before-each-milestone).
 
@@ -121,15 +156,66 @@ Follow [D1–D5 in TEST_PLAN §8](docs/TEST_PLAN.md#8-demonstration-scripts-deli
 
 ## Deployment — team members only
 
-Vercel serves this as a static Vite app: build command `npm run build`, output directory `dist`, with no environment variables or backend. Prefer the Vercel Git integration; pushes to `main` deploy production when that integration is configured. The fallback CLI procedure is in [TECH_SPEC §13.2](docs/TECH_SPEC.md#132-hosting-on-vercel).
+Vercel serves this as a static Vite app: build command `npm run build`, output directory `dist`, with no environment variables or backend. We deploy with the Vercel CLI: run `npx vercel --prod` from a clean `main`. The full procedure, including the optional Git integration, is in [TECH_SPEC §13.2](docs/TECH_SPEC.md#132-hosting-on-vercel).
 
 Under [AGENTS.md §7](AGENTS.md#7-human-only-actions--never-do-these-note-them-in-progressmd-under-human-only-steps), the humans handle pushes, account connections and deployment. After deploying the tested app, open a fresh browser context, confirm the empty state and **Load sample week**, then rehearse D1–D5 and complete the manual release checks.
 
-## Project documents
+## Documentation
 
 - [PROJECT_SCHEMA.md](docs/PROJECT_SCHEMA.md): behavior, requirements, business rules and UX.
 - [TECH_SPEC.md](docs/TECH_SPEC.md): architecture, contracts, algorithms and work items.
 - [TEST_PLAN.md](docs/TEST_PLAN.md): exact cases, validation, demos and release checklist.
 - [PROGRESS.md](docs/PROGRESS.md): current branch, completed work and human handoff.
+- [AUDIT.md](docs/AUDIT.md): the independent review and how each finding was resolved.
+- [samples/](docs/samples/README.md) and [screenshots/](docs/screenshots/): sample inputs and UI captures.
+
+**Deviations from the submitted assignments.** The app follows our Assignments 1–3, which were written separately as design deliverables. Before coding, we unified them into the three documents above, and we deviated where the real constraints required it:
+- **Hosting.** The course requires a hosted URL, so the app is a static site. IndexedDB (Dexie) replaces the planned SQLite, which only made sense for a locally run app.
+- **Conflict sweep.** It uses a min-heap, because the running-maximum sweep in A1/A2 misses conflicting pairs.
+- **Data structures.** In-memory storage stays with plain sorted arrays; the planned BST was dropped.
+- **Underspecified features.** The Replan pipeline, the one-task-at-a-time scheduling queue and the priority-aware ranking were given exact rules.
+
+Every such deviation is listed with its reason in [PROJECT_SCHEMA §9](docs/PROJECT_SCHEMA.md#9-deviations-from-the-submitted-assignments). Decisions made later, during implementation, are recorded in the *Decisions log* of [PROGRESS.md](docs/PROGRESS.md) and in each document's change log.
 
 Read the repository session protocol and disciplined-coding skill before changing code. The humans should be able to explain every line during the viva.
+
+## AI-assisted development
+
+The course allows AI for every task, provided each team member can explain every line in the viva. We built the app with AI coding agents (OpenAI Codex and Anthropic Claude Code). The agents took turns, one at a time, and worked inside a framework we designed with Claude so that their output stays consistent, tested and explainable.
+
+```text
+.
+├── AGENTS.md                                  # session protocol every agent follows: rebuild state, claim a work item, commit, hand off, merge
+├── CLAUDE.md                                  # imports AGENTS.md for Claude Code
+├── .agents/skills/disciplined-coding/SKILL.md # our coding-contract skill (read by Codex)
+├── .claude/
+│   ├── skills/disciplined-coding/SKILL.md     # identical copy for Claude Code
+│   └── settings.json                          # commands agents may run; push, reset --hard, rebase and deploy are denied
+└── docs/
+    ├── PROJECT_SCHEMA.md · TECH_SPEC.md · TEST_PLAN.md   # the single source of truth agents build against
+    ├── PROGRESS.md                            # work-item checklist, per-session handoff notes, decisions log
+    ├── PROMPTS.md                             # the prompts that drove development
+    └── AUDIT.md                               # independent AI audit (A01–A10) and how each finding was resolved
+```
+
+**How it worked:**
+
+1. **Specification first.**
+   - We merged Assignments 1–3 into three documents that settle precedence among themselves and freeze the public contracts: types, schemas, the engine interface and algorithm signatures.
+   - The build was split into work items (WI-01 → WI-38), each with its dependencies, its files and a "done when" list of tests.
+2. **Agents in relay.**
+   - Every session starts with the same [reusable prompt](docs/PROMPTS.md#4-the-reusable-session-prompt). The agent rebuilds the state from git and `PROGRESS.md` rather than from memory, then claims one work item and works on its own branch.
+   - It commits small and often, because a usage limit can stop it at any moment, and merges with `--no-ff` only when the gate is green.
+   - Pushing, deploying and accounts are reserved for the humans.
+3. **Contracts in the code** (the `disciplined-coding` skill):
+   - Every function and component carries `PRE`/`POST` comments, written before its body, and every loop carries `INVARIANT`/`POST`.
+   - "PRE decides who validates": the engine facade validates all outside input with shared Zod schemas, and the pure algorithms trust their stated preconditions.
+   - The skill also requires iteration over recursion, one task per function, intent-revealing names, named constants and why-only comments.
+   - The contract comments double as our study notes for the viva.
+4. **Test-driven, with independent checks.**
+   - Algorithms and engine code were written test-first against the exact values in `TEST_PLAN.md`, then cross-checked by brute-force property oracles.
+   - ESLint enforces the layer boundaries, so algorithms cannot import UI, storage or date libraries.
+   - Coverage gates, CI and Playwright smoke flows guard against regressions.
+5. **Human review loop.**
+   - We rehearsed the demos on production and reported problems.
+   - A separate agent audited the code read-only. Each finding, and each bug we found, was turned into a new work item with failing tests first.
