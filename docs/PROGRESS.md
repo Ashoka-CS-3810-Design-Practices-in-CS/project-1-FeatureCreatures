@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-31 Final docs sync, branch `docs/wi-31-final-sync`.
-- **Last session:** 2026-10-26 · Codex · finished WI-30 after completing WI-32/33 and recording Divyam's production passes.
+- **Active WI:** none; all WI-01–33 are complete locally. Human push/redeploy and post-deploy/viva checks remain listed below.
+- **Last session:** 2026-10-26 · Codex · finished WI-32/33 test-first, completed WI-30/31, and recorded Divyam's production rehearsal/accessibility results.
 - **Gate status:** typecheck/lint and 524 tests pass (T15 opt-in); coverage 98.30% lines / 93.12% branches overall; all 5 full-property tests, 7 DST cases, build and 8 browser checks green; T15 median 4.188 ms; exports regenerate identically.
 
 ## Work items
@@ -108,8 +108,9 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-26 · Codex · branch `docs/wi-30-demo` · done: final typecheck/lint/test gate green (508 pass, T15 intentionally skipped), sample regeneration diff and whitespace checks clean; all local preparation committed · next: production D1–D5 rehearsal; WI-30 remains in progress and unmerged until its production done-when condition is met
   - 2026-10-26 · Codex · branch `docs/wi-30-demo` · done: merged completed WI-32/33, retained prior docs/exports, recorded Divyam's D1–D5 passes in §8 table and PROGRESS; README explains warnings, shortcuts button and exact ER2 result · next: final validation, finish/merge WI-30 then WI-31 · note: user will push and redeploy afterwards
   - 2026-10-26 · Codex · branch `docs/wi-30-demo` · done: README/sample guide and six validated/reproducible exports complete; production outcomes recorded; all requested dependencies finished; gate/coverage/full properties/DST and T15 pass (median 4.188 ms) · next: WI-31 · note: production D1–D5 passes are Divyam's reported run; WI-32/33 new steps pass locally and the user will push/redeploy afterwards
-- [~] **WI-31** Final docs sync — owner S + Dv — depends on 30
+- [x] **WI-31** Final docs sync — owner S + Dv — depends on 30
   - 2026-10-26 · Codex · branch `docs/wi-31-final-sync` · done: WI-30 and WI-32/33 merged, post-merge main gate verified; final runtime validation/coverage/properties/DST/ER2 all green · next: sync model/UI/complexity docs, mark verified release evidence and explicit human post-deploy/viva steps, merge and tag m6
+  - 2026-10-26 · Codex · branch `docs/wi-31-final-sync` · done: all three change logs/model/UI/complexity contracts synchronized; TEST_PLAN §8 records Divyam's five production passes and contrast/toast-reader results; release evidence distinguishes local new-feature tests from the earlier production run · next: human pushes/redeploys and smoke-checks new D5 steps; viva preparation remains human-owned · note: all local requested WIs complete; no push/deploy/account action taken
 
 ### Change requests before WI-30
 
@@ -123,6 +124,7 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 ## Milestones
 
+- **m6** (2026-10-26) — Phase 6 local release preparation: README and six reproducible sample exports; Divyam's production D1–D5 passes recorded; WI-32 independent barred warnings and WI-33 accessible help button implemented test-first; 524 tests, 7 DST, 8 Chromium checks and all five 10,000-case properties green. Human will push/redeploy afterwards.
 - **m5** (2026-10-26) — Phase 5 Testing: E1–E3 plus three accessibility browser checks, reproducible T15 (N=5000, seed=7, k=183; eleven-run median 1.201 ms), coverage above thresholds, all five 10,000-case properties and six DST cases green.
 - **m4** (2026-10-26) — Phase 4 UI: all calendar/task/conflict/replan/settings workflows, toolbar/theme/shortcuts, both-theme styles, responsive native drawer and loading feedback; 507 tests and 3 Chromium accessibility checks green. Production visual/screen-reader release checks remain human-only.
 - **m1** (2026-10-25) — Phase 1 Setup: Vite/React/TS scaffold, ESLint layer boundaries, Vitest (UTC + DST), Playwright config, CI workflow; first Vercel deploy done by the humans.
@@ -133,8 +135,9 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 - [x] Divyam, 2026-10-26: production D1–D5 all pass; contrast OK in both themes and screen reader announces toasts (user-reported). WI-32/33 changes will be redeployed by the human afterwards; post-deploy checks remain human-owned.
 - [ ] User will push and redeploy after local WI-30/31 completion, then smoke-check the new WI-32/33 D5 steps on production.
-- [ ] Connect the GitHub Classroom repo as `origin` and push `main`.
-- [ ] Push the WI branches and milestone tags too: `git push origin --all` and `git push origin --tags` (tags `m1`–`m5` exist locally).
+- [ ] Push the finished tested `main` to the configured origin (human-owned).
+- [ ] Push the WI branches and milestone tags too: `git push origin --all` and `git push origin --tags` (local milestones `m1`–`m6`).
+- [ ] Complete the unreported List-view screen-reader quick pass and viva preparation in TEST_PLAN §7/§9; do not infer these from the reported toast-announcement check.
 - [x] First Vercel deploy (TECH_SPEC §13.2) and paste the URL at the top of this file.
 - [ ] Turn on branch protection for `main` on GitHub (optional).
 

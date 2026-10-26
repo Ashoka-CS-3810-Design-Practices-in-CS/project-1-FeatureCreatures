@@ -241,13 +241,14 @@ Local automated evidence (WI-25/26): `src/ui/styles/tokens.test.ts` checks light
 
 - [ ] Every conflict is identifiable without colour: the ⚠ icon plus the word "Conflict".
 - [ ] Every priority is identifiable without colour: the [H] / [M] / [L] tag.
-- [ ] Text contrast is at least 4.5:1 in light and dark mode, checked with the browser devtools contrast picker on:
-  - [ ] event text on each priority background
-  - [ ] muted text
-  - [ ] toasts
+- [x] Text contrast is OK in both themes (Divyam, production, 2026-10-26); local token tests also enforce at least 4.5:1:
+  - [x] event text on each priority background
+  - [x] muted text
+  - [x] toasts
 - [ ] Every dialog is fully operable with the keyboard alone. Focus is trapped, `Esc` closes the dialog, and focus returns to its trigger.
 - [ ] An event can be moved and resized through the event dialog, without a mouse.
-- [ ] The List view reads sensibly with a screen reader (VoiceOver or NVDA quick pass). Toasts are announced.
+- [ ] The List view reads sensibly with a screen reader (VoiceOver or NVDA quick pass); local accessible-name/keyboard checks pass, but this specific human check was not reported.
+- [x] Toasts are announced by the screen reader (Divyam, production, 2026-10-26).
 - [ ] Click targets are at least 32 px. The layout works at 1280 px and 1024 px, and the drawer works below 1024 px.
 
 ### 7.2 UX sanity
@@ -289,14 +290,17 @@ Each demo starts from **Settings → Data → Load sample calendar**.
 
 ## 9. Release checklist (definition of done for the whole project)
 
-- [ ] Every FR acceptance criterion in PROJECT_SCHEMA §4 is demonstrably met (D1–D5).
-- [ ] `npm run typecheck`, `lint`, `test:coverage` (thresholds met), `test:dst` and `build` pass on `main`.
-- [ ] `npm run test:props:full` passes. Any seeds it found are added as regression cases.
-- [ ] `npm run e2e` passes (E1–E3).
-- [ ] `npm run test:perf` gives a T15 median under 100 ms (portable `PERF=1 npm test -- perf`). The printed numbers are pasted into `README.md`.
-- [ ] The production URL is live and in `README.md`. A fresh browser shows the empty state with "Load sample week".
-- [ ] `README.md` covers setup (`npm ci`, `npm run dev`), tests, deployment, the architecture summary (links to the three docs), and the production URL.
-- [ ] The change logs of all three docs are updated, and `docs/PROGRESS.md` is fully ticked.
+WI-31 completes local release preparation. User-reported production outcomes are distinguished from local automated results. Unchecked human items below are retained for the user's planned push/redeploy and viva, not asserted as completed by the agent.
+
+- [x] D1–D5 pass on production per Divyam, 2026-10-26; WI-32/33's new behavior passes T37/T38 and toolbar UI/browser regressions locally.
+- [x] Typecheck/lint/test gate passes; coverage thresholds met (98.30% overall lines / 93.12% branches; algorithms 99.67% / 95.85%). DST: 7 cases. Production build passes.
+- [x] `npm run test:props:full`: all five properties pass 10,000 random-seed cases each; no failing seed found.
+- [x] `npm run e2e`: all 8 Chromium checks pass, including E1–E3 and the new warning/ER2/help workflows.
+- [x] `npm run test:perf`: N=5000, seed=7, k=183, eleven-run median 4.188 ms < 100 ms; recorded in README.
+- [x] Production URL recorded in README and used for Divyam's rehearsal; local fresh-context browser tests show the empty state and Load sample week.
+- [x] README covers setup, tests, deployment, architecture, limits, production URL and both change requests; six sample exports validate and regenerate identically.
+- [x] All three change logs synchronized and all work items in PROGRESS complete.
+- [ ] Human: push the finished main/branches/tags, redeploy, and smoke-check the new D5 warning/help steps plus fresh-browser behavior on production.
 - [ ] Viva prep: each member can explain, without notes:
   - [ ] the heap sweep and why the running-max version fails T3
   - [ ] merge, complement and gaps with the buffer
@@ -318,3 +322,4 @@ Each demo starts from **Settings → Data → Load sample calendar**.
 | 2026-10-26 | v1.4 (WI-28): §9 uses the portable `test:perf` script for T15; the gated assertion measures eleven combined-query runs and prints k and the median. |
 | 2026-10-26 | v1.5 (WI-30): §8 links reproducible sample deliverables, distinguishes fixed UTC files from current-local-week presets, and records the pending D1–D5 production rehearsals. |
 | 2026-10-26 | v1.6 (WI-32/33): adds T37/T38 and the toolbar-button regression; extends D5; records Divyam's D1–D5 production passes and contrast/toast-announcement results, distinguishing later change-request checks. |
+| 2026-10-26 | v1.7 (WI-31): final validation/release record (524 tests, 7 DST, 8 browser, full properties, coverage, T15); checks reported contrast/toast announcements and retains unreported List-reader/viva/post-deploy actions as human-owned. |

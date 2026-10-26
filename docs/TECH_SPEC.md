@@ -139,7 +139,7 @@ Every file listed here exists by the end of the project. The WI column says whic
    │  │  ├─ taskScheduler.ts       # FR5, FR8, FR9
    │  │  └─ replan.ts              # FR10
    │  └─ algorithms/       # PURE functions over arrays; each file has a sibling *.test.ts
-   │     ├─ interval.ts  sortedArray.ts  minHeap.ts  sweep.ts  merge.ts
+   │     ├─ interval.ts  sortedArray.ts  minHeap.ts  sweep.ts  barred.ts  merge.ts
    │     ├─ segments.ts  gaps.ts  dayLoad.ts  rank.ts  target.ts  taskOrder.ts
    │     └─ replanHeuristics.ts
    ├─ data/
@@ -1323,12 +1323,14 @@ Each sample uses `atLocal` relative to `weekMonday`. The UI passes `startOfLocal
 | T | tasks |
 | D | days in a window |
 | B | barred slots |
+| q | barred event/slot overlap records |
+| W | barred-warning derivation cost: N·B log(B+1) + q (constant when no slots exist) |
 
 | Operation | Time | Space |
 |---|---|---|
 | Barred warnings, including per-event local frames | O(N·B log(B+1) + q) | O(B + q) |
 | Validate a command (Zod) | O(1) | O(1) |
-| Boot: load + sort + sweep | O(N log N + k log k) | O(N + T + k) |
+| Boot: load + sort + sweep + barred warnings | O(N log N + k log k + W) | O(N + T + k + B + q) |
 | Insert / move / delete in the sorted array | O(log N + N) | O(N) (new array) |
 | Conflict sweep after a change (global) | O(N log N + k log k) | O(N + k) |
 | Window slice `eventsIntersecting` | O(log N + n) | O(n) |
@@ -1339,9 +1341,9 @@ Each sample uses `atLocal` relative to `weekMonday`. The UI passes `startOfLocal
 | **findSlots / suggestAlternatives (end to end)** | **O(log N + n + D·B + m log m)** | O(n + s + m) |
 | orderForScheduling | O(T log T) | O(T) |
 | **planReplan** | **O(c·(n + c + s + m log m))** | O(n + c + s + m) |
-| Commit (excluding IndexedDB I/O) | O(N log N + k log k) | O(N + k) |
+| Commit (excluding IndexedDB I/O) | O(N log N + k log k + W) | O(N + k + B + q) |
 | Undo / redo | same as commit | O(changed records) per history entry |
-| Export / import | O(N + T) / O((N + T) log N) | O(N + T) |
+| Export / import | O(N + T) / O((N + T) log N + W) | O(N + T + B + q) |
 | Drag preview `countOverlaps` | O(n) | O(1) |
 
 Compared with A1–A3:
@@ -1374,6 +1376,8 @@ interface AppState {
     | { kind: 'confirm'; title: string; body: string; confirmLabel: string; onConfirm: () => void };
   picker: PickerState | null;                  // store/pickerSlice.ts
   emphasisIds: string[];                       // briefly highlighted after a change (1.5 s)
+  panelsOpen: boolean;                         // UI-only narrow drawer state
+  barredViewRequest: number;                   // UI-only focus/scroll request counter
   toasts: Toast[];                             // store/toastSlice.ts
   actions: AppActions;
 }
@@ -1413,8 +1417,7 @@ All sample loads and imports with more than `IMPORT_SPINNER_THRESHOLD` events pl
 | Component | Responsibility | Reads | Calls |
 |---|---|---|---|
 | `App` | Layout grid, empty state, banners, fatal screen, mounts dialogs/toasts, `useShortcuts`, `useTheme` | `status`, `dialog`, `picker` | — |
-| `Toolbar` | Navigation, view switch, priority filter chips, + Event, + Task, Replan, Undo/Redo (disabled per `canUndo/canRedo`, tooltip = label), theme toggle, settings, drawer toggle (< 1024 px) | `view`, `snapshot.canUndo…` | store actions |
-| WI-33 toolbar addition | A `?` icon button between theme and settings, `aria-label="Keyboard shortcuts"`; opens `openDialog({kind: 'shortcuts'})`, retaining the existing `?` shortcut | existing dialog state | `openDialog` |
+| `Toolbar` | Navigation, view switch, priority filters, + Event/+ Task/Replan, labelled Undo/Redo, theme, `?` button labelled Keyboard shortcuts (opens the existing help), settings, drawer toggle (< 1024 px) | `view`, `snapshot.canUndo…`, dialog state | store actions |
 | `CalendarView` | FullCalendar wrapper (§11.3) | `snapshot.events`, `conflicts`, `settings`, `eventPriorityFilter`, `emphasisIds` | `moveEvent`, open dialogs |
 | `EventContent` | Renders an event block: title, time, `[H]/[M]/[L]` tag, `Fixed`/`Task` tag, `⚠ Conflict N min` | props | — |
 | `TaskPanel` | Sort/filter controls, task rows with checkbox, status, *Find time*, context menu; "Find time for N selected" | `snapshot.tasks`, `taskPanel` | `openTaskPicker`, dialogs |
@@ -1460,6 +1463,7 @@ FullCalendar is a **controlled, render-only view**. Its `events` prop is always 
 
 - `conflictMinutes` is the largest overlap minutes among the event's conflicts.
 - Each entry also carries a complete accessible `label` from `format/explain.ts`: title, date/time range, priority, kind and conflict. `EventContent` updates the FullCalendar button's accessible name and native tooltip whenever the label changes. List custom content supplies a native button to retain the keyboard activation that would otherwise be lost with FullCalendar's default anchor. Short blocks keep a 32 px minimum target; the complete text remains available in List view and the dialog.
+- WI-32 adds `barredLabels: readonly string[]` to event extended props: distinct labels grouped in O(N+q) mapping time. Text tags and the accessible label include `In <label>`; no conflict class is added for a barred warning alone.
 - Barred slots for the visible range are added as `{display: 'background', classNames: ['barred'], title: label}` entries, one per day, built with `buildDayFrames(activeRange, settings)`.
 - The function is pure and memoised on `snapshot.version`, the filter, `activeRange` and `emphasisIds`.
 
@@ -1734,3 +1738,4 @@ Production URL: https://…vercel.app
 | 2026-10-26 | v1.18 (WI-28): §1.3 adds portable `test:perf`; §9.5 documents optional stress-generator seed and the shared T15 fixture/query used by benchmark and gated assertion. |
 | 2026-10-26 | v1.19 (WI-30): §1.3/§9.5 document reproducible, validated sample-file generation through the existing Vite module loader. |
 | 2026-10-26 | v1.20 (WI-32/33): §5/§7 add derived BarredOverlap records to state/snapshots; §8.4a/§10 freeze the pure algorithm and complexity; §11 defines settings toast/View and reused alternatives; §14 adds both change requests before WI-30. Production rehearsal is reported complete by Divyam; human push/redeploy follow local completion. |
+| 2026-10-26 | v1.21 (WI-31): final layout/UI contract sync; §10 includes warning derivation in boot/commit/import complexity. All local WIs complete, with user-owned push/redeploy and viva checks explicitly retained in the release record. |
