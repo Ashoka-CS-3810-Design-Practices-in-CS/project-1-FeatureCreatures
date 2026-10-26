@@ -7,8 +7,10 @@ import { createEngine } from '@/engine';
 import { DEFAULT_SETTINGS } from '@/shared/constants';
 import { toMinute } from '@/shared/time';
 import { App } from '@/ui/App';
+import { ErrorBoundary } from '@/ui/components/ErrorBoundary/ErrorBoundary';
+import { downloadJson } from '@/ui/hooks/download';
 import { rememberView, storedView } from '@/ui/hooks/preferences';
-import { createAppStore, StoreProvider } from '@/ui/store/appStore';
+import { createAppStore, StoreProvider, type AppStore } from '@/ui/store/appStore';
 import '@/ui/styles/tokens.css';
 import '@/ui/styles/global.css';
 import '@/ui/styles/fullcalendar.css';
@@ -29,9 +31,17 @@ async function openRepository(): Promise<{ repo: Repository; storageWarning: boo
   }
 }
 
+// PRE:  store is the app's store
+// POST: downloads the current data as an export file; throws if the engine cannot export
+function exportFromStore(store: AppStore): void {
+  const { fileName, json } = store.getState().actions.exportFile();
+  downloadJson(fileName, json);
+}
+
 // PRE:  the page has been parsed (module scripts run after parsing)
 // POST: opens storage, creates and initialises the engine, and renders the App with its store
-//       (starting in the remembered view, and remembering view changes);
+//       (starting in the remembered view, and remembering view changes) inside the error
+//       boundary, so a render crash shows Reload / Export data, not a blank page;
 //       throws if index.html has no #root
 async function bootstrap(): Promise<void> {
   const rootElement = document.getElementById('root');
@@ -52,9 +62,14 @@ async function bootstrap(): Promise<void> {
   rememberView(store);
   createRoot(rootElement).render(
     <StrictMode>
-      <StoreProvider store={store}>
-        <App />
-      </StoreProvider>
+      <ErrorBoundary
+        onReload={() => window.location.reload()}
+        onExport={() => exportFromStore(store)}
+      >
+        <StoreProvider store={store}>
+          <App />
+        </StoreProvider>
+      </ErrorBoundary>
     </StrictMode>,
   );
 }
