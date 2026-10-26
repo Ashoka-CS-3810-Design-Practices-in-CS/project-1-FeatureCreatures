@@ -6,9 +6,9 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-30 README & demo scripts, branch `docs/wi-30-demo`.
-- **Last session:** 2026-10-26 · Codex · finished and merged WI-25–29; started WI-30.
-- **Gate status on `main`:** verified green after WI-29 merge (typecheck, lint, 508 tests; T15 opt-in); coverage, 5 full-property tests, 6 DST cases, build and 6 Chromium checks pass.
+- **Active WI:** WI-32 Barred-slot overlap warnings, branch `feat/wi-32-barred-warnings`; WI-30 waits for 32/33, then resumes its preserved `docs/wi-30-demo` branch.
+- **Last session:** 2026-10-26 · Codex · recorded Divyam's production D1–D5 passes and contrast/toast screen-reader checks; documented WI-32/33 before implementation.
+- **Gate status on `main`:** verified typecheck/lint and 508 tests pass (T15 opt-in). No uncommitted leftovers found.
 
 ## Work items
 
@@ -101,9 +101,15 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 ### Phase 6 — Docs and demo
 
-- [~] **WI-30** README & demo scripts — owner S + Dv — depends on 29
+- [~] **WI-30** README & demo scripts — owner S + Dv — depends on 29, 32, 33
   - 2026-10-26 · Codex · branch `docs/wi-30-demo` · done: verified WI-29 main gate and read D1–D5/release requirements · next: complete README, reproducible six-sample JSON exports and rehearsal guide; production rehearsal needs the human deployment step
 - [ ] **WI-31** Final docs sync — owner S + Dv — depends on 30
+
+### Change requests before WI-30
+
+- [~] **WI-32** Barred-slot overlap warnings — owner S + Dv — depends on 29
+  - 2026-10-26 · Codex · branch `feat/wi-32-barred-warnings` · done: requirements/contracts/T37/T38 and complexity documented in all three docs before code · next: algorithm/snapshot and UI tests first, separate warning records, settings toast/View and reused alternatives
+- [ ] **WI-33** Shortcuts button — owner S + Dv — depends on 29
 
 ## Milestones
 
@@ -115,7 +121,7 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 ## Human-only steps
 
-- [ ] Before presenting the release, run TEST_PLAN §7 on production, including the devtools contrast picker and an NVDA/VoiceOver announcement check. Local Chromium layout/focus/semantic-name checks and both-theme contrast-token tests pass; live screen-reader control is unavailable in this environment.
+- [x] Divyam, 2026-10-26: production D1–D5 all pass; contrast OK in both themes and screen reader announces toasts (user-reported). WI-32/33 changes will be redeployed by the human afterwards; post-deploy checks remain human-owned.
 - [ ] Connect the GitHub Classroom repo as `origin` and push `main`.
 - [ ] Push the WI branches and milestone tags too: `git push origin --all` and `git push origin --tags` (tags `m1`–`m5` exist locally).
 - [x] First Vercel deploy (TECH_SPEC §13.2) and paste the URL at the top of this file.

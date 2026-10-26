@@ -374,6 +374,13 @@ These rules are normative. The algorithms in TECH_SPEC §8 implement them exactl
 
 **BR-4 Events are capped at 24 h.** This makes "which events can intersect this window" a bounded binary-search slice (TECH_SPEC §8.2).
 
+**BR-15 Barred-slot overlap warnings (WI-32).**
+- An event overlaps a barred slot on each local day it touches iff their absolute, half-open intervals overlap. Touching boundaries produce no warning. A slot applies on its own configured weekdays even when that day is not a working day.
+- Every overlap is a derived `{eventId, label, overlap, minutes}` record, with `overlap = [max(starts), min(ends))` and `minutes = overlap.end − overlap.start`. Existing events remain allowed inside barred slots.
+- These warnings are separate from BR-3 event-pair conflicts: the sweep, conflict counts and replan metrics do not include them. They are recomputed after data changes and settings changes, and are never persisted or exported.
+- Event blocks show a text tag `In <label>` for each distinct overlapping label. A second panel section, **Barred-slot overlaps (N)**, lists every record with event title, label, range, minutes and **Suggest alternatives** for that event (no other-event toggle).
+- When saving settings introduces overlap records, an info toast counts distinct events among the new records: `2 events overlap barred slots` (singular: `1 event overlaps barred slots`). **View** opens the panels drawer when needed and focuses/scrolls the barred-overlap section. An unchanged save or a save only removing overlaps produces no overlap toast.
+
 **BR-5 Allowed segments.**
 - **Inputs:** the search window, plus — when the request respects working hours — the working days and hours.
 - **Steps:**
@@ -510,7 +517,7 @@ Every search result also carries:
 8. **Shortcut help overlay:** lists the shortcuts in §7.6.
 
 ```text
-[◀] [Today] [▶]  Week of 2 Nov 2026   [Day|Week|Month|List]  Priority: [H][M][L]   [+ Event] [+ Task] [Replan] [↶][↷] [◐] [⚙]
+[◀] [Today] [▶]  Week of 2 Nov 2026   [Day|Week|Month|List]  Priority: [H][M][L]   [+ Event] [+ Task] [Replan] [↶][↷] [◐] [?] [⚙]
 
 ┌───────┬──────────────────┬──────────────────┬──────────────────┐   ┌──────────────────────────────────┐
 │       │ Mon 2            │ Tue 3            │ Wed 4            │   │ Tasks   Sort: Priority ▼  [H M L] │
@@ -550,6 +557,7 @@ Every search result also carries:
 ### 7.2 Controls
 
 - Toolbar buttons as in Figure 1.
+- A `?` icon button labelled **Keyboard shortcuts** sits next to the theme and settings buttons and opens the same help as the `?` key (WI-33).
 - The calendar supports:
   - click-drag on empty time to create an event (with times pre-filled)
   - click an event to edit it
@@ -593,6 +601,7 @@ All toasts are announced through an ARIA live region. Errors use `assertive`; ev
 - **Conflict:** a 2 px dashed outline in the danger colour, a ⚠ icon and the text "Conflict N min".
 - **Fixed events** show a small "Fixed" tag. **Scheduled-task events** show a "Task" tag.
 - **Barred slots** are hatched background blocks with their label. Non-working hours are lightly shaded.
+- Events overlapping barred slots carry `In Lunch` (or the configured label) text tags; these warnings have their own panel section and do not change conflict counts.
 
 ### 7.6 Keyboard shortcuts (B4)
 
@@ -668,3 +677,4 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 | Date | Change |
 |---|---|
 | 2026-10-25 | v1.0: unified from A1–A3. |
+| 2026-10-26 | v1.1 (WI-32/33): BR-15 defines independent barred-slot warnings, settings feedback and alternatives; §7 adds text tags, a separate panel section and the accessible toolbar shortcuts button. |
