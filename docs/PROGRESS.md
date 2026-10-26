@@ -158,6 +158,7 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 - [~] **WI-39** Fix intermittent CI failures — owner S + Dv — depends on 38
   - 2026-10-26 · Codex · branch `fix/wi-39-shortcut-race` · done: clean main, branches/log and baseline typecheck/lint/578 tests verified; confirmed render-time shortcut closure · next: failing synchronous close/keypress regression, current-state listener, CI diagnostics, warm/cold 10-repeat browser hunts · note: preserve the human's README and completed release checklist updates
+  - 2026-10-26 · Codex · branch `fix/wi-39-shortcut-race` · done: four regressions failed on old code then passed (same-act close/keypress, picker/busy transitions, immediate suppression and listener lifecycle); one listener reads live state through useAppStoreApi/getState; CI retry/trace/HTML/failure-artifact configured · next: full gate and two 10-repeat/2-worker browser hunts · note: warm/cold counts pending; no waits added
 
 ## Milestones
 

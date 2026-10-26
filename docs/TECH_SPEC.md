@@ -1432,7 +1432,7 @@ interface Toast { id: string; tone: 'success' | 'info' | 'warning' | 'error'; te
                   actions?: { label: string; run: () => void }[]; sticky?: boolean }
 ```
 
-`createAppStore(engine, {storageWarning, init, now, resetStorage, initialView?})` builds the store; `now` dates the samples and `resetStorage` empties the repository for the fatal screen's *Reset local data*. `initialView` is the view remembered in `localStorage['fc-view']` (`storedView()` in `hooks/preferences.ts`); `main.tsx` calls `rememberView(store)` so later view changes are remembered too. `onDatesSet` records `view.type` and `view.date` (the shown period's first day, for the toolbar title) as well as `activeRange`. `StoreProvider` and `useAppStore(selector)` live in `appStore.ts`.
+`createAppStore(engine, {storageWarning, init, now, resetStorage, initialView?})` builds the store; `now` dates the samples and `resetStorage` empties the repository for the fatal screen's *Reset local data*. `initialView` is the view remembered in `localStorage['fc-view']` (`storedView()` in `hooks/preferences.ts`); `main.tsx` calls `rememberView(store)` so later view changes are remembered too. `onDatesSet` records `view.type` and `view.date` (the shown period's first day, for the toolbar title) as well as `activeRange`. `StoreProvider`, `useAppStore(selector)` and `useAppStoreApi()` live in `appStore.ts`; the API hook exposes the provided store without a render subscription for handlers that need current state (WI-39).
 
 `SidePanel` renders the panels once: an `aside` at 1024 px and wider, a native `Modal` drawer below it. `useNarrowLayout` listens for media-query changes. The UI store owns the drawer's open state; App wires its toolbar trigger. Nested dialogs keep the drawer open; native Esc closes only the top dialog. Modal cleanup returns focus to the connected trigger, with the page trigger retained across confirmation replacements.
 
@@ -1574,7 +1574,7 @@ No web font is loaded: the system stack needs no dependency, causes no font flas
 
 ### 11.5 Shortcuts (`hooks/useShortcuts.ts`)
 
-- There is one `keydown` listener on `window`.
+- There is one `keydown` listener on `window`, registered for the mounted store/calendar ref and removed on unmount. It reads `store.getState()` at keypress time for dialog, picker, busy and actions. It must not capture their render-time values: a shortcut immediately after a store change can arrive before React's passive effects (WI-39).
 - It returns early when `e.target` is an `input`, `textarea`, `select` or `[contenteditable]`, or when `store.dialog !== null` (except for `Escape`).
 - The key map is exactly PROJECT_SCHEMA §7.6. `mod = e.metaKey || e.ctrlKey`.
 - Navigation keys call FullCalendar's API through a ref exposed by `CalendarView` (`calendarRef.current.getApi().prev()` and so on).
@@ -1635,6 +1635,7 @@ export default defineConfig({
 
 **`playwright.config.ts`**
 - `testDir: 'e2e'`
+- `retries: process.env.CI ? 1 : 0`; `use.trace: 'retain-on-failure'` keeps the first failed attempt's trace even when its retry passes. CI uses GitHub plus HTML reporters (`open: 'never'`); local runs use the list reporter.
 - Two `webServer`s: the built app (`npm run build && npm run preview -- --port 4173 --strictPort`) and the StrictMode dev server (`npm run dev -- --port 5174 --strictPort`), both with `reuseExistingServer: !process.env.CI`.
 - Project `chromium` runs every spec against `http://localhost:4173`; project `chromium-dev` runs only `smoke.spec.ts` against `http://localhost:5174`, because StrictMode's double mount happens only in development (WI-35).
 
@@ -1670,6 +1671,15 @@ jobs:
         with: { node-version: 22, cache: npm }
       - run: npm ci && npx playwright install --with-deps chromium
       - run: npm run e2e
+      - name: Upload browser failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-failure-diagnostics
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
 ```
 
 `main` is protected: it requires the `check` job and one review.

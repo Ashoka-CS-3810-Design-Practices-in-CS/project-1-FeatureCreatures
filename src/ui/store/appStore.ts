@@ -909,12 +909,18 @@ export function StoreProvider({ store, children }: { store: AppStore; children: 
   return createElement(StoreContext.Provider, { value: store }, children);
 }
 
-// PRE:  called in a component under StoreProvider; selector reads part of AppState
-// POST: returns selector(state) and re-renders the component when that part changes
-export function useAppStore<T>(selector: (state: AppState) => T): T {
+// PRE:  called in a component under StoreProvider
+// POST: returns the provided store API without subscribing to render-time state
+export function useAppStoreApi(): AppStore {
   const store = useContext(StoreContext);
   if (store === null) {
     throw new Error('useAppStore must be used inside StoreProvider');
   }
-  return useStore(store, selector);
+  return store;
+}
+
+// PRE:  called in a component under StoreProvider; selector reads part of AppState
+// POST: returns selector(state) and re-renders the component when that part changes
+export function useAppStore<T>(selector: (state: AppState) => T): T {
+  return useStore(useAppStoreApi(), selector);
 }
