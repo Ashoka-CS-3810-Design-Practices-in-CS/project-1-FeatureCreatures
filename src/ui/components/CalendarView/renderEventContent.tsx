@@ -15,9 +15,18 @@ export interface EventContentInfo {
   view: { type: string };
 }
 
+// PRE:  props are any event's extendedProps
+// POST: returns true iff props carry what toFullCalendar sets for every snapshot event
+function hasBlockProps(
+  props: Record<string, unknown>,
+): props is Record<string, unknown> & EventBlockProps {
+  return typeof props.label === 'string' && Array.isArray(props.barredLabels);
+}
+
 // PRE:  info is FullCalendar's eventContent argument; onOpenEvent opens an event's edit dialog
-// POST: returns a barred slot's label for a background block, else the EventContent block
-//       (a button that calls onOpenEvent(info.event.id) in the List view)
+// POST: returns a barred slot's label for a background block; only the time for an event
+//       without block props (the select mirror); else the EventContent block (a button that
+//       calls onOpenEvent(info.event.id) in the List view)
 export function renderEventContent(
   info: EventContentInfo,
   onOpenEvent: (id: string) => void,
@@ -26,9 +35,19 @@ export function renderEventContent(
   if (info.event.display === 'background') {
     return <span className="barred-label">{info.event.title}</span>;
   }
+  // FullCalendar draws the time being selected as a mirror event with no extendedProps
+  // (isMirror); a drag mirror of a real event keeps its props and renders in full.
+  const props = info.event.extendedProps;
+  if (!hasBlockProps(props)) {
+    return (
+      <div className="event-content">
+        <span className="event-time">{info.timeText}</span>
+      </div>
+    );
+  }
   return (
     <EventContent
-      {...(info.event.extendedProps as unknown as EventBlockProps)}
+      {...props}
       title={info.event.title}
       timeText={info.timeText}
       onOpen={info.view.type === LIST_VIEW ? () => onOpenEvent(info.event.id) : undefined}
