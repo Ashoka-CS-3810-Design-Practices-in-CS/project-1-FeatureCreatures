@@ -629,6 +629,28 @@ dialog fieldset > button {
   margin-top: var(--space-3);
 }
 
+/* Explicit block sizing keeps a fieldset from sharing the preceding inline control's line. */
+dialog .form-group {
+  display: block;
+  width: 100%;
+  min-inline-size: 0;
+  margin-top: var(--space-4);
+}
+
+dialog .flex-window input {
+  max-width: 100%;
+}
+
+.choice-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+}
+
+.choice-options label:has(> input[type='radio']) {
+  margin: 0;
+}
+
 /* The action row stays in view while a long dialog scrolls, so Apply is never out of reach. */
 .dialog-actions {
   position: sticky;

@@ -39,6 +39,20 @@ function openCreate(store: AppStore): void {
 }
 
 describe('EventDialog', () => {
+  it('offers tagged priority radios in a named fieldset and saves the selected priority', async () => {
+    const { engine } = await makeEngine();
+    const store = renderDialogs(engine);
+    openCreate(store);
+    expect(screen.getByRole('group', { name: 'Priority' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: '[M] Medium' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: '[L] Low' })).not.toBeChecked();
+    await userEvent.click(screen.getByRole('radio', { name: '[H] High' }));
+    await userEvent.type(screen.getByLabelText('Title'), 'Important');
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(store.getState().dialog).toBeNull());
+    expect(store.getState().snapshot.events[0]?.priority).toBe('high');
+  });
+
   it('creates an event and closes', async () => {
     const { engine } = await makeEngine();
     const store = renderDialogs(engine);

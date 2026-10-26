@@ -144,6 +144,7 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 - [~] **WI-37** Dialog form polish — owner S + Dv — depends on 36
   - 2026-10-26 · Codex · branch `feat/wi-37-dialog-polish` · done: clean main and merged WI-36 verified; requirements added to TECH_SPEC §14 · next: failing RTL/browser controls and geometry checks, UI fixes, screenshots · note: UI only; preserve schemas/engine
+  - 2026-10-26 · Codex · branch `feat/wi-37-dialog-polish` · done: red-then-green RTL radios/defaults/persistence; shared tagged priority fieldset and boolean task-hours radios; flexible toggle and full-width window are block groups below End; gate 565 tests and all six both-theme geometry/arrow-key browser checks green · next: review 12 dialog screenshots, full browser suite, finish/merge · note: npm.cmd/npx.cmd avoid this host's blocked PowerShell shims
 - [ ] **WI-38** Replan vs barred-slot overlaps — owner S + Dv — depends on 37
 
 ## Milestones
