@@ -2,7 +2,7 @@
 // segments → busy → gaps → rank. It is the only place this pipeline is assembled.
 
 import { SNAP_MIN } from '@/shared/constants';
-import type { EngineError } from '@/shared/errors';
+import type { EmptyWindowCause, EngineError } from '@/shared/errors';
 import { err, ok, type Result } from '@/shared/result';
 import { parseInput, slotSchema } from '@/shared/schemas';
 import { buildDayFrames, ceilTo } from '@/shared/time';
@@ -114,6 +114,27 @@ export function search(
     fittingCount: fitting.length,
     options,
   });
+}
+
+// PRE:  window.start < window.end; a search of window with useWorkingHours from notBefore found
+//       no allowed minute (longest stretch 0)
+// POST: returns why (WI-41): 'past' when window ends by notBefore; 'barred' when the same search
+//       with no barred slots would find allowed time; otherwise 'noWorkingHours'
+export function emptyWindowCause(
+  state: EngineState,
+  window: Interval,
+  useWorkingHours: boolean,
+  notBefore: Minute,
+): EmptyWindowCause {
+  if (window.end <= notBefore) {
+    return 'past';
+  }
+  const withoutBarred = { ...state.settings, barredSlots: [] };
+  const segments = allowedSegments(window, buildDayFrames(window, withoutBarred), {
+    useWorkingHours,
+    notBefore,
+  });
+  return segments.length > 0 ? 'barred' : 'noWorkingHours';
 }
 
 // PRE:  now is the current Minute

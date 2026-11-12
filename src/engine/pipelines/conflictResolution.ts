@@ -6,7 +6,13 @@ import { err, type Result } from '@/shared/result';
 import { parseInput, searchOptionsSchema } from '@/shared/schemas';
 import { addLocalDays, startOfLocalDay } from '@/shared/time';
 import type { CalendarEvent, Interval, Minute, SlotSearchResult } from '@/shared/types';
-import { requireCurrentVersion, requireNotPast, requireValidSlot, search } from '../search';
+import {
+  emptyWindowCause,
+  requireCurrentVersion,
+  requireNotPast,
+  requireValidSlot,
+  search,
+} from '../search';
 import type { EngineState, PipelineContext, PipelineOutcome } from '../state';
 // eventCrud also imports this module (for the ER4 suggestion). The cycle is safe: each side only
 // calls the other's functions at run time, never while the modules load.
@@ -26,6 +32,7 @@ export interface AlternativesRequest {
   eventId: string;
   otherEventId?: string;
   bufferMin?: number;
+  useWorkingHours?: boolean; // WI-41: false searches any time; omitted means true (as before)
 }
 
 // PRE:  event is an event
@@ -44,9 +51,11 @@ function alternativesWindow(event: CalendarEvent): Interval {
 
 // PRE:  state.events is sorted; request comes from outside (bufferMin unchecked); notBefore is now
 //       rounded up to SNAP_MIN
-// POST: returns the nearest-first alternative slots for the event (working hours on, the event itself
-//       excluded, buffer = request.bufferMin ?? settings.bufferMin); err InvalidInput for a bad
-//       bufferMin, NotFound for an unknown event, or the search's ER2 / ER3 errors
+// POST: returns the nearest-first alternative slots for the event (working hours only unless
+//       request.useWorkingHours is false; barred slots always apply; the event itself excluded;
+//       buffer = request.bufferMin ?? settings.bufferMin); err InvalidInput for a bad bufferMin,
+//       NotFound for an unknown event, or the search's ER2 / ER3 errors, where an ER2 with no
+//       allowed minute at all also names its emptyCause
 export function suggestAlternatives(
   state: EngineState,
   request: AlternativesRequest,
@@ -61,13 +70,15 @@ export function suggestAlternatives(
     return err({ code: 'NotFound', entity: 'event', id: request.eventId });
   }
 
-  return search(
+  const window = alternativesWindow(event);
+  const useWorkingHours = request.useWorkingHours ?? true;
+  const found = search(
     state,
     {
       durationMin: event.end - event.start,
       priority: event.priority,
-      window: alternativesWindow(event),
-      useWorkingHours: true,
+      window,
+      useWorkingHours,
       excludeIds: [event.id],
       originalStart: event.start,
       criterion: 'nearest',
@@ -81,6 +92,17 @@ export function suggestAlternatives(
     },
     notBefore,
   );
+  if (
+    found.ok ||
+    found.error.code !== 'TaskLongerThanWindow' ||
+    found.error.longestStretchMin > 0
+  ) {
+    return found;
+  }
+  return err({
+    ...found.error,
+    emptyCause: emptyWindowCause(state, window, useWorkingHours, notBefore),
+  });
 }
 
 // PRE:  request comes from the UI, normally an option of suggestAlternatives

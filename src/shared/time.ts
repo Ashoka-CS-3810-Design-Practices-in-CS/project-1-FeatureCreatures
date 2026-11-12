@@ -107,6 +107,15 @@ function buildDayFrame(dayStart: Minute, settings: Settings): DayFrame {
   return { dayStart, dayEnd, weekday, work, barred };
 }
 
+// PRE:  interval.start ≤ interval.end; settings satisfies settingsSchema
+// POST: returns whether the local day of interval.start is a working day whose working hours
+//       interval overlaps (WI-41); an event entirely at night or on a non-working day does not
+export function overlapsWorkingHours(interval: Interval, settings: Settings): boolean {
+  const day = startOfLocalDay(interval.start);
+  const work = buildDayFrame(day, settings).work;
+  return work !== null && interval.start < work.end && work.start < interval.end;
+}
+
 /** One DayFrame per local day intersecting `window`, in order. Work and barred times are built with
  *  date-fns `set(day, {hours, minutes})`, never by adding minutes to midnight — so DST days are correct. */
 // PRE:  window.end > window.start; settings satisfies settingsSchema

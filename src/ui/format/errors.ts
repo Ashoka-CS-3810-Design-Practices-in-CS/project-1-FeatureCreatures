@@ -1,9 +1,15 @@
 // Toast text for every engine error (TECH_SPEC §11.6, PROJECT_SCHEMA §5 ER1–ER8).
 
-import type { EngineError, FieldIssue } from '@/shared/errors';
+import type { EmptyWindowCause, EngineError, FieldIssue } from '@/shared/errors';
 import { fmtDuration, fmtRange } from './time';
 
 const NUMERIC_SEGMENT = /^\d+$/;
+
+const EMPTY_WINDOW_TEXT: Record<EmptyWindowCause, string> = {
+  past: 'Its window is entirely in the past.',
+  noWorkingHours: 'Its window has no working hours. Choose "Any time" to search outside them.',
+  barred: 'Its window is fully barred: every free minute in it is inside a barred slot.',
+};
 
 // PRE:  path is a FieldIssue path such as 'events.3.end' ('' for the root)
 // POST: returns it with numeric segments in brackets, e.g. 'events[3].end'
@@ -30,6 +36,9 @@ export function errorMessage(error: EngineError): string {
     case 'InvalidTime':
       return error.issues[0]?.message ?? 'Please check the highlighted fields.';
     case 'TaskLongerThanWindow':
+      if (error.emptyCause !== undefined) {
+        return EMPTY_WINDOW_TEXT[error.emptyCause];
+      }
       return error.longestStretchMin === 0
         ? 'Its window has no available time (it may be in the past, outside working days/hours, or fully barred).'
         : `This needs ${fmtDuration(error.durationMin)}, but the longest stretch available in its window is ${fmtDuration(error.longestStretchMin)}. Shorten the task or widen the window.`;

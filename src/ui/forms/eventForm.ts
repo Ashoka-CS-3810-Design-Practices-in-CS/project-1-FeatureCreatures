@@ -4,7 +4,14 @@
 import { format } from 'date-fns';
 import type { FieldError, Resolver } from 'react-hook-form';
 import { eventInputSchema, toFieldIssues } from '@/shared/schemas';
-import { atLocal, fromMinute, onLocalDay, startOfLocalDay } from '@/shared/time';
+import {
+  addLocalDays,
+  atLocal,
+  fromMinute,
+  onLocalDay,
+  overlapsWorkingHours,
+  startOfLocalDay,
+} from '@/shared/time';
 import type {
   CalendarEvent,
   Category,
@@ -78,10 +85,19 @@ export function flexibleByDefault(category: Category): boolean {
   return FLEXIBLE_CATEGORIES.includes(category);
 }
 
-// PRE:  start is a Minute; settings are valid
-// POST: returns the default flex window: start's local day from working start to working end
-export function defaultFlexWindow(start: Minute, settings: Settings): Interval {
+// PRE:  start ≤ end are the event's Minutes (end defaults to start); settings are valid
+// POST: returns the default flex window: start's local day from working start to working end when
+//       the event overlaps that day's working hours, otherwise the whole local day 00:00–24:00, so
+//       a night or weekend event's window is not empty (WI-41, reports #4 and #9)
+export function defaultFlexWindow(
+  start: Minute,
+  settings: Settings,
+  end: Minute = start,
+): Interval {
   const day = startOfLocalDay(start);
+  if (!overlapsWorkingHours({ start, end }, settings)) {
+    return { start: day, end: addLocalDays(day, 1) };
+  }
   return {
     start: onLocalDay(day, settings.workStartMin),
     end: onLocalDay(day, settings.workEndMin),
@@ -95,7 +111,7 @@ export function eventFormValues(
   settings: Settings,
 ): EventFormValues {
   const category = source.category ?? 'meeting';
-  const window = source.flexWindow ?? defaultFlexWindow(source.start, settings);
+  const window = source.flexWindow ?? defaultFlexWindow(source.start, settings, source.end);
   return {
     title: source.title ?? '',
     description: source.description ?? '',
