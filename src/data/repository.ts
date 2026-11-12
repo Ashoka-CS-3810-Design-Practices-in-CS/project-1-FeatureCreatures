@@ -13,6 +13,8 @@ export interface StoredData {
 }
 
 export interface ChangeSet {
+  putCategories?: Category[];
+  deleteCategoryIds?: string[];
   putEvents: CalendarEvent[];
   deleteEventIds: string[];
   putTasks: Task[];

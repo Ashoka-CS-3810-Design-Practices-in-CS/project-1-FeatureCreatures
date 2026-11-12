@@ -31,4 +31,5 @@ export type EngineError =
   | { code: 'InvalidImport'; issues: FieldIssue[] } // ER6
   | { code: 'StaleResult' } // ER7
   | { code: 'ConcurrentModification' } // ER8: another tab saved first (WI-40)
-  | { code: 'NotFound'; entity: 'event' | 'task'; id: string };
+  | { code: 'CategoryInUse'; eventCount: number; taskCount: number }
+  | { code: 'NotFound'; entity: 'event' | 'task' | 'category'; id: string };

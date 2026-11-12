@@ -62,15 +62,15 @@ export function toTaskInput(form: TaskFormValues): TaskInput {
 }
 
 // PRE:  source is an existing task, or undefined for a new one; viewDate is the calendar's date
-// POST: returns the form values: the task's own, or a 1 h medium assignment whose window runs from
-//       the next whole hour for DEFAULT_WINDOW_DAYS local days
+// POST: returns the task's values, or a 1 h medium task whose window runs from the next whole hour
+//       for DEFAULT_WINDOW_DAYS local days; the dialog supplies the session's default category
 export function taskFormValues(source: Task | undefined, viewDate: Minute): TaskFormValues {
   if (source === undefined) {
     const start = ceilTo(viewDate, MINUTES_PER_HOUR);
     return {
       name: '',
       description: '',
-      categoryId: 'assignment',
+      categoryId: '',
       priority: 'medium',
       hours: DEFAULT_DURATION_HOURS,
       minutes: '0',

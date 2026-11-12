@@ -20,6 +20,7 @@ import { parseExportFile } from '@/shared/schemas';
 import { fromMinute, overlapsWorkingHours, startOfLocalWeek } from '@/shared/time';
 import type {
   Conflict,
+  CategoryInput,
   BarredOverlap,
   EventInput,
   ExportFile,
@@ -93,6 +94,10 @@ export interface AppActions {
   pushToast(toast: Omit<Toast, 'id'>): string;
   openDialog(dialog: Exclude<Dialog, null>): void;
   closeDialog(): void;
+  createCategory(input: CategoryInput): Promise<Result<MutationResult>>;
+  updateCategory(id: string, input: CategoryInput): Promise<Result<MutationResult>>;
+  deleteCategory(id: string): Promise<Result<MutationResult>>;
+  rememberCategory(id: string): void;
   createEvent(input: EventInput): Promise<Result<MutationResult>>;
   updateEvent(id: string, input: EventInput): Promise<Result<MutationResult>>;
   moveEvent(id: string, to: Interval): Promise<Result<MutationResult>>;
@@ -101,6 +106,7 @@ export interface AppActions {
   setActiveRange(range: Interval): void;
   setView(type: ViewType, date: Minute): void;
   toggleEventPriority(priority: Priority): void;
+  toggleEventCategory(id: string): void;
   showAllEventPriorities(): void;
   createTask(input: TaskInput): Promise<Result<MutationResult>>;
   updateTask(id: string, input: TaskInput): Promise<Result<MutationResult>>;
@@ -145,6 +151,8 @@ export interface AppState {
   snapshot: Snapshot;
   view: { type: ViewType; date: Minute; activeRange: Interval | null };
   eventPriorityFilter: Priority[];
+  hiddenCategoryIds: string[];
+  lastCategoryId: string | null;
   taskPanel: {
     sort: 'priority' | 'windowEnd';
     priorities: Priority[];
@@ -565,6 +573,39 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
         set({ dialog: null });
       },
 
+      // PRE:  input is user-entered category data
+      // POST: creates a category through the engine and publishes its undoable snapshot
+      createCategory(input) {
+        return runMutation(
+          () => engine.createCategory(input),
+          (value) => value.label,
+        );
+      },
+
+      // PRE:  id is any string; input is user-entered category data
+      // POST: publishes the category edit immediately to every referring UI component
+      updateCategory(id, input) {
+        return runMutation(
+          () => engine.updateCategory(id, input),
+          (value) => value.label,
+        );
+      },
+
+      // PRE:  id is any string
+      // POST: deletes an unused category through the engine, or reports why it is in use
+      deleteCategory(id) {
+        return runMutation(
+          () => engine.deleteCategory(id),
+          (value) => value.label,
+        );
+      },
+
+      // PRE:  id names the user's category choice
+      // POST: remembers it for new items in this session; missing ids fall back at form creation
+      rememberCategory(id) {
+        set({ lastCategoryId: id });
+      },
+
       // PRE:  input comes from the event dialog (validated by the engine)
       // POST: creates the event through runMutation; the toast reads 'Event created: "<title>".'
       createEvent(input) {
@@ -661,9 +702,20 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
       },
 
       // PRE:  none
-      // POST: the calendar's priority filter shows every priority again (List's Show all, WI-44)
+      // POST: the calendar's priority and category filters show every event again
       showAllEventPriorities() {
-        set({ eventPriorityFilter: [...ALL_PRIORITIES] });
+        set({ eventPriorityFilter: [...ALL_PRIORITIES], hiddenCategoryIds: [] });
+      },
+
+      // PRE:  id is a category id
+      // POST: toggles its calendar visibility; conflicts, searches and task rows are unchanged
+      toggleEventCategory(id) {
+        const hidden = get().hiddenCategoryIds;
+        set({
+          hiddenCategoryIds: hidden.includes(id)
+            ? hidden.filter((candidate) => candidate !== id)
+            : [...hidden, id],
+        });
       },
 
       // PRE:  input comes from the task dialog (validated by the engine)
@@ -1055,6 +1107,8 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
       snapshot: options.init.ok ? options.init.value : engine.snapshot(),
       view: { type: options.initialView ?? 'timeGridWeek', date: now, activeRange: null },
       eventPriorityFilter: [...ALL_PRIORITIES],
+      hiddenCategoryIds: [],
+      lastCategoryId: null,
       taskPanel: {
         sort: 'priority',
         priorities: [...ALL_PRIORITIES],

@@ -1,24 +1,9 @@
-import type { Engine } from '@/engine';
 import { DEFAULT_CATEGORIES, MINUTES_PER_HOUR } from '@/shared/constants';
-import type { Result } from '@/shared/result';
-import type { Category, MutationResult } from '@/shared/types';
+import type { Category } from '@/shared/types';
 import { ev, task } from '../helpers/builders';
-import { capture, makeEngine, type EngineOptions } from '../helpers/engine';
+import { capture, makeEngine } from '../helpers/engine';
 import { FailingRepository } from '../helpers/failingRepository';
 import { BASE_MONDAY, t } from '../helpers/time';
-
-type CategoryInput = Pick<Category, 'name' | 'colour'>;
-interface CategoryCommands {
-  // PRE:  input contains user-entered name and colour strings, not yet validated
-  // POST: creates a valid unique category as one atomic undoable mutation, or returns an error
-  createCategory(input: CategoryInput): Promise<Result<MutationResult>>;
-  // PRE:  id is any category id; input contains unvalidated name and colour strings
-  // POST: updates that category as one undoable mutation, or returns a validation/NotFound error
-  updateCategory(id: string, input: CategoryInput): Promise<Result<MutationResult>>;
-  // PRE:  id is any category id
-  // POST: deletes an unused category as one undoable mutation, or returns CategoryInUse/NotFound
-  deleteCategory(id: string): Promise<Result<MutationResult>>;
-}
 
 const RESEARCH: Category = {
   id: 'research',
@@ -34,17 +19,23 @@ const READING: Category = {
 };
 const WINDOW: [string, string] = ['Mon 09:00', 'Fri 18:00'];
 
-// PRE:  options supplies consistent stored records, as makeEngine requires
-// POST: returns the fixture with the planned WI-49 command signatures for test-first execution
-//       before the facade implements them; remove this local interface/cast when it does
-async function categoryEngine(options: EngineOptions = {}) {
-  const fixture = await makeEngine(options);
-  return { ...fixture, engine: fixture.engine as Engine & CategoryCommands };
-}
-
 describe('T49: category commands (D-11)', () => {
+  it.each(['#ffffff', '#b3302a', '#467b71'])(
+    'rejects invalid imported category colour %s without replacing data',
+    async (colour) => {
+      const { engine, repo } = await makeEngine();
+      const before = await capture(engine, repo);
+      const file = JSON.parse(engine.exportData());
+      file.categories.push({ ...RESEARCH, colour });
+      expect(await engine.importData(JSON.stringify(file))).toMatchObject({
+        ok: false,
+        error: { code: 'InvalidImport', issues: [{ path: 'categories.5.colour' }] },
+      });
+      expect(await capture(engine, repo)).toEqual(before);
+    },
+  );
   it('creates a trimmed category with an engine id/time, persisted as one undo step', async () => {
-    const { engine, repo } = await categoryEngine({ now: 'Mon 08:00' });
+    const { engine, repo } = await makeEngine({ now: 'Mon 08:00' });
     const created = await engine.createCategory({ name: '  Research  ', colour: '#577D35' });
 
     expect(created).toMatchObject({
@@ -72,7 +63,7 @@ describe('T49: category commands (D-11)', () => {
   it('renames and recolours a used category by id without rewriting its events or tasks', async () => {
     const event = ev('E', 'Mon 09:00', 'Mon 10:00', { categoryId: RESEARCH.id });
     const todo = task('T', MINUTES_PER_HOUR, WINDOW, { categoryId: RESEARCH.id });
-    const { engine, repo } = await categoryEngine({
+    const { engine, repo } = await makeEngine({
       categories: [RESEARCH],
       events: [event],
       tasks: [todo],
@@ -92,7 +83,7 @@ describe('T49: category commands (D-11)', () => {
   });
 
   it('blocks deleting a used category, counting every event and open/done task without writing', async () => {
-    const { engine, repo } = await categoryEngine({
+    const { engine, repo } = await makeEngine({
       categories: [RESEARCH],
       events: [
         ev('E1', 'Mon 09:00', 'Mon 10:00', { categoryId: RESEARCH.id }),
@@ -116,7 +107,7 @@ describe('T49: category commands (D-11)', () => {
   });
 
   it('allows deleting the last unused category and restores it on undo and redo', async () => {
-    const { engine, repo } = await categoryEngine({ categories: [RESEARCH] });
+    const { engine, repo } = await makeEngine({ categories: [RESEARCH] });
     expect((await engine.deleteCategory(RESEARCH.id)).ok).toBe(true);
     expect(engine.snapshot().categories).toEqual([]);
     expect((await repo.load()).categories).toEqual([]);
@@ -128,7 +119,7 @@ describe('T49: category commands (D-11)', () => {
   });
 
   it('rejects names already used ignoring case on create and rename, without writing', async () => {
-    const { engine, repo } = await categoryEngine({ categories: [RESEARCH, READING] });
+    const { engine, repo } = await makeEngine({ categories: [RESEARCH, READING] });
     const before = await capture(engine, repo);
     const expected = {
       ok: false,
@@ -149,7 +140,7 @@ describe('T49: category commands (D-11)', () => {
   it.each(['#577D35', '#577d36'])(
     'rejects a duplicate or perceptually adjacent colour %s',
     async (colour) => {
-      const { engine, repo } = await categoryEngine({ categories: [RESEARCH] });
+      const { engine, repo } = await makeEngine({ categories: [RESEARCH] });
       const before = await capture(engine, repo);
       expect(await engine.createCategory({ name: 'Reading', colour })).toMatchObject({
         ok: false,
@@ -160,7 +151,7 @@ describe('T49: category commands (D-11)', () => {
   );
 
   it('allows retaining the same category colour and frees a swatch after recolouring', async () => {
-    const { engine } = await categoryEngine({ categories: [RESEARCH] });
+    const { engine } = await makeEngine({ categories: [RESEARCH] });
     expect(
       (await engine.updateCategory(RESEARCH.id, { name: 'Projects', colour: RESEARCH.colour })).ok,
     ).toBe(true);
@@ -179,7 +170,7 @@ describe('T49: category commands (D-11)', () => {
   });
 
   it('returns NotFound for an absent category instead of writing a new record', async () => {
-    const { engine, repo } = await categoryEngine();
+    const { engine, repo } = await makeEngine();
     const before = await capture(engine, repo);
     const expected = { ok: false, error: { code: 'NotFound', entity: 'category', id: 'missing' } };
     expect(
@@ -191,7 +182,7 @@ describe('T49: category commands (D-11)', () => {
 
   it('rolls back a failed category write with no state or history change', async () => {
     const repo = new FailingRepository();
-    const { engine } = await categoryEngine({ repo });
+    const { engine } = await makeEngine({ repo });
     const before = await capture(engine, repo);
     repo.failNextApply();
     expect(

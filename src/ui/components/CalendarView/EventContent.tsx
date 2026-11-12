@@ -2,6 +2,7 @@ import { fmtDuration } from '../../format/time';
 import { useEffect, useId, useRef } from 'react';
 import { FixedTag } from '../FixedTag/FixedTag';
 import type { EventBlockProps } from './toFullCalendar';
+import { CategoryTag } from '../Categories/CategoryTag';
 
 const PRIORITY_TAG = { high: '[H]', medium: '[M]', low: '[L]' } as const;
 
@@ -13,6 +14,7 @@ const PRIORITY_TAG = { high: '[H]', medium: '[M]', low: '[L]' } as const;
 //       a fixed block is described by the Fixed tag's hint (WI-42)
 export function EventContent({
   title,
+  category,
   timeText,
   priority,
   flexible,
@@ -51,6 +53,7 @@ export function EventContent({
       <span className="event-time">{timeText}</span>{' '}
       <strong className="event-title">{title}</strong>{' '}
       <span className={`tag prio-${priority}`}>{PRIORITY_TAG[priority]}</span>
+      {category !== undefined && <CategoryTag category={category} />}
       {kind === 'Task' && <span className="tag">Task</span>}
       {kind === 'Fixed' && <FixedTag descriptionId={hintId} />}
     </>

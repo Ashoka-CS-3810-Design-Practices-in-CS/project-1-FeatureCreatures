@@ -158,10 +158,7 @@ The TypeScript definitions live in `TECH_SPEC.md` §5. This table lists the fiel
 | `taskId` | string \| null | Set only for scheduled-task events |
 | `createdAt`, `updatedAt` | Minute | Assigned by the engine |
 
-The event dialog picks a default `flexible` value from the category. The user can change it.
-
-- **Fixed by default:** class, meeting, appointment.
-- **Flexible by default:** assignment, personal.
+New events start Fixed for every category (D-11, C-01). Selecting or creating a category never changes the user's scheduling choice.
 
 The default flex window is the event's local day, from working start to working end. When the event does not overlap its day's working hours (for example at night) or falls on a non-working day, the default is that whole local day, 00:00–24:00, so the window is never empty by default (WI-41, reports #4 and #9). This only fills the form of a new event or one without a window; stored events are never changed.
 
@@ -196,7 +193,7 @@ The default flex window is the event's local day, from working start to working 
 
 UI-only preferences (theme and last view) are stored in `localStorage`, not in Settings.
 
-#### Category (WI-48 data contract; editing/filter controls in WI-49)
+#### Category (BR-16, WI-49)
 
 `{id, name, colour, createdAt}`: non-empty engine-assigned id; trimmed name 1–40 characters, unique ignoring case; six-digit hex colour, unique per category; integer Minute `createdAt`. Each event/task must reference an existing category, including on commands, imports and stored-data validation. A done task has no `scheduledEventId`, so existing link invariants still apply.
 
@@ -262,11 +259,11 @@ Each requirement lists its acceptance criteria. The tests that prove it are in `
   - The picker also shows how many gaps were considered and how many fit.
   - If nothing fits, the user gets ER3, including the largest gap found.
 
-**FR6 — Priority sort and filter.**
+**FR6 — Priority sort and category filter.**
 - **Task panel:**
   - Sort by priority (High → Medium → Low, then window end ascending, then name) or by window end (ascending, then priority, then name).
   - Filter by any subset of priorities and by status (unscheduled, scheduled, all).
-- **Calendar toolbar:** a filter that shows only events of the chosen priorities.
+- **Calendar toolbar:** priority and category chips combine; Reset filters and List's Show all restore both. Categories are shown by default, including newly created categories. Task rows and conflict detection ignore the calendar filters.
 - **Acceptance:**
   - Sorting and filtering never change stored data.
   - Conflicts are still computed on all events. A hidden event still appears in the conflict panel, tagged "(hidden by filter)".
@@ -326,7 +323,7 @@ Each requirement lists its acceptance criteria. The tests that prove it are in `
   - Remaining problems are shown even with no movable events. A plan with zero moves and remaining problems says "No moves in this plan — N events still need attention." (singular as appropriate), never a bare "No changes needed". Problems resolved by that plan are omitted.
 
 **FR11 — Settings.**
-- **Editable:** working days and hours, default buffer, barred slots (add, edit, remove), default criterion.
+- **Editable:** working days and hours, default buffer, barred slots (add, edit, remove), default criterion, Categories (BR-16).
 - **Behaviour:** changes apply immediately to every later search. Barred slots are shown on the calendar as shaded background blocks with their label, and non-working hours are shaded.
 - **Acceptance:** invalid settings (end ≤ start, buffer out of range, a duplicate barred slot) are rejected inline. A barred slot that repeats an earlier slot's days, start and end shows "Duplicate of barred slot N." under its Days, where N is the earlier slot's number; an import with such settings is rejected (ER6) with the same message.
 
@@ -373,6 +370,7 @@ Every engine command returns either success or a typed error (§5). Errors never
 | ER7 | A stale option or plan: the calendar changed between computing the options and applying them, or time passed so that an offered slot, a planned move's target or a planned event now starts before "now" (AUDIT A07) | Version check; start ≥ now rounded up to 5 min when applying | `StaleResult` | "The calendar changed since these options were computed. Refreshing…" The options are recomputed automatically. | Cancelled, then refreshed |
 | ER8 | Another tab of the app, open on the same browser data, saved a change after this tab last loaded (peer report #14, WI-40) | Every write names the stored revision it was based on; the repository refuses it in the same transaction when the stored revision differs | `ConcurrentModification` | Warning toast: "This changed in another tab — your view has been refreshed. Nothing was overwritten." The tab reloads the stored data first (history cleared). | Cancelled; nothing stored; view refreshed |
 | — | A referenced ID no longer exists | Lookup | `NotFound {entity, id}` | "That item no longer exists." | Cancelled |
+| — | Delete a category referenced by events or tasks, including done tasks | Reference counts | `CategoryInUse {eventCount, taskCount}` | "Used by 3 events and 1 task. Change their category or delete them first." | Cancelled; no reassignment |
 | — | IndexedDB is unavailable (e.g. a locked-down private window) | Opening the DB fails at startup | — | Persistent banner: "Storage unavailable: changes will be lost when you close this tab." The app runs on the in-memory repository. | Degraded mode |
 
 ER4 is our decision: allow with a warning, as in A1. It keeps the user in control.
@@ -526,6 +524,10 @@ Every search result also carries:
 - When saving settings introduces overlap records, an info toast counts distinct events among the new records: `2 events overlap barred slots` (singular: `1 event overlaps barred slots`). **View** opens the panels drawer when needed and focuses/scrolls the barred-overlap section. An unchanged save or a save only removing overlaps produces no overlap toast.
 
 ---
+
+**BR-16 Categories (D-11).** Every event/task has one existing category id. Settings → Categories supports create, rename, recolour and delete, one atomic undo step each. Name is trimmed, 1–40 characters and unique ignoring case. Renaming/recolouring updates all referring tags immediately without rewriting items. Deleting is blocked while any event or task refers to the category, including done tasks; the last unused category may be deleted. Both item dialogs end the category select with New category… and a small inline name/colour editor, preserving the item draft. With no categories they require creating one before saving. New items use the last category chosen in this session if it still exists, otherwise the first listed category. No category controls whether an event is flexible.
+
+Twelve curated colours include the five seeds. Free colours are normalised six-digit hex, at least `MIN_CATEGORY_COLOUR_DISTANCE = 0.04` apart in OKLab from other categories and reserved fills, conflict/priority colours. A dot has at least 3:1 contrast on its tag in both themes; its name uses normal text at least 4.5:1. Deleting/recolouring frees a swatch. Imports and stored-data validation enforce the same colour safety. Calendar blocks, accessible names/tooltips and task rows resolve the category by id. Multi-category and category-less items remain out of scope.
 
 ## 7. UX specification
 
@@ -728,3 +730,4 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 | 2026-11-12 | v1.13 (WI-46): §7.1 Settings is laid out in four headed sections with compact barred-slot rows and day chips. UI only; validation unchanged beyond WI-43. |
 | 2026-11-12 | v1.14 (WI-47, D-18): documentation reorganised under `progress/` and `extras/`; §0.2 links the relocated progress file and binding Round 2 design. Product behaviour changes in the later implementing WIs. |
 | 2026-11-12 | v1.15 (WI-48, D-17): §3.2 category entities/references, kept ids, done status/completion time and the global working-time field; BR-9 copies `categoryId`. Dexie v3 preserves old rows/revision/overlaps; exports v2 include categories, imports accept v1/v2. UI and commands for the new fields follow in WI-49/53/54. |
+| 2026-11-12 | v1.16 (WI-49, D-11/C-01): BR-16 specifies category CRUD/history, blocked deletion, shared colour validation, inline creation, tags, category filters and session defaults. FR6/FR11 include the controls; new events start Fixed regardless of category. T49 replaces category-based flexibility expectations. |

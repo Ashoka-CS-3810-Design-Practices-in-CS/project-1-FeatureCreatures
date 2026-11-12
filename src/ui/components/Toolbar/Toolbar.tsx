@@ -4,6 +4,7 @@ import type { Priority } from '@/shared/types';
 import { fmtViewTitle } from '../../format/time';
 import type { ThemeChoice } from '../../hooks/useTheme';
 import { useAppStore, type ViewType } from '../../store/appStore';
+import { CategoryTag } from '../Categories/CategoryTag';
 
 const VIEWS: { type: ViewType; label: string }[] = [
   { type: 'timeGridDay', label: 'Day' },
@@ -48,6 +49,8 @@ export function Toolbar({
 }) {
   const view = useAppStore((state) => state.view);
   const filter = useAppStore((state) => state.eventPriorityFilter);
+  const categories = useAppStore((state) => state.snapshot.categories);
+  const hiddenCategories = useAppStore((state) => state.hiddenCategoryIds);
   const canUndo = useAppStore((state) => state.snapshot.canUndo);
   const canRedo = useAppStore((state) => state.snapshot.canRedo);
   const undoLabel = useAppStore((state) => state.snapshot.undoLabel);
@@ -108,6 +111,21 @@ export function Toolbar({
             </button>
           ))}
         </div>
+        <div role="group" aria-label="Category filter" className="category-filters">
+          {categories.map((category) => (
+            <button
+              key={category.id}
+              type="button"
+              aria-pressed={!hiddenCategories.includes(category.id)}
+              onClick={() => actions.toggleEventCategory(category.id)}
+            >
+              <CategoryTag category={category} />
+            </button>
+          ))}
+        </div>
+        <button type="button" onClick={actions.showAllEventPriorities}>
+          Reset filters
+        </button>
         <button
           type="button"
           className="primary"

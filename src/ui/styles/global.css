@@ -342,6 +342,71 @@ th {
   white-space: nowrap;
 }
 
+.category-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.category-dot {
+  display: inline-block;
+  width: var(--space-2);
+  height: var(--space-2);
+  flex-shrink: 0;
+  border-radius: var(--radius-pill);
+}
+
+.toolbar .category-filters {
+  flex-wrap: wrap;
+}
+
+.category-filters .category-tag {
+  padding: 0;
+  border: 0;
+}
+
+.category-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-block: var(--space-2);
+}
+
+.category-row > .category-tag {
+  margin-right: auto;
+}
+
+.category-editor {
+  min-inline-size: 0;
+}
+
+.category-palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  background: var(--surface);
+}
+
+.category-palette label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--target-min);
+  padding: var(--space-1);
+}
+
+.category-palette .category-dot {
+  width: var(--space-4);
+  height: var(--space-4);
+}
+
+dialog .category-editor input[type='color'] {
+  width: var(--space-7);
+  padding: var(--space-1);
+}
+
 .tag.prio-high {
   border-color: currentColor;
   background: var(--prio-high-bg);

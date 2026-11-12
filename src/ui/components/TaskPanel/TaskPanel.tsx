@@ -3,6 +3,7 @@ import type { CalendarEvent, Priority, Task } from '@/shared/types';
 import { fmtDay, fmtDuration, fmtRange, fmtTime } from '../../format/time';
 import { useAppStore, type AppActions, type AppState } from '../../store/appStore';
 import { visibleTasks } from '../../store/selectors';
+import { CategoryTag } from '../Categories/CategoryTag';
 
 const PRIORITY_OPTIONS: { value: Priority; label: string; tag: string }[] = [
   { value: 'high', label: 'High', tag: '[H]' },
@@ -28,6 +29,9 @@ function TaskRow({
   selected: boolean;
   actions: AppActions;
 }) {
+  const category = useAppStore((state) =>
+    state.snapshot.categories.find((candidate) => candidate.id === task.categoryId),
+  );
   const isUnscheduled = task.status === 'unscheduled';
   return (
     <li className={`task-row prio-${task.priority}`}>
@@ -42,6 +46,7 @@ function TaskRow({
       </label>{' '}
       <span className="task-heading">
         <strong>{task.name}</strong> <span className="tag">{TAG_FOR[task.priority]}</span>
+        {category !== undefined && <CategoryTag category={category} />}
       </span>{' '}
       <span className="task-meta">
         <span>{fmtDuration(task.durationMin)}</span>{' '}

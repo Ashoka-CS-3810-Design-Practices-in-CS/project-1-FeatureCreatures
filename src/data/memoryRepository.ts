@@ -59,6 +59,7 @@ export class MemoryRepository implements Repository {
   async apply(changes: ChangeSet, expectedRevision: number): Promise<void> {
     requireRevision(this.revision, expectedRevision);
     const copy = structuredClone(changes);
+    applyToMap(this.categories, copy.deleteCategoryIds ?? [], copy.putCategories ?? []);
     applyToMap(this.events, copy.deleteEventIds, copy.putEvents);
     applyToMap(this.tasks, copy.deleteTaskIds, copy.putTasks);
     this.revision += 1;

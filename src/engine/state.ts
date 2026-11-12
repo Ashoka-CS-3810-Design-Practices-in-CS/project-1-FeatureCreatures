@@ -39,6 +39,7 @@ export interface RecordChange<T> {
 }
 export interface Change {
   readonly label: string;
+  readonly categories?: readonly RecordChange<Category>[];
   readonly events: readonly RecordChange<CalendarEvent>[];
   readonly tasks: readonly RecordChange<Task>[];
 }
@@ -119,25 +120,30 @@ function imageFor<T>(record: RecordChange<T>, direction: Direction): T | null {
   return direction === 'forward' ? record.after : record.before;
 }
 
-// PRE:  tasks have distinct ids; image is null or a task with id = id
-// POST: returns tasks with the task id replaced in place by image, appended when it was absent,
+// PRE:  records have distinct ids; image is null or a record with id = id
+// POST: returns records with id replaced in place by image, appended when it was absent,
 //       or removed when image is null
-function writeTask(tasks: readonly Task[], id: string, image: Task | null): Task[] {
+function writeRecord<RecordType extends { id: string }>(
+  records: readonly RecordType[],
+  id: string,
+  image: RecordType | null,
+): RecordType[] {
   if (image === null) {
-    return removeById(tasks, id);
+    return removeById(records, id);
   }
-  const index = tasks.findIndex((existing) => existing.id === id);
-  return index === -1 ? [...tasks, image] : tasks.with(index, image);
+  const index = records.findIndex((existing) => existing.id === id);
+  return index === -1 ? [...records, image] : records.with(index, image);
 }
 
 // PRE:  state.events is sorted by compareEvents; change touches each record at most once
-// POST: returns state's events and tasks with every image for direction written: a null image
+// POST: returns state's categories, events and tasks with every image for direction written: a null image
 //       deletes the record; events stay sorted; state is not mutated
 export function applyChange(
   state: EngineState,
   change: Change,
   direction: Direction,
-): { events: CalendarEvent[]; tasks: Task[] } {
+): { categories: Category[]; events: CalendarEvent[]; tasks: Task[] } {
+  let categories = [...state.categories];
   let events = [...state.events];
   let tasks = [...state.tasks];
 
@@ -153,11 +159,17 @@ export function applyChange(
 
   // INVARIANT: tasks has every visited task record's image written, other tasks in their old order
   for (const record of change.tasks) {
-    tasks = writeTask(tasks, record.id, imageFor(record, direction));
+    tasks = writeRecord(tasks, record.id, imageFor(record, direction));
   }
   // POST: tasks has every task image written
 
-  return { events, tasks };
+  // INVARIANT: categories contains the direction image of every visited category change
+  for (const record of change.categories ?? []) {
+    categories = writeRecord(categories, record.id, imageFor(record, direction));
+  }
+  // POST: categories contains all category images; unrelated categories keep their order
+
+  return { categories, events, tasks };
 }
 
 // PRE:  records is a list of RecordChanges; direction is 'forward' or 'backward'
@@ -186,9 +198,12 @@ function splitImages<T>(
 // PRE:  change is a Change; direction is 'forward' or 'backward'
 // POST: returns the repository ChangeSet that writes change's images for direction (§9.1)
 function changeSetFor(change: Change, direction: Direction): ChangeSet {
+  const categories = splitImages(change.categories ?? [], direction);
   const events = splitImages(change.events, direction);
   const tasks = splitImages(change.tasks, direction);
   return {
+    putCategories: categories.puts,
+    deleteCategoryIds: categories.deleteIds,
     putEvents: events.puts,
     deleteEventIds: events.deleteIds,
     putTasks: tasks.puts,

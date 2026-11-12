@@ -19,6 +19,7 @@ import { useShortcuts } from './hooks/useShortcuts';
 import { useTheme } from './hooks/useTheme';
 import { useNarrowLayout } from './hooks/useNarrowLayout';
 import { useAppStore } from './store/appStore';
+import { eventIsVisible } from './store/selectors';
 import styles from './App.module.css';
 
 // PRE:  count ≥ 0; noun is singular
@@ -70,6 +71,7 @@ export function App() {
   const storageWarning = useAppStore((state) => state.storageWarning);
   const snapshot = useAppStore((state) => state.snapshot);
   const filter = useAppStore((state) => state.eventPriorityFilter);
+  const hiddenCategories = useAppStore((state) => state.hiddenCategoryIds);
 
   if (status === 'loading') {
     return <p role="status">Loading your calendar…</p>;
@@ -79,7 +81,9 @@ export function App() {
   }
 
   const isEmpty = snapshot.events.length === 0 && snapshot.tasks.length === 0;
-  const visibleCount = snapshot.events.filter((event) => filter.includes(event.priority)).length;
+  const visibleCount = snapshot.events.filter((event) =>
+    eventIsVisible(event, filter, hiddenCategories),
+  ).length;
   return (
     <div className={`app ${styles.app}`}>
       {storageWarning && (

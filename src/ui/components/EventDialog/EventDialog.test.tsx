@@ -71,19 +71,22 @@ describe('EventDialog', () => {
     ]);
   });
 
-  it('defaults flexible from the categoryId, and shows the flex window only when flexible', async () => {
+  it('T49 D-11: category changes preserve the deliberate scheduling choice', async () => {
     const { engine } = await makeEngine();
     const store = renderDialogs(engine);
     openCreate(store);
     const flexible = screen.getByRole('checkbox', { name: /Flexible/ });
 
     await userEvent.selectOptions(screen.getByLabelText('Category'), 'assignment');
+    expect(flexible).not.toBeChecked();
+    expect(screen.queryByLabelText('Window start')).not.toBeInTheDocument();
+    await userEvent.click(flexible);
     expect(flexible).toBeChecked();
     expect(screen.getByLabelText('Window start')).toBeInTheDocument();
 
     await userEvent.selectOptions(screen.getByLabelText('Category'), 'class');
-    expect(flexible).not.toBeChecked();
-    expect(screen.queryByLabelText('Window start')).not.toBeInTheDocument();
+    expect(flexible).toBeChecked();
+    expect(screen.getByLabelText('Window start')).toBeInTheDocument();
   });
 
   it('T5 (UI): end before start shows the message under End, keeps the values and skips the engine', async () => {

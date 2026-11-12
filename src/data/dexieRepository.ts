@@ -134,9 +134,11 @@ export class DexieRepository implements Repository {
   //       are stored and the revision grows by 1; otherwise nothing is and the promise rejects
   //       (ConcurrentModificationError for a stale revision)
   async apply(changes: ChangeSet, expectedRevision: number): Promise<void> {
-    const { events, tasks, meta } = this.db;
-    await this.db.transaction('rw', events, tasks, meta, async () => {
+    const { events, tasks, meta, categories } = this.db;
+    await this.db.transaction('rw', [events, tasks, meta, categories], async () => {
       await this.claimRevision(expectedRevision);
+      await categories.bulkDelete(changes.deleteCategoryIds ?? []);
+      await categories.bulkPut(changes.putCategories ?? []);
       await events.bulkDelete(changes.deleteEventIds);
       await tasks.bulkDelete(changes.deleteTaskIds);
       await events.bulkPut(changes.putEvents);

@@ -2,7 +2,12 @@
 // These are the project's shared validators: the engine re-validates every command with them.
 
 import { z } from 'zod';
+import { colourDistance, contrastRatio } from './colours';
 import {
+  CATEGORY_TAG_BACKGROUNDS,
+  MIN_CATEGORY_COLOUR_DISTANCE,
+  MIN_NON_TEXT_CONTRAST,
+  RESERVED_COLOURS,
   EXPORT_FORMAT,
   EXPORT_VERSION,
   LEGACY_EXPORT_VERSION,
@@ -25,6 +30,7 @@ import type {
   BarredSlot,
   CalendarEvent,
   Category,
+  CategoryInput,
   EventInput,
   ExportFile,
   Interval,
@@ -290,6 +296,54 @@ export const categorySchema = z.object({
   createdAt: minute,
 });
 
+export const categoryInputSchema = categorySchema.pick({ name: true, colour: true });
+
+// PRE:  colour is a normalised six-digit hex colour; categories excludes the category being edited
+// POST: returns the colour's D-11 validation message, or null if it is available and readable
+export function categoryColourIssue(
+  colour: string,
+  categories: readonly Category[],
+): string | null {
+  if (
+    RESERVED_COLOURS.some(
+      (reserved) => colourDistance(colour, reserved) < MIN_CATEGORY_COLOUR_DISTANCE,
+    )
+  ) {
+    return 'Choose a colour further from the reserved event, conflict and priority colours.';
+  }
+  if (
+    categories.some(
+      (category) => colourDistance(colour, category.colour) < MIN_CATEGORY_COLOUR_DISTANCE,
+    )
+  ) {
+    return 'Choose a colour further from the colours already in use.';
+  }
+  return CATEGORY_TAG_BACKGROUNDS.every(
+    (background) => contrastRatio(colour, background) >= MIN_NON_TEXT_CONTRAST,
+  )
+    ? null
+    : 'Choose a colour with at least 3:1 contrast in both themes.';
+}
+
+// PRE:  input is untrusted; categories are current categories; editingId is absent for creation
+// POST: returns a trimmed, normalised unique category input, or InvalidInput with field issues
+export function parseCategoryInput(
+  input: unknown,
+  categories: readonly Category[],
+  editingId?: string,
+): Result<CategoryInput> {
+  const parsed = parseInput(categoryInputSchema, input);
+  if (!parsed.ok) return parsed;
+  const others = categories.filter((category) => category.id !== editingId);
+  const issues: FieldIssue[] = [];
+  if (others.some((category) => category.name.toLowerCase() === parsed.value.name.toLowerCase())) {
+    issues.push({ path: 'name', message: 'A category with this name already exists.' });
+  }
+  const colourIssue = categoryColourIssue(parsed.value.colour, others);
+  if (colourIssue !== null) issues.push({ path: 'colour', message: colourIssue });
+  return issues.length === 0 ? parsed : err({ code: 'InvalidInput', issues });
+}
+
 const legacyEventSchema = eventInputShape
   .omit({ categoryId: true })
   .extend({
@@ -454,6 +508,10 @@ export function linkIssues(
         path: `categories.${index}.colour`,
         message: 'Category colours must be unique.',
       });
+    } else {
+      const colourIssue = categoryColourIssue(category.colour, categories.slice(0, index));
+      if (colourIssue !== null)
+        issues.push({ path: `categories.${index}.colour`, message: colourIssue });
     }
     categoryNames.add(name);
     categoryColours.add(category.colour);

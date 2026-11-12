@@ -18,7 +18,8 @@ A browser-based week planner that detects every scheduling conflict, finds free 
 ## What it does
 
 - **Calendar.** Create, edit, drag, resize and delete events in Day, Week, Month and List views.
-  - Each event has a category, a priority (High, Medium or Low) and an optional _flexible_ window. Classes stay fixed; a gym session can move within its window.
+  - Each event has a category, a priority (High, Medium or Low) and an optional _flexible_ window. New events start Fixed; choose Flexible when the planner may move them.
+- **Categories.** Create, rename, recolour and delete categories in Settings → Categories, or create one inline in either item dialog. Each change is undoable. Used categories show their event/task counts when deletion is blocked. Choose from twelve swatches or a custom colour checked for contrast and distinctness. Category chips beside H/M/L filter the calendar; Reset filters restores both. Tasks and conflict detection keep all their data.
 - **Conflict detection.** Every pair of overlapping events is found automatically after each change.
   - Each conflict shows which events overlap, the exact overlap (e.g. 11:00–11:30) and its length in minutes.
   - Back-to-back events do not count as conflicts.

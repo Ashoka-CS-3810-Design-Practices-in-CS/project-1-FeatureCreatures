@@ -20,6 +20,7 @@ import { downloadJson, EXPORT_MIME_TYPE } from '../../hooks/download';
 import { useAppStore } from '../../store/appStore';
 import { ErrorText } from '../Modal/ErrorText';
 import { Modal } from '../Modal/Modal';
+import { CategoriesSection } from '../Categories/CategoriesSection';
 
 // Monday first, as on the calendar; the values are the weekday numbers (0 = Sunday).
 const WEEKDAYS: { value: string; label: string }[] = [
@@ -422,6 +423,7 @@ export function SettingsDialog() {
   return (
     <Modal open title="Settings" className="settings-dialog" onClose={closeDialog}>
       <SettingsForm settings={settings} />
+      <CategoriesSection />
       <DataSection />
     </Modal>
   );

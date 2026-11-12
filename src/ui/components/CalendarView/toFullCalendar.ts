@@ -6,6 +6,7 @@ import { buildDayFrames, fromMinute } from '@/shared/time';
 import { eventAccessibleText } from '../../format/explain';
 import type {
   CalendarEvent,
+  Category,
   BarredOverlap,
   Conflict,
   Interval,
@@ -14,6 +15,7 @@ import type {
 } from '@/shared/types';
 
 export interface EventBlockProps {
+  category?: Category;
   barredLabels: readonly string[];
   label: string;
   priority: Priority;
@@ -64,6 +66,7 @@ function toEntry(
   conflictMinutes: number,
   emphasised: boolean,
   barredLabels: readonly string[],
+  category: Category | undefined,
 ): EventInput {
   const classNames = ['ev', `prio-${event.priority}`];
   if (conflictMinutes > 0) {
@@ -73,7 +76,8 @@ function toEntry(
     classNames.push('is-emphasised');
   }
   const extendedProps: EventBlockProps = {
-    label: eventAccessibleText(event, conflictMinutes, barredLabels),
+    label: `${eventAccessibleText(event, conflictMinutes, barredLabels)}${category === undefined ? '' : `, ${category.name}`}`,
+    category,
     barredLabels,
     priority: event.priority,
     categoryId: event.categoryId,
@@ -119,16 +123,23 @@ export function toFullCalendar(
   filter: readonly Priority[],
   activeRange: Interval | null,
   emphasisIds: readonly string[],
+  hiddenCategoryIds: readonly string[] = [],
 ): EventInput[] {
   const overlaps = largestOverlaps(snapshot.conflicts);
   const barredLabels = labelsByEvent(snapshot.barredOverlaps);
   const emphasised = new Set(emphasisIds);
+  const categories = new Map(snapshot.categories.map((category) => [category.id, category]));
+  const hidden = new Set(hiddenCategoryIds);
   const events = snapshot.events
-    .filter((event) => filter.includes(event.priority))
+    .filter((event) => filter.includes(event.priority) && !hidden.has(event.categoryId))
     .map((event) =>
-      toEntry(event, overlaps.get(event.id) ?? 0, emphasised.has(event.id), [
-        ...(barredLabels.get(event.id) ?? []),
-      ]),
+      toEntry(
+        event,
+        overlaps.get(event.id) ?? 0,
+        emphasised.has(event.id),
+        [...(barredLabels.get(event.id) ?? [])],
+        categories.get(event.categoryId),
+      ),
     );
   return [...events, ...barredEntries(snapshot, activeRange)];
 }

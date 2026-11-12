@@ -4,6 +4,7 @@
 
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { CATEGORY_PALETTE, CATEGORY_TAG_BACKGROUNDS } from '@/shared/constants';
 
 const TOKENS_CSS = readFileSync(fileURLToPath(new URL('./tokens.css', import.meta.url)), 'utf8');
 const MIN_TEXT_CONTRAST = 4.5; // WCAG AA, body text
@@ -91,6 +92,17 @@ const light = tokensOf(':root');
 const dark = tokensOf(":root[data-theme='dark']");
 
 describe('tokens.css', () => {
+  it('T49: every category swatch reaches 3:1 on its tag and every category name reaches 4.5:1 in both themes', () => {
+    [light, dark].forEach((tokens, index) => {
+      expect(tokens.get('surface')).toBe(CATEGORY_TAG_BACKGROUNDS[index]);
+      CATEGORY_PALETTE.forEach((colour) =>
+        expect(contrast(colour, tokens.get('surface') ?? ''), colour).toBeGreaterThanOrEqual(3),
+      );
+      expect(
+        contrast(tokens.get('text') ?? '', tokens.get('surface') ?? ''),
+      ).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+    });
+  });
   it.each([
     ['light', light],
     ['dark', dark],

@@ -7,10 +7,11 @@ import { addLunchBarredSlot, createEvent } from '../../e2e/helpers';
 const OUTPUT_DIR = 'docs/screenshots';
 const VIEWPORT_HEIGHT = 900;
 const WIDE_WIDTH = 1440;
+const MEDIUM_DESKTOP_WIDTH = 1280;
 const NARROW_DESKTOP_WIDTH = 1024;
 const DRAWER_WIDTH = 900;
 const TALL_HEIGHT = 1400; // shows the whole side column, conflicts included
-const WEEK_WIDTHS = [WIDE_WIDTH, NARROW_DESKTOP_WIDTH];
+const WEEK_WIDTHS = [WIDE_WIDTH, MEDIUM_DESKTOP_WIDTH, NARROW_DESKTOP_WIDTH];
 const THEMES = ['light', 'dark'] as const;
 const TOAST_WAIT_MS = 10_000;
 // Late Monday morning of TEST_PLAN's base week: "today" and the now line sit inside the grid, and
@@ -59,6 +60,18 @@ for (const theme of THEMES) {
 
   // INVARIANT: dialog captures are registered for every visited width in this theme
   for (const width of [...WEEK_WIDTHS, DRAWER_WIDTH]) {
+    test(`categories ${theme} ${width}`, async ({ page }) => {
+      await openApp(page, theme, width);
+      await page.getByRole('button', { name: 'Settings', exact: true }).click();
+      const settings = page.getByRole('dialog', { name: 'Settings', exact: true });
+      await settings.getByRole('button', { name: 'New category…', exact: true }).click();
+      await settings.getByLabel('Category name', { exact: true }).fill('Research');
+      await settings
+        .getByRole('button', { name: 'Create category', exact: true })
+        .scrollIntoViewIfNeeded();
+      await capture(page, `categories-${theme}-${width}`);
+    });
+
     test(`event dialog ${theme} ${width}`, async ({ page }) => {
       await openApp(page, theme, width);
       await page.getByRole('button', { name: '+ Event', exact: true }).click();

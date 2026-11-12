@@ -9,6 +9,7 @@ import { MIN_CLICK_TARGET_PX } from '@/shared/constants';
 import type { Interval, Priority, Snapshot } from '@/shared/types';
 import { ALL_HIDDEN_BY_FILTER_TEXT } from '../../format/explain';
 import { useAppStore } from '../../store/appStore';
+import { eventIsVisible } from '../../store/selectors';
 import { createCalendarHandlers } from './calendarHandlers';
 import { toClockTime } from '../../format/time';
 import { renderEventContent } from './renderEventContent';
@@ -27,10 +28,11 @@ function filterHidesEventsIn(
   snapshot: Snapshot,
   filter: readonly Priority[],
   range: Interval | null,
+  hiddenCategoryIds: readonly string[],
 ): boolean {
   return snapshot.events.some(
     (event) =>
-      !filter.includes(event.priority) &&
+      !eventIsVisible(event, filter, hiddenCategoryIds) &&
       (range === null || (event.start < range.end && event.end > range.start)),
   );
 }
@@ -38,10 +40,18 @@ function filterHidesEventsIn(
 // PRE:  onShowAll shows every priority again
 // POST: tells why List is empty when the priority filter hides every event of its range, with a
 //       Show all button (WI-44, report #10)
-function HiddenByFilterNotice({ onShowAll }: { onShowAll: () => void }) {
+function HiddenByFilterNotice({
+  onShowAll,
+  categoriesHidden,
+}: {
+  onShowAll: () => void;
+  categoriesHidden: boolean;
+}) {
   return (
     <span className="list-hidden-notice">
-      {ALL_HIDDEN_BY_FILTER_TEXT}{' '}
+      {categoriesHidden
+        ? 'All events in this range are hidden by the calendar filters'
+        : ALL_HIDDEN_BY_FILTER_TEXT}{' '}
       <button type="button" onClick={onShowAll}>
         Show all
       </button>
@@ -60,17 +70,18 @@ export function CalendarView({ calendarRef }: { calendarRef: RefObject<FullCalen
   const snapshot = useAppStore((state) => state.snapshot);
   const view = useAppStore((state) => state.view);
   const filter = useAppStore((state) => state.eventPriorityFilter);
+  const hiddenCategories = useAppStore((state) => state.hiddenCategoryIds);
   const emphasisIds = useAppStore((state) => state.emphasisIds);
   const actions = useAppStore((state) => state.actions);
 
   const handlers = useMemo(() => createCalendarHandlers(actions), [actions]);
   // The snapshot is replaced on every change, so it is the right memo key for its events.
   const events = useMemo(
-    () => toFullCalendar(snapshot, filter, view.activeRange, emphasisIds),
-    [snapshot, filter, view.activeRange, emphasisIds],
+    () => toFullCalendar(snapshot, filter, view.activeRange, emphasisIds, hiddenCategories),
+    [snapshot, filter, view.activeRange, emphasisIds, hiddenCategories],
   );
   const { workDays, workStartMin, workEndMin } = snapshot.settings;
-  const hiddenByFilter = filterHidesEventsIn(snapshot, filter, view.activeRange);
+  const hiddenByFilter = filterHidesEventsIn(snapshot, filter, view.activeRange, hiddenCategories);
 
   return (
     <FullCalendar
@@ -112,7 +123,10 @@ export function CalendarView({ calendarRef }: { calendarRef: RefObject<FullCalen
       events={events}
       noEventsContent={() =>
         hiddenByFilter ? (
-          <HiddenByFilterNotice onShowAll={actions.showAllEventPriorities} />
+          <HiddenByFilterNotice
+            onShowAll={actions.showAllEventPriorities}
+            categoriesHidden={hiddenCategories.length > 0}
+          />
         ) : (
           NO_EVENTS_TEXT
         )
