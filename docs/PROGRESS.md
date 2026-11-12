@@ -6,7 +6,7 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** Peer bug fixes batch (WI-40–46, see "Peer bug fixes (batch)" below). WI-40 and WI-41 merged; next WI-42 (C) on `feat/wi-42-fixed-drag-confirm`.
+- **Active WI:** Peer bug fixes batch (WI-40–46, see "Peer bug fixes (batch)" below). WI-40–42 merged; next WI-43 (D) on `feat/wi-43-duplicate-barred-slots`.
 - **Last session:** 2026-11-12 · Claude Code · planned the peer bug fixes batch. Before that: 2026-10-26 · Codex · WI-39 merged; final main typecheck/lint/582 tests green; warm and cold browser hunts 360/360 passed with zero retries and no additional flakes.
 - **Gate status:** typecheck/lint, 582 tests (T15 opt-in), coverage 98.60% lines / 94.08% branches, build and 360/360 browser executions green (180 warm + 180 cold; each 10 repeats, 2 workers, zero retries). Seven DST and five 10,000-case properties were last verified before this UI-only fix. Run `npm run build` before `npm run e2e` while an existing `vite preview` holds port 4173.
 
@@ -175,8 +175,9 @@ Fourteen peer bug reports, each verified against `main` and the live build. One 
 - [x] **WI-41** (B) Alternatives outside working hours (#3, #4, #9) — owner S + Dv — depends on 40
   - 2026-11-12 · Claude Code · branch `feat/wi-41-alternatives-any-time` · done: claimed after WI-40 merge and green main · next: failing tests for the picker hours radio, its default, defaultFlexWindow at night / non-working day, empty-window causes and the fixed-target note
   - 2026-11-12 · Claude Code · branch `feat/wi-41-alternatives-any-time` · done: T42 red first (10 cases), then green: optional `useWorkingHours` on suggestAlternatives (omitted = identical results, proven equal), picker Search hours radios with the outside-working-hours default, fixed-target note, whole-day default flex window, `emptyCause` past / noWorkingHours / barred with texts; docs (BR-5, FR7, §3.2, TECH_SPEC, T42, BUG_REPORTS #3/#4/#9). Gate: 612 tests, coverage 98.55% st / 94.2% br / 98.62% lines, DST 7, props 5×10,000, build, e2e 57/57 · next: WI-42 · surprises: none; no existing test needed a change
-- [~] **WI-42** (C) Fixed events ask before a manual drag (#1) — owner S + Dv — depends on 41
+- [x] **WI-42** (C) Fixed events ask before a manual drag (#1) — owner S + Dv — depends on 41
   - 2026-11-12 · Claude Code · branch `feat/wi-42-fixed-drag-confirm` · done: claimed after WI-41 merge and green main · next: failing handler/ConfirmDialog tests (fixed asks, Keep it/Esc reverts, Move moves, flexible unchanged), then E2 confirm and Playwright cancel/confirm
+  - 2026-11-12 · Claude Code · branch `feat/wi-42-fixed-drag-confirm` · done: T43 red first (unit + browser), then green: store `dragEvent` opens the existing ConfirmDialog (new optional `cancelLabel`/`onCancel`) for fixed events, handlers route drops/resizes through it, `FixedTag` tooltip + hidden description (user chose "tick Flexible"); T14's two fixed drops and E2 now confirm Move (named in commit 37b69da); docs + BUG_REPORTS #1. Gate: 618 tests, coverage 98.65% st / 94.18% br / 98.73% lines, DST 7, props 5×10,000, build, e2e 60/60 · next: WI-43 · surprises: E2's resize needed a hover after the dialog, because FullCalendar shows the resize handle only on hover
 - [ ] **WI-43** (D) Duplicate barred slots (#6) — owner S + Dv — depends on 42
 - [ ] **WI-44** (E) Filter vs count, List layout (#10, #12, #13) — owner S + Dv — depends on 43
 - [ ] **WI-45** (F) Small UX (#5, #7, #11) — owner S + Dv — depends on 44
