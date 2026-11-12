@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-51 Suggestion pickers, claimed for `feat/wi-51-suggestion-pickers`; no implementation changes yet. WI-50 is merged and fully verified on main.
-- **Last session:** 2026-11-13 · Codex · completed WI-50, including native-close test synchronization, outside-grid pointer release and reviewed 72-PNG set (58 scenes). Both branch and main full gates pass. Resuming D-06 with failing candidate/picker tests before implementation.
+- **Active WI:** WI-51 Suggestion pickers on `feat/wi-51-suggestion-pickers`; seven new candidate/picker tests confirmed red before implementation. WI-50 is merged and fully verified on main.
+- **Last session:** 2026-11-13 · Codex · completed WI-50 and full branch/main gates, then claimed WI-51. Three new engine candidate cases and four picker layout/selection/details cases fail for the expected D-06 gaps. Next: pure generator unit/property tests and implementation, preserving Replan's ranking; then picker layout, old expectation/doc updates and full gates/screenshots.
 - **Gate status:** 2026-11-13 on `main` at `f3ee047`: full gate green (718 tests + 1 skipped, 98.59% statements / 93.75% branches / 97.97% functions / 98.70% lines, algorithms 99.70/95.93/100/99.68, 7 DST, five properties × 10,000, build, 90/90 browser runs, zero retries).
 
 ## Work items
@@ -248,6 +248,7 @@ Binding design: `docs/extras/AUDIT_2.md` (D-01–D-19, C-01–C-08). Work in ord
 - [~] **WI-51** Suggestion pickers — owner S + Dv — depends on 50
   - Done when: Generator unit and property tests; picker RTL tests; e2e apply flows.
   - 2026-11-13 · Codex · branch `feat/wi-51-suggestion-pickers` · done: claimed after complete WI-50 main gate; D-06/C-03/C-04 and shared search/ranking/picker paths reviewed · next: failing candidate and picker layout/selection/details tests, then pure generator/property tests and implementation; keep Replan rankOptions/MAX_OPTIONS unchanged · note: no production changes or existing expectations changed in this WI yet.
+  - 2026-11-13 · Codex · branch `feat/wi-51-suggestion-pickers` · done: three exact candidate integration regressions and four picker layout/selection/details RTL regressions written and confirmed red (one candidate per gap, missing Top picks/Details), T51 expectations recorded · next: generator unit/property tests and pure implementation, shared picker layout, retain/update existing D-06 expectations, browser flows, matching docs/README, full branch/main gates and screenshots · note: no existing assertions or production code changed; main remains green at `f3ee047` (claim-only docs `38e9922`).
 - [ ] **WI-52** Past time — owner S + Dv — depends on 51
   - Done when: Panel grouping and counts; muted past styling; Replan wording.
 - [ ] **WI-53** Barred slots and working hours — owner S + Dv — depends on 52
