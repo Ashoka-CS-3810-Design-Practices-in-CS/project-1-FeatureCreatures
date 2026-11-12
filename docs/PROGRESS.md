@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** none. WI-01–39 are complete and merged into `main`; ready for the human push, CI run and deployment.
-- **Last session:** 2026-10-26 · Codex · WI-39 merged; final main typecheck/lint/582 tests green; warm and cold browser hunts 360/360 passed with zero retries and no additional flakes.
+- **Active WI:** Peer bug fixes batch (WI-40–46, see "Peer bug fixes (batch)" below). Next: record the baseline on `main`, then WI-40.
+- **Last session:** 2026-11-12 · Claude Code · planned the peer bug fixes batch. Before that: 2026-10-26 · Codex · WI-39 merged; final main typecheck/lint/582 tests green; warm and cold browser hunts 360/360 passed with zero retries and no additional flakes.
 - **Gate status:** typecheck/lint, 582 tests (T15 opt-in), coverage 98.60% lines / 94.08% branches, build and 360/360 browser executions green (180 warm + 180 cold; each 10 repeats, 2 workers, zero retries). Seven DST and five 10,000-case properties were last verified before this UI-only fix. Run `npm run build` before `npm run e2e` while an existing `vite preview` holds port 4173.
 
 ## Work items
@@ -162,6 +162,20 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-26 · Codex · branch `fix/wi-39-shortcut-race` · done: full gate 582 tests, coverage 98.60% lines / 94.08% branches; warm browser hunt 180/180 passed over 10 repeats with 2 workers and zero retries; CI config import assertions pass · next: cold 180-case hunt after verified test-server stop and node_modules/.vite deletion · note: warm runner exited 0 after manually terminating only its verified dev-server child (Windows sandbox cleanup); cold run uses permitted process cleanup
   - 2026-10-26 · Codex · branch `fix/wi-39-shortcut-race` · done: cold run 180/180 passed (4.3 min, exit 0) after server stop and verified cache deletion; combined 360/360 over two 10-repeat/2-worker runs, zero retries and no other flakes; one CI retry, retained traces, HTML report and failure artifact configured; docs synced · next: merge/main gate, human push/CI/deploy · note: no waits or timeouts added; human README/release updates preserved
   - 2026-10-26 · Codex · branch `main` · done: WI-39 merged with feature branch retained; final main gate 582 tests green; all changes committed · next: human push and inspect remote CI/deploy · note: no active work or unresolved browser failures
+
+### Peer bug fixes (batch)
+
+Fourteen peer bug reports, each verified against `main` and the live build. One WI per item, in order, each on its own branch and merged only after the full gate passes. Findings and verdicts: `docs/BUG_REPORTS.md` (created in WI-40). Rejected: #2 invalid, #8 by design (documentation only).
+
+- [ ] **WI-40** (A) Multi-tab integrity (#14) — owner S + Dv — depends on 39
+- [ ] **WI-41** (B) Alternatives outside working hours (#3, #4, #9) — owner S + Dv — depends on 40
+- [ ] **WI-42** (C) Fixed events ask before a manual drag (#1) — owner S + Dv — depends on 41
+- [ ] **WI-43** (D) Duplicate barred slots (#6) — owner S + Dv — depends on 42
+- [ ] **WI-44** (E) Filter vs count, List layout (#10, #12, #13) — owner S + Dv — depends on 43
+- [ ] **WI-45** (F) Small UX (#5, #7, #11) — owner S + Dv — depends on 44
+- [ ] **WI-46** (G) Settings panel redesign — owner S + Dv — depends on 45
+- [ ] Cleanup: delete `test-results/claude-verify-snapshot.tgz` and `.git/stale-maintenance-lock-claude` if they exist (nothing else).
+- [ ] Finish: full gate vs baseline (e2e `--repeat-each=5`), README test results, smoke checklist for the deployed site.
 
 ## Milestones
 
