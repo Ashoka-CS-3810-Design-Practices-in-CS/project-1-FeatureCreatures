@@ -6,7 +6,7 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** Peer bug fixes batch (WI-40–46, see "Peer bug fixes (batch)" below). WI-40–43 merged; next WI-44 (E) on `feat/wi-44-filter-count-list`.
+- **Active WI:** Peer bug fixes batch (WI-40–46, see "Peer bug fixes (batch)" below). WI-40–44 merged; next WI-45 (F) on `feat/wi-45-small-ux`.
 - **Last session:** 2026-11-12 · Claude Code · planned the peer bug fixes batch. Before that: 2026-10-26 · Codex · WI-39 merged; final main typecheck/lint/582 tests green; warm and cold browser hunts 360/360 passed with zero retries and no additional flakes.
 - **Gate status:** typecheck/lint, 582 tests (T15 opt-in), coverage 98.60% lines / 94.08% branches, build and 360/360 browser executions green (180 warm + 180 cold; each 10 repeats, 2 workers, zero retries). Seven DST and five 10,000-case properties were last verified before this UI-only fix. Run `npm run build` before `npm run e2e` while an existing `vite preview` holds port 4173.
 
@@ -181,8 +181,9 @@ Fourteen peer bug reports, each verified against `main` and the live build. One 
 - [x] **WI-43** (D) Duplicate barred slots (#6) — owner S + Dv — depends on 42
   - 2026-11-12 · Claude Code · branch `feat/wi-43-duplicate-barred-slots` · done: claimed after WI-42 merge and green main · next: failing settingsSchema / Settings dialog / sample-import tests, then the schema refine
   - 2026-11-12 · Claude Code · branch `feat/wi-43-duplicate-barred-slots` · done: T44 red first (schema, import, dialog), then green via `refineDistinctBarredSlots` in settingsSchema ("Duplicate of barred slot N." at the later slot's days; label ignored; days order-insensitive); all six docs/samples files and every built sample re-import; docs + BUG_REPORTS #6. Gate: 623 tests, coverage 98.66% st / 94.27% br / 98.74% lines, DST 7, props 5×10,000, build, e2e 60/60 · next: WI-44 · surprises: T38's store test saved two identical Lunch slots as its fixture; it now uses a different overlapping Break (named in commit 356a280)
-- [~] **WI-44** (E) Filter vs count, List layout (#10, #12, #13) — owner S + Dv — depends on 43
+- [x] **WI-44** (E) Filter vs count, List layout (#10, #12, #13) — owner S + Dv — depends on 43
   - 2026-11-12 · Claude Code · branch `feat/wi-44-filter-count-list` · done: claimed after WI-43 merge and green main · next: failing status-line / List empty-state tests and the 420 px list-width browser check, then CSS
+  - 2026-11-12 · Claude Code · branch `feat/wi-44-filter-count-list` · done: T45 red first (2 unit + 4 browser: 464 px rows in 370 px, z-index auto, title 3.5 px low), then green: filtered status line with "(N hidden by filter)", List `HiddenByFilterNotice` + Show all, List CSS (sticky header z-index 2 + opaque, middle-aligned cells, block flex button that wraps, ≤ 640 px time wrap). Week screenshots byte-identical at 1440/1024/900; List differs only by alignment (reviewed). Docs + BUG_REPORTS #10/#12/#13. Gate: 626 tests, coverage 98.67% st / 94.32% br / 98.75% lines, DST 7, props 5×10,000, build, e2e 72/72 · next: WI-45 · surprises: the title sat low because the inline-flex List button rested on the cell's text baseline
 - [ ] **WI-45** (F) Small UX (#5, #7, #11) — owner S + Dv — depends on 44
 - [ ] **WI-46** (G) Settings panel redesign — owner S + Dv — depends on 45
 - [x] Cleanup: delete `test-results/claude-verify-snapshot.tgz` and `.git/stale-maintenance-lock-claude` if they exist (nothing else). 2026-11-12 · Claude Code: both existed and were deleted by exact path.
@@ -212,6 +213,7 @@ Fourteen peer bug reports, each verified against `main` and the live build. One 
 
 ## Decisions log (append-only)
 
+- 2026-11-12 (WI-45, user decision): #7's stretch list comes from a new read-only engine query (`explainWindow`), called by the picker only after an ER2/ER3 error, so the ER2/ER3 error objects and every existing exact-equality test stay unchanged. Asked and confirmed by the user.
 - 2026-11-12 (WI-42, user decision): the Fixed tag's tooltip says "…you can also edit its times or tick Flexible." instead of the brief's "untick Fixed", because the event dialog's control is the "Flexible (the planner may move it)" checkbox; asked and confirmed by the user.
 - 2026-11-12 (WI-41, Claude Code): "lies outside working hours" means the event does not overlap its start day's working hours, or that day is not a working day (`overlapsWorkingHours`). An event that only partly sticks out (17:30–19:00) keeps the old defaults, so working-hours behaviour stays identical. The picker's Search hours choice is kept when the user toggles the target, because it was the user's choice. `emptyCause` is added only by `suggestAlternatives`, so task-search errors (and T28) are unchanged.
 - 2026-11-12 (WI-40, Claude Code): the revision is checked by the repository, not the engine, because only the repository's own transaction can make check-and-write atomic across tabs. `engine.reload()` clears undo/redo (the history describes records another tab may have replaced) and bumps the version so open pickers/plans are ER7. ER8 shows a warning toast with no Retry, since retrying would replay a command built on the old view. No broadcast in degraded mode: tabs then share no storage, and a message would only clear the other tab's history.
