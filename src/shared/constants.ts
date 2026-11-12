@@ -18,6 +18,8 @@ export const DRAWER_BREAKPOINT_PX = 1024;
 export const MIN_CLICK_TARGET_PX = 32;
 export const CLICK_EVENT_MIN = 30; // a click on empty time creates one calendar row (WI-35)
 export const IMPORT_SPINNER_THRESHOLD = 1000;
+export const INITIAL_REVISION = 0; // stored revision of a repository nothing has written to (WI-40)
+export const TAB_CHANNEL_NAME = 'feature-creatures-calendar'; // BroadcastChannel between tabs (WI-40)
 export const MINUTES_PER_DAY = 1440;
 // Supported dates, 1970-01-01T00:00Z to 9999-12-31T23:59Z: every such minute is a valid JavaScript
 // Date and formats in any time zone (AUDIT A02).

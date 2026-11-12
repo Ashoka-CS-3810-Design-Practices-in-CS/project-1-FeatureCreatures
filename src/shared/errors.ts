@@ -1,4 +1,4 @@
-// Typed engine errors (ER1–ER7) — frozen contract (TECH_SPEC §5).
+// Typed engine errors (ER1–ER8) — frozen contract (TECH_SPEC §5).
 
 import type { Interval } from './types';
 
@@ -21,4 +21,5 @@ export type EngineError =
   | { code: 'StorageError'; message: string } // ER5
   | { code: 'InvalidImport'; issues: FieldIssue[] } // ER6
   | { code: 'StaleResult' } // ER7
+  | { code: 'ConcurrentModification' } // ER8: another tab saved first (WI-40)
   | { code: 'NotFound'; entity: 'event' | 'task'; id: string };

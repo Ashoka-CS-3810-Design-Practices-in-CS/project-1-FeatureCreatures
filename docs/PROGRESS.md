@@ -6,7 +6,7 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** Peer bug fixes batch (WI-40–46, see "Peer bug fixes (batch)" below). Baseline recorded; WI-40 in progress on `feat/wi-40-multi-tab`.
+- **Active WI:** Peer bug fixes batch (WI-40–46, see "Peer bug fixes (batch)" below). WI-40 merged; next WI-41 (B) on `feat/wi-41-alternatives-any-time`.
 - **Last session:** 2026-11-12 · Claude Code · planned the peer bug fixes batch. Before that: 2026-10-26 · Codex · WI-39 merged; final main typecheck/lint/582 tests green; warm and cold browser hunts 360/360 passed with zero retries and no additional flakes.
 - **Gate status:** typecheck/lint, 582 tests (T15 opt-in), coverage 98.60% lines / 94.08% branches, build and 360/360 browser executions green (180 warm + 180 cold; each 10 repeats, 2 workers, zero retries). Seven DST and five 10,000-case properties were last verified before this UI-only fix. Run `npm run build` before `npm run e2e` while an existing `vite preview` holds port 4173.
 
@@ -169,8 +169,9 @@ Fourteen peer bug reports, each verified against `main` and the live build. One 
 
 - **Baseline** (2026-11-12, Claude Code, `main` at f2d4b90, all green): typecheck + lint clean; `test:coverage` 582 passed + 1 skipped (T15 opt-in) in 70 files, coverage 98.57% statements / 94.08% branches / 98.08% functions / 98.6% lines; `test:dst` 7/7; `test:props:full` 5/5 (10,000 cases each); `build` OK; `npx playwright test --repeat-each=3 --workers=2` 54/54 (18 checks × 3, both projects, zero retries).
 
-- [~] **WI-40** (A) Multi-tab integrity (#14) — owner S + Dv — depends on 39
+- [x] **WI-40** (A) Multi-tab integrity (#14) — owner S + Dv — depends on 39
   - 2026-11-12 · Claude Code · branch `feat/wi-40-multi-tab` · done: claimed; baseline recorded · next: failing T41 (two engines, one repository), repository revision + Dexie v2 upgrade test, then ER8, reload, BroadcastChannel, store toasts, e2e
+  - 2026-11-12 · Claude Code · branch `feat/wi-40-multi-tab` · done: T41 red first (tab B's move of an event tab A deleted resolved ok), then green: stored revision in both repositories (Dexie v2 `meta`, v1 database upgrade test keeps all rows), ER8 `ConcurrentModification`, `engine.reload()`, `EngineDeps.onCommit` → BroadcastChannel (`hooks/tabSync.ts`, not in degraded mode), store `handleError`/`reloadFromOtherTab` with both toasts, two-page Playwright T41; docs + `docs/BUG_REPORTS.md` + README link. Gate: typecheck/lint, 601 tests (+19), coverage 98.58% st / 94.16% br / 98.65% lines, DST 7, props 5×10,000, build, e2e 57/57 (19 × 3, 2 workers) · next: WI-41 · surprises: (1) the frozen Repository signature change forced mechanical edits in six existing test files (listed in commit a894bc3; no expectation loosened); (2) an edit dialog whose record another tab deleted rendered nothing yet kept `dialog` set, blocking shortcuts — the reload now closes it (store test added)
 - [ ] **WI-41** (B) Alternatives outside working hours (#3, #4, #9) — owner S + Dv — depends on 40
 - [ ] **WI-42** (C) Fixed events ask before a manual drag (#1) — owner S + Dv — depends on 41
 - [ ] **WI-43** (D) Duplicate barred slots (#6) — owner S + Dv — depends on 42
@@ -203,6 +204,8 @@ Fourteen peer bug reports, each verified against `main` and the live build. One 
 - [ ] Turn on branch protection for `main` on GitHub (optional).
 
 ## Decisions log (append-only)
+
+- 2026-11-12 (WI-40, Claude Code): the revision is checked by the repository, not the engine, because only the repository's own transaction can make check-and-write atomic across tabs. `engine.reload()` clears undo/redo (the history describes records another tab may have replaced) and bumps the version so open pickers/plans are ER7. ER8 shows a warning toast with no Retry, since retrying would replay a command built on the old view. No broadcast in degraded mode: tabs then share no storage, and a message would only clear the other tab's history.
 
 
 - 2026-10-25: Repo initialised with the three spec docs, AGENTS.md, CLAUDE.md and the `disciplined-coding` skill. TECH_SPEC v1.1 aligns the spec with the skill.

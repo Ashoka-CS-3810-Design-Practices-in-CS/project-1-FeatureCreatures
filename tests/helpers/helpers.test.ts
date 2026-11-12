@@ -111,13 +111,18 @@ describe('FailingRepository', () => {
     repository.failNextApply();
     repository.failNextSaveSettings();
 
-    await expect(repository.apply(changes)).rejects.toThrow('Simulated');
-    await expect(repository.saveSettings(DEFAULT_SETTINGS)).rejects.toThrow('Simulated');
-    expect(await repository.load()).toEqual({ events: [], tasks: [], settings: null });
+    await expect(repository.apply(changes, 0)).rejects.toThrow('Simulated');
+    await expect(repository.saveSettings(DEFAULT_SETTINGS, 0)).rejects.toThrow('Simulated');
+    expect(await repository.load()).toEqual({ events: [], tasks: [], settings: null, revision: 0 });
 
-    await repository.apply(changes);
-    await repository.saveSettings(DEFAULT_SETTINGS);
-    await repository.replaceAll({ events: [], tasks: [], settings: DEFAULT_SETTINGS });
-    expect(await repository.load()).toEqual({ events: [], tasks: [], settings: DEFAULT_SETTINGS });
+    await repository.apply(changes, 0);
+    await repository.saveSettings(DEFAULT_SETTINGS, 1);
+    await repository.replaceAll({ events: [], tasks: [], settings: DEFAULT_SETTINGS }, 2);
+    expect(await repository.load()).toEqual({
+      events: [],
+      tasks: [],
+      settings: DEFAULT_SETTINGS,
+      revision: 3,
+    });
   });
 });

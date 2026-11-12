@@ -155,6 +155,7 @@ Every test case, with its exact inputs and expected outputs, is listed in [TEST_
 | [TECH_SPEC.md](docs/TECH_SPEC.md) | How it is built: architecture, data types, algorithms with complexity, storage and the build plan |
 | [TEST_PLAN.md](docs/TEST_PLAN.md) | How it is verified: every test case, traceability, manual checks and demo scripts |
 | [AUDIT.md](docs/AUDIT.md) | An independent review of the finished code, and how each finding was resolved |
+| [BUG_REPORTS.md](docs/BUG_REPORTS.md) | The fourteen peer bug reports: each verdict, its evidence and the fix |
 | [PROGRESS.md](docs/PROGRESS.md) | The development log: each work item, its test results and the decisions made along the way |
 
 **Deviations from our earlier design assignments.** These documents replace our three design assignments, which were written separately before any code existed. Merging them meant settling where they disagreed, and a few changes came from real constraints:

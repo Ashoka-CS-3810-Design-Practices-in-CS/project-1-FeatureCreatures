@@ -213,6 +213,9 @@ export const storedDataSchema = z.object({
   settings: settingsSchema.nullable(),
 });
 
+// The revision that comes with Repository.load() (WI-40); other keys are checked above.
+export const storedRevisionSchema = z.object({ revision: z.number().int().min(0) });
+
 export const exportFileSchema = z.object({
   format: z.literal(EXPORT_FORMAT),
   version: z.literal(EXPORT_VERSION),

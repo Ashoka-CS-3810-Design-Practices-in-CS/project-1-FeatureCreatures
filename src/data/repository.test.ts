@@ -63,6 +63,7 @@ function byId(data: StoredData): StoredData {
     events: data.events.toSorted(compareById),
     tasks: data.tasks.toSorted(compareById),
     settings: data.settings,
+    revision: data.revision,
   };
 }
 
@@ -91,54 +92,59 @@ describe.each(adapters)('%s (Repository contract)', (_name, openRepository) => {
   it('starts empty, with no settings', async () => {
     const repository = await openRepository();
 
-    expect(await repository.load()).toEqual({ events: [], tasks: [], settings: null });
+    expect(await repository.load()).toEqual({ events: [], tasks: [], settings: null, revision: 0 });
   });
 
   it('round-trips puts, updates and deletes from apply', async () => {
     const repository = await openRepository();
-    await repository.apply(changeSet({ putEvents: [lectureA, meetingB], putTasks: [task('t')] }));
+    await repository.apply(
+      changeSet({ putEvents: [lectureA, meetingB], putTasks: [task('t')] }),
+      0,
+    );
     const movedA = { ...lectureA, start: 630, end: 690 };
-    await repository.apply(changeSet({ putEvents: [movedA], deleteEventIds: ['b'] }));
+    await repository.apply(changeSet({ putEvents: [movedA], deleteEventIds: ['b'] }), 1);
 
     expect(byId(await repository.load())).toEqual({
       events: [movedA],
       tasks: [task('t')],
       settings: null,
+      revision: 2,
     });
   });
 
   it('deletes tasks and ignores deleting a missing id', async () => {
     const repository = await openRepository();
-    await repository.apply(changeSet({ putTasks: [task('t1'), task('t2')] }));
-    await repository.apply(changeSet({ deleteTaskIds: ['t1', 'missing'] }));
+    await repository.apply(changeSet({ putTasks: [task('t1'), task('t2')] }), 0);
+    await repository.apply(changeSet({ deleteTaskIds: ['t1', 'missing'] }), 1);
 
     expect((await repository.load()).tasks).toEqual([task('t2')]);
   });
 
   it('saves and reloads settings', async () => {
     const repository = await openRepository();
-    await repository.saveSettings(lunch);
+    await repository.saveSettings(lunch, 0);
 
     expect((await repository.load()).settings).toEqual(lunch);
   });
 
   it('replaceAll swaps every table for the new data', async () => {
     const repository = await openRepository();
-    await repository.apply(changeSet({ putEvents: [lectureA], putTasks: [task('old')] }));
-    await repository.saveSettings(DEFAULT_SETTINGS);
-    await repository.replaceAll({ events: [meetingB], tasks: [task('new')], settings: lunch });
+    await repository.apply(changeSet({ putEvents: [lectureA], putTasks: [task('old')] }), 0);
+    await repository.saveSettings(DEFAULT_SETTINGS, 1);
+    await repository.replaceAll({ events: [meetingB], tasks: [task('new')], settings: lunch }, 2);
 
     expect(byId(await repository.load())).toEqual({
       events: [meetingB],
       tasks: [task('new')],
       settings: lunch,
+      revision: 3,
     });
   });
 
   it('does not alias caller data on apply or load', async () => {
     const repository = await openRepository();
     const changes = changeSet({ putEvents: [{ ...lectureA }] });
-    await repository.apply(changes);
+    await repository.apply(changes, 0);
     (changes.putEvents[0] as { title: string }).title = 'mutated after apply';
     const loaded = await repository.load();
     (loaded.events[0] as { title: string }).title = 'mutated after load';
@@ -153,33 +159,34 @@ describe('DexieRepository (IndexedDB specifics)', () => {
 
   it('apply is atomic: a failing put rolls back the deletes before it', async () => {
     const repository = await openFreshDexie();
-    await repository.apply(changeSet({ putEvents: [event('a', 0, 60)] }));
+    await repository.apply(changeSet({ putEvents: [event('a', 0, 60)] }), 0);
 
     await expect(
-      repository.apply(changeSet({ deleteEventIds: ['a'], putEvents: [keyless] })),
+      repository.apply(changeSet({ deleteEventIds: ['a'], putEvents: [keyless] }), 1),
     ).rejects.toThrow();
     expect((await repository.load()).events.map((row) => row.id)).toEqual(['a']);
   });
 
   it('replaceAll is atomic: a failing put keeps the old data', async () => {
     const repository = await openFreshDexie();
-    await repository.apply(changeSet({ putEvents: [event('a', 0, 60)] }));
+    await repository.apply(changeSet({ putEvents: [event('a', 0, 60)] }), 0);
 
     await expect(
-      repository.replaceAll({ events: [keyless], tasks: [], settings: DEFAULT_SETTINGS }),
+      repository.replaceAll({ events: [keyless], tasks: [], settings: DEFAULT_SETTINGS }, 1),
     ).rejects.toThrow();
     expect(await repository.load()).toEqual({
       events: [event('a', 0, 60)],
       tasks: [],
       settings: null,
+      revision: 1,
     });
   });
 
   it('persists across close and reopen of the same database', async () => {
     const name = 'calendar-test-reopen';
     const first = await DexieRepository.open(name);
-    await first.apply(changeSet({ putEvents: [event('a', 0, 60)] }));
-    await first.saveSettings(DEFAULT_SETTINGS);
+    await first.apply(changeSet({ putEvents: [event('a', 0, 60)] }), 0);
+    await first.saveSettings(DEFAULT_SETTINGS, 1);
     first.close();
     const reopened = await DexieRepository.open(name);
 
@@ -187,6 +194,7 @@ describe('DexieRepository (IndexedDB specifics)', () => {
       events: [event('a', 0, 60)],
       tasks: [],
       settings: DEFAULT_SETTINGS,
+      revision: 2,
     });
   });
 });

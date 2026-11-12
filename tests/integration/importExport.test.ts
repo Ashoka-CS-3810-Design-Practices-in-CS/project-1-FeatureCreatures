@@ -267,8 +267,8 @@ describe('export / import (T25, B2, ER6)', () => {
     const inner = new MemoryRepository();
     const repo: Repository = {
       load: () => inner.load(),
-      apply: (changes) => inner.apply(changes),
-      saveSettings: (settings) => inner.saveSettings(settings),
+      apply: (changes, revision) => inner.apply(changes, revision),
+      saveSettings: (settings, revision) => inner.saveSettings(settings, revision),
       replaceAll: async () => {
         throw new Error('disk full');
       },
@@ -288,11 +288,14 @@ describe('init and stored links', () => {
   it('reports StorageError when a stored event has dates beyond the supported range (A02)', async () => {
     const repo = new MemoryRepository();
     const keep = ev('Keep', 'Mon 09:00', 'Mon 10:00');
-    await repo.replaceAll({
-      events: [{ ...keep, start: Number.MAX_SAFE_INTEGER - 60, end: Number.MAX_SAFE_INTEGER }],
-      tasks: [],
-      settings: SAMPLES.backToBack.build(BASE_MONDAY).settings,
-    });
+    await repo.replaceAll(
+      {
+        events: [{ ...keep, start: Number.MAX_SAFE_INTEGER - 60, end: Number.MAX_SAFE_INTEGER }],
+        tasks: [],
+        settings: SAMPLES.backToBack.build(BASE_MONDAY).settings,
+      },
+      0,
+    );
     const engine = createEngine({ repo, now: () => 0, newId: () => 'x' });
 
     expect(await engine.init()).toEqual({
@@ -303,11 +306,14 @@ describe('init and stored links', () => {
 
   it('reports StorageError when stored task ↔ event links are broken', async () => {
     const repo = new MemoryRepository();
-    await repo.replaceAll({
-      events: [],
-      tasks: [task('T', 60, WEEK, { status: 'scheduled', scheduledEventId: 'gone' })],
-      settings: SAMPLES.backToBack.build(BASE_MONDAY).settings,
-    });
+    await repo.replaceAll(
+      {
+        events: [],
+        tasks: [task('T', 60, WEEK, { status: 'scheduled', scheduledEventId: 'gone' })],
+        settings: SAMPLES.backToBack.build(BASE_MONDAY).settings,
+      },
+      0,
+    );
     const engine = createEngine({ repo, now: () => 0, newId: () => 'x' });
 
     expect(await engine.init()).toEqual({

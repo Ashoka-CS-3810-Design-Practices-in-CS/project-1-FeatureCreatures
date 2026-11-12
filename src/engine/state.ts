@@ -1,8 +1,8 @@
 // Engine state, reversible changes and the commit step (TECH_SPEC §7.1, B1).
 // Every data change is a Change of before/after images, so undo is the same change applied backward.
 
-import type { ChangeSet, Repository } from '@/data/repository';
-import { HISTORY_LIMIT } from '@/shared/constants';
+import { ConcurrentModificationError, type ChangeSet, type Repository } from '@/data/repository';
+import { HISTORY_LIMIT, INITIAL_REVISION } from '@/shared/constants';
 import type { EngineError } from '@/shared/errors';
 import { err, ok, type Result } from '@/shared/result';
 import type {
@@ -21,6 +21,7 @@ import { detectConflicts } from './algorithms/sweep';
 
 export interface EngineState {
   readonly version: number;
+  readonly revision: number; // the repository revision this state was loaded from or last wrote
   readonly events: readonly CalendarEvent[]; // ALWAYS sorted by compareEvents (start, end, id)
   readonly tasks: readonly Task[];
   readonly settings: Settings;
@@ -82,17 +83,22 @@ export function barredOverlapsFor(
   return warnings;
 }
 
-// PRE:  events have distinct ids, in any order; tasks have distinct ids; records/settings are valid
-// POST: returns version 0 over these records: events sorted by compareEvents, their conflicts
-//       and barred overlaps detected, and empty undo / redo stacks
-export function createState(data: {
-  events: readonly CalendarEvent[];
-  tasks: readonly Task[];
-  settings: Settings;
-}): EngineState {
+// PRE:  events have distinct ids, in any order; tasks have distinct ids; records/settings are valid;
+//       revision is the repository revision the records were loaded from or written as
+// POST: returns version 0 at revision over these records: events sorted by compareEvents, their
+//       conflicts and barred overlaps detected, and empty undo / redo stacks
+export function createState(
+  data: {
+    events: readonly CalendarEvent[];
+    tasks: readonly Task[];
+    settings: Settings;
+  },
+  revision: number = INITIAL_REVISION,
+): EngineState {
   const events = data.events.toSorted(compareEvents);
   return {
     version: 0,
+    revision,
     events,
     tasks: [...data.tasks],
     settings: data.settings,
@@ -213,10 +219,14 @@ function nextHistory(
   return { undo: [...state.undo, change], redo: state.redo.slice(0, -1) };
 }
 
-// PRE:  error is any value thrown by a repository
-// POST: returns a human-readable message for it
-function messageOf(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
+// PRE:  error is any value thrown by a repository write
+// POST: returns ConcurrentModification (ER8) when another tab wrote first, otherwise StorageError
+//       (ER5) carrying error's message
+export function repositoryError(error: unknown): EngineError {
+  if (error instanceof ConcurrentModificationError) {
+    return { code: 'ConcurrentModification' };
+  }
+  return { code: 'StorageError', message: error instanceof Error ? error.message : String(error) };
 }
 
 // PRE:  state.events is sorted; change touches each record at most once and has been validated by the
@@ -224,7 +234,8 @@ function messageOf(error: unknown): string {
 // POST: on success, the repository holds change's images for the direction (backward for 'undo',
 //       forward otherwise) and returns the next state (records written, conflicts and barred overlaps re-detected,
 //       history updated, version + 1) with the changed event ids and the introduced / resolved
-//       conflicts; when repo.apply rejects, returns StorageError and neither state nor repo change
+//       conflicts; when repo.apply rejects, returns StorageError (ER5), or ConcurrentModification
+//       (ER8) when the stored revision is no longer state.revision, and neither state nor repo change
 export async function commit(
   state: EngineState,
   change: Change,
@@ -234,10 +245,10 @@ export async function commit(
   const direction: Direction = mode === 'undo' ? 'backward' : 'forward';
   const next = applyChange(state, change, direction);
   try {
-    await repo.apply(changeSetFor(change, direction));
+    await repo.apply(changeSetFor(change, direction), state.revision);
   } catch (error) {
-    // Nothing has been assigned yet, so the old state is still the current one (ER5).
-    return err({ code: 'StorageError', message: messageOf(error) });
+    // Nothing has been assigned yet, so the old state is still the current one (ER5, ER8).
+    return err(repositoryError(error));
   }
 
   const conflicts = detectConflicts(next.events);
@@ -249,6 +260,7 @@ export async function commit(
       conflicts,
       barredOverlaps: barredOverlapsFor(next.events, state.settings),
       version: state.version + 1,
+      revision: state.revision + 1,
     },
     label: change.label,
     changedEventIds: change.events

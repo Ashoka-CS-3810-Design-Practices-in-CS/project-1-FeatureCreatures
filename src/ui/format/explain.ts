@@ -70,6 +70,7 @@ export function sampleLoadedText(label: string): string {
 
 export const SETTINGS_SAVED_TEXT = 'Settings saved.';
 export const DATA_CLEARED_TEXT = 'All data cleared.';
+export const OTHER_TAB_UPDATED_TEXT = 'Calendar updated in another tab.';
 
 // PRE:  eventCount, taskCount ≥ 0 are what an import brought in
 // POST: returns the success toast after the import, e.g. "Imported 2 events and 1 task."

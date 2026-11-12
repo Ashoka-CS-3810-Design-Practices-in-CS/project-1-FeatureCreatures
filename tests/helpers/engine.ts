@@ -16,7 +16,8 @@ export interface EngineOptions {
 }
 
 // PRE:  options holds valid records and a valid t() spec for now
-// POST: seeds the repository (a new MemoryRepository unless given) via replaceAll, then returns an
+// POST: seeds the repository (a new MemoryRepository unless given) via replaceAll at its current
+//       revision, then returns an
 //       initialised engine whose clock reads t(now) until setNow(spec) moves it to t(spec), and
 //       whose newId yields 'id-1', 'id-2', …; throws if init fails, so a broken seed fails the
 //       test at once
@@ -24,11 +25,14 @@ export async function makeEngine(
   options: EngineOptions = {},
 ): Promise<{ engine: Engine; repo: Repository; setNow: (spec: string) => void }> {
   const repo = options.repo ?? new MemoryRepository();
-  await repo.replaceAll({
-    events: options.events ?? [],
-    tasks: options.tasks ?? [],
-    settings: options.settings ?? DEFAULT_SETTINGS,
-  });
+  await repo.replaceAll(
+    {
+      events: options.events ?? [],
+      tasks: options.tasks ?? [],
+      settings: options.settings ?? DEFAULT_SETTINGS,
+    },
+    (await repo.load()).revision,
+  );
   let now = t(options.now ?? 'Mon 00:00');
   let idCount = 0;
   const engine = createEngine({

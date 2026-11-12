@@ -1,4 +1,4 @@
-// Toast text for every engine error (TECH_SPEC §11.6, PROJECT_SCHEMA §5 ER1–ER7).
+// Toast text for every engine error (TECH_SPEC §11.6, PROJECT_SCHEMA §5 ER1–ER8).
 
 import type { EngineError, FieldIssue } from '@/shared/errors';
 import { fmtDuration, fmtRange } from './time';
@@ -47,5 +47,7 @@ export function errorMessage(error: EngineError): string {
       return 'The calendar changed since these options were computed. Refreshing…';
     case 'NotFound':
       return `That ${error.entity} no longer exists.`;
+    case 'ConcurrentModification':
+      return 'This changed in another tab — your view has been refreshed. Nothing was overwritten.';
   }
 }
