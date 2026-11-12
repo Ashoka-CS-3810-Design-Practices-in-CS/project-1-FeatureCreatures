@@ -68,6 +68,25 @@ for (const theme of THEMES) {
       await capture(page, `event-dialog-${theme}-${width}`);
     });
 
+    // WI-46: the redesigned Settings panel with two barred slots, then scrolled to its Data section.
+    test(`settings ${theme} ${width}`, async ({ page }) => {
+      await openApp(page, theme, width);
+      await page.getByRole('button', { name: 'Settings', exact: true }).click();
+      const settings = page.getByRole('dialog', { name: 'Settings', exact: true });
+      await settings.getByRole('button', { name: 'Add barred slot', exact: true }).click();
+      await settings.getByRole('button', { name: 'Add barred slot', exact: true }).click();
+      const second = settings.getByRole('group', { name: 'Barred slot 2', exact: true });
+      await second.getByLabel('Label', { exact: true }).fill('Gym');
+      await second.getByLabel('From', { exact: true }).fill('18:00');
+      await second.getByLabel('To', { exact: true }).fill('19:00');
+      await second.getByRole('checkbox', { name: 'Mon', exact: true }).uncheck();
+      await capture(page, `settings-${theme}-${width}`);
+      await settings
+        .getByRole('button', { name: 'Clear all data', exact: true })
+        .scrollIntoViewIfNeeded();
+      await capture(page, `settings-data-${theme}-${width}`);
+    });
+
     test(`task dialog ${theme} ${width}`, async ({ page }) => {
       await openApp(page, theme, width);
       await page.getByRole('button', { name: '+ Task', exact: true }).click();
