@@ -31,6 +31,21 @@ function pointer(type: string, clientX: number, clientY: number, button = 0): Mo
 }
 
 describe('T50: locked calendar panning', () => {
+  it('ends a pending drag when the pointer is released outside the calendar', () => {
+    render(<Harness locked onOpen={vi.fn()} />);
+    const scroller = screen.getByRole('region', { name: 'Time grid' });
+    const event = screen.getByRole('button', { name: 'Event' });
+    const capture = vi.fn();
+    scroller.setPointerCapture = capture;
+    scroller.hasPointerCapture = () => false;
+    fireEvent(event, pointer('pointerdown', 100, 100));
+    fireEvent(window, pointer('pointerup', 100, 100));
+    fireEvent(event, pointer('pointermove', 80, 60));
+    expect(scroller.scrollTop).toBe(0);
+    expect(scroller.scrollLeft).toBe(0);
+    expect(capture).not.toHaveBeenCalled();
+  });
+
   it('pans both axes from the initial scroll, captures/releases, and suppresses only the drag click', () => {
     const onOpen = vi.fn();
     render(<Harness locked onOpen={onOpen} />);

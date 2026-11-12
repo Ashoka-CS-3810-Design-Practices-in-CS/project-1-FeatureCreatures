@@ -79,16 +79,17 @@ export function useCalendarPan(rootRef: RefObject<HTMLDivElement | null>, locked
 
     root.addEventListener('pointerdown', begin);
     root.addEventListener('pointermove', move);
-    root.addEventListener('pointerup', finish);
-    root.addEventListener('pointercancel', finish);
+    // A pointer can leave the grid before crossing the capture threshold and be released outside it.
+    window.addEventListener('pointerup', finish);
+    window.addEventListener('pointercancel', finish);
     root.addEventListener('click', click, true);
     return () => {
       finish();
       root.classList.remove('is-locked');
       root.removeEventListener('pointerdown', begin);
       root.removeEventListener('pointermove', move);
-      root.removeEventListener('pointerup', finish);
-      root.removeEventListener('pointercancel', finish);
+      window.removeEventListener('pointerup', finish);
+      window.removeEventListener('pointercancel', finish);
       root.removeEventListener('click', click, true);
     };
   }, [rootRef, locked]);

@@ -1912,6 +1912,7 @@ Production URL: https://…vercel.app
 
 | Date | Change |
 |---|---|
+| 2026-11-13 | WI-50 pan verification: `useCalendarPan` observes pointerup/pointercancel on window, so a release outside the grid before capture clears its pending start. Cleanup removes both global listeners. T50 reproduces the stale-start failure before the fix. |
 | 2026-10-25 | v1.0: unified technical spec (Dexie, heap sweep, four pipelines, B1–B4). |
 | 2026-10-25 | v1.1: aligned with the `disciplined-coding` skill and `AGENTS.md` (local `--no-ff` merges, no function length cap, no `assertSorted`, scaffold via a temp folder, `PROGRESS.md` pre-created, Vercel deploy is a human step). |
 | 2026-10-25 | v1.2 (WI-01): `@hookform/resolvers` pinned to `^5` (§1.2); CI e2e step passes with no tests until WI-27 (§13.1). |
