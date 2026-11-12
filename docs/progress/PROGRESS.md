@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-49 Categories on `feat/wi-49-categories`; WI-47 and WI-48 merged with full main gates green.
-- **Last session:** 2026-11-12 · Codex · initialised Round 2 baseline/plan, merged WI-47 and completed WI-48's v3 migration/v2 export contracts and regressions.
+- **Active WI:** WI-49 Categories on `feat/wi-49-categories`, at the test-first checkpoint: ten T49 command regressions are red because the category commands are not implemented yet. Resume this branch.
+- **Last session:** 2026-11-12 · Codex · initialised Round 2 baseline/plan; merged WI-47 and WI-48 with full branch/main gates; started WI-49 with ten failing category command regressions. No WI-49 production code changed yet.
 - **Gate status:** 2026-11-12 on `main` at `9f44754`: full gate green (649 tests + 1 skipped, 98.82% statements / 94.31% branches / 98.26% functions / 98.90% lines, algorithms unchanged, 7 DST, five properties × 10,000, build, 75/75 browser runs, zero retries).
 
 ## Work items
@@ -226,6 +226,8 @@ Binding design: `docs/extras/AUDIT_2.md` (D-01–D-19, C-01–C-08). Work in ord
 - [~] **WI-49** Categories — owner S + Dv — depends on 48
   - Done when: New tests for CRUD, delete blocking, uniqueness, undo, filters.
   - 2026-11-12 · Codex · branch `feat/wi-49-categories` · done: claimed after the full WI-48 main gate; D-11 and the category/repository/history/UI touchpoints reviewed · next: failing category command/undo/validation tests, then implementation, palette/free picker, Settings/inline creation, tags and filters, and removal of category-based flexibility · note: category entity/storage/import validation already exist from WI-48.
+  - 2026-11-12 · Codex · branch `feat/wi-49-categories` · done: ten T49 integration regressions written, formatted and confirmed red for missing `createCategory` / `updateCategory` / `deleteCategory`; TEST_PLAN records exact expectations · next: implement the category commands with atomic repository/history changes, add colour conversion/validation and palette tests, then Settings/inline creation/tags/filters and remove `flexibleByDefault`; complete all three docs and full branch/main/UI screenshot gates before merging · note: the test's local `CategoryCommands` interface/cast deliberately lets this test-first checkpoint typecheck before the facade exists; remove it when the real Engine interface gains the commands. Main at `9f44754` passed the full gate; current branch tests are intentionally red, not a main regression.
+  - 2026-11-12 · Codex · branch `feat/wi-49-categories` · done: test-first handoff saved; Prettier, typecheck and lint pass; targeted T49 run has exactly ten expected missing-command failures; all work committed · next: resume this branch at the category command implementation described above, keeping WI-49 in progress until its complete UI and full gate pass.
 - [ ] **WI-50** Scheduling model and lock — owner S + Dv — depends on 49
   - Done when: T43 updated to the new wording; tests for the lock's gestures and grab-to-pan; D-02 search tests.
 - [ ] **WI-51** Suggestion pickers — owner S + Dv — depends on 50
@@ -274,6 +276,8 @@ Binding design: `docs/extras/AUDIT_2.md` (D-01–D-19, C-01–C-08). Work in ord
 - [ ] Turn on branch protection for `main` on GitHub (optional).
 
 ## Decisions log (append-only)
+
+- 2026-11-12 (WI-49, Codex, test-first command naming): category commands will follow existing CRUD names: `createCategory(input)`, `updateCategory(id, input)`, `deleteCategory(id)`, each queued and returning `Result<MutationResult>`, with input `{name, colour}`. Create uses undo label `Create category "<name>"`; duplicate names give `A category with this name already exists.`; deletion reports `CategoryInUse` with `eventCount`/`taskCount`; missing ids use `NotFound` with entity `category`. These naming/message choices are represented locally in T49 pending implementation and the frozen-contract doc update.
 
 - 2026-11-12 (WI-48, Codex): default category ids equal the five legacy enum strings, so migrations and v1 imports map deterministically without changing links. Seed `createdAt` is epoch minute 0 and seed order is lexical id order, matching both repository adapters. Initial colours are Meeting `#467b70`, Class `#9364a2`, Appointment `#a45c81`, Assignment `#7b7650`, Personal `#427e8c`; display/palette controls and their contrast checks belong to WI-49. Stored settings permit older overlaps/duplicates; new edits and v2 imports retain the current duplicate rule until WI-53 implements the new overlap validation.
 
