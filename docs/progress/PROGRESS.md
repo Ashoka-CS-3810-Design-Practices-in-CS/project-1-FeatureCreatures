@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-50 Scheduling model and lock, claimed on `feat/wi-50-scheduling-lock`. Next: test-first regressions for D-01–D-05; no WI-50 production code changed.
-- **Last session:** 2026-11-12 · Codex · completed WI-49 Categories, merged as `97c5354` with branch retained, full branch and main gates green; 52-scene screenshot set reviewed and committed. Starting WI-50.
+- **Active WI:** WI-50 Scheduling model and lock on `feat/wi-50-scheduling-lock`, at a test-first checkpoint: seven T50 RTL regressions are red for the missing lock/radios/separate List toggle and old confirmation wording. No WI-50 production code changed. Resume this branch.
+- **Last session:** 2026-11-12 · Codex · completed WI-49 Categories, merged as `97c5354` with branch retained, full branch and main gates green; 52-scene screenshot set reviewed and committed. Started WI-50 with seven failing regressions; implementation and remaining search/gesture tests are next.
 - **Gate status:** 2026-11-12 on `main` at `97c5354`: full gate green (693 tests + 1 skipped, 98.64% statements / 94.05% branches / 98.01% functions / 98.68% lines, algorithms 99.70/95.93/100/99.68, 7 DST, five properties × 10,000, build, 81/81 browser runs, zero retries).
 
 ## Work items
@@ -236,6 +236,8 @@ Binding design: `docs/extras/AUDIT_2.md` (D-01–D-19, C-01–C-08). Work in ord
 - [~] **WI-50** Scheduling model and lock — owner S + Dv — depends on 49
   - Done when: T43 updated to the new wording; tests for the lock's gestures and grab-to-pan; D-02 search tests.
   - 2026-11-12 · Codex · branch `feat/wi-50-scheduling-lock` · done: claimed after the complete WI-49 main gate; D-01–D-05/C-02/C-05 reviewed, current gesture/shortcut/store/alternatives paths inspected · next: failing scheduling/lock/confirmation tests, then D-02 engine search tests and implementation; no production code changed yet.
+  - 2026-11-12 · Codex · branch `feat/wi-50-scheduling-lock` · done: seven T50 RTL regressions written and confirmed red for missing Calendar lock (empty/populated defaults and K/+ Event behavior), missing D-01 Fixed/Flexible radios, old View group including List, and D-03 move/resize questions; TEST_PLAN records exact labels/expectations · next: add D-02 fixed opt-in/temporary-range engine tests (including InvalidTime and searching outside the old 3-day window), lock gesture/grab-to-pan browser regressions, then implement D-01–D-05; update frozen contracts/BRs/README and old T43/checkbox/List expectations only for their binding decisions; full branch/main/screenshot gates before merge · note: no existing assertions or production code changed in WI-50; main remains fully green at `97c5354` (claim-only doc commit `6279655`).
+  - 2026-11-12 · Codex · branch `feat/wi-50-scheduling-lock` · done: test-first handoff saved; new test file formatted, typecheck and lint pass; targeted T50 run has exactly seven expected behavior failures; all work committed · next: resume this branch at the remaining tests/implementation above, keeping WI-50 in progress until complete gates and visual review pass.
 - [ ] **WI-51** Suggestion pickers — owner S + Dv — depends on 50
   - Done when: Generator unit and property tests; picker RTL tests; e2e apply flows.
 - [ ] **WI-52** Past time — owner S + Dv — depends on 51
