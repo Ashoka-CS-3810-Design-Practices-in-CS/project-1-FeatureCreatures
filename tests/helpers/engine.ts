@@ -3,11 +3,12 @@
 import { MemoryRepository } from '@/data/memoryRepository';
 import type { Repository, StoredData } from '@/data/repository';
 import { createEngine, type Engine } from '@/engine';
-import { DEFAULT_SETTINGS } from '@/shared/constants';
-import type { CalendarEvent, Settings, Snapshot, Task } from '@/shared/types';
+import { DEFAULT_CATEGORIES, DEFAULT_SETTINGS } from '@/shared/constants';
+import type { CalendarEvent, Category, Settings, Snapshot, Task } from '@/shared/types';
 import { t } from './time';
 
 export interface EngineOptions {
+  categories?: Category[];
   events?: CalendarEvent[];
   tasks?: Task[];
   settings?: Settings;
@@ -27,6 +28,7 @@ export async function makeEngine(
   const repo = options.repo ?? new MemoryRepository();
   await repo.replaceAll(
     {
+      categories: options.categories ?? [...DEFAULT_CATEGORIES],
       events: options.events ?? [],
       tasks: options.tasks ?? [],
       settings: options.settings ?? DEFAULT_SETTINGS,

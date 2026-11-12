@@ -8,7 +8,7 @@ const BLOCK_PROPS: EventBlockProps = {
   barredLabels: ['Lunch'],
   label: 'Lecture, Mon 2 Nov 10:00–11:00',
   priority: 'high',
-  category: 'class',
+  categoryId: 'class',
   flexible: false,
   isTask: false,
   conflictMinutes: 0,

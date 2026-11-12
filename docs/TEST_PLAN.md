@@ -222,6 +222,12 @@ All times are on Mon 2 Nov 2026 unless a day is given. Intervals are half-open.
 
 ---
 
+### 4.4 Round 2 data and behaviour tests
+
+| Test | Exact checks |
+|---|---|
+| T48 — data v3 / export v2 (WI-48, D-17) | `tests/integration/dataMigration.test.ts`: open the shipped v2 schema with one event per enum category, linked and unscheduled tasks, overlapping/duplicate barred slots and revision 7; upgrade keeps every field and link, maps `category` to seeded `categoryId`, adds `keptInBarred = []`, `doneAt = null`, `useWorkingHours = true`, and five categories. Engine init accepts the preserved legacy slots. A write at revision 7 succeeds once, the next rejects with ER8 and preserves all data. Retained `tests/fixtures/export-v1.json` imports and re-exports as v2. v1 overlapping slots are preserved. v2 imports/exports custom categories, kept ids, a done task and disabled working hours; an unknown event category gives ER6 at `events.0.categoryId`. |
+
 ## 5. UI tests (RTL) — additional required cases
 
 These are part of their WI's definition of done in TECH_SPEC §14.
@@ -378,3 +384,4 @@ WI-31 completes local release preparation. User-reported production outcomes are
 | 2026-11-12 | v1.18 (WI-45): T46 covers `explainWindow`, the stretch explanation text, stable Move order, the Modal × (unit and browser); TaskDialog button lists include ×. |
 | 2026-11-12 | v1.19 (WI-46): T47 covers the Settings sections, compact barred rows and new-slot focus; settings screenshots at 1440/1024/900 px in both themes reviewed. |
 | 2026-11-12 | v1.20 (WI-47, D-18): links point to the relocated Round 2 design/progress evidence. Documentation-only move verified by old-path search, local Markdown link checks and the full branch/main gate; no test expectation changes. |
+| 2026-11-12 | v1.21 (WI-48, D-17): T48 covers real v2→v3 migration, revision safety, v1/v2 imports, independent seeds, category references/uniqueness and doneAt consistency. T25's export-version and stored-schema expectations become v2; T41's v1 fixture supplies original enum fields before mapping; existing record/form/repository fixtures gain required new fields. Original assertions retained. All six regenerated sample files still import. |

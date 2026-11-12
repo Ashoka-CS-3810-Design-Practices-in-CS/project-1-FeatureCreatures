@@ -1,7 +1,12 @@
 // Record builders shared by the sample calendars (TECH_SPEC §9.5). Every time is placed with
 // onLocalDay relative to the sample week's Monday, so samples stay correct across DST changes.
 
-import { EXPORT_FORMAT, EXPORT_VERSION, MINUTES_PER_HOUR } from '@/shared/constants';
+import {
+  DEFAULT_CATEGORIES,
+  EXPORT_FORMAT,
+  EXPORT_VERSION,
+  MINUTES_PER_HOUR,
+} from '@/shared/constants';
 import { addLocalDays, fromMinute, onLocalDay } from '@/shared/time';
 import type { CalendarEvent, ExportFile, Interval, Minute, Settings, Task } from '@/shared/types';
 
@@ -39,7 +44,8 @@ export function sampleEvent(
     id,
     title,
     description: '',
-    category: 'meeting',
+    categoryId: 'meeting',
+    keptInBarred: [],
     priority: 'medium',
     ...interval,
     flexible: false,
@@ -65,12 +71,13 @@ export function sampleTask(
     id,
     name,
     description: '',
-    category: 'assignment',
+    categoryId: 'assignment',
     priority: 'medium',
     durationMin,
     window,
     useWorkingHours: true,
     status: 'unscheduled',
+    doneAt: null,
     scheduledEventId: null,
     createdAt,
     updatedAt: createdAt,
@@ -88,6 +95,7 @@ export function exportFileOf(
     format: EXPORT_FORMAT,
     version: EXPORT_VERSION,
     exportedAt: fromMinute(exportedAt).toISOString(),
+    categories: structuredClone([...DEFAULT_CATEGORIES]),
     ...data,
   };
 }

@@ -15,16 +15,17 @@ const CONCURRENT_MODIFICATION = err({ code: 'ConcurrentModification' });
 // PRE:  title is non-empty; from and to are valid t() specs with from < to
 // POST: returns a fixed medium meeting input over [t(from), t(to))
 function meeting(title: string, from: string, to: string): EventInput {
-  const { description, category, priority, start, end, flexible, flexWindow } = ev(title, from, to);
-  return { title, description, category, priority, start, end, flexible, flexWindow };
+  const { description, categoryId, priority, start, end, flexible, flexWindow } = ev(
+    title,
+    from,
+    to,
+  );
+  return { title, description, categoryId, priority, start, end, flexible, flexWindow };
 }
 
 // PRE:  repo already holds valid data
 // POST: returns a second initialised engine ("tab") on repo, whose onCommit calls count commits
-async function openTab(
-  repo: Repository,
-  onCommit: () => void = () => undefined,
-): Promise<Engine> {
+async function openTab(repo: Repository, onCommit: () => void = () => undefined): Promise<Engine> {
   const engine = createEngine({
     repo,
     now: () => t('Mon 00:00'),
@@ -40,7 +41,9 @@ async function openTab(
 
 describe('T41: two tabs on one repository', () => {
   it('rejects a move of an event another tab deleted with ER8, writing nothing', async () => {
-    const { engine: tabA, repo } = await makeEngine({ events: [ev('Seminar', 'Mon 10:00', 'Mon 11:00')] });
+    const { engine: tabA, repo } = await makeEngine({
+      events: [ev('Seminar', 'Mon 10:00', 'Mon 11:00')],
+    });
     const tabB = await openTab(repo);
 
     expect((await tabA.deleteEvent('Seminar')).ok).toBe(true);
@@ -54,7 +57,9 @@ describe('T41: two tabs on one repository', () => {
   });
 
   it('reload adopts the other tab’s data, clears history and bumps the version', async () => {
-    const { engine: tabA, repo } = await makeEngine({ events: [ev('Seminar', 'Mon 10:00', 'Mon 11:00')] });
+    const { engine: tabA, repo } = await makeEngine({
+      events: [ev('Seminar', 'Mon 10:00', 'Mon 11:00')],
+    });
     const tabB = await openTab(repo);
     expect((await tabB.createEvent(meeting('x', 'Tue 09:00', 'Tue 10:00'))).ok).toBe(true);
     await tabA.reload();
@@ -73,7 +78,9 @@ describe('T41: two tabs on one repository', () => {
   });
 
   it('after a reload the tab writes again, and the first tab is now the stale one', async () => {
-    const { engine: tabA, repo } = await makeEngine({ events: [ev('Seminar', 'Mon 10:00', 'Mon 11:00')] });
+    const { engine: tabA, repo } = await makeEngine({
+      events: [ev('Seminar', 'Mon 10:00', 'Mon 11:00')],
+    });
     const tabB = await openTab(repo);
     expect((await tabA.deleteEvent('Seminar')).ok).toBe(true);
     expect(await tabB.moveEvent('Seminar', iv('Mon 12:00', 'Mon 13:00'))).toEqual(
@@ -89,7 +96,9 @@ describe('T41: two tabs on one repository', () => {
   });
 
   it('settings saves and imports from a stale tab are rejected with ER8 too', async () => {
-    const { engine: tabA, repo } = await makeEngine({ events: [ev('Seminar', 'Mon 10:00', 'Mon 11:00')] });
+    const { engine: tabA, repo } = await makeEngine({
+      events: [ev('Seminar', 'Mon 10:00', 'Mon 11:00')],
+    });
     const tabB = await openTab(repo);
     const exported = tabB.exportData();
     expect((await tabA.deleteEvent('Seminar')).ok).toBe(true);

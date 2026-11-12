@@ -6,9 +6,9 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-48 Data model v3 and migration on `feat/wi-48-data-v3`; WI-47 merged and its full main gate passed.
-- **Last session:** 2026-11-12 · Codex · committed the unchanged planning inputs and Round 2 plan/baseline; completed WI-47 documentation moves and link updates.
-- **Gate status:** 2026-11-12 on `main` at `7566f35`: full gate green (639 tests + 1 skipped, unchanged baseline coverage, 7 DST, five properties × 10,000, build, 75/75 browser runs, zero retries).
+- **Active WI:** Round 2 overhaul; WI-48 complete on its branch, merging for the full main gate. Next: WI-49 Categories.
+- **Last session:** 2026-11-12 · Codex · initialised Round 2 baseline/plan, merged WI-47 and completed WI-48's v3 migration/v2 export contracts and regressions.
+- **Gate status:** 2026-11-12 on `feat/wi-48-data-v3` at `9412ace`: full gate green (649 tests + 1 skipped, 98.82% statements / 94.31% branches / 98.26% functions / 98.90% lines, 7 DST, five properties × 10,000, build, 75/75 browser runs, zero retries). Full main gate next.
 
 ## Work items
 
@@ -215,9 +215,13 @@ Binding design: `docs/extras/AUDIT_2.md` (D-01–D-19, C-01–C-08). Work in ord
   - 2026-11-12 · Codex · branch `feat/wi-47-docs-restructure` · done: four files moved with `git mv`; agent instructions, README trees/links, main-doc navigation/change logs, audit source links and reusable prompts updated; old-path grep empty · next: local-link verification and full branch gate, finish/merge and full main gate · note: scripts, CI, Playwright configs and both skill copies contain no moved-path references; no test changes.
   - 2026-11-12 · Codex · branch `feat/wi-47-docs-restructure` · done: 75 local Markdown links resolve, old-path grep empty, Prettier invoked (hand-written specs remain excluded by repo config), full gate green: 639 + 1 skipped, coverage identical to BASELINE, DST 7, five properties × 10,000, build OK, e2e 75/75 (25 × 3, zero retries) · next: merge, full main gate, WI-48 · note: no test expectations or application behaviour changed.
   - 2026-11-12 · Codex · branch `main` · done: merged WI-47 as `7566f35`, branch retained, full post-merge gate green with the same counts/coverage and 75/75 browser runs · next: WI-48.
-- [~] **WI-48** Data model v3 and migration — owner S + Dv — depends on 47
+- [x] **WI-48** Data model v3 and migration — owner S + Dv — depends on 47
   - Done when: Dexie v2→v3 upgrade test; v1/v2 import tests; samples re-exported; all existing tests pass (fixtures updated mechanically).
   - 2026-11-12 · Codex · branch `feat/wi-48-data-v3` · done: claimed after WI-47 and full main gate; storage/schema/state/UI references reviewed · next: failing T48 migration/import tests plus a retained v1 fixture, then types/validators, v3 migration, repositories/state/I/O, mechanical fixtures and samples · note: no category CRUD or new UI features until later WIs.
+  - 2026-11-12 · Codex · branch `feat/wi-48-data-v3` · done: T48's four integration regressions fail for the intended reasons (no v3 category/field migration, export still v1, older duplicates rejected, v2 import rejected); original v1 sparse-week fixture retained · next: implement data contracts/migration and preserve category references across storage/state/export · note: test-first checkpoint; existing main remains green.
+  - 2026-11-12 · Codex · branch `feat/wi-48-data-v3` · done: T48 red→green; categories/new fields persist across v3 repositories, engine state/snapshot and v1/v2 I/O; old v1/v2 schemas untouched; legacy overlaps/duplicates preserved; all six samples regenerated as v2; typecheck/lint and 649 tests + 1 skipped green · next: contract/doc review, formatting, full branch gate (including coverage), finish/merge/main gate · note: mechanical category→categoryId and required-field fixture changes retain assertions; T25 now expects export v2 (D-17), T41's legacy seed still supplies enum fields.
+  - 2026-11-12 · Codex · branch `feat/wi-48-data-v3` · done: implementation/contracts/fixture inventory committed as `9412ace`; branch typecheck/lint, 649 + 1 skipped, coverage 98.82% statements / 94.31% branches / 98.26% functions / 98.90% lines (algorithms unchanged), DST 7, five 10,000-case properties and build green · next: browser repeats, finish/merge/main gate · note: T25 “export is pretty-printed ExportFile JSON stamped with now” and “exportFileSchema prefixes nested issue paths with the array index (T25 path format)” expect v2; T41 “keeps the events, tasks and settings of a version-1 database and starts at revision 0” keeps all assertions against mapped rows (D-17).
+  - 2026-11-12 · Codex · branch `feat/wi-48-data-v3` · done: full branch gate green, including 75/75 browser runs (25 checks × 3, zero retries); all ten new T48 cases and all old assertions pass; six v2 sample files import; contract comments reviewed and formatting/lint clean · next: merge, full main gate, WI-49 · note: minimal UI field/type adaptation only; category controls and new visual tokens belong to WI-49/57.
 - [ ] **WI-49** Categories — owner S + Dv — depends on 48
   - Done when: New tests for CRUD, delete blocking, uniqueness, undo, filters.
 - [ ] **WI-50** Scheduling model and lock — owner S + Dv — depends on 49
@@ -268,6 +272,8 @@ Binding design: `docs/extras/AUDIT_2.md` (D-01–D-19, C-01–C-08). Work in ord
 - [ ] Turn on branch protection for `main` on GitHub (optional).
 
 ## Decisions log (append-only)
+
+- 2026-11-12 (WI-48, Codex): default category ids equal the five legacy enum strings, so migrations and v1 imports map deterministically without changing links. Seed `createdAt` is epoch minute 0 and seed order is lexical id order, matching both repository adapters. Initial colours are Meeting `#467b70`, Class `#9364a2`, Appointment `#a45c81`, Assignment `#7b7650`, Personal `#427e8c`; display/palette controls and their contrast checks belong to WI-49. Stored settings permit older overlaps/duplicates; new edits and v2 imports retain the current duplicate rule until WI-53 implements the new overlap validation.
 
 - 2026-11-12 (WI-45, user decision): #7's stretch list comes from a new read-only engine query (`explainWindow`), called by the picker only after an ER2/ER3 error, so the ER2/ER3 error objects and every existing exact-equality test stay unchanged. Asked and confirmed by the user.
 - 2026-11-12 (WI-42, user decision): the Fixed tag's tooltip says "…you can also edit its times or tick Flexible." instead of the brief's "untick Fixed", because the event dialog's control is the "Flexible (the planner may move it)" checkbox; asked and confirmed by the user.

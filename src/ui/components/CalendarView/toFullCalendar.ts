@@ -7,7 +7,6 @@ import { eventAccessibleText } from '../../format/explain';
 import type {
   CalendarEvent,
   BarredOverlap,
-  Category,
   Conflict,
   Interval,
   Priority,
@@ -18,7 +17,7 @@ export interface EventBlockProps {
   barredLabels: readonly string[];
   label: string;
   priority: Priority;
-  category: Category;
+  categoryId: string;
   flexible: boolean;
   isTask: boolean;
   conflictMinutes: number; // largest overlap among the event's conflicts, 0 if none
@@ -77,7 +76,7 @@ function toEntry(
     label: eventAccessibleText(event, conflictMinutes, barredLabels),
     barredLabels,
     priority: event.priority,
-    category: event.category,
+    categoryId: event.categoryId,
     flexible: event.flexible,
     isTask: event.taskId !== null,
     conflictMinutes,

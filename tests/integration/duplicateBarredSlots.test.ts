@@ -3,7 +3,12 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { SAMPLES, type SampleId } from '@/data/samples';
-import { DEFAULT_SETTINGS, EXPORT_FORMAT, EXPORT_VERSION } from '@/shared/constants';
+import {
+  DEFAULT_CATEGORIES,
+  DEFAULT_SETTINGS,
+  EXPORT_FORMAT,
+  EXPORT_VERSION,
+} from '@/shared/constants';
 import { parseExportFile, parseInput, settingsSchema } from '@/shared/schemas';
 import type { BarredSlot, Settings } from '@/shared/types';
 import { BASE_MONDAY } from '../helpers/time';
@@ -71,6 +76,7 @@ describe('T44: duplicate barred slots', () => {
     const file = {
       format: EXPORT_FORMAT,
       version: EXPORT_VERSION,
+      categories: DEFAULT_CATEGORIES,
       exportedAt: '2026-11-02T08:00:00.000Z',
       events: [],
       tasks: [],

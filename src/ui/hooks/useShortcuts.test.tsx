@@ -167,7 +167,7 @@ describe('useShortcuts (T32)', () => {
     await store.getState().actions.createEvent({
       title: 'Gym',
       description: '',
-      category: 'personal',
+      categoryId: 'personal',
       priority: 'low',
       start: t('Mon 18:00'),
       end: t('Mon 19:00'),

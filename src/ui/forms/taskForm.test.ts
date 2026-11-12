@@ -9,7 +9,7 @@ function form(overrides: Partial<TaskFormValues> = {}): TaskFormValues {
   return {
     name: 'Write report',
     description: '',
-    category: 'assignment',
+    categoryId: 'assignment',
     priority: 'high',
     hours: '1',
     minutes: '30',

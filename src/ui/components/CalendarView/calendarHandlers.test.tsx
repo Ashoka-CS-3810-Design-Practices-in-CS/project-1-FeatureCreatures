@@ -168,7 +168,7 @@ describe('calendar handlers ↔ engine (T14, ER4, ER5)', () => {
           barredLabels={[]}
           timeText="09:00"
           priority="low"
-          category="assignment"
+          categoryId="assignment"
           flexible
           isTask
           conflictMinutes={0}
@@ -179,7 +179,7 @@ describe('calendar handlers ↔ engine (T14, ER4, ER5)', () => {
           barredLabels={[]}
           timeText="10:00"
           priority="low"
-          category="personal"
+          categoryId="personal"
           flexible
           isTask={false}
           conflictMinutes={0}

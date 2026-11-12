@@ -2,7 +2,12 @@
 // interface, which hides the state, the pipelines, the algorithms and the repository behind it.
 
 import type { Repository } from '@/data/repository';
-import { DEFAULT_SETTINGS, EXPORT_FORMAT, EXPORT_VERSION } from '@/shared/constants';
+import {
+  DEFAULT_CATEGORIES,
+  DEFAULT_SETTINGS,
+  EXPORT_FORMAT,
+  EXPORT_VERSION,
+} from '@/shared/constants';
 import type { EngineError } from '@/shared/errors';
 import { err, ok, type Result } from '@/shared/result';
 import {
@@ -16,6 +21,7 @@ import {
 import { fromMinute } from '@/shared/time';
 import type {
   CalendarEvent,
+  Category,
   EventInput,
   ExportFile,
   Interval,
@@ -141,6 +147,7 @@ function storageError(error: unknown): Result<never, EngineError> {
 
 /** What the repository holds, validated, with its revision. */
 interface LoadedData {
+  readonly categories: readonly Category[];
   readonly events: readonly CalendarEvent[];
   readonly tasks: readonly Task[];
   readonly settings: Settings | null;
@@ -149,7 +156,12 @@ interface LoadedData {
 
 class CalendarEngine implements Engine {
   private readonly deps: EngineDeps;
-  private state: EngineState = createState({ events: [], tasks: [], settings: DEFAULT_SETTINGS });
+  private state: EngineState = createState({
+    categories: DEFAULT_CATEGORIES,
+    events: [],
+    tasks: [],
+    settings: DEFAULT_SETTINGS,
+  });
   private chain: Promise<unknown> = Promise.resolve();
   private lastReplan: ReplanResult | null = null; // §7.4.4: not part of EngineState
 
@@ -209,7 +221,7 @@ class CalendarEngine implements Engine {
   }
 
   // PRE:  none (Repository.load() returns untrusted data)
-  // POST: returns the stored events, tasks, settings and revision once validated (shapes, links
+  // POST: returns stored categories, events, tasks, settings and revision once validated (shapes, links
   //       and the BR-9 mirror); err StorageError when loading fails or the data is damaged
   private async loadStored(): Promise<Result<LoadedData>> {
     let loaded: unknown;
@@ -223,7 +235,7 @@ class CalendarEngine implements Engine {
     if (
       !parsed.ok ||
       !revision.ok ||
-      linkIssues(parsed.value.events, parsed.value.tasks).length > 0
+      linkIssues(parsed.value.events, parsed.value.tasks, parsed.value.categories).length > 0
     ) {
       return storageError(new Error('Saved data is damaged.'));
     }
@@ -241,9 +253,12 @@ class CalendarEngine implements Engine {
       if (!loaded.ok) {
         return loaded;
       }
-      const { events, tasks, revision } = loaded.value;
+      const { categories, events, tasks, revision } = loaded.value;
       if (loaded.value.settings !== null) {
-        this.state = createState({ events, tasks, settings: loaded.value.settings }, revision);
+        this.state = createState(
+          { categories, events, tasks, settings: loaded.value.settings },
+          revision,
+        );
         return ok(this.snapshot());
       }
       try {
@@ -251,7 +266,10 @@ class CalendarEngine implements Engine {
       } catch (error) {
         return storageError(error);
       }
-      this.state = createState({ events, tasks, settings: DEFAULT_SETTINGS }, revision + 1);
+      this.state = createState(
+        { categories, events, tasks, settings: DEFAULT_SETTINGS },
+        revision + 1,
+      );
       this.deps.onCommit?.();
       return ok(this.snapshot());
     });
@@ -268,9 +286,9 @@ class CalendarEngine implements Engine {
       if (!loaded.ok) {
         return loaded;
       }
-      const { events, tasks, revision } = loaded.value;
+      const { categories, events, tasks, revision } = loaded.value;
       const settings = loaded.value.settings ?? DEFAULT_SETTINGS;
-      const fresh = createState({ events, tasks, settings }, revision);
+      const fresh = createState({ categories, events, tasks, settings }, revision);
       this.state = { ...fresh, version: this.state.version + 1 };
       this.lastReplan = null;
       return ok(this.snapshot());
@@ -280,8 +298,10 @@ class CalendarEngine implements Engine {
   // PRE:  none
   // POST: returns the read-only view of the current state the UI renders
   snapshot(): Snapshot {
-    const { version, events, tasks, settings, conflicts, barredOverlaps, undo, redo } = this.state;
+    const { categories, version, events, tasks, settings, conflicts, barredOverlaps, undo, redo } =
+      this.state;
     return {
+      categories,
       version,
       events,
       tasks,
@@ -463,14 +483,15 @@ class CalendarEngine implements Engine {
   }
 
   // PRE:  none
-  // POST: returns the current events, tasks and settings as pretty-printed ExportFile JSON (§9.4),
+  // POST: returns categories, events, tasks and settings as pretty-printed v2 ExportFile JSON (§9.4),
   //       stamped with now
   exportData(): string {
-    const { events, tasks, settings } = this.state;
+    const { categories, events, tasks, settings } = this.state;
     const file: ExportFile = {
       format: EXPORT_FORMAT,
       version: EXPORT_VERSION,
       exportedAt: fromMinute(this.deps.now()).toISOString(),
+      categories,
       events,
       tasks,
       settings,
@@ -489,16 +510,16 @@ class CalendarEngine implements Engine {
       if (!parsed.ok) {
         return parsed;
       }
-      const { events, tasks, settings } = parsed.value;
+      const { categories, events, tasks, settings } = parsed.value;
       try {
         await this.deps.repo.replaceAll(
-          { events: [...events], tasks: [...tasks], settings },
+          { categories: [...categories], events: [...events], tasks: [...tasks], settings },
           this.state.revision,
         );
       } catch (error) {
         return storageError(error);
       }
-      const fresh = createState({ events, tasks, settings }, this.state.revision + 1);
+      const fresh = createState({ categories, events, tasks, settings }, this.state.revision + 1);
       this.state = { ...fresh, version: this.state.version + 1 };
       this.lastReplan = null;
       this.deps.onCommit?.();

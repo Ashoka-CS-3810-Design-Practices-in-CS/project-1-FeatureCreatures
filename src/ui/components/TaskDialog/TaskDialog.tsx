@@ -1,6 +1,6 @@
 import { useId } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import type { Category, Task } from '@/shared/types';
+import type { Task } from '@/shared/types';
 import {
   taskFormValues,
   taskResolver,
@@ -12,7 +12,7 @@ import { ErrorText } from '../Modal/ErrorText';
 import { Modal } from '../Modal/Modal';
 import { PriorityRadioGroup } from '../PriorityRadioGroup/PriorityRadioGroup';
 
-const CATEGORIES: { value: Category; label: string }[] = [
+const CATEGORIES: { value: string; label: string }[] = [
   { value: 'assignment', label: 'Assignment' },
   { value: 'personal', label: 'Personal' },
   { value: 'meeting', label: 'Meeting' },
@@ -23,7 +23,7 @@ const CATEGORIES: { value: Category; label: string }[] = [
 // PRE:  rendered under StoreProvider; existing is the task being edited (undefined when creating);
 //       reads view.date; uses the task actions, openTaskPicker, openDialog and closeDialog
 //       + additional props from: Modal, ErrorText, PriorityRadioGroup
-// POST: shows the task form (name, duration in hours + minutes, priority, category, window,
+// POST: shows the task form (name, duration in hours + minutes, priority, categoryId, window,
 //       scheduling-hours radios, description); Save validates with taskResolver before calling the
 //       engine; in edit mode it also offers Find time (unscheduled), Unschedule (scheduled) and
 //       Delete (after confirmation)
@@ -108,8 +108,8 @@ function TaskForm({ existing }: { existing: Task | undefined }) {
 
         <PriorityRadioGroup registration={register('priority')} />
 
-        <label htmlFor={fieldId('category')}>Category</label>
-        <select id={fieldId('category')} {...register('category')}>
+        <label htmlFor={fieldId('categoryId')}>Category</label>
+        <select id={fieldId('categoryId')} {...register('categoryId')}>
           {CATEGORIES.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}

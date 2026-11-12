@@ -5,13 +5,13 @@ import type { FieldError, Resolver } from 'react-hook-form';
 import { MINUTES_PER_HOUR } from '@/shared/constants';
 import { taskInputSchema, toFieldIssues } from '@/shared/schemas';
 import { addLocalDays, ceilTo } from '@/shared/time';
-import type { Category, Minute, Priority, Task, TaskInput } from '@/shared/types';
+import type { Minute, Priority, Task, TaskInput } from '@/shared/types';
 import { fromDateTimeLocal, toDateTimeLocal } from './eventForm';
 
 export interface TaskFormValues {
   name: string;
   description: string;
-  category: Category;
+  categoryId: string;
   priority: Priority;
   hours: string;
   minutes: string;
@@ -53,7 +53,7 @@ export function toTaskInput(form: TaskFormValues): TaskInput {
   return {
     name: form.name,
     description: form.description,
-    category: form.category,
+    categoryId: form.categoryId,
     priority: form.priority,
     durationMin: hours * MINUTES_PER_HOUR + minutes,
     window: { start: fromDateTimeLocal(form.windowStart), end: fromDateTimeLocal(form.windowEnd) },
@@ -70,7 +70,7 @@ export function taskFormValues(source: Task | undefined, viewDate: Minute): Task
     return {
       name: '',
       description: '',
-      category: 'assignment',
+      categoryId: 'assignment',
       priority: 'medium',
       hours: DEFAULT_DURATION_HOURS,
       minutes: '0',
@@ -82,7 +82,7 @@ export function taskFormValues(source: Task | undefined, viewDate: Minute): Task
   return {
     name: source.name,
     description: source.description,
-    category: source.category,
+    categoryId: source.categoryId,
     priority: source.priority,
     hours: String(Math.floor(source.durationMin / MINUTES_PER_HOUR)),
     minutes: String(source.durationMin % MINUTES_PER_HOUR),

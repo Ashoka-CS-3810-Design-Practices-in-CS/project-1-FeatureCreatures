@@ -1,3 +1,4 @@
+import { DEFAULT_CATEGORIES } from '@/shared/constants';
 import type { CalendarEvent } from '@/shared/types';
 import { ev, iv, settings } from '../../tests/helpers/builders';
 import { t } from '../../tests/helpers/time';
@@ -7,7 +8,12 @@ import { createState } from './state';
 // PRE:  events have distinct ids
 // POST: returns a state over events with default settings (Mon–Fri 09:00–18:00, buffer 0)
 function stateOf(events: CalendarEvent[], bufferMin = 0) {
-  return createState({ events, tasks: [], settings: settings({ bufferMin }) });
+  return createState({
+    categories: [...DEFAULT_CATEGORIES],
+    events,
+    tasks: [],
+    settings: settings({ bufferMin }),
+  });
 }
 
 // PRE:  overrides holds any subset of SearchRequest

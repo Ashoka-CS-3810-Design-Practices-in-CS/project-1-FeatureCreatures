@@ -27,7 +27,7 @@ function input(title: string, from: string, to: string): EventInput {
   return {
     title,
     description: '',
-    category: 'meeting',
+    categoryId: 'meeting',
     priority: 'medium',
     start: t(from),
     end: t(to),

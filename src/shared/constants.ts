@@ -1,6 +1,6 @@
 // Named limits and defaults — frozen contract (TECH_SPEC §5). Add new magic numbers here.
 
-import type { Priority, Settings } from './types';
+import type { Category, Priority, Settings } from './types';
 
 export const MAX_EVENT_MIN = 1440; // BR-4
 export const MAX_OPTIONS = 5; // BR-7
@@ -8,7 +8,9 @@ export const HISTORY_LIMIT = 50; // B1
 export const SNAP_MIN = 5; // BR-5 notBefore rounding + UI snap
 export const MAX_REPLAN_DAYS = 14; // BR-12
 export const EXPORT_FORMAT = 'feature-creatures-calendar'; // §9.4
-export const EXPORT_VERSION = 1;
+export const EXPORT_VERSION = 2;
+export const LEGACY_EXPORT_VERSION = 1;
+export const MAX_CATEGORY_NAME_LENGTH = 40;
 export const REPLAN_DST_SLACK_MIN = 120; // a replan range of 14 local days may span DST changes
 export const CONFLICT_LIST_LIMIT = 50;
 export const TOAST_MS = 4000; // success and info toasts (PROJECT_SCHEMA UX feedback)
@@ -36,6 +38,7 @@ export const MAX_TASK_DURATION_MIN = MAX_EVENT_MIN; // a scheduled task becomes 
 export const MAX_BUFFER_MIN = 120;
 export const PRIORITY_RANK: Record<Priority, number> = { high: 3, medium: 2, low: 1 };
 export const DEFAULT_SETTINGS: Settings = {
+  useWorkingHours: true,
   workDays: [1, 2, 3, 4, 5], // Monday–Friday
   workStartMin: 540, // 09:00
   workEndMin: 1080, // 18:00
@@ -43,3 +46,12 @@ export const DEFAULT_SETTINGS: Settings = {
   barredSlots: [],
   defaultCriterion: 'earliest',
 };
+
+// Stable seed ids let a legacy enum map to the same category on every database and import.
+export const DEFAULT_CATEGORIES: readonly Category[] = [
+  { id: 'meeting', name: 'Meeting', colour: '#467b70', createdAt: MIN_SUPPORTED_MINUTE },
+  { id: 'class', name: 'Class', colour: '#9364a2', createdAt: MIN_SUPPORTED_MINUTE },
+  { id: 'appointment', name: 'Appointment', colour: '#a45c81', createdAt: MIN_SUPPORTED_MINUTE },
+  { id: 'assignment', name: 'Assignment', colour: '#7b7650', createdAt: MIN_SUPPORTED_MINUTE },
+  { id: 'personal', name: 'Personal', colour: '#427e8c', createdAt: MIN_SUPPORTED_MINUTE },
+].toSorted((first, second) => first.id.localeCompare(second.id));

@@ -8,6 +8,7 @@ import { err, ok, type Result } from '@/shared/result';
 import type {
   BarredOverlap,
   CalendarEvent,
+  Category,
   Conflict,
   Minute,
   Settings,
@@ -20,6 +21,7 @@ import { compareEvents, insertSorted, removeById } from './algorithms/sortedArra
 import { detectConflicts } from './algorithms/sweep';
 
 export interface EngineState {
+  readonly categories: readonly Category[];
   readonly version: number;
   readonly revision: number; // the repository revision this state was loaded from or last wrote
   readonly events: readonly CalendarEvent[]; // ALWAYS sorted by compareEvents (start, end, id)
@@ -83,12 +85,13 @@ export function barredOverlapsFor(
   return warnings;
 }
 
-// PRE:  events have distinct ids, in any order; tasks have distinct ids; records/settings are valid;
+// PRE:  categories, events and tasks have distinct ids per kind; records/settings and references are valid;
 //       revision is the repository revision the records were loaded from or written as
 // POST: returns version 0 at revision over these records: events sorted by compareEvents, their
-//       conflicts and barred overlaps detected, and empty undo / redo stacks
+//       conflicts and barred overlaps detected, categories retained, and empty undo / redo stacks
 export function createState(
   data: {
+    categories: readonly Category[];
     events: readonly CalendarEvent[];
     tasks: readonly Task[];
     settings: Settings;
@@ -97,6 +100,7 @@ export function createState(
 ): EngineState {
   const events = data.events.toSorted(compareEvents);
   return {
+    categories: [...data.categories],
     version: 0,
     revision,
     events,

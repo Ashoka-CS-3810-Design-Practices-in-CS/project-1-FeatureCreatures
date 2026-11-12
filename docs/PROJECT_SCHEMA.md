@@ -95,6 +95,7 @@ These optional features from the project description are also covered by the cor
 - Accounts, multi-user use, sharing, or server sync
 - ICS import/export
 - Task dependencies
+- Multiple categories per item, or events/tasks without a category (Round 2)
 - Splitting a task across several gaps
 - Jointly optimal multi-task scheduling (dynamic programming)
 - Interval tree or BST store
@@ -118,6 +119,8 @@ These optional features from the project description are also covered by the cor
 | **Flexible event** | An event the app may propose to move, but only inside its **flex window**. |
 | **Flex window** | An Interval within which a flexible event may be placed. |
 | **Task** | A to-do with name, duration, priority and an **allowable window**. It has no time until scheduled, and is shown only in the task panel. |
+| **Category** | A stored name and colour referenced by an event/task's required `categoryId`. Five defaults are seeded. |
+| **Done task** | A completed task with `doneAt`, no linked event and no occupied calendar time. Commands and UI arrive in WI-54. |
 | **Scheduled task** | A task linked to exactly one event (created when the user applies a slot). The event is flexible and its flex window equals the task window. |
 | **Local day** | A calendar day in the browser's time zone, from local midnight to the next local midnight. It can be 23 or 25 hours long around daylight-saving changes. |
 | **Working hours / working days** | From settings, e.g. Mon–Fri 09:00–18:00 local time. |
@@ -146,7 +149,8 @@ The TypeScript definitions live in `TECH_SPEC.md` §5. This table lists the fiel
 | `id` | string (UUID) | Unique, assigned by the engine |
 | `title` | string | 1–100 characters after trimming |
 | `description` | string | 0–1000 characters (may be empty) |
-| `category` | `meeting \| class \| appointment \| assignment \| personal` | Required |
+| `categoryId` | string | Required; references an existing Category |
+| `keptInBarred` | string[] | Barred-slot ids explicitly kept by the user; initially `[]` (Keep here behaviour in WI-53) |
 | `priority` | `high \| medium \| low` | Required |
 | `start`, `end` | Minute | `end > start`; `end − start ≤ 1440` (24 h); may cross midnight |
 | `flexible` | boolean | Required |
@@ -168,12 +172,13 @@ The default flex window is the event's local day, from working start to working 
 | `id` | string (UUID) | Unique |
 | `name` | string | 1–100 characters after trimming |
 | `description` | string | 0–1000 characters |
-| `category` | Category | Default `assignment` |
+| `categoryId` | string | Required; references an existing Category |
 | `priority` | Priority | Required |
 | `durationMin` | integer | 5 ≤ d ≤ 1440 |
 | `window` | Interval | `end > start` (the allowable scheduling window) |
 | `useWorkingHours` | boolean | Default `true`. If `false`, working days and hours are ignored for this task, but barred slots still apply. |
-| `status` | `unscheduled \| scheduled` | Managed by the engine |
+| `status` | `unscheduled \| scheduled \| done` | Managed by the engine |
+| `doneAt` | Minute \| null | Non-null exactly when `status = done` |
 | `scheduledEventId` | string \| null | Non-null iff `status = scheduled` |
 | `createdAt`, `updatedAt` | Minute | Assigned by the engine |
 
@@ -181,6 +186,7 @@ The default flex window is the event's local day, from working start to working 
 
 | Field | Type | Default | Constraint |
 |---|---|---|---|
+| `useWorkingHours` | boolean | `true` | Global working-time switch; search/UI behaviour added in WI-53 |
 | `workDays` | weekday[] (0 = Sun … 6 = Sat) | `[1,2,3,4,5]` | At least one day |
 | `workStartMin` | minutes after local midnight | `540` (09:00) | 0–1439 |
 | `workEndMin` | minutes after local midnight | `1080` (18:00) | `> workStartMin`, ≤ 1440 |
@@ -189,6 +195,14 @@ The default flex window is the event's local day, from working start to working 
 | `defaultCriterion` | `earliest \| bestFit \| priorityAware` | `earliest` | — |
 
 UI-only preferences (theme and last view) are stored in `localStorage`, not in Settings.
+
+#### Category (WI-48 data contract; editing/filter controls in WI-49)
+
+`{id, name, colour, createdAt}`: non-empty engine-assigned id; trimmed name 1–40 characters, unique ignoring case; six-digit hex colour, unique per category; integer Minute `createdAt`. Each event/task must reference an existing category, including on commands, imports and stored-data validation. A done task has no `scheduledEventId`, so existing link invariants still apply.
+
+Dexie v3 keeps every v1/v2 event, task, settings row and stored revision. Legacy enum categories map to the five seeded ids (the old enum strings), with empty kept ids, null completion times and working hours enabled. Overlapping legacy barred slots, including duplicates, are preserved and remain readable. New settings edits retain the current validation rules; the legacy-overlap editing UI arrives in WI-53.
+
+Exports now use format version 2 and include categories. Import accepts versions 1 and 2, validates shapes and category/task/event references, and maps v1 data to v3 before replacement. The retained v1 test fixture proves compatibility; all six sample exports use v2.
 
 #### Derived (never stored)
 
@@ -441,7 +455,7 @@ Every search result also carries:
 
 **BR-9 Task ↔ event synchronisation.**
 - **Scheduling** a task at slot `S` creates an event:
-  - `title = task.name`, with `description`, `category` and `priority` copied from the task
+  - `title = task.name`, with `description`, `categoryId` and `priority` copied from the task
   - `start/end = S`
   - `flexible = true`, `flexWindow = task.window`, `taskId = task.id`
   - The task gets `status = scheduled` and `scheduledEventId = event.id`.
@@ -713,3 +727,4 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 | 2026-11-12 | v1.12 (WI-45, peer reports #5, #7, #11): FR7 Move radios keep the conflict order; §7.4 ER2/ER3 list the available stretches and what splits them (no behaviour change); §7.7 every dismissible dialog has a × named Close. |
 | 2026-11-12 | v1.13 (WI-46): §7.1 Settings is laid out in four headed sections with compact barred-slot rows and day chips. UI only; validation unchanged beyond WI-43. |
 | 2026-11-12 | v1.14 (WI-47, D-18): documentation reorganised under `progress/` and `extras/`; §0.2 links the relocated progress file and binding Round 2 design. Product behaviour changes in the later implementing WIs. |
+| 2026-11-12 | v1.15 (WI-48, D-17): §3.2 category entities/references, kept ids, done status/completion time and the global working-time field; BR-9 copies `categoryId`. Dexie v3 preserves old rows/revision/overlaps; exports v2 include categories, imports accept v1/v2. UI and commands for the new fields follow in WI-49/53/54. |

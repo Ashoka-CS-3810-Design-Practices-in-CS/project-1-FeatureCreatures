@@ -68,7 +68,7 @@ async function run(engine: Engine, command: Command): Promise<void> {
     await engine.createEvent({
       title: 'Generated',
       description: '',
-      category: 'meeting',
+      categoryId: 'meeting',
       priority: 'medium',
       start,
       end: start + command.length,
@@ -87,7 +87,7 @@ async function run(engine: Engine, command: Command): Promise<void> {
       await engine.deleteEvent(target.id);
     }
   } else if (command.kind === 'createTask') {
-    const { name, description, category, priority, durationMin, window, useWorkingHours } = task(
+    const { name, description, categoryId, priority, durationMin, window, useWorkingHours } = task(
       'template',
       command.length,
       WEEK,
@@ -95,7 +95,7 @@ async function run(engine: Engine, command: Command): Promise<void> {
     await engine.createTask({
       name,
       description,
-      category,
+      categoryId,
       priority,
       durationMin,
       window,

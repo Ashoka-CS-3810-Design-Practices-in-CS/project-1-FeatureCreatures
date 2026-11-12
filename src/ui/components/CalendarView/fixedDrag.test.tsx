@@ -10,7 +10,7 @@ import { t } from '../../../../tests/helpers/time';
 import { ConfirmDialog } from '../ConfirmDialog/ConfirmDialog';
 import { createCalendarHandlers, type ChangedEventInfo } from './calendarHandlers';
 
-const lecture = ev('Lecture', 'Mon 10:00', 'Mon 11:00', { category: 'class' });
+const lecture = ev('Lecture', 'Mon 10:00', 'Mon 11:00', { categoryId: 'class' });
 const study = flexEv('Study', 'Mon 13:00', 'Mon 14:00', ['Mon 09:00', 'Mon 18:00']);
 
 // PRE:  id names a seeded event; from and to are valid t() specs
@@ -114,7 +114,7 @@ describe('T43: a fixed event asks before a manual drag or resize', () => {
     await actions.updateEvent('Lecture', {
       title: 'Lecture',
       description: '',
-      category: 'class',
+      categoryId: 'class',
       priority: 'medium',
       start: t('Tue 10:00'),
       end: t('Tue 11:00'),

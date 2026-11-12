@@ -23,7 +23,7 @@ export function buildSparseWeek(weekMonday: Minute): ExportFile {
   const week = { start: at(weekMonday, MONDAY, '09:00'), end: at(weekMonday, FRIDAY, '18:00') };
   const on = (day: number, from: string, to: string) => span(weekMonday, day, from, to);
   const flexible = { flexible: true, flexWindow: week };
-  const highClass = { category: 'class', priority: 'high' } as const;
+  const highClass = { categoryId: 'class', priority: 'high' } as const;
   return exportFileOf(
     {
       events: [
@@ -49,11 +49,11 @@ export function buildSparseWeek(weekMonday: Minute): ExportFile {
           flexible,
         ),
         sampleEvent('sparse-lab', 'Lab', on(WEDNESDAY, '09:00', '10:00'), weekMonday, {
-          category: 'class',
+          categoryId: 'class',
         }),
         sampleEvent('sparse-study', 'Study', on(WEDNESDAY, '15:00', '16:30'), weekMonday, {
           ...flexible,
-          category: 'personal',
+          categoryId: 'personal',
           priority: 'low',
         }),
         sampleEvent(
@@ -68,10 +68,10 @@ export function buildSparseWeek(weekMonday: Minute): ExportFile {
           'Office hours',
           on(THURSDAY, '14:00', '15:00'),
           weekMonday,
-          { category: 'appointment', priority: 'low' },
+          { categoryId: 'appointment', priority: 'low' },
         ),
         sampleEvent('sparse-tutorial', 'Tutorial', on(FRIDAY, '09:30', '10:30'), weekMonday, {
-          category: 'class',
+          categoryId: 'class',
         }),
       ],
       tasks: [
@@ -80,7 +80,7 @@ export function buildSparseWeek(weekMonday: Minute): ExportFile {
         }),
         sampleTask('sparse-chapter', 'Read chapter 4', CHAPTER_MIN, week, weekMonday),
         sampleTask('sparse-gym', 'Gym', GYM_MIN, week, weekMonday, {
-          category: 'personal',
+          categoryId: 'personal',
           priority: 'low',
         }),
         sampleTask('sparse-thesis', 'Thesis draft', THESIS_MIN, week, weekMonday),

@@ -2,9 +2,10 @@
 // Strategy pattern: the engine depends only on this interface; DexieRepository (IndexedDB) and
 // MemoryRepository (tests, degraded mode) are interchangeable implementations of it.
 
-import type { CalendarEvent, Settings, Task } from '@/shared/types';
+import type { CalendarEvent, Category, Settings, Task } from '@/shared/types';
 
 export interface StoredData {
+  categories: Category[];
   events: CalendarEvent[];
   tasks: Task[];
   settings: Settings | null;
@@ -26,7 +27,7 @@ export interface Repository {
   apply(changes: ChangeSet, expectedRevision: number): Promise<void>; // MUST be atomic (all or nothing)
   saveSettings(settings: Settings, expectedRevision: number): Promise<void>;
   replaceAll(
-    data: { events: CalendarEvent[]; tasks: Task[]; settings: Settings },
+    data: { events: CalendarEvent[]; tasks: Task[]; settings: Settings; categories: Category[] },
     expectedRevision: number,
   ): Promise<void>; // atomic
 }

@@ -167,7 +167,7 @@ describe('SlotPicker — task mode', () => {
     await engine.createEvent({
       title: 'Elsewhere',
       description: '',
-      category: 'meeting',
+      categoryId: 'meeting',
       priority: 'medium',
       start: t('Tue 10:00'),
       end: t('Tue 11:00'),

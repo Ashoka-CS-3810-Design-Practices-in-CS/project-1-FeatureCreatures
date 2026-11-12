@@ -1,3 +1,4 @@
+import { DEFAULT_CATEGORIES } from '@/shared/constants';
 // fake-indexeddb must be installed before Dexie is first imported.
 import 'fake-indexeddb/auto';
 import Dexie from 'dexie';
@@ -9,7 +10,12 @@ import { ConcurrentModificationError, type ChangeSet, type Repository } from './
 
 // The stored revision of the multi-tab check (WI-40, TECH_SPEC §9.1).
 
-const NO_CHANGES: ChangeSet = { putEvents: [], deleteEventIds: [], putTasks: [], deleteTaskIds: [] };
+const NO_CHANGES: ChangeSet = {
+  putEvents: [],
+  deleteEventIds: [],
+  putTasks: [],
+  deleteTaskIds: [],
+};
 
 // PRE:  id is non-empty; start < end are integer minutes
 // POST: returns a fixed medium-priority meeting [start, end) with that id
@@ -18,13 +24,14 @@ function event(id: string, start: number, end: number): CalendarEvent {
     id,
     title: id,
     description: '',
-    category: 'meeting',
+    categoryId: 'meeting',
     priority: 'medium',
     start,
     end,
     flexible: false,
     flexWindow: null,
     taskId: null,
+    keptInBarred: [],
     createdAt: 0,
     updatedAt: 0,
   };
@@ -34,12 +41,13 @@ const seminarTask: Task = {
   id: 't',
   name: 'Report',
   description: '',
-  category: 'assignment',
+  categoryId: 'assignment',
   priority: 'high',
   durationMin: 60,
   window: { start: 0, end: 600 },
   useWorkingHours: true,
   status: 'unscheduled',
+  doneAt: null,
   scheduledEventId: null,
   createdAt: 0,
   updatedAt: 0,
@@ -71,7 +79,10 @@ describe.each(adapters)('%s (stored revision)', (_name, openRepository) => {
 
     await repository.apply({ ...NO_CHANGES, putEvents: [event('a', 0, 60)] }, 0);
     await repository.saveSettings(lunch, 1);
-    await repository.replaceAll({ events: [], tasks: [], settings: DEFAULT_SETTINGS }, 2);
+    await repository.replaceAll(
+      { categories: [...DEFAULT_CATEGORIES], events: [], tasks: [], settings: DEFAULT_SETTINGS },
+      2,
+    );
 
     expect((await repository.load()).revision).toBe(3);
   });
@@ -86,7 +97,10 @@ describe.each(adapters)('%s (stored revision)', (_name, openRepository) => {
     );
     await expect(repository.saveSettings(lunch, 0)).rejects.toThrow(ConcurrentModificationError);
     await expect(
-      repository.replaceAll({ events: [], tasks: [], settings: lunch }, 2),
+      repository.replaceAll(
+        { categories: [...DEFAULT_CATEGORIES], events: [], tasks: [], settings: lunch },
+        2,
+      ),
     ).rejects.toThrow(ConcurrentModificationError);
     expect(await repository.load()).toEqual(stored);
   });
@@ -104,7 +118,13 @@ describe('DexieRepository revision across connections (two tabs)', () => {
     await expect(
       tabB.apply({ ...NO_CHANGES, putEvents: [event('Seminar', 120, 180)] }, seenByB),
     ).rejects.toThrow(ConcurrentModificationError);
-    expect(await tabA.load()).toEqual({ events: [], tasks: [], settings: null, revision: 2 });
+    expect(await tabA.load()).toEqual({
+      categories: [...DEFAULT_CATEGORIES],
+      events: [],
+      tasks: [],
+      settings: null,
+      revision: 2,
+    });
     tabA.close();
     tabB.close();
   });
@@ -117,8 +137,15 @@ describe('DexieRepository upgrade from schema version 1', () => {
     const legacy = new Dexie(name);
     legacy.version(1).stores({ events: 'id, start, taskId', tasks: 'id, status', settings: 'key' });
     await legacy.open();
-    await legacy.table('events').bulkPut([event('Seminar', 600, 660), event('Gym', 720, 780)]);
-    await legacy.table('tasks').put(seminarTask);
+    await legacy
+      .table('events')
+      .bulkPut(
+        [event('Seminar', 600, 660), event('Gym', 720, 780)].map(({ categoryId, ...fields }) => ({
+          ...fields,
+          category: categoryId,
+        })),
+      );
+    await legacy.table('tasks').put({ ...seminarTask, category: seminarTask.categoryId });
     await legacy.table('settings').put({ key: 'app', value: lunch });
     legacy.close();
 

@@ -14,7 +14,6 @@ import {
 } from '@/shared/time';
 import type {
   CalendarEvent,
-  Category,
   EventInput,
   Interval,
   Minute,
@@ -25,7 +24,7 @@ import type {
 export interface EventFormValues {
   title: string;
   description: string;
-  category: Category;
+  categoryId: string;
   priority: Priority;
   start: string; // datetime-local, 'YYYY-MM-DDTHH:mm'
   end: string;
@@ -41,7 +40,7 @@ const DATETIME_LOCAL = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})$/;
 const DATE_INPUT_FORMAT = 'yyyy-MM-dd';
 const DATE_INPUT = /^\d{4}-\d{2}-\d{2}$/;
 const MISSING_DATE_MESSAGE = 'Enter a date and time.';
-const FLEXIBLE_CATEGORIES: readonly Category[] = ['assignment', 'personal'];
+const FLEXIBLE_CATEGORIES: readonly string[] = ['assignment', 'personal'];
 
 // Schema paths that are not form field names (TECH_SPEC §6 table).
 const FIELD_FOR_PATH: Record<string, keyof EventFormValues> = {
@@ -79,10 +78,10 @@ export function fromDateInput(text: string): Minute {
   return DATE_INPUT.test(text) ? atLocal(text, '00:00') : Number.NaN;
 }
 
-// PRE:  category is a Category
-// POST: returns whether a new event of that category starts flexible (assignment, personal)
-export function flexibleByDefault(category: Category): boolean {
-  return FLEXIBLE_CATEGORIES.includes(category);
+// PRE:  categoryId is a category id
+// POST: returns whether a new event of that categoryId starts flexible (assignment, personal)
+export function flexibleByDefault(categoryId: string): boolean {
+  return FLEXIBLE_CATEGORIES.includes(categoryId);
 }
 
 // PRE:  start ≤ end are the event's Minutes (end defaults to start); settings are valid
@@ -110,16 +109,16 @@ export function eventFormValues(
   source: CalendarEvent | (Partial<EventInput> & Interval),
   settings: Settings,
 ): EventFormValues {
-  const category = source.category ?? 'meeting';
+  const categoryId = source.categoryId ?? 'meeting';
   const window = source.flexWindow ?? defaultFlexWindow(source.start, settings, source.end);
   return {
     title: source.title ?? '',
     description: source.description ?? '',
-    category,
+    categoryId,
     priority: source.priority ?? 'medium',
     start: toDateTimeLocal(source.start),
     end: toDateTimeLocal(source.end),
-    flexible: source.flexible ?? flexibleByDefault(category),
+    flexible: source.flexible ?? flexibleByDefault(categoryId),
     flexStart: toDateTimeLocal(window.start),
     flexEnd: toDateTimeLocal(window.end),
   };
@@ -132,7 +131,7 @@ export function toEventInput(form: EventFormValues): EventInput {
   return {
     title: form.title,
     description: form.description,
-    category: form.category,
+    categoryId: form.categoryId,
     priority: form.priority,
     start: fromDateTimeLocal(form.start),
     end: fromDateTimeLocal(form.end),

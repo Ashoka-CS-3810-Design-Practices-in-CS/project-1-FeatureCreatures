@@ -1,6 +1,6 @@
 // Self-tests for the helpers: the property tests are only as trustworthy as these oracles.
 
-import { DEFAULT_SETTINGS } from '@/shared/constants';
+import { DEFAULT_CATEGORIES, DEFAULT_SETTINGS } from '@/shared/constants';
 import { ev, flexEv, iv, settings, task } from './builders';
 import { FailingRepository } from './failingRepository';
 import { bitmapGaps, bruteForceConflicts } from './oracle';
@@ -26,7 +26,7 @@ describe('builders', () => {
   it('apply the TEST_PLAN §2 defaults and overrides', () => {
     expect(ev('A', 'Mon 10:00', 'Mon 11:00', { priority: 'high' })).toMatchObject({
       title: 'A',
-      category: 'meeting',
+      categoryId: 'meeting',
       priority: 'high',
       flexible: false,
       start: t('Mon 10:00'),
@@ -36,7 +36,7 @@ describe('builders', () => {
     );
     expect(task('R', 90, ['Mon 09:00', 'Fri 18:00'])).toMatchObject({
       name: 'R',
-      category: 'assignment',
+      categoryId: 'assignment',
       status: 'unscheduled',
       useWorkingHours: true,
     });
@@ -113,12 +113,22 @@ describe('FailingRepository', () => {
 
     await expect(repository.apply(changes, 0)).rejects.toThrow('Simulated');
     await expect(repository.saveSettings(DEFAULT_SETTINGS, 0)).rejects.toThrow('Simulated');
-    expect(await repository.load()).toEqual({ events: [], tasks: [], settings: null, revision: 0 });
+    expect(await repository.load()).toEqual({
+      categories: [...DEFAULT_CATEGORIES],
+      events: [],
+      tasks: [],
+      settings: null,
+      revision: 0,
+    });
 
     await repository.apply(changes, 0);
     await repository.saveSettings(DEFAULT_SETTINGS, 1);
-    await repository.replaceAll({ events: [], tasks: [], settings: DEFAULT_SETTINGS }, 2);
+    await repository.replaceAll(
+      { categories: [...DEFAULT_CATEGORIES], events: [], tasks: [], settings: DEFAULT_SETTINGS },
+      2,
+    );
     expect(await repository.load()).toEqual({
+      categories: [...DEFAULT_CATEGORIES],
       events: [],
       tasks: [],
       settings: DEFAULT_SETTINGS,

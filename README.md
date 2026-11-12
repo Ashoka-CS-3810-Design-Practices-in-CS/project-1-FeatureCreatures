@@ -46,6 +46,8 @@ Nothing changes without your say-so: suggestions and plans are previews until yo
 
 More presets (overlap cluster, midnight crossing, fully booked day, a 5,000-event stress test) are under **Settings → Data → Load sample calendar**. Loading a sample replaces your current data, so export first if you want to keep it.
 
+Existing browser data upgrades automatically to database v3 with events, tasks, settings and the multi-tab revision preserved. New JSON exports use version 2 and include categories; version 1 backups still import.
+
 ## Run it locally
 
 You need Node.js 22 and npm.

@@ -1,3 +1,4 @@
+import { DEFAULT_CATEGORIES } from '@/shared/constants';
 import { MemoryRepository } from '@/data/memoryRepository';
 import type { Repository } from '@/data/repository';
 import { createEngine, type Engine } from '@/engine';
@@ -68,7 +69,7 @@ describe('createAppStore', () => {
     await engine.createEvent({
       title: 'Gym',
       description: '',
-      category: 'personal',
+      categoryId: 'personal',
       priority: 'low',
       start: t('Mon 10:00'),
       end: t('Mon 11:00'),
@@ -150,7 +151,7 @@ describe('createAppStore', () => {
     await store.getState().actions.createEvent({
       title: 'Blocker',
       description: '',
-      category: 'meeting',
+      categoryId: 'meeting',
       priority: 'medium',
       start: t('Mon 12:00'),
       end: t('Mon 13:00'),
@@ -173,7 +174,7 @@ describe('createAppStore', () => {
     await engine.createEvent({
       title: 'A',
       description: '',
-      category: 'meeting',
+      categoryId: 'meeting',
       priority: 'medium',
       start: t('Mon 10:00'),
       end: t('Mon 11:00'),
@@ -259,6 +260,7 @@ describe('createAppStore', () => {
     const inner = new MemoryRepository();
     await inner.replaceAll(
       {
+        categories: [...DEFAULT_CATEGORIES],
         events: [ev('A', 'Mon 10:00', 'Mon 11:00')],
         tasks: [],
         settings: (await makeEngine()).engine.snapshot().settings,
@@ -278,7 +280,11 @@ describe('createAppStore', () => {
     const init = await engine.init();
     const reset = vi.fn(async () => {
       const { settings, revision } = await inner.load();
-      if (settings !== null) await inner.replaceAll({ events: [], tasks: [], settings }, revision);
+      if (settings !== null)
+        await inner.replaceAll(
+          { categories: [...DEFAULT_CATEGORIES], events: [], tasks: [], settings },
+          revision,
+        );
     });
     const store = createAppStore(engine, {
       storageWarning: false,
@@ -319,7 +325,7 @@ describe('createAppStore', () => {
     const input = {
       name: 'Read',
       description: '',
-      category: 'assignment' as const,
+      categoryId: 'assignment' as const,
       priority: 'medium' as const,
       durationMin: 45,
       window: iv(...WEEK),

@@ -1,13 +1,46 @@
 {
   "format": "feature-creatures-calendar",
-  "version": 1,
+  "version": 2,
   "exportedAt": "2026-11-02T00:00:00.000Z",
+  "categories": [
+    {
+      "id": "appointment",
+      "name": "Appointment",
+      "colour": "#a45c81",
+      "createdAt": 0
+    },
+    {
+      "id": "assignment",
+      "name": "Assignment",
+      "colour": "#7b7650",
+      "createdAt": 0
+    },
+    {
+      "id": "class",
+      "name": "Class",
+      "colour": "#9364a2",
+      "createdAt": 0
+    },
+    {
+      "id": "meeting",
+      "name": "Meeting",
+      "colour": "#467b70",
+      "createdAt": 0
+    },
+    {
+      "id": "personal",
+      "name": "Personal",
+      "colour": "#427e8c",
+      "createdAt": 0
+    }
+  ],
   "events": [
     {
       "id": "midnight-late",
       "title": "Late shift",
       "description": "",
-      "category": "meeting",
+      "categoryId": "meeting",
+      "keptInBarred": [],
       "priority": "medium",
       "start": 29894340,
       "end": 29894460,
@@ -21,7 +54,8 @@
       "id": "midnight-early",
       "title": "Night call",
       "description": "",
-      "category": "meeting",
+      "categoryId": "meeting",
+      "keptInBarred": [],
       "priority": "medium",
       "start": 29894430,
       "end": 29894490,
@@ -34,6 +68,7 @@
   ],
   "tasks": [],
   "settings": {
+    "useWorkingHours": true,
     "workDays": [
       1,
       2,

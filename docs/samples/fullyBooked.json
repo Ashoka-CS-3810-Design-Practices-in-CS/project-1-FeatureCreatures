@@ -1,13 +1,46 @@
 {
   "format": "feature-creatures-calendar",
-  "version": 1,
+  "version": 2,
   "exportedAt": "2026-11-02T00:00:00.000Z",
+  "categories": [
+    {
+      "id": "appointment",
+      "name": "Appointment",
+      "colour": "#a45c81",
+      "createdAt": 0
+    },
+    {
+      "id": "assignment",
+      "name": "Assignment",
+      "colour": "#7b7650",
+      "createdAt": 0
+    },
+    {
+      "id": "class",
+      "name": "Class",
+      "colour": "#9364a2",
+      "createdAt": 0
+    },
+    {
+      "id": "meeting",
+      "name": "Meeting",
+      "colour": "#467b70",
+      "createdAt": 0
+    },
+    {
+      "id": "personal",
+      "name": "Personal",
+      "colour": "#427e8c",
+      "createdAt": 0
+    }
+  ],
   "events": [
     {
       "id": "booked-1",
       "title": "Workshop",
       "description": "",
-      "category": "meeting",
+      "categoryId": "meeting",
+      "keptInBarred": [],
       "priority": "medium",
       "start": 29897820,
       "end": 29897910,
@@ -21,7 +54,8 @@
       "id": "booked-2",
       "title": "Review",
       "description": "",
-      "category": "meeting",
+      "categoryId": "meeting",
+      "keptInBarred": [],
       "priority": "medium",
       "start": 29897910,
       "end": 29898000,
@@ -35,7 +69,8 @@
       "id": "booked-3",
       "title": "Client call",
       "description": "",
-      "category": "meeting",
+      "categoryId": "meeting",
+      "keptInBarred": [],
       "priority": "medium",
       "start": 29898015,
       "end": 29898120,
@@ -49,7 +84,8 @@
       "id": "booked-4",
       "title": "Planning",
       "description": "",
-      "category": "meeting",
+      "categoryId": "meeting",
+      "keptInBarred": [],
       "priority": "medium",
       "start": 29898120,
       "end": 29898360,
@@ -65,7 +101,7 @@
       "id": "booked-task",
       "name": "Quick email",
       "description": "",
-      "category": "assignment",
+      "categoryId": "assignment",
       "priority": "medium",
       "durationMin": 30,
       "window": {
@@ -74,12 +110,14 @@
       },
       "useWorkingHours": true,
       "status": "unscheduled",
+      "doneAt": null,
       "scheduledEventId": null,
       "createdAt": 29892960,
       "updatedAt": 29892960
     }
   ],
   "settings": {
+    "useWorkingHours": true,
     "workDays": [
       1,
       2,

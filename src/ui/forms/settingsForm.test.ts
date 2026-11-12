@@ -35,6 +35,7 @@ describe('settingsForm', () => {
     const values = form();
 
     expect(values).toEqual({
+      useWorkingHours: true,
       workDays: ['1', '2', '3', '4', '5'],
       workStart: '09:00',
       workEnd: '18:00',

@@ -14,6 +14,7 @@ describe('constants', () => {
 
   it('defaults to Mon–Fri 09:00–18:00, no buffer, earliest (PROJECT_SCHEMA §3.2)', () => {
     expect(DEFAULT_SETTINGS).toEqual({
+      useWorkingHours: true,
       workDays: [1, 2, 3, 4, 5],
       workStartMin: 9 * 60,
       workEndMin: 18 * 60,

@@ -1,3 +1,4 @@
+import { DEFAULT_CATEGORIES } from '@/shared/constants';
 import { createState } from '@/engine/state';
 import type { Snapshot } from '@/shared/types';
 import { ev, settings, task } from '../../../tests/helpers/builders';
@@ -50,6 +51,7 @@ describe('visibleTasks (T30, FR6)', () => {
 
   it('a High calendar filter keeps only High events and leaves the snapshot alone', () => {
     const state = createState({
+      categories: [...DEFAULT_CATEGORIES],
       events: [
         ev('H', 'Mon 09:00', 'Mon 10:00', { priority: 'high' }),
         ev('L1', 'Mon 11:00', 'Mon 12:00', { priority: 'low' }),
