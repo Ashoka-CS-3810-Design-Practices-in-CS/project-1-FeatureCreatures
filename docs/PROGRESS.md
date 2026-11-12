@@ -184,7 +184,8 @@ Fourteen peer bug reports, each verified against `main` and the live build. One 
 - [x] **WI-44** (E) Filter vs count, List layout (#10, #12, #13) — owner S + Dv — depends on 43
   - 2026-11-12 · Claude Code · branch `feat/wi-44-filter-count-list` · done: claimed after WI-43 merge and green main · next: failing status-line / List empty-state tests and the 420 px list-width browser check, then CSS
   - 2026-11-12 · Claude Code · branch `feat/wi-44-filter-count-list` · done: T45 red first (2 unit + 4 browser: 464 px rows in 370 px, z-index auto, title 3.5 px low), then green: filtered status line with "(N hidden by filter)", List `HiddenByFilterNotice` + Show all, List CSS (sticky header z-index 2 + opaque, middle-aligned cells, block flex button that wraps, ≤ 640 px time wrap). Week screenshots byte-identical at 1440/1024/900; List differs only by alignment (reviewed). Docs + BUG_REPORTS #10/#12/#13. Gate: 626 tests, coverage 98.67% st / 94.32% br / 98.75% lines, DST 7, props 5×10,000, build, e2e 72/72 · next: WI-45 · surprises: the title sat low because the inline-flex List button rested on the cell's text baseline
-- [ ] **WI-45** (F) Small UX (#5, #7, #11) — owner S + Dv — depends on 44
+- [~] **WI-45** (F) Small UX (#5, #7, #11) — owner S + Dv — depends on 44
+  - 2026-11-12 · Claude Code · branch `feat/wi-45-small-ux` · done: claimed after WI-44 merge and green main · next: failing tests for the Modal × (Close), stable Move radio order and the ER2/ER3 stretch explanation (new read-only `explainWindow` query, user decision)
 - [ ] **WI-46** (G) Settings panel redesign — owner S + Dv — depends on 45
 - [x] Cleanup: delete `test-results/claude-verify-snapshot.tgz` and `.git/stale-maintenance-lock-claude` if they exist (nothing else). 2026-11-12 · Claude Code: both existed and were deleted by exact path.
 - [ ] Finish: full gate vs baseline (e2e `--repeat-each=5`), README test results, smoke checklist for the deployed site.
