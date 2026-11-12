@@ -167,6 +167,8 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
 
 Fourteen peer bug reports, each verified against `main` and the live build. One WI per item, in order, each on its own branch and merged only after the full gate passes. Findings and verdicts: `docs/BUG_REPORTS.md` (created in WI-40). Rejected: #2 invalid, #8 by design (documentation only).
 
+- **Baseline** (2026-11-12, Claude Code, `main` at f2d4b90, all green): typecheck + lint clean; `test:coverage` 582 passed + 1 skipped (T15 opt-in) in 70 files, coverage 98.57% statements / 94.08% branches / 98.08% functions / 98.6% lines; `test:dst` 7/7; `test:props:full` 5/5 (10,000 cases each); `build` OK; `npx playwright test --repeat-each=3 --workers=2` 54/54 (18 checks × 3, both projects, zero retries).
+
 - [ ] **WI-40** (A) Multi-tab integrity (#14) — owner S + Dv — depends on 39
 - [ ] **WI-41** (B) Alternatives outside working hours (#3, #4, #9) — owner S + Dv — depends on 40
 - [ ] **WI-42** (C) Fixed events ask before a manual drag (#1) — owner S + Dv — depends on 41
