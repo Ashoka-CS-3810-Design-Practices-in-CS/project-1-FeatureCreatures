@@ -18,7 +18,7 @@ import {
 } from './constants';
 import type { EngineError, FieldIssue } from './errors';
 import { err, ok, type Result } from './result';
-import type { CalendarEvent, EventInput, ExportFile, Interval, Task } from './types';
+import type { BarredSlot, CalendarEvent, EventInput, ExportFile, Interval, Task } from './types';
 
 // Tags ordering issues so they map to InvalidTime rather than InvalidInput.
 const TIME_ISSUE_KIND = 'time';
@@ -191,6 +191,41 @@ export const slotSchema = z.object({ slot: interval });
 // The optional per-search override of the settings buffer (findSlots, suggestAlternatives, planReplan).
 export const searchOptionsSchema = z.object({ bufferMin: bufferMinSchema.optional() });
 
+// PRE:  slot has integer startMin / endMin and weekday days
+// POST: returns a key equal for two slots exactly when they bar the same days (in any order)
+//       from the same start to the same end; the label and id do not count (WI-43)
+function barredSlotKey(slot: Pick<BarredSlot, 'startMin' | 'endMin' | 'days'>): string {
+  return JSON.stringify([slot.startMin, slot.endMin, slot.days.toSorted()]);
+}
+
+// PRE:  slots are barred slots that each passed barredSlotSchema
+// POST: ctx holds one issue "Duplicate of barred slot N." at barredSlots.i.days for every slot i
+//       that repeats an earlier slot's days, start and end, where N is that first slot's number
+//       (peer report #6)
+function refineDistinctBarredSlots(
+  slots: readonly Pick<BarredSlot, 'startMin' | 'endMin' | 'days'>[],
+  ctx: z.RefinementCtx,
+): void {
+  const firstIndexByKey = new Map<string, number>();
+
+  // INVARIANT: firstIndexByKey maps the key of every visited slot to the first index with it ∧
+  //            ctx holds an issue for each visited slot whose key appeared at an earlier index
+  for (const [index, slot] of slots.entries()) {
+    const key = barredSlotKey(slot);
+    const firstIndex = firstIndexByKey.get(key);
+    if (firstIndex === undefined) {
+      firstIndexByKey.set(key, index);
+    } else {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['barredSlots', index, 'days'],
+        message: `Duplicate of barred slot ${firstIndex + 1}.`,
+      });
+    }
+  }
+  // POST: every repeated slot has its issue, naming the first slot it repeats
+}
+
 export const settingsSchema = z
   .object({
     workDays: z.array(weekday).min(1, 'Pick at least one working day.'),
@@ -204,6 +239,7 @@ export const settingsSchema = z
     if (settings.workEndMin <= settings.workStartMin) {
       addTimeIssue(ctx, ['workEndMin'], 'Working hours must end after they start.');
     }
+    refineDistinctBarredSlots(settings.barredSlots, ctx);
   });
 
 // What engine.init() accepts from Repository.load(); settings are null on first run.

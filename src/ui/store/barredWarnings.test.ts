@@ -9,7 +9,10 @@ describe('T38 settings warning feedback', () => {
   it('counts distinct newly warned events and does not repeat unchanged or removed warnings', async () => {
     const { engine } = await makeEngine({ events: [ev('A', 'Mon 13:00', 'Mon 14:00')] });
     const store = storeFor(engine);
-    const changed = settings({ barredSlots: [LUNCH, { ...LUNCH, id: 'duplicate' }] });
+    // Two different slots over one event (identical slots are rejected since WI-43).
+    const changed = settings({
+      barredSlots: [LUNCH, { ...LUNCH, id: 'break', label: 'Break', startMin: 810 }],
+    });
     await store.getState().actions.updateSettings(changed);
     expect(store.getState().snapshot.barredOverlaps).toHaveLength(2);
     expect(

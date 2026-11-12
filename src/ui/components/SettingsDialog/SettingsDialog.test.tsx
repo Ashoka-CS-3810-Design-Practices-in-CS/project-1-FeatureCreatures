@@ -107,6 +107,30 @@ describe('SettingsDialog', () => {
     expect(await within(slot).findByText('Label is required.')).toBeInTheDocument();
   });
 
+  it('T44: a duplicate barred slot is shown inline on the later row and nothing is saved', async () => {
+    const { engine } = await makeEngine();
+    const store = renderOpen(engine);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Add barred slot' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Add barred slot' }));
+    await userEvent.clear(
+      within(screen.getByRole('group', { name: 'Barred slot 2' })).getByLabelText('Label'),
+    );
+    await userEvent.type(
+      within(screen.getByRole('group', { name: 'Barred slot 2' })).getByLabelText('Label'),
+      'Break',
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    const second = screen.getByRole('group', { name: 'Barred slot 2' });
+    expect(await within(second).findByText('Duplicate of barred slot 1.')).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('group', { name: 'Barred slot 1' })).queryByText(/Duplicate/),
+    ).not.toBeInTheDocument();
+    expect(store.getState().dialog).toEqual({ kind: 'settings' });
+    expect(engine.snapshot().settings.barredSlots).toEqual([]);
+  });
+
   it('Export downloads calendar-export-YYYY-MM-DD.json', async () => {
     const createObjectURL = vi.fn<(blob: Blob) => string>(() => 'blob:export');
     const revokeObjectURL = vi.fn();
