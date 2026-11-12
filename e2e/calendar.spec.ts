@@ -3,6 +3,7 @@ import {
   clickTime,
   collectPageErrors,
   createConflict,
+  createEvent,
   DRAG_STEPS,
   dragSelect,
   GRAB_OFFSET_PX,
@@ -121,5 +122,51 @@ test('E4: clicking and drag-selecting empty time open New event with those times
   await dragSelect(page, '10:00:00', '11:30:00');
   await expectNewEventTimes(page, '2026-11-02T10:00', '2026-11-02T11:30');
 
+  expect(errors).toEqual([]);
+});
+
+// PRE:  page shows the base week with the event titled title starting at from (HH:mm:ss) in a
+//       30-minute row; to is a later visible row
+// POST: drags that event's block by the rows between from and to with a real pointer
+async function dragEventBetweenRows(
+  page: Page,
+  title: string,
+  from: string,
+  to: string,
+): Promise<void> {
+  const block = page
+    .locator('.fc-timegrid-event.ev')
+    .filter({ has: page.getByText(title, { exact: true }) });
+  const distance = (await rowTop(page, to)) - (await rowTop(page, from));
+  const rowHeight = (await rowTop(page, '11:30:00')) - (await rowTop(page, '11:00:00'));
+  const grabAtY = (await rowTop(page, from)) + rowHeight / 2 + GRAB_OFFSET_PX;
+  await dragVertically(page, block, distance, grabAtY);
+}
+
+test('T43: dragging a fixed event asks first; Keep it leaves it, Move moves it', async ({
+  page,
+}) => {
+  const errors = collectPageErrors(page);
+  await openCalendar(page);
+  await createEvent(page, 'Seminar', '2026-11-02T10:00', '2026-11-02T11:00');
+  const atTen = page.getByRole('button', { name: /^Seminar, Mon 2 Nov 10:00–11:00/ });
+  const atTwelve = page.getByRole('button', { name: /^Seminar, Mon 2 Nov 12:00–13:00/ });
+  await expect(atTen).toBeVisible();
+
+  await dragEventBetweenRows(page, 'Seminar', '10:00:00', '12:00:00');
+  const ask = page.getByRole('dialog', { name: 'Seminar is fixed. Move it anyway?' });
+  await expect(ask).toBeVisible();
+  await ask.getByRole('button', { name: 'Keep it', exact: true }).click();
+  await expect(ask).toHaveCount(0);
+  await expect(atTen).toBeVisible();
+  await page.reload();
+  await expect(atTen).toBeVisible();
+
+  await dragEventBetweenRows(page, 'Seminar', '10:00:00', '12:00:00');
+  await expect(ask).toBeVisible();
+  await ask.getByRole('button', { name: 'Move', exact: true }).click();
+  await expect(atTwelve).toBeVisible();
+  await page.reload();
+  await expect(atTwelve).toBeVisible();
   expect(errors).toEqual([]);
 });
