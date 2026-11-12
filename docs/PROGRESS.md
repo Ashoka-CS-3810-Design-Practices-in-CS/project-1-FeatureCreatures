@@ -181,7 +181,8 @@ Fourteen peer bug reports, each verified against `main` and the live build. One 
 - [x] **WI-43** (D) Duplicate barred slots (#6) — owner S + Dv — depends on 42
   - 2026-11-12 · Claude Code · branch `feat/wi-43-duplicate-barred-slots` · done: claimed after WI-42 merge and green main · next: failing settingsSchema / Settings dialog / sample-import tests, then the schema refine
   - 2026-11-12 · Claude Code · branch `feat/wi-43-duplicate-barred-slots` · done: T44 red first (schema, import, dialog), then green via `refineDistinctBarredSlots` in settingsSchema ("Duplicate of barred slot N." at the later slot's days; label ignored; days order-insensitive); all six docs/samples files and every built sample re-import; docs + BUG_REPORTS #6. Gate: 623 tests, coverage 98.66% st / 94.27% br / 98.74% lines, DST 7, props 5×10,000, build, e2e 60/60 · next: WI-44 · surprises: T38's store test saved two identical Lunch slots as its fixture; it now uses a different overlapping Break (named in commit 356a280)
-- [ ] **WI-44** (E) Filter vs count, List layout (#10, #12, #13) — owner S + Dv — depends on 43
+- [~] **WI-44** (E) Filter vs count, List layout (#10, #12, #13) — owner S + Dv — depends on 43
+  - 2026-11-12 · Claude Code · branch `feat/wi-44-filter-count-list` · done: claimed after WI-43 merge and green main · next: failing status-line / List empty-state tests and the 420 px list-width browser check, then CSS
 - [ ] **WI-45** (F) Small UX (#5, #7, #11) — owner S + Dv — depends on 44
 - [ ] **WI-46** (G) Settings panel redesign — owner S + Dv — depends on 45
 - [x] Cleanup: delete `test-results/claude-verify-snapshot.tgz` and `.git/stale-maintenance-lock-claude` if they exist (nothing else). 2026-11-12 · Claude Code: both existed and were deleted by exact path.
