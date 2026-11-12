@@ -6,9 +6,9 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** Peer bug fixes batch (WI-40–46, see "Peer bug fixes (batch)" below). WI-40–46 merged; next: the batch finish (final gate vs baseline, README results, smoke checklist).
-- **Last session:** 2026-11-12 · Claude Code · planned the peer bug fixes batch. Before that: 2026-10-26 · Codex · WI-39 merged; final main typecheck/lint/582 tests green; warm and cold browser hunts 360/360 passed with zero retries and no additional flakes.
-- **Gate status:** typecheck/lint, 582 tests (T15 opt-in), coverage 98.60% lines / 94.08% branches, build and 360/360 browser executions green (180 warm + 180 cold; each 10 repeats, 2 workers, zero retries). Seven DST and five 10,000-case properties were last verified before this UI-only fix. Run `npm run build` before `npm run e2e` while an existing `vite preview` holds port 4173.
+- **Active WI:** Peer bug fixes batch (WI-40–46, see "Peer bug fixes (batch)" below). Peer bug fixes batch complete (WI-40–46 merged, final gate green). Next: human push, `npx vercel --prod`, then the smoke checklist under the batch heading.
+- **Last session:** 2026-11-12 · Claude Code · planned and completed the peer bug fixes batch (WI-40–46); final main gate 639 tests, coverage 98.78% lines / 94.23% branches, e2e 125/125 over 5 repeats. Before that: 2026-10-26 · Codex · WI-39 merged; final main typecheck/lint/582 tests green; warm and cold browser hunts 360/360 passed with zero retries and no additional flakes.
+- **Gate status:** 2026-11-12 on `main` 222e3bf: typecheck/lint, 639 tests (T15 opt-in; median 1.278 ms), coverage 98.71% statements / 94.23% branches / 98.78% lines, 7 DST, five 10,000-case properties, build, and 125/125 browser runs (25 checks × 5 repeats, 2 workers, zero retries). `npm run screenshots` works again (fixed in WI-46).
 
 ## Work items
 
@@ -163,7 +163,7 @@ Status marks: `[ ]` not started · `[~]` in progress · `[x]` done (tests listed
   - 2026-10-26 · Codex · branch `fix/wi-39-shortcut-race` · done: cold run 180/180 passed (4.3 min, exit 0) after server stop and verified cache deletion; combined 360/360 over two 10-repeat/2-worker runs, zero retries and no other flakes; one CI retry, retained traces, HTML report and failure artifact configured; docs synced · next: merge/main gate, human push/CI/deploy · note: no waits or timeouts added; human README/release updates preserved
   - 2026-10-26 · Codex · branch `main` · done: WI-39 merged with feature branch retained; final main gate 582 tests green; all changes committed · next: human push and inspect remote CI/deploy · note: no active work or unresolved browser failures
 
-### Peer bug fixes (batch)
+### Peer bug fixes (batch) — complete (2026-11-12)
 
 Fourteen peer bug reports, each verified against `main` and the live build. One WI per item, in order, each on its own branch and merged only after the full gate passes. Findings and verdicts: `docs/BUG_REPORTS.md` (created in WI-40). Rejected: #2 invalid, #8 by design (documentation only).
 
@@ -191,7 +191,17 @@ Fourteen peer bug reports, each verified against `main` and the live build. One 
   - 2026-11-12 · Claude Code · branch `feat/wi-46-settings-redesign` · done: claimed after WI-45 merge and green main · next: failing RTL checks for the four headed sections, compact barred rows and focus on a new slot's label; then markup/CSS and both-theme screenshots at 1440/1024/900
   - 2026-11-12 · Claude Code · branch `feat/wi-46-settings-redesign` · done: T47 red first, then green: headed sections, compact `.barred-row` grid with day chips (checked = tested on-accent/accent pair) and remove ×, legends/labels kept visually hidden so every accessible name is unchanged, focus on a new slot's label; 760 px dialog so rows fit one line at 1440/1024/900 (wrap below 800 px); all screenshots refreshed and reviewed in both themes; docs + README Settings row. Gate: 639 tests, coverage 98.71% st / 94.23% br / 98.78% lines, DST 7, props 5×10,000, build, e2e 75/75 · next: batch finish · surprises: `npm run screenshots` had been broken since WI-35 (the e2e projects' baseURL overrode the screenshot port); fixed in its own commit 6a917c3
 - [x] Cleanup: delete `test-results/claude-verify-snapshot.tgz` and `.git/stale-maintenance-lock-claude` if they exist (nothing else). 2026-11-12 · Claude Code: both existed and were deleted by exact path.
-- [ ] Finish: full gate vs baseline (e2e `--repeat-each=5`), README test results, smoke checklist for the deployed site.
+- [x] Finish: full gate vs baseline (e2e `--repeat-each=5`), README test results, smoke checklist for the deployed site.
+  - 2026-11-12 · Claude Code · `main` at 222e3bf · final gate vs baseline: typecheck + lint clean; `test:coverage` 639 passed + 1 skipped (baseline 582 + 1; no test removed), coverage 98.71% statements / 94.23% branches / 98.23% functions / 98.78% lines (baseline 98.57 / 94.08 / 98.08 / 98.6), algorithms 99.68% lines / 95.93% branches; `test:dst` 7/7; `test:props:full` 5/5 at 10,000 cases; `build` OK; `npx playwright test --repeat-each=5 --workers=2` 125/125 (25 checks × 5, both projects, zero failures or retries; baseline 18 checks); `test:perf` T15 median 1.278 ms. README results updated.
+
+**Smoke checklist for the deployed site** (human, after `npx vercel --prod`; tick each line):
+
+- [ ] **Two tabs (#14).** Open the site in two tabs of one browser. In tab 1 click *Load sample week*, then reload tab 2 so it shows the week. In tab 2 open *Seminar* (Thu 10:00), then in tab 1 delete Seminar (Delete → Delete). Tab 2 shows "Calendar updated in another tab.", its dialog closes and Seminar disappears. Rename *Tutorial* in tab 2 and check tab 1 shows the new name. Reload both tabs: Seminar is still gone and the rename is kept.
+- [ ] **Fixed event drag, cancel then confirm (#1).** Drag *Algorithms lecture* (Mon 09:00, Fixed) down an hour → "Algorithms lecture is fixed. Move it anyway?" → **Keep it**: it snaps back, and Undo stays as it was. Drag it again → **Move**: it moves, and Ctrl+Z moves it back. Hover its *Fixed* tag: the tooltip explains it. Drag a flexible event (*Study*, Wed 15:00): it moves with no question.
+- [ ] **Alternatives for a night event (#3, #4, #9).** Create *Night A* Mon 21:00–22:00 and *Night B* Mon 21:30–22:30. In the conflict panel click *Suggest alternatives*: *Search hours* shows **Any time**, and the options lie near 21:00 (e.g. 20:30–21:30). The picker says the event is fixed. Switch to **Working hours only**: the options move into working hours. Also create a new *Personal* event Sat 10:00–11:00 with Flexible on: its default flex window is Sat 00:00–Sun 00:00.
+- [ ] **Duplicate barred slot (#6).** Settings → *Add barred slot* twice (two default Lunch rows) → Save: "Duplicate of barred slot 1." appears under slot 2, the dialog stays open and nothing is saved. Remove slot 2 → Save works.
+- [ ] **All priorities off (#10, #12, #13).** With the sample loaded, turn off H, M and L: the status line reads "0 events (8 hidden by filter) · 4 tasks · 1 conflict". Switch to **List**: "All events in this range are hidden by the priority filter" with **Show all**, which brings every event back. Scroll List: day headers stay above the conflict outlines. On a phone (or a 420 px wide window) List rows wrap instead of being cut off.
+- [ ] **Settings in both themes (G, #11).** Set the theme to Light, open Settings: four sections (Working time, Scheduling defaults, Barred slots, Data), barred slots as one-line rows with day chips, text readable, × closes the dialog. Repeat in Dark. Also check that × closes the event dialog and Keyboard shortcuts, and that an ER2 task (e.g. 45 min in a 12:30–14:30 window with Lunch) lists "Available: … — Lunch 13:00–14:00 is barred.".
 
 ## Milestones
 
@@ -203,6 +213,8 @@ Fourteen peer bug reports, each verified against `main` and the live build. One 
 - **m2** (2026-10-25) — Phase 2 Core types and data: frozen shared types/constants/result/errors, Zod schemas with `parseInput`, DST-safe local-time module, interval/sortedArray/minHeap, Memory + Dexie repositories (atomic), test helpers and brute-force oracles. 105 unit tests + 4 DST tests, 100% coverage of `src/`.
 
 ## Human-only steps
+
+- [ ] Push the peer bug fixes batch (`main`, branches `feat/wi-40-multi-tab` … `feat/wi-46-settings-redesign`), redeploy with `npx vercel --prod`, then run the smoke checklist under "Peer bug fixes (batch)" on the live site before answering the bug reports.
 
 - [x] Push WI-39 (`main` and `fix/wi-39-shortcut-race`), inspect the next CI run and deploy the shortcut fix; failed e2e jobs now upload Playwright traces and the HTML report.
 

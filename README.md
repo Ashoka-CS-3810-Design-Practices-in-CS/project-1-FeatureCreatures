@@ -106,18 +106,19 @@ The algorithms are the core of the project, so they are tested hardest:
 
 Continuous integration runs these checks on every change to `main`.
 
-**Latest results** (26 October 2026):
+**Latest results** (12 November 2026, after the peer bug fixes):
 
 | Check | Result |
 | --- | --- |
-| Unit, integration and UI tests | 582 passing |
+| Unit, integration and UI tests | 639 passing |
 | Randomised oracle tests | 5 properties × 10,000 random calendars each, all passing |
 | Daylight-saving tests (New York time zone) | 7 passing |
-| Browser tests (Chromium) | 18 passing; 360 of 360 runs passed when the suite was repeated 10 times on a warm and a cold start (no flaky tests) |
-| Code coverage | 98.60% of lines and 94.08% of branches overall; 99.70% / 95.93% for the algorithms |
-| Performance | Conflict detection plus a slot search on a 5,000-event calendar: median 4.2 ms (target: under 100 ms) |
+| Browser tests (Chromium) | 25 passing; 125 of 125 runs passed when the suite was repeated 5 times (no flaky tests) |
+| Code coverage | 98.78% of lines and 94.23% of branches overall; 99.68% / 95.93% for the algorithms |
+| Performance | Conflict detection plus a slot search on a 5,000-event calendar: median 1.3 ms (target: under 100 ms) |
 | Manual checks on the live site | All five demo scripts passed; colour contrast and screen-reader announcements checked |
 | Independent code audit | 10 findings re-checked, then fixed with tests or deferred with reasons ([AUDIT.md](docs/AUDIT.md)) |
+| Peer bug reports | 14 reports re-checked: 11 fixed with tests, 1 clarified, 1 by design, 1 invalid ([BUG_REPORTS.md](docs/BUG_REPORTS.md)) |
 
 **Reproduce the results.** Install dependencies with `npm ci`, then:
 
