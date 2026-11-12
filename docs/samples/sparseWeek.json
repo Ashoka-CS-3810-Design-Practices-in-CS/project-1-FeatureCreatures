@@ -1,13 +1,46 @@
 {
   "format": "feature-creatures-calendar",
-  "version": 1,
+  "version": 2,
   "exportedAt": "2026-11-02T00:00:00.000Z",
+  "categories": [
+    {
+      "id": "appointment",
+      "name": "Appointment",
+      "colour": "#a45c81",
+      "createdAt": 0
+    },
+    {
+      "id": "assignment",
+      "name": "Assignment",
+      "colour": "#7b7650",
+      "createdAt": 0
+    },
+    {
+      "id": "class",
+      "name": "Class",
+      "colour": "#9364a2",
+      "createdAt": 0
+    },
+    {
+      "id": "meeting",
+      "name": "Meeting",
+      "colour": "#467b70",
+      "createdAt": 0
+    },
+    {
+      "id": "personal",
+      "name": "Personal",
+      "colour": "#427e8c",
+      "createdAt": 0
+    }
+  ],
   "events": [
     {
       "id": "sparse-algorithms",
       "title": "Algorithms lecture",
       "description": "",
-      "category": "class",
+      "categoryId": "class",
+      "keptInBarred": [],
       "priority": "high",
       "start": 29893500,
       "end": 29893590,
@@ -21,7 +54,8 @@
       "id": "sparse-lecture",
       "title": "Lecture",
       "description": "",
-      "category": "class",
+      "categoryId": "class",
+      "keptInBarred": [],
       "priority": "high",
       "start": 29895000,
       "end": 29895090,
@@ -35,7 +69,8 @@
       "id": "sparse-meeting",
       "title": "Meeting",
       "description": "",
-      "category": "meeting",
+      "categoryId": "meeting",
+      "keptInBarred": [],
       "priority": "medium",
       "start": 29895060,
       "end": 29895120,
@@ -52,7 +87,8 @@
       "id": "sparse-lab",
       "title": "Lab",
       "description": "",
-      "category": "class",
+      "categoryId": "class",
+      "keptInBarred": [],
       "priority": "medium",
       "start": 29896380,
       "end": 29896440,
@@ -66,7 +102,8 @@
       "id": "sparse-study",
       "title": "Study",
       "description": "",
-      "category": "personal",
+      "categoryId": "personal",
+      "keptInBarred": [],
       "priority": "low",
       "start": 29896740,
       "end": 29896830,
@@ -83,7 +120,8 @@
       "id": "sparse-seminar",
       "title": "Seminar",
       "description": "",
-      "category": "class",
+      "categoryId": "class",
+      "keptInBarred": [],
       "priority": "high",
       "start": 29897880,
       "end": 29898000,
@@ -97,7 +135,8 @@
       "id": "sparse-office-hours",
       "title": "Office hours",
       "description": "",
-      "category": "appointment",
+      "categoryId": "appointment",
+      "keptInBarred": [],
       "priority": "low",
       "start": 29898120,
       "end": 29898180,
@@ -111,7 +150,8 @@
       "id": "sparse-tutorial",
       "title": "Tutorial",
       "description": "",
-      "category": "class",
+      "categoryId": "class",
+      "keptInBarred": [],
       "priority": "medium",
       "start": 29899290,
       "end": 29899350,
@@ -127,7 +167,7 @@
       "id": "sparse-report",
       "name": "Write report",
       "description": "",
-      "category": "assignment",
+      "categoryId": "assignment",
       "priority": "high",
       "durationMin": 90,
       "window": {
@@ -136,6 +176,7 @@
       },
       "useWorkingHours": true,
       "status": "unscheduled",
+      "doneAt": null,
       "scheduledEventId": null,
       "createdAt": 29892960,
       "updatedAt": 29892960
@@ -144,7 +185,7 @@
       "id": "sparse-chapter",
       "name": "Read chapter 4",
       "description": "",
-      "category": "assignment",
+      "categoryId": "assignment",
       "priority": "medium",
       "durationMin": 45,
       "window": {
@@ -153,6 +194,7 @@
       },
       "useWorkingHours": true,
       "status": "unscheduled",
+      "doneAt": null,
       "scheduledEventId": null,
       "createdAt": 29892960,
       "updatedAt": 29892960
@@ -161,7 +203,7 @@
       "id": "sparse-gym",
       "name": "Gym",
       "description": "",
-      "category": "personal",
+      "categoryId": "personal",
       "priority": "low",
       "durationMin": 60,
       "window": {
@@ -170,6 +212,7 @@
       },
       "useWorkingHours": true,
       "status": "unscheduled",
+      "doneAt": null,
       "scheduledEventId": null,
       "createdAt": 29892960,
       "updatedAt": 29892960
@@ -178,7 +221,7 @@
       "id": "sparse-thesis",
       "name": "Thesis draft",
       "description": "",
-      "category": "assignment",
+      "categoryId": "assignment",
       "priority": "medium",
       "durationMin": 600,
       "window": {
@@ -187,12 +230,14 @@
       },
       "useWorkingHours": true,
       "status": "unscheduled",
+      "doneAt": null,
       "scheduledEventId": null,
       "createdAt": 29892960,
       "updatedAt": 29892960
     }
   ],
   "settings": {
+    "useWorkingHours": true,
     "workDays": [
       1,
       2,

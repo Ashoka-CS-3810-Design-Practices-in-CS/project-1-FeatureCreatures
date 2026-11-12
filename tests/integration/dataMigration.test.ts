@@ -6,8 +6,10 @@ import { ConcurrentModificationError } from '@/data/repository';
 import { createEngine } from '@/engine';
 import { EXPORT_VERSION } from '@/shared/constants';
 import { parseExportFile } from '@/shared/schemas';
+import { migrateLegacyData } from '@/shared/legacy';
 import type { CalendarEvent, Settings, Task } from '@/shared/types';
 import { makeEngine } from '../helpers/engine';
+import { ev, task } from '../helpers/builders';
 import { BASE_MONDAY } from '../helpers/time';
 
 type LegacyEvent = Omit<CalendarEvent, 'category' | 'categoryId' | 'keptInBarred'> & {
@@ -96,6 +98,19 @@ function migratedRows(data: LegacyFixture) {
 }
 
 describe('T48: data model v3 and export v2 (D-17)', () => {
+  it('preserves absent legacy settings and gives each migration independent category records', () => {
+    const first = migrateLegacyData({ events: [], tasks: [], settings: null });
+    const second = migrateLegacyData({ events: [], tasks: [], settings: null });
+    expect(first).toEqual({
+      events: [],
+      tasks: [],
+      settings: null,
+      categories: EXPECTED_CATEGORIES,
+    });
+    expect(first.categories).toHaveLength(CATEGORY_ROWS.length);
+    expect(first.categories[0]).not.toBe(second.categories[0]);
+  });
+
   it('upgrades a populated v2 database without losing rows, overlaps, links or its revision', async () => {
     const name = 'round-2-v2-upgrade';
     const source = legacyData();
@@ -194,6 +209,83 @@ describe('T48: data model v3 and export v2 (D-17)', () => {
     expect(parseExportFile(JSON.stringify(invalid))).toMatchObject({
       ok: false,
       error: { code: 'InvalidImport', issues: [{ path: 'events.0.categoryId' }] },
+    });
+  });
+
+  it('rejects missing category references at the event/task command boundary without writing', async () => {
+    const { engine, repo } = await makeEngine({
+      events: [ev('E', 'Mon 09:00', 'Mon 10:00')],
+      tasks: [task('T', 60, ['Mon 09:00', 'Fri 18:00'])],
+    });
+    const before = await repo.load();
+    const invalidEvent = { ...ev('E', 'Mon 09:00', 'Mon 10:00'), categoryId: 'missing' };
+    const invalidTask = { ...task('T', 60, ['Mon 09:00', 'Fri 18:00']), categoryId: 'missing' };
+    const expected = {
+      ok: false,
+      error: {
+        code: 'InvalidInput',
+        issues: [{ path: 'categoryId', message: 'This category does not exist.' }],
+      },
+    };
+    expect(await engine.createEvent(invalidEvent)).toEqual(expected);
+    expect(await engine.updateEvent('E', invalidEvent)).toEqual(expected);
+    expect(await engine.createTask(invalidTask)).toEqual(expected);
+    expect(await engine.updateTask('T', invalidTask)).toEqual(expected);
+    expect(await repo.load()).toEqual(before);
+  });
+
+  it.each([
+    [
+      'duplicate ids',
+      [
+        { id: 'same', name: 'First', colour: '#467b70', createdAt: BASE_MONDAY },
+        { id: 'same', name: 'Second', colour: '#9364a2', createdAt: BASE_MONDAY },
+      ],
+      'categories',
+    ],
+    [
+      'case-insensitive names',
+      [
+        { id: 'first', name: 'Research', colour: '#467b70', createdAt: BASE_MONDAY },
+        { id: 'second', name: 'research', colour: '#9364a2', createdAt: BASE_MONDAY },
+      ],
+      'categories.1.name',
+    ],
+    [
+      'duplicate colours',
+      [
+        { id: 'first', name: 'First', colour: '#467b70', createdAt: BASE_MONDAY },
+        { id: 'second', name: 'Second', colour: '#467B70', createdAt: BASE_MONDAY },
+      ],
+      'categories.1.colour',
+    ],
+  ])('rejects v2 categories with %s', async (_label, categories, path) => {
+    const { engine } = await makeEngine();
+    const file = { ...JSON.parse(engine.exportData()), categories };
+    expect(parseExportFile(JSON.stringify(file))).toMatchObject({
+      ok: false,
+      error: { code: 'InvalidImport', issues: [{ path }] },
+    });
+  });
+
+  it('rejects a task with a missing category and a completion timestamp inconsistent with its status', async () => {
+    const { engine } = await makeEngine({ tasks: [task('T', 60, ['Mon 09:00', 'Fri 18:00'])] });
+    const file = JSON.parse(engine.exportData());
+    expect(
+      parseExportFile(
+        JSON.stringify({ ...file, tasks: [{ ...file.tasks[0], categoryId: 'missing' }] }),
+      ),
+    ).toMatchObject({
+      ok: false,
+      error: { code: 'InvalidImport', issues: [{ path: 'tasks.0.categoryId' }] },
+    });
+    expect(
+      parseExportFile(
+        JSON.stringify({ ...file, tasks: [{ ...file.tasks[0], doneAt: BASE_MONDAY }] }),
+      ),
+    ).toMatchObject({
+      ok: false,
+      error: { code: 'InvalidImport', issues: [{ path: 'tasks.0.doneAt' }] },
     });
   });
 });

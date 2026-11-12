@@ -2,7 +2,7 @@
 
 import { MemoryRepository } from '@/data/memoryRepository';
 import type { ChangeSet, Repository, StoredData } from '@/data/repository';
-import type { CalendarEvent, Settings, Task } from '@/shared/types';
+import type { CalendarEvent, Category, Settings, Task } from '@/shared/types';
 
 export class FailingRepository implements Repository {
   private readonly inner = new MemoryRepository();
@@ -50,7 +50,7 @@ export class FailingRepository implements Repository {
   // PRE:  as Repository.replaceAll
   // POST: behaves like MemoryRepository.replaceAll
   async replaceAll(
-    data: { events: CalendarEvent[]; tasks: Task[]; settings: Settings },
+    data: { events: CalendarEvent[]; tasks: Task[]; settings: Settings; categories: Category[] },
     expectedRevision: number,
   ): Promise<void> {
     await this.inner.replaceAll(data, expectedRevision);

@@ -1,3 +1,4 @@
+import { DEFAULT_CATEGORIES } from '@/shared/constants';
 import { MemoryRepository } from '@/data/memoryRepository';
 import type { Repository } from '@/data/repository';
 import { createEngine } from '@/engine';
@@ -16,7 +17,7 @@ function input(overrides: Partial<EventInput> = {}): EventInput {
   return {
     title: 'A',
     description: '',
-    category: 'meeting',
+    categoryId: 'meeting',
     priority: 'medium',
     start: t('Mon 10:00'),
     end: t('Mon 11:00'),
@@ -298,6 +299,7 @@ describe('init', () => {
     });
     const damaged = createEngine({
       repo: repoWith(async () => ({
+        categories: [...DEFAULT_CATEGORIES],
         events: [ev('A', 'Mon 11:00', 'Mon 10:00')],
         tasks: [],
         settings: null,
@@ -320,7 +322,13 @@ describe('init', () => {
   it('reports StorageError when saving the first-run settings fails', async () => {
     const engine = createEngine({
       repo: {
-        ...repoWith(async () => ({ events: [], tasks: [], settings: null, revision: 0 })),
+        ...repoWith(async () => ({
+          categories: [...DEFAULT_CATEGORIES],
+          events: [],
+          tasks: [],
+          settings: null,
+          revision: 0,
+        })),
         saveSettings: async () => {
           throw new Error('quota');
         },

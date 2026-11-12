@@ -292,14 +292,18 @@ export type Minute = number;                       // integer minutes since Unix
 export interface Interval { readonly start: Minute; readonly end: Minute } // half-open [start, end)
 
 export type Priority = 'high' | 'medium' | 'low';
-export type Category = 'meeting' | 'class' | 'appointment' | 'assignment' | 'personal';
+export type LegacyCategory = 'meeting' | 'class' | 'appointment' | 'assignment' | 'personal';
+export interface Category {
+  readonly id: string; readonly name: string; readonly colour: string; readonly createdAt: Minute;
+}
 export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;  // 0 = Sunday (JS Date convention)
 
 export interface CalendarEvent extends Interval {
   readonly id: string;
   readonly title: string;
   readonly description: string;
-  readonly category: Category;
+  readonly categoryId: string;
+  readonly keptInBarred: readonly string[];
   readonly priority: Priority;
   readonly flexible: boolean;
   readonly flexWindow: Interval | null;          // non-null iff flexible
@@ -312,12 +316,13 @@ export interface Task {
   readonly id: string;
   readonly name: string;
   readonly description: string;
-  readonly category: Category;
+  readonly categoryId: string;
   readonly priority: Priority;
   readonly durationMin: number;                  // 5..1440
   readonly window: Interval;                     // allowable scheduling window
   readonly useWorkingHours: boolean;
-  readonly status: 'unscheduled' | 'scheduled';
+  readonly status: 'unscheduled' | 'scheduled' | 'done';
+  readonly doneAt: Minute | null;
   readonly scheduledEventId: string | null;      // non-null iff status === 'scheduled'
   readonly createdAt: Minute;
   readonly updatedAt: Minute;
@@ -330,6 +335,7 @@ export interface BarredSlot {
 }
 
 export interface Settings {
+  readonly useWorkingHours: boolean;
   readonly workDays: readonly Weekday[];
   readonly workStartMin: number;   // minutes after local midnight
   readonly workEndMin: number;
@@ -339,9 +345,9 @@ export interface Settings {
 }
 
 export type EventInput = Pick<CalendarEvent,
-  'title' | 'description' | 'category' | 'priority' | 'start' | 'end' | 'flexible' | 'flexWindow'>;
+  'title' | 'description' | 'categoryId' | 'priority' | 'start' | 'end' | 'flexible' | 'flexWindow'>;
 export type TaskInput = Pick<Task,
-  'name' | 'description' | 'category' | 'priority' | 'durationMin' | 'window' | 'useWorkingHours'>;
+  'name' | 'description' | 'categoryId' | 'priority' | 'durationMin' | 'window' | 'useWorkingHours'>;
 
 // ---- derived (never stored) ----
 export interface Conflict {
@@ -452,6 +458,7 @@ export interface ReplanNotMoved {
 }
 
 export interface Snapshot {
+  readonly categories: readonly Category[];
   readonly version: number;
   readonly events: readonly CalendarEvent[];   // sorted by (start, end, id)
   readonly tasks: readonly Task[];             // creation order
@@ -473,7 +480,8 @@ export interface MutationResult {
 
 export interface ExportFile {
   readonly format: 'feature-creatures-calendar';
-  readonly version: 1;
+  readonly version: 2;
+  readonly categories: readonly Category[];
   readonly exportedAt: string;                 // ISO 8601
   readonly events: readonly CalendarEvent[];
   readonly tasks: readonly Task[];
@@ -515,7 +523,10 @@ export const HISTORY_LIMIT = 50;     // B1
 export const SNAP_MIN = 5;           // BR-5 notBefore rounding + UI snap
 export const MAX_REPLAN_DAYS = 14;   // BR-12
 export const EXPORT_FORMAT = 'feature-creatures-calendar'; // §9.4
-export const EXPORT_VERSION = 1;
+export const EXPORT_VERSION = 2;
+export const LEGACY_EXPORT_VERSION = 1;
+export const MAX_CATEGORY_NAME_LENGTH = 40;
+// DEFAULT_CATEGORIES seeds Meeting, Class, Appointment, Assignment and Personal with stable ids.
 export const REPLAN_DST_SLACK_MIN = 120; // a 14-day replan range may span DST changes
 export const CONFLICT_LIST_LIMIT = 50;
 export const TOAST_MS = 4000;          // success / info toasts
@@ -538,6 +549,7 @@ export const MAX_TASK_DURATION_MIN = MAX_EVENT_MIN;
 export const MAX_BUFFER_MIN = 120;
 export const PRIORITY_RANK: Record<Priority, number> = { high: 3, medium: 2, low: 1 };
 export const DEFAULT_SETTINGS: Settings = {
+  useWorkingHours: true,
   workDays: [1, 2, 3, 4, 5], workStartMin: 540, workEndMin: 1080,
   bufferMin: 0, barredSlots: [], defaultCriterion: 'earliest',
 };
@@ -562,14 +574,14 @@ const minute = z.number().int().superRefine((v, ctx) => {
 });
 const interval = z.object({ start: minute, end: minute });
 const priority = z.enum(['high', 'medium', 'low']);
-const category = z.enum(['meeting', 'class', 'appointment', 'assignment', 'personal']);
+const categoryId = z.string().min(1);
 const timeIssue = (ctx: z.RefinementCtx, path: (string | number)[], message: string) =>
   ctx.addIssue({ code: 'custom', path, message, params: { kind: 'time' } });
 
 export const eventInputSchema = z.object({
   title: z.string().trim().min(1, 'Title is required.').max(100),
   description: z.string().max(1000, 'Description can be at most 1000 characters.'),   // shown under the field (AUDIT A09)
-  category, priority,
+  categoryId, priority,
   start: minute, end: minute,
   flexible: z.boolean(),
   flexWindow: interval.nullable(),
@@ -588,7 +600,7 @@ export const eventInputSchema = z.object({
 export const taskInputSchema = z.object({
   name: z.string().trim().min(1, 'Name is required.').max(100),
   description: z.string().max(1000, 'Description can be at most 1000 characters.'),
-  category, priority,
+  categoryId, priority,
   durationMin: z.number({ message: 'Duration must be a number.' }).int()
     .min(5, 'Duration must be at least 5 minutes.').max(1440, 'Duration can be at most 24 hours.'),
   window: interval,
@@ -601,14 +613,17 @@ export const settingsSchema = z.object({ /* §3.2 of PROJECT_SCHEMA; workEndMin 
   barred endMin > startMin are time issues; workDays nonempty; bufferMin int 0..120 */ });
 
 export const exportFileSchema = z.object({
-  format: z.literal('feature-creatures-calendar'), version: z.literal(1), exportedAt: z.string(),
+  format: z.literal('feature-creatures-calendar'), version: z.literal(EXPORT_VERSION), exportedAt: z.string(),
+  categories: z.array(categorySchema),
   events: z.array(storedEventSchema), tasks: z.array(storedTaskSchema), settings: settingsSchema,
 }); // plus engine-side checks in importData (§7.4.6)
 ```
 
 `storedEventSchema` and `storedTaskSchema` extend the input schemas with `id`, `taskId`, `status`, `scheduledEventId`, `createdAt` and `updatedAt`.
 
-`storedDataSchema = {events: storedEvent[], tasks: storedTask[], settings: settings | null}` validates `Repository.load()` in `engine.init()` and `engine.reload()`; `storedRevisionSchema = {revision: int ≥ 0}` validates its revision (WI-40). `searchOptionsSchema = {bufferMin?: int 0–120}` validates the `bufferMin` override of `findSlots`, `suggestAlternatives` and `planReplan`; it shares one `bufferMinSchema` with `settingsSchema`. `slotSchema = {slot: interval}` (AUDIT A06) validates the slot of `scheduleTask` and `applyAlternative` through `requireValidSlot` in `search.ts`.
+WI-48 adds `keptInBarred` to stored events and `doneAt` to stored tasks. `categorySchema` validates `{id, name, colour, createdAt}`; hex colours normalise to lowercase. `parseCategorisedInput(schema, input, categories)` validates new/edited event and task inputs, including that `categoryId` exists. `linkIssues(events, tasks, categories)` additionally checks category identity/name/colour uniqueness and every reference on import/init/reload. `shared/legacy.ts` is the only enum-to-id mapping, shared by Dexie upgrades and v1 import.
+
+`storedDataSchema = {categories: Category[], events: storedEvent[], tasks: storedTask[], settings: storedSettings | null}` validates `Repository.load()` in `engine.init()` and `engine.reload()`; `storedRevisionSchema = {revision: int ≥ 0}` validates its revision (WI-40). `searchOptionsSchema = {bufferMin?: int 0–120}` validates the `bufferMin` override of `findSlots`, `suggestAlternatives` and `planReplan`; it shares one `bufferMinSchema` with `settingsSchema`. `slotSchema = {slot: interval}` (AUDIT A06) validates the slot of `scheduleTask` and `applyAlternative` through `requireValidSlot` in `search.ts`.
 
 - Zod 4 cannot `.extend()` a refined object, so each schema is a plain object shape plus a named refine function (`refineEventTiming`, `refineTaskWindow`), and the stored schemas extend the shape and re-apply the same refinements.
 - `storedTaskSchema` also checks `(status = 'scheduled') ⟺ (scheduledEventId ≠ null)` as a shape issue at `scheduledEventId`: "A task has an event id exactly when it is scheduled."
@@ -648,6 +663,7 @@ The facade validates every command with `parseInput`. `importData` uses `toField
 
 ```ts
 export interface EngineState {
+  readonly categories: readonly Category[];
   readonly version: number;
   readonly revision: number;                   // repository revision it was loaded from or last wrote (WI-40)
   readonly events: readonly CalendarEvent[];   // ALWAYS sorted by compareEvents (start, end, id)
@@ -694,7 +710,7 @@ It returns the new `{events, tasks}`.
 
 **`changedEventIds`** are the IDs of records whose image in that direction is non-null.
 
-`commit` resolves to `Result<CommitOutcome, EngineError>`, where `CommitOutcome = {state, label, changedEventIds, introducedConflicts, resolvedConflicts}`. The facade adds the `snapshot` and `suggestion` to make the `MutationResult`. **`createState({events, tasks, settings}, revision = INITIAL_REVISION)`** builds version 0 at `revision`: it sorts the events, detects their conflicts and starts with empty history. `engine.init()` and `engine.reload()` use it after `load()`, with the loaded revision.
+`commit` resolves to `Result<CommitOutcome, EngineError>`, where `CommitOutcome = {state, label, changedEventIds, introducedConflicts, resolvedConflicts}`. The facade adds the `snapshot` and `suggestion` to make the `MutationResult`. **`createState({categories, events, tasks, settings}, revision = INITIAL_REVISION)`** builds version 0 at `revision`: it sorts the events, detects their conflicts and starts with empty history. `engine.init()` and `engine.reload()` use it after `load()`, with the loaded revision.
 
 ### 7.2 Engine interface (`src/engine/facade.ts`) — frozen contract
 
@@ -817,7 +833,7 @@ Every mutation pipeline follows the same skeleton: validate → look up → buil
 
 #### 7.4.3 Task Scheduler (`pipelines/taskScheduler.ts`)
 
-- **`createTask(input)`** validates the input and creates `{...parsed, id, status: 'unscheduled', scheduledEventId: null, createdAt, updatedAt}`. The label is `Create task "<name>"`.
+- **`createTask(input)`** validates the input and creates `{...parsed, id, status: 'unscheduled', doneAt: null, scheduledEventId: null, createdAt, updatedAt}`. The label is `Create task "<name>"`.
 - **`updateTask(id, input)`** validates the input and updates the task.
   - If the task is scheduled, mirror the change into the linked event: `title = name`, `priority`, `end = event.start + durationMin` (the start is kept) and `flexWindow = window`. Both records go in one `Change`.
   - The mirrored event is validated with `eventInputSchema`, so a window shorter than the task gives `InvalidTime` at `flexWindow` and nothing changes.
@@ -833,7 +849,7 @@ Every mutation pipeline follows the same skeleton: validate → look up → buil
   2. Return `search({durationMin: task.durationMin, priority: task.priority, window: task.window, useWorkingHours: task.useWorkingHours, excludeIds: [], originalStart: null, criterion: criterion ?? settings.defaultCriterion, bufferMin: bufferMin ?? settings.bufferMin, subject: {kind: 'task', taskId, name}})`.
 - **`scheduleTask({taskId, slot, baseVersion})`**
   1. Check the version (ER7), look up the task (it must be unscheduled, else the `status` issue of `findSlots`), check that `slot.start ≥ notBeforeFor(now)` with `requireNotPast` or return `StaleResult` (AUDIT A07; also in `applyAlternative`), and check the slot with `requireValidSlot` (shared with `applyAlternative`): its ends must pass `slotSchema` (supported integer Minutes, issues at `slot.start` / `slot.end`, AUDIT A06), and `slot.end − slot.start === durationMin`, or return `InvalidTime` with the issue `{path: 'slot', message: 'The slot must be exactly as long as the duration.'}`. Whether the slot is still free is guaranteed by the version check against the search it came from (ER7).
-  2. Build `event = {id: newId(), title: name, description, category, priority, start, end, flexible: true, flexWindow: task.window, taskId, createdAt, updatedAt}`.
+  2. Build `event = {id: newId(), title: name, description, categoryId, priority, keptInBarred: [], start, end, flexible: true, flexWindow: task.window, taskId, createdAt, updatedAt}`.
   3. Update the task with `{status: 'scheduled', scheduledEventId: event.id}`.
   4. Put both in one `Change` with the label `Schedule "<name>"`.
 
@@ -878,14 +894,15 @@ There is no history entry, and the conflicts are unchanged.
 **`importData(json)`**
 
 1. Parse the JSON. A failure gives `InvalidImport [{path: '', message: 'Not valid JSON.'}]`.
-2. Run `exportFileSchema.safeParse`. Any issue gives `InvalidImport`, and **all** issues are kept.
+2. Validate the discriminated v1/v2 import schema; v1 records are mapped to v3 before cross-record checks. Any issue gives `InvalidImport`, and **all** issues are kept.
 3. Run the cross-record checks. Each one gives `InvalidImport`:
    - unique event IDs
    - unique task IDs
+   - unique category IDs, case-insensitive names and colours; every event/task categoryId exists
    - every scheduled task's `scheduledEventId` exists and points back with `taskId`
    - that event mirrors the task (BR-9, AUDIT A04): it is flexible, `title = name`, the same priority, `end − start = durationMin`, `flexWindow = window` (description and category may differ); path `tasks.N.scheduledEventId`
    - every event `taskId` points to a scheduled task
-   - these checks are `linkIssues(events, tasks)` in `schemas.ts`; `parseExportFile(json)` runs steps 1–3, and `engine.init()` runs `linkIssues` on stored data too
+   - these checks are `linkIssues(events, tasks, categories)` in `schemas.ts`; `parseExportFile(json)` runs steps 1–3, and `engine.init()` runs `linkIssues` on stored data too
 4. Then:
    1. `await repo.replaceAll(data)`
    2. sort the events
@@ -1294,7 +1311,7 @@ invalidReason(e, win, segs, occupied, b, frames):   // first failing check, in t
 ### 9.1 Repository interface — frozen contract
 
 ```ts
-export interface StoredData { events: CalendarEvent[]; tasks: Task[]; settings: Settings | null; revision: number }
+export interface StoredData { categories: Category[]; events: CalendarEvent[]; tasks: Task[]; settings: Settings | null; revision: number }
 export interface ChangeSet {
   putEvents: CalendarEvent[]; deleteEventIds: string[];
   putTasks: Task[];           deleteTaskIds: string[];
@@ -1303,7 +1320,7 @@ export interface Repository {
   load(): Promise<StoredData>;
   apply(changes: ChangeSet, expectedRevision: number): Promise<void>;          // MUST be atomic (all or nothing)
   saveSettings(settings: Settings, expectedRevision: number): Promise<void>;
-  replaceAll(data: { events: CalendarEvent[]; tasks: Task[]; settings: Settings }, expectedRevision: number): Promise<void>; // atomic
+  replaceAll(data: { categories: Category[]; events: CalendarEvent[]; tasks: Task[]; settings: Settings }, expectedRevision: number): Promise<void>; // atomic
 }
 export class ConcurrentModificationError extends Error { … }
 export function requireRevision(storedRevision: number, expectedRevision: number): void; // throws ConcurrentModificationError
@@ -1319,6 +1336,7 @@ export function requireRevision(storedRevision: number, expectedRevision: number
 
 ```ts
 class CalendarDb extends Dexie {
+  categories!: Table<Category, string>;
   events!: Table<CalendarEvent, string>;
   tasks!: Table<Task, string>;
   settings!: Table<{ key: 'app'; value: Settings }, string>;
@@ -1327,6 +1345,7 @@ class CalendarDb extends Dexie {
     this.version(1).stores({ events: 'id, start, taskId', tasks: 'id, status', settings: 'key' });
     this.version(2).stores({ meta: 'key' })                     // WI-40: { key: 'revision', value }
       .upgrade((tx) => tx.table('meta').put({ key: 'revision', value: INITIAL_REVISION }));
+    this.version(3).stores({ categories: 'id' }).upgrade(/* validated legacy mapping; revision kept */);
   }
 }
 // apply(): db.transaction('rw', db.events, db.tasks, async () => { bulkDelete…; bulkPut… })
@@ -1350,6 +1369,10 @@ It is used for:
 ### 9.4 Export file
 
 The export file is the `ExportFile` type in §5. It is pretty-printed JSON. The file name is `calendar-export-YYYY-MM-DD.json`.
+
+WI-48 / D-17: export format version 2 contains categories. Import accepts v1 via `legacyExportSchema` and v2 via `exportFileSchema`, discriminated by version. `shared/legacy.ts` holds typed pure mappings after `legacyStoredDataSchema` validation. V1 enum ids map to the same stable seed ids; missing fields get the new defaults. The v3 Dexie upgrade bulk-writes mapped records and seeded categories in its upgrade transaction without touching the meta revision; fresh databases populate categories too. MemoryRepository seeds the same independent records. `replaceAll` atomically replaces categories with events/tasks/settings, including rollback and revision checking.
+
+`storedSettingsSchema` validates individual slots and working-time bounds while preserving legacy overlaps/duplicates. The new-settings and v2-import schemas still apply the current duplicate rule; v1 imports use the legacy settings schema. `storedTaskSchema` requires `doneAt != null` exactly for `done`, and the existing event-link check still requires an event id exactly for `scheduled`.
 
 The UI downloads it via `Blob` + `URL.createObjectURL`. It reads imports via `<input type="file" accept="application/json">` and `file.text()`.
 
@@ -1540,7 +1563,7 @@ FullCalendar is a **controlled, render-only view**. Its `events` prop is always 
 {
   id, title, start: fromMinute(start), end: fromMinute(end),
   classNames: ['ev', `prio-${p}`, conflicted && 'is-conflict', emphasised && 'is-emphasised'],
-  extendedProps: { priority, category, flexible, isTask: taskId !== null, conflictMinutes },
+  extendedProps: { priority, categoryId, flexible, isTask: taskId !== null, conflictMinutes },
 }
 ```
 
@@ -1899,3 +1922,4 @@ Production URL: https://…vercel.app
 | 2026-11-12 | v1.35 (WI-46): §11.2 the Settings dialog markup (headed sections, compact barred rows, day chips, `.visually-hidden`); `global.css` Settings block; `playwright.screenshots.config.ts` gets its own Chrome project so captures use the screenshot server (fix found here); new settings screenshots. |
 | 2026-11-12 | v1.36: §14 plans Round 2 WI-47–59 from `extras/AUDIT_2.md` §7, in order, with the full branch/main gate and final baseline comparison. Behaviour and frozen contracts change in their implementing WIs. |
 | 2026-11-12 | v1.37 (WI-47, D-18): §0/§2/§14 and references use `docs/progress/PROGRESS.md` and `docs/extras/`; main specs, samples and screenshots stay in place. All local links and references checked, full Round 2 gate required before and after merge. |
+| 2026-11-12 | v1.38 (WI-48, D-17): frozen §5 types/constants gain Category, `categoryId`, kept ids, done/doneAt, global working-time switch and export v2. §6 legacy/stored/category schemas and category-reference validation; §7 state/snapshot/import/export carry categories; §9 repositories load/replace categories atomically and Dexie v3 migrates without editing v1/v2 or changing the revision. T48 retains v1 compatibility and six samples are v2. |

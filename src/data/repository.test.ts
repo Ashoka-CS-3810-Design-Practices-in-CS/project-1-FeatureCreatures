@@ -1,3 +1,4 @@
+import { DEFAULT_CATEGORIES } from '@/shared/constants';
 // fake-indexeddb must be installed before Dexie is first imported.
 import 'fake-indexeddb/auto';
 import { DEFAULT_SETTINGS } from '@/shared/constants';
@@ -13,13 +14,14 @@ function event(id: string, start: number, end: number): CalendarEvent {
     id,
     title: id,
     description: '',
-    category: 'meeting',
+    categoryId: 'meeting',
     priority: 'medium',
     start,
     end,
     flexible: false,
     flexWindow: null,
     taskId: null,
+    keptInBarred: [],
     createdAt: 0,
     updatedAt: 0,
   };
@@ -32,12 +34,13 @@ function task(id: string): Task {
     id,
     name: id,
     description: '',
-    category: 'assignment',
+    categoryId: 'assignment',
     priority: 'medium',
     durationMin: 60,
     window: { start: 0, end: 600 },
     useWorkingHours: true,
     status: 'unscheduled',
+    doneAt: null,
     scheduledEventId: null,
     createdAt: 0,
     updatedAt: 0,
@@ -60,6 +63,7 @@ function compareById(first: { id: string }, second: { id: string }): number {
 // POST: returns data with events and tasks sorted by id, so adapters with different row orders compare equal
 function byId(data: StoredData): StoredData {
   return {
+    categories: data.categories.toSorted(compareById),
     events: data.events.toSorted(compareById),
     tasks: data.tasks.toSorted(compareById),
     settings: data.settings,
@@ -92,7 +96,13 @@ describe.each(adapters)('%s (Repository contract)', (_name, openRepository) => {
   it('starts empty, with no settings', async () => {
     const repository = await openRepository();
 
-    expect(await repository.load()).toEqual({ events: [], tasks: [], settings: null, revision: 0 });
+    expect(await repository.load()).toEqual({
+      categories: [...DEFAULT_CATEGORIES],
+      events: [],
+      tasks: [],
+      settings: null,
+      revision: 0,
+    });
   });
 
   it('round-trips puts, updates and deletes from apply', async () => {
@@ -105,6 +115,7 @@ describe.each(adapters)('%s (Repository contract)', (_name, openRepository) => {
     await repository.apply(changeSet({ putEvents: [movedA], deleteEventIds: ['b'] }), 1);
 
     expect(byId(await repository.load())).toEqual({
+      categories: [...DEFAULT_CATEGORIES],
       events: [movedA],
       tasks: [task('t')],
       settings: null,
@@ -131,9 +142,18 @@ describe.each(adapters)('%s (Repository contract)', (_name, openRepository) => {
     const repository = await openRepository();
     await repository.apply(changeSet({ putEvents: [lectureA], putTasks: [task('old')] }), 0);
     await repository.saveSettings(DEFAULT_SETTINGS, 1);
-    await repository.replaceAll({ events: [meetingB], tasks: [task('new')], settings: lunch }, 2);
+    await repository.replaceAll(
+      {
+        categories: [...DEFAULT_CATEGORIES],
+        events: [meetingB],
+        tasks: [task('new')],
+        settings: lunch,
+      },
+      2,
+    );
 
     expect(byId(await repository.load())).toEqual({
+      categories: [...DEFAULT_CATEGORIES],
       events: [meetingB],
       tasks: [task('new')],
       settings: lunch,
@@ -172,9 +192,18 @@ describe('DexieRepository (IndexedDB specifics)', () => {
     await repository.apply(changeSet({ putEvents: [event('a', 0, 60)] }), 0);
 
     await expect(
-      repository.replaceAll({ events: [keyless], tasks: [], settings: DEFAULT_SETTINGS }, 1),
+      repository.replaceAll(
+        {
+          categories: [...DEFAULT_CATEGORIES],
+          events: [keyless],
+          tasks: [],
+          settings: DEFAULT_SETTINGS,
+        },
+        1,
+      ),
     ).rejects.toThrow();
     expect(await repository.load()).toEqual({
+      categories: [...DEFAULT_CATEGORIES],
       events: [event('a', 0, 60)],
       tasks: [],
       settings: null,
@@ -191,6 +220,7 @@ describe('DexieRepository (IndexedDB specifics)', () => {
     const reopened = await DexieRepository.open(name);
 
     expect(await reopened.load()).toEqual({
+      categories: [...DEFAULT_CATEGORIES],
       events: [event('a', 0, 60)],
       tasks: [],
       settings: DEFAULT_SETTINGS,

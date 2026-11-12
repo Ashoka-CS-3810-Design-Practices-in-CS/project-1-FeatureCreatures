@@ -1,5 +1,6 @@
 import {
   DEFAULT_SETTINGS,
+  DEFAULT_CATEGORIES,
   MAX_DESCRIPTION_LENGTH,
   MAX_SUPPORTED_MINUTE,
   MIN_SUPPORTED_MINUTE,
@@ -35,7 +36,7 @@ function at(hour: number): number {
 const validEvent: EventInput = {
   title: 'Lecture',
   description: '',
-  category: 'class',
+  categoryId: 'class',
   priority: 'high',
   start: at(10),
   end: at(11),
@@ -46,7 +47,7 @@ const validEvent: EventInput = {
 const validTask: TaskInput = {
   name: 'Write report',
   description: '',
-  category: 'assignment',
+  categoryId: 'assignment',
   priority: 'high',
   durationMin: 90,
   window: { start: at(9), end: at(18) },
@@ -351,6 +352,7 @@ describe('stored schemas', () => {
     ...validEvent,
     id: 'e1',
     taskId: null,
+    keptInBarred: [],
     createdAt: MON_MIDNIGHT,
     updatedAt: MON_MIDNIGHT,
   };
@@ -358,6 +360,7 @@ describe('stored schemas', () => {
     ...validTask,
     id: 't1',
     status: 'scheduled',
+    doneAt: null,
     scheduledEventId: 'e1',
     createdAt: MON_MIDNIGHT,
     updatedAt: MON_MIDNIGHT,
@@ -397,7 +400,8 @@ describe('stored schemas', () => {
   it('exportFileSchema prefixes nested issue paths with the array index (T25 path format)', () => {
     const file = {
       format: 'feature-creatures-calendar',
-      version: 1,
+      version: 2,
+      categories: DEFAULT_CATEGORIES,
       exportedAt: '2026-11-02T00:00:00.000Z',
       events: [storedEvent, { ...storedEvent, id: 'e2', end: at(9) }],
       tasks: [],
@@ -448,11 +452,23 @@ describe('searchOptionsSchema', () => {
 
 describe('storedDataSchema', () => {
   it('accepts empty first-run data with null settings', () => {
-    expect(parseInput(storedDataSchema, { events: [], tasks: [], settings: null }).ok).toBe(true);
+    expect(
+      parseInput(storedDataSchema, {
+        categories: DEFAULT_CATEGORIES,
+        events: [],
+        tasks: [],
+        settings: null,
+      }).ok,
+    ).toBe(true);
   });
 
   it('rejects a damaged event row with its path', () => {
-    const result = storedDataSchema.safeParse({ events: [{ id: 'x' }], tasks: [], settings: null });
+    const result = storedDataSchema.safeParse({
+      categories: DEFAULT_CATEGORIES,
+      events: [{ id: 'x' }],
+      tasks: [],
+      settings: null,
+    });
 
     expect(result.error?.issues.map((issue) => issue.path.join('.'))).toContain('events.0.title');
   });

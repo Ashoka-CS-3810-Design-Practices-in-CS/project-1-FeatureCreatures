@@ -2,6 +2,8 @@
 
 These importable files use the test week beginning **Monday 2 November 2026**, in UTC. When importing in another time zone, the displayed wall-clock times follow that time zone. The app's **Load sample calendar** control instead builds samples for the current local week.
 
+All six files use export format **version 2**, including the five default categories and the v3 data fields. The app also imports older v1 exports; a retained original fixture lives in `tests/fixtures/export-v1.json`.
+
 | File | Events | Tasks | Purpose |
 | --- | ---: | ---: | --- |
 | [sparseWeek.json](sparseWeek.json) | 8 | 4 | One conflict, flexible events, lunch and scheduling tasks |

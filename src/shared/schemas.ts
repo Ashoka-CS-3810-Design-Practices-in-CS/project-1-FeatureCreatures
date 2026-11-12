@@ -5,6 +5,8 @@ import { z } from 'zod';
 import {
   EXPORT_FORMAT,
   EXPORT_VERSION,
+  LEGACY_EXPORT_VERSION,
+  MAX_CATEGORY_NAME_LENGTH,
   MAX_BARRED_LABEL_LENGTH,
   MAX_BUFFER_MIN,
   MAX_DESCRIPTION_LENGTH,
@@ -18,7 +20,17 @@ import {
 } from './constants';
 import type { EngineError, FieldIssue } from './errors';
 import { err, ok, type Result } from './result';
-import type { BarredSlot, CalendarEvent, EventInput, ExportFile, Interval, Task } from './types';
+import { migrateLegacyData } from './legacy';
+import type {
+  BarredSlot,
+  CalendarEvent,
+  Category,
+  EventInput,
+  ExportFile,
+  Interval,
+  Settings,
+  Task,
+} from './types';
 
 // Tags ordering issues so they map to InvalidTime rather than InvalidInput.
 const TIME_ISSUE_KIND = 'time';
@@ -37,7 +49,7 @@ const minute = z
   });
 const interval = z.object({ start: minute, end: minute });
 const priority = z.enum(['high', 'medium', 'low']);
-const category = z.enum(['meeting', 'class', 'appointment', 'assignment', 'personal']);
+const legacyCategory = z.enum(['meeting', 'class', 'appointment', 'assignment', 'personal']);
 const weekday = z.literal([0, 1, 2, 3, 4, 5, 6]);
 const entityId = z.string().min(1);
 const description = z
@@ -91,7 +103,7 @@ function refineTaskWindow(value: { window: Interval }, ctx: z.RefinementCtx): vo
 // POST: ctx holds a shape issue at scheduledEventId unless
 //       (status = 'scheduled') ⟺ (scheduledEventId ≠ null)
 function refineScheduledLink(
-  value: { status: 'unscheduled' | 'scheduled'; scheduledEventId: string | null },
+  value: { status: Task['status']; scheduledEventId: string | null },
   ctx: z.RefinementCtx,
 ): void {
   if ((value.status === 'scheduled') !== (value.scheduledEventId !== null)) {
@@ -108,7 +120,7 @@ function refineScheduledLink(
 const eventInputShape = z.object({
   title: z.string().trim().min(1, 'Title is required.').max(MAX_TITLE_LENGTH),
   description,
-  category,
+  categoryId: entityId,
   priority,
   start: minute,
   end: minute,
@@ -119,7 +131,7 @@ const eventInputShape = z.object({
 const taskInputShape = z.object({
   name: z.string().trim().min(1, 'Name is required.').max(MAX_TITLE_LENGTH),
   description,
-  category,
+  categoryId: entityId,
   priority,
   durationMin: z
     .number({ message: 'Duration must be a number.' })
@@ -137,18 +149,33 @@ export const eventInputSchema = eventInputShape.superRefine(refineEventTiming);
 export const taskInputSchema = taskInputShape.superRefine(refineTaskWindow);
 
 export const storedEventSchema = eventInputShape
-  .extend({ id: entityId, taskId: entityId.nullable(), ...entityTimestamps })
+  .extend({
+    id: entityId,
+    taskId: entityId.nullable(),
+    keptInBarred: z.array(entityId),
+    ...entityTimestamps,
+  })
   .superRefine(refineEventTiming);
 
 export const storedTaskSchema = taskInputShape
   .extend({
     id: entityId,
-    status: z.enum(['unscheduled', 'scheduled']),
+    status: z.enum(['unscheduled', 'scheduled', 'done']),
+    doneAt: minute.nullable(),
     scheduledEventId: entityId.nullable(),
     ...entityTimestamps,
   })
   .superRefine(refineTaskWindow)
-  .superRefine(refineScheduledLink);
+  .superRefine(refineScheduledLink)
+  .superRefine((task, ctx) => {
+    if ((task.status === 'done') !== (task.doneAt !== null)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['doneAt'],
+        message: 'A task has a completion time exactly when it is done.',
+      });
+    }
+  });
 
 // Start-of-range values stop one minute before midnight; end values may be midnight itself.
 const minuteOfDayStart = z
@@ -226,27 +253,78 @@ function refineDistinctBarredSlots(
   // POST: every repeated slot has its issue, naming the first slot it repeats
 }
 
-export const settingsSchema = z
-  .object({
-    workDays: z.array(weekday).min(1, 'Pick at least one working day.'),
-    workStartMin: minuteOfDayStart,
-    workEndMin: minuteOfDayEnd,
-    bufferMin: bufferMinSchema,
-    barredSlots: z.array(barredSlotSchema),
-    defaultCriterion: z.enum(['earliest', 'bestFit', 'priorityAware']),
+const settingsShape = z.object({
+  useWorkingHours: z.boolean(),
+  workDays: z.array(weekday).min(1, 'Pick at least one working day.'),
+  workStartMin: minuteOfDayStart,
+  workEndMin: minuteOfDayEnd,
+  bufferMin: bufferMinSchema,
+  barredSlots: z.array(barredSlotSchema),
+  defaultCriterion: z.enum(['earliest', 'bestFit', 'priorityAware']),
+});
+
+// PRE:  settings has integer working-time boundaries; ctx belongs to its enclosing schema
+// POST: adds a time issue iff working hours end no later than they start
+function refineWorkingTime(
+  settings: Pick<Settings, 'workStartMin' | 'workEndMin'>,
+  ctx: z.RefinementCtx,
+): void {
+  if (settings.workEndMin <= settings.workStartMin) {
+    addTimeIssue(ctx, ['workEndMin'], 'Working hours must end after they start.');
+  }
+}
+
+// Legacy overlaps remain readable; new settings edits still enforce the current slot rules.
+export const storedSettingsSchema = settingsShape.superRefine(refineWorkingTime);
+export const settingsSchema = storedSettingsSchema.superRefine((settings, ctx) => {
+  refineDistinctBarredSlots(settings.barredSlots, ctx);
+});
+
+export const categorySchema = z.object({
+  id: entityId,
+  name: z.string().trim().min(1, 'Category name is required.').max(MAX_CATEGORY_NAME_LENGTH),
+  colour: z
+    .string()
+    .regex(/^#[\da-f]{6}$/i, 'Choose a hex colour.')
+    .transform((colour) => colour.toLowerCase()),
+  createdAt: minute,
+});
+
+const legacyEventSchema = eventInputShape
+  .omit({ categoryId: true })
+  .extend({
+    category: legacyCategory,
+    id: entityId,
+    taskId: entityId.nullable(),
+    ...entityTimestamps,
   })
-  .superRefine((settings, ctx) => {
-    if (settings.workEndMin <= settings.workStartMin) {
-      addTimeIssue(ctx, ['workEndMin'], 'Working hours must end after they start.');
-    }
-    refineDistinctBarredSlots(settings.barredSlots, ctx);
-  });
+  .superRefine(refineEventTiming);
+const legacyTaskSchema = taskInputShape
+  .omit({ categoryId: true })
+  .extend({
+    category: legacyCategory,
+    id: entityId,
+    status: z.enum(['unscheduled', 'scheduled']),
+    scheduledEventId: entityId.nullable(),
+    ...entityTimestamps,
+  })
+  .superRefine(refineTaskWindow)
+  .superRefine(refineScheduledLink);
+const legacySettingsSchema = settingsShape
+  .omit({ useWorkingHours: true })
+  .superRefine(refineWorkingTime);
+export const legacyStoredDataSchema = z.object({
+  events: z.array(legacyEventSchema),
+  tasks: z.array(legacyTaskSchema),
+  settings: legacySettingsSchema.nullable(),
+});
 
 // What engine.init() accepts from Repository.load(); settings are null on first run.
 export const storedDataSchema = z.object({
+  categories: z.array(categorySchema),
   events: z.array(storedEventSchema),
   tasks: z.array(storedTaskSchema),
-  settings: settingsSchema.nullable(),
+  settings: storedSettingsSchema.nullable(),
 });
 
 // The revision that comes with Repository.load() (WI-40); other keys are checked above.
@@ -256,10 +334,27 @@ export const exportFileSchema = z.object({
   format: z.literal(EXPORT_FORMAT),
   version: z.literal(EXPORT_VERSION),
   exportedAt: z.string(),
+  categories: z.array(categorySchema),
   events: z.array(storedEventSchema),
   tasks: z.array(storedTaskSchema),
   settings: settingsSchema,
 }); // plus engine-side checks in importData (§7.4.6)
+
+const legacyExportSchema = legacyStoredDataSchema
+  .extend({
+    format: z.literal(EXPORT_FORMAT),
+    version: z.literal(LEGACY_EXPORT_VERSION),
+    exportedAt: z.string(),
+    settings: legacySettingsSchema,
+  })
+  .transform((file): ExportFile => ({
+    ...file,
+    ...migrateLegacyData(file),
+    version: EXPORT_VERSION,
+    settings: { ...file.settings, useWorkingHours: true },
+  }));
+
+const importFileSchema = z.discriminatedUnion('version', [exportFileSchema, legacyExportSchema]);
 
 // PRE:  zodError was produced by one of this module's schemas
 // POST: returns one FieldIssue per issue of zodError, in order; each path joins its segments
@@ -312,7 +407,7 @@ function duplicateIdIssues(records: readonly { id: string }[], path: string): Fi
 
 // PRE:  task is scheduled as event, which points back to it
 // POST: returns true iff event mirrors task as BR-9 requires: flexible, title = name, the same
-//       priority, end − start = durationMin and flexWindow = window (description and category are
+//       priority, end − start = durationMin and flexWindow = window (description and categoryId are
 //       only copied when scheduling, so they may differ)
 function mirrorsTask(event: CalendarEvent, task: Task): boolean {
   return (
@@ -326,14 +421,48 @@ function mirrorsTask(event: CalendarEvent, task: Task): boolean {
   );
 }
 
-// PRE:  events and tasks are shape-valid stored records (storedEventSchema, storedTaskSchema)
+// PRE:  events, tasks and categories passed their stored schemas; hex colours are normalised
 // POST: returns the cross-record issues (TECH_SPEC §7.4.6), empty when the data is consistent:
 //       duplicate event ids ('events'), duplicate task ids ('tasks'), a scheduled task whose event
 //       is missing, does not point back or does not mirror it (BR-9, AUDIT A04)
 //       ('tasks.N.scheduledEventId'), and an event whose taskId does not name a task scheduled as
-//       that event ('events.N.taskId')
-export function linkIssues(events: readonly CalendarEvent[], tasks: readonly Task[]): FieldIssue[] {
-  const issues = [...duplicateIdIssues(events, 'events'), ...duplicateIdIssues(tasks, 'tasks')];
+//       that event ('events.N.taskId'); duplicate categories/names/colours and absent category ids
+export function linkIssues(
+  events: readonly CalendarEvent[],
+  tasks: readonly Task[],
+  categories: readonly Category[],
+): FieldIssue[] {
+  const issues = [
+    ...duplicateIdIssues(events, 'events'),
+    ...duplicateIdIssues(tasks, 'tasks'),
+    ...duplicateIdIssues(categories, 'categories'),
+  ];
+  const categoryIds = new Set(categories.map((category) => category.id));
+  const categoryNames = new Set<string>();
+  const categoryColours = new Set<string>();
+  // INVARIANT: index ranges over categories; sets hold each earlier name/colour and issues names every earlier repeat.
+  for (const [index, category] of categories.entries()) {
+    const name = category.name.toLowerCase();
+    if (categoryNames.has(name)) {
+      issues.push({
+        path: `categories.${index}.name`,
+        message: 'Category names must be unique ignoring case.',
+      });
+    }
+    if (categoryColours.has(category.colour)) {
+      issues.push({
+        path: `categories.${index}.colour`,
+        message: 'Category colours must be unique.',
+      });
+    }
+    categoryNames.add(name);
+    categoryColours.add(category.colour);
+  }
+  // POST: duplicate category names and colours have issues.
+  issues.push(
+    ...categoryReferenceIssues(events, categoryIds, 'events'),
+    ...categoryReferenceIssues(tasks, categoryIds, 'tasks'),
+  );
   const eventsById = new Map(events.map((event) => [event.id, event]));
   const tasksById = new Map(tasks.map((task) => [task.id, task]));
 
@@ -371,6 +500,39 @@ export function linkIssues(events: readonly CalendarEvent[], tasks: readonly Tas
   return issues;
 }
 
+// PRE:  records are shape-valid entities and categoryIds contains the available category ids
+// POST: returns a categoryId issue for every entity whose category is absent
+function categoryReferenceIssues(
+  records: readonly { categoryId: string }[],
+  categoryIds: ReadonlySet<string>,
+  path: string,
+): FieldIssue[] {
+  return records.flatMap((record, index) =>
+    categoryIds.has(record.categoryId)
+      ? []
+      : [{ path: `${path}.${index}.categoryId`, message: 'This category does not exist.' }],
+  );
+}
+
+// PRE:  schema validates a category-bearing input; categories are the current stored categories
+// POST: validates input and its category reference, returning InvalidInput for an absent category
+export function parseCategorisedInput<Output extends { categoryId: string }>(
+  schema: z.ZodType<Output>,
+  input: unknown,
+  categories: readonly Category[],
+): Result<Output> {
+  const parsed = parseInput(schema, input);
+  if (!parsed.ok) {
+    return parsed;
+  }
+  return categories.some((category) => category.id === parsed.value.categoryId)
+    ? parsed
+    : err({
+        code: 'InvalidInput',
+        issues: [{ path: 'categoryId', message: 'This category does not exist.' }],
+      });
+}
+
 // PRE:  json is untrusted text (a file the user picked)
 // POST: returns the ExportFile it holds; err InvalidImport with path '' for text that is not JSON,
 //       with every schema issue when the shape is wrong, or with the linkIssues otherwise (ER6)
@@ -381,10 +543,10 @@ export function parseExportFile(json: string): Result<ExportFile> {
   } catch {
     return err({ code: 'InvalidImport', issues: [{ path: '', message: 'Not valid JSON.' }] });
   }
-  const parsed = exportFileSchema.safeParse(raw);
+  const parsed = importFileSchema.safeParse(raw);
   if (!parsed.success) {
     return err({ code: 'InvalidImport', issues: toFieldIssues(parsed.error) });
   }
-  const issues = linkIssues(parsed.data.events, parsed.data.tasks);
+  const issues = linkIssues(parsed.data.events, parsed.data.tasks, parsed.data.categories);
   return issues.length === 0 ? ok(parsed.data) : err({ code: 'InvalidImport', issues });
 }

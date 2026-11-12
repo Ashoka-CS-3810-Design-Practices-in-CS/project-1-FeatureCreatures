@@ -74,7 +74,7 @@ describe('another tab changed the data', () => {
     await storeB.getState().actions.createEvent({
       title: 'Read',
       description: '',
-      category: 'personal',
+      categoryId: 'personal',
       priority: 'low',
       start: t('Wed 09:00'),
       end: t('Wed 10:00'),

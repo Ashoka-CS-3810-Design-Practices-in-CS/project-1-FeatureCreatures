@@ -2,7 +2,7 @@ import { useId } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { MINUTES_PER_HOUR } from '@/shared/constants';
 import { ceilTo } from '@/shared/time';
-import type { CalendarEvent, Category, Interval } from '@/shared/types';
+import type { CalendarEvent, Interval } from '@/shared/types';
 import {
   eventFormValues,
   eventResolver,
@@ -17,7 +17,7 @@ import { PriorityRadioGroup } from '../PriorityRadioGroup/PriorityRadioGroup';
 
 type EventDialogState = Extract<Exclude<Dialog, null>, { kind: 'event' }>;
 
-const CATEGORIES: { value: Category; label: string }[] = [
+const CATEGORIES: { value: string; label: string }[] = [
   { value: 'meeting', label: 'Meeting' },
   { value: 'class', label: 'Class' },
   { value: 'appointment', label: 'Appointment' },
@@ -35,7 +35,7 @@ function nextHourSlot(viewDate: number): Interval {
 // PRE:  rendered under StoreProvider; dialog is the open event dialog; existing is the event being
 //       edited (undefined when creating); reads settings and view.date; uses event actions
 //       + additional props from: Modal, PriorityRadioGroup
-// POST: shows the event form (title, category, priority, start, end, flexible, flex window when
+// POST: shows the event form (title, categoryId, priority, start, end, flexible, flex window when
 //       flexible, description); Save validates with eventResolver and only then calls the engine,
 //       closing on success; Delete asks for confirmation first
 function EventForm({
@@ -93,7 +93,7 @@ function EventForm({
     });
   }
 
-  const categoryField = register('category');
+  const categoryField = register('categoryId');
   return (
     <Modal
       open
@@ -105,14 +105,14 @@ function EventForm({
         <input id={fieldId('title')} type="text" {...register('title')} {...described('title')} />
         <ErrorText id={errorId('title')} error={errors.title} />
 
-        <label htmlFor={fieldId('category')}>Category</label>
+        <label htmlFor={fieldId('categoryId')}>Category</label>
         <select
-          id={fieldId('category')}
+          id={fieldId('categoryId')}
           {...categoryField}
           onChange={(event) => {
             void categoryField.onChange(event);
             if (existing === undefined) {
-              setValue('flexible', flexibleByDefault(event.target.value as Category));
+              setValue('flexible', flexibleByDefault(event.target.value as string));
             }
           }}
         >

@@ -1,13 +1,46 @@
 {
   "format": "feature-creatures-calendar",
-  "version": 1,
+  "version": 2,
   "exportedAt": "2026-11-02T00:00:00.000Z",
+  "categories": [
+    {
+      "id": "appointment",
+      "name": "Appointment",
+      "colour": "#a45c81",
+      "createdAt": 0
+    },
+    {
+      "id": "assignment",
+      "name": "Assignment",
+      "colour": "#7b7650",
+      "createdAt": 0
+    },
+    {
+      "id": "class",
+      "name": "Class",
+      "colour": "#9364a2",
+      "createdAt": 0
+    },
+    {
+      "id": "meeting",
+      "name": "Meeting",
+      "colour": "#467b70",
+      "createdAt": 0
+    },
+    {
+      "id": "personal",
+      "name": "Personal",
+      "colour": "#427e8c",
+      "createdAt": 0
+    }
+  ],
   "events": [
     {
       "id": "b2b-1",
       "title": "Block 1",
       "description": "",
-      "category": "meeting",
+      "categoryId": "meeting",
+      "keptInBarred": [],
       "priority": "medium",
       "start": 29893500,
       "end": 29893560,
@@ -21,7 +54,8 @@
       "id": "b2b-2",
       "title": "Block 2",
       "description": "",
-      "category": "meeting",
+      "categoryId": "meeting",
+      "keptInBarred": [],
       "priority": "medium",
       "start": 29893560,
       "end": 29893620,
@@ -35,7 +69,8 @@
       "id": "b2b-3",
       "title": "Block 3",
       "description": "",
-      "category": "meeting",
+      "categoryId": "meeting",
+      "keptInBarred": [],
       "priority": "medium",
       "start": 29893620,
       "end": 29893680,
@@ -49,7 +84,8 @@
       "id": "b2b-4",
       "title": "Block 4",
       "description": "",
-      "category": "meeting",
+      "categoryId": "meeting",
+      "keptInBarred": [],
       "priority": "medium",
       "start": 29893680,
       "end": 29893740,
@@ -63,7 +99,8 @@
       "id": "b2b-5",
       "title": "Block 5",
       "description": "",
-      "category": "meeting",
+      "categoryId": "meeting",
+      "keptInBarred": [],
       "priority": "medium",
       "start": 29893740,
       "end": 29893800,
@@ -77,7 +114,8 @@
       "id": "b2b-6",
       "title": "Block 6",
       "description": "",
-      "category": "meeting",
+      "categoryId": "meeting",
+      "keptInBarred": [],
       "priority": "medium",
       "start": 29893800,
       "end": 29893860,
@@ -91,7 +129,8 @@
       "id": "b2b-7",
       "title": "Block 7",
       "description": "",
-      "category": "meeting",
+      "categoryId": "meeting",
+      "keptInBarred": [],
       "priority": "medium",
       "start": 29893860,
       "end": 29893920,
@@ -105,7 +144,8 @@
       "id": "b2b-8",
       "title": "Block 8",
       "description": "",
-      "category": "meeting",
+      "categoryId": "meeting",
+      "keptInBarred": [],
       "priority": "medium",
       "start": 29893920,
       "end": 29893980,
@@ -118,6 +158,7 @@
   ],
   "tasks": [],
   "settings": {
+    "useWorkingHours": true,
     "workDays": [
       1,
       2,

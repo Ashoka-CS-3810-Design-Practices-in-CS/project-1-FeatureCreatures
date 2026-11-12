@@ -1,13 +1,46 @@
 {
   "format": "feature-creatures-calendar",
-  "version": 1,
+  "version": 2,
   "exportedAt": "2026-11-02T00:00:00.000Z",
+  "categories": [
+    {
+      "id": "appointment",
+      "name": "Appointment",
+      "colour": "#a45c81",
+      "createdAt": 0
+    },
+    {
+      "id": "assignment",
+      "name": "Assignment",
+      "colour": "#7b7650",
+      "createdAt": 0
+    },
+    {
+      "id": "class",
+      "name": "Class",
+      "colour": "#9364a2",
+      "createdAt": 0
+    },
+    {
+      "id": "meeting",
+      "name": "Meeting",
+      "colour": "#467b70",
+      "createdAt": 0
+    },
+    {
+      "id": "personal",
+      "name": "Personal",
+      "colour": "#427e8c",
+      "createdAt": 0
+    }
+  ],
   "events": [
     {
       "id": "cluster-1",
       "title": "Overlap 1",
       "description": "",
-      "category": "meeting",
+      "categoryId": "meeting",
+      "keptInBarred": [],
       "priority": "medium",
       "start": 29896440,
       "end": 29896560,
@@ -21,7 +54,8 @@
       "id": "cluster-2",
       "title": "Overlap 2",
       "description": "",
-      "category": "meeting",
+      "categoryId": "meeting",
+      "keptInBarred": [],
       "priority": "medium",
       "start": 29896455,
       "end": 29896545,
@@ -35,7 +69,8 @@
       "id": "cluster-3",
       "title": "Overlap 3",
       "description": "",
-      "category": "meeting",
+      "categoryId": "meeting",
+      "keptInBarred": [],
       "priority": "medium",
       "start": 29896470,
       "end": 29896530,
@@ -49,7 +84,8 @@
       "id": "cluster-4",
       "title": "Overlap 4",
       "description": "",
-      "category": "meeting",
+      "categoryId": "meeting",
+      "keptInBarred": [],
       "priority": "medium",
       "start": 29896485,
       "end": 29896515,
@@ -63,7 +99,8 @@
       "id": "cluster-5",
       "title": "Overlap 5",
       "description": "",
-      "category": "meeting",
+      "categoryId": "meeting",
+      "keptInBarred": [],
       "priority": "medium",
       "start": 29896500,
       "end": 29896530,
@@ -77,7 +114,8 @@
       "id": "cluster-6",
       "title": "Overlap 6",
       "description": "",
-      "category": "meeting",
+      "categoryId": "meeting",
+      "keptInBarred": [],
       "priority": "medium",
       "start": 29896440,
       "end": 29896505,
@@ -90,6 +128,7 @@
   ],
   "tasks": [],
   "settings": {
+    "useWorkingHours": true,
     "workDays": [
       1,
       2,

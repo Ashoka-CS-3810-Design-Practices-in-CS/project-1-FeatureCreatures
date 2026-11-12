@@ -7,14 +7,21 @@ export interface Interval {
 } // half-open [start, end)
 
 export type Priority = 'high' | 'medium' | 'low';
-export type Category = 'meeting' | 'class' | 'appointment' | 'assignment' | 'personal';
+export type LegacyCategory = 'meeting' | 'class' | 'appointment' | 'assignment' | 'personal';
+export interface Category {
+  readonly id: string;
+  readonly name: string;
+  readonly colour: string;
+  readonly createdAt: Minute;
+}
 export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6; // 0 = Sunday (JS Date convention)
 
 export interface CalendarEvent extends Interval {
   readonly id: string;
   readonly title: string;
   readonly description: string;
-  readonly category: Category;
+  readonly categoryId: string;
+  readonly keptInBarred: readonly string[];
   readonly priority: Priority;
   readonly flexible: boolean;
   readonly flexWindow: Interval | null; // non-null iff flexible
@@ -27,12 +34,13 @@ export interface Task {
   readonly id: string;
   readonly name: string;
   readonly description: string;
-  readonly category: Category;
+  readonly categoryId: string;
   readonly priority: Priority;
   readonly durationMin: number; // 5..1440
   readonly window: Interval; // allowable scheduling window
   readonly useWorkingHours: boolean;
-  readonly status: 'unscheduled' | 'scheduled';
+  readonly status: 'unscheduled' | 'scheduled' | 'done';
+  readonly doneAt: Minute | null;
   readonly scheduledEventId: string | null; // non-null iff status === 'scheduled'
   readonly createdAt: Minute;
   readonly updatedAt: Minute;
@@ -47,6 +55,7 @@ export interface BarredSlot {
 }
 
 export interface Settings {
+  readonly useWorkingHours: boolean;
   readonly workDays: readonly Weekday[];
   readonly workStartMin: number; // minutes after local midnight
   readonly workEndMin: number;
@@ -57,11 +66,11 @@ export interface Settings {
 
 export type EventInput = Pick<
   CalendarEvent,
-  'title' | 'description' | 'category' | 'priority' | 'start' | 'end' | 'flexible' | 'flexWindow'
+  'title' | 'description' | 'categoryId' | 'priority' | 'start' | 'end' | 'flexible' | 'flexWindow'
 >;
 export type TaskInput = Pick<
   Task,
-  'name' | 'description' | 'category' | 'priority' | 'durationMin' | 'window' | 'useWorkingHours'
+  'name' | 'description' | 'categoryId' | 'priority' | 'durationMin' | 'window' | 'useWorkingHours'
 >;
 
 // ---- derived (never stored) ----
@@ -226,6 +235,7 @@ export interface ReplanNotMoved {
 }
 
 export interface Snapshot {
+  readonly categories: readonly Category[];
   readonly version: number;
   readonly events: readonly CalendarEvent[]; // sorted by (start, end, id)
   readonly tasks: readonly Task[]; // creation order
@@ -249,7 +259,8 @@ export interface MutationResult {
 
 export interface ExportFile {
   readonly format: 'feature-creatures-calendar';
-  readonly version: 1;
+  readonly version: 2;
+  readonly categories: readonly Category[];
   readonly exportedAt: string; // ISO 8601
   readonly events: readonly CalendarEvent[];
   readonly tasks: readonly Task[];

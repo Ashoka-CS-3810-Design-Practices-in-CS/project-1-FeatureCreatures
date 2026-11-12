@@ -31,11 +31,11 @@ const slotsOf = (result: SlotSearchResult) => result.options.map((option) => opt
 // PRE:  current is a task
 // POST: returns current's TaskInput fields with overrides applied
 function taskInput(current: Task, overrides: Partial<TaskInput> = {}): TaskInput {
-  const { name, description, category, priority, durationMin, window, useWorkingHours } = current;
+  const { name, description, categoryId, priority, durationMin, window, useWorkingHours } = current;
   return {
     name,
     description,
-    category,
+    categoryId,
     priority,
     durationMin,
     window,
@@ -268,7 +268,7 @@ describe('findSlots (FR5)', () => {
     const manual = await engine.createEvent({
       title: 'Lunch talk',
       description: '',
-      category: 'meeting',
+      categoryId: 'meeting',
       priority: 'medium',
       start: t('Mon 13:00'),
       end: t('Mon 13:30'),
@@ -352,7 +352,7 @@ describe('scheduling and sync (FR8, FR9, BR-9)', () => {
       await engine.updateEvent('id-1', {
         title: 'Final report',
         description: event.description,
-        category: event.category,
+        categoryId: event.categoryId,
         priority: event.priority,
         start: event.start,
         end: t('Mon 16:00'),
@@ -430,7 +430,7 @@ describe('scheduling and sync (FR8, FR9, BR-9)', () => {
       await engine.createEvent({
         title: 'Elsewhere',
         description: '',
-        category: 'meeting',
+        categoryId: 'meeting',
         priority: 'medium',
         start: t('Tue 10:00'),
         end: t('Tue 11:00'),

@@ -71,7 +71,7 @@ describe('EventDialog', () => {
     ]);
   });
 
-  it('defaults flexible from the category, and shows the flex window only when flexible', async () => {
+  it('defaults flexible from the categoryId, and shows the flex window only when flexible', async () => {
     const { engine } = await makeEngine();
     const store = renderDialogs(engine);
     openCreate(store);

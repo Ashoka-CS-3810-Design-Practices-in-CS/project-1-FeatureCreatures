@@ -20,7 +20,7 @@ function form(overrides: Partial<EventFormValues> = {}): EventFormValues {
   return {
     title: 'Standup',
     description: '',
-    category: 'meeting',
+    categoryId: 'meeting',
     priority: 'medium',
     start: '2026-11-02T10:00',
     end: '2026-11-02T11:00',
@@ -79,7 +79,7 @@ describe('eventForm', () => {
     expect(defaultFlexWindow(evening.start, settings(), evening.end)).toEqual(
       iv('Tue 09:00', 'Tue 18:00'),
     );
-    expect(eventFormValues({ ...night, category: 'personal' }, settings())).toMatchObject({
+    expect(eventFormValues({ ...night, categoryId: 'personal' }, settings())).toMatchObject({
       flexible: true,
       flexStart: '2026-11-03T00:00',
       flexEnd: '2026-11-04T00:00',
@@ -88,8 +88,8 @@ describe('eventForm', () => {
 
   it('builds form values from create defaults and from an existing event', () => {
     expect(
-      eventFormValues({ ...iv('Mon 10:00', 'Mon 11:00'), category: 'assignment' }, settings()),
-    ).toEqual(form({ title: '', category: 'assignment', flexible: true }));
+      eventFormValues({ ...iv('Mon 10:00', 'Mon 11:00'), categoryId: 'assignment' }, settings()),
+    ).toEqual(form({ title: '', categoryId: 'assignment', flexible: true }));
     const existing = flexEv('E', 'Wed 14:00', 'Wed 15:00', ['Wed 12:00', 'Wed 17:00']);
     expect(eventFormValues(existing, settings())).toMatchObject({
       title: 'E',

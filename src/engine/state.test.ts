@@ -1,3 +1,4 @@
+import { DEFAULT_CATEGORIES } from '@/shared/constants';
 import { MemoryRepository } from '@/data/memoryRepository';
 import { HISTORY_LIMIT } from '@/shared/constants';
 import type { CalendarEvent, Task } from '@/shared/types';
@@ -30,13 +31,20 @@ async function seeded(
   events: CalendarEvent[],
   tasks: Task[] = [],
 ): Promise<EngineState> {
-  await repo.replaceAll({ events, tasks, settings: settings() }, 0);
-  return createState({ events, tasks, settings: settings() }, (await repo.load()).revision);
+  await repo.replaceAll(
+    { categories: [...DEFAULT_CATEGORIES], events, tasks, settings: settings() },
+    0,
+  );
+  return createState(
+    { categories: [...DEFAULT_CATEGORIES], events, tasks, settings: settings() },
+    (await repo.load()).revision,
+  );
 }
 
 describe('createState', () => {
   it('sorts the events, detects conflicts and starts at version 0 with empty history', () => {
     const state = createState({
+      categories: [...DEFAULT_CATEGORIES],
       events: [ev('B', 'Mon 11:00', 'Mon 12:00'), ev('A', 'Mon 10:00', 'Mon 11:30')],
       tasks: [],
       settings: settings(),
@@ -52,7 +60,12 @@ describe('applyChange', () => {
   const a = ev('A', 'Mon 10:00', 'Mon 11:00');
   const b = ev('B', 'Mon 12:00', 'Mon 13:00');
   const t1 = task('T1', 60, WINDOW);
-  const base = createState({ events: [a, b], tasks: [t1], settings: settings() });
+  const base = createState({
+    categories: [...DEFAULT_CATEGORIES],
+    events: [a, b],
+    tasks: [t1],
+    settings: settings(),
+  });
 
   it('writes after-images forward and before-images backward, keeping events sorted', () => {
     const movedA = { ...a, start: b.end, end: b.end + 60 };

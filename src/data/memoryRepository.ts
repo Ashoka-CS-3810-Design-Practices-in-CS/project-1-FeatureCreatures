@@ -1,8 +1,8 @@
 // In-memory Repository (TECH_SPEC §9.3): used by engine and integration tests and by degraded mode.
 // Every value crossing the boundary is deep-copied so callers can never alias the stored rows.
 
-import { INITIAL_REVISION } from '@/shared/constants';
-import type { CalendarEvent, Settings, Task } from '@/shared/types';
+import { DEFAULT_CATEGORIES, INITIAL_REVISION } from '@/shared/constants';
+import type { CalendarEvent, Category, Settings, Task } from '@/shared/types';
 import { requireRevision, type ChangeSet, type Repository, type StoredData } from './repository';
 
 // PRE:  rows maps each row's id to that row; deleteIds and puts are already deep copies
@@ -33,6 +33,7 @@ function mapById<T extends { id: string }>(rows: readonly T[]): Map<string, T> {
 }
 
 export class MemoryRepository implements Repository {
+  private categories = mapById(structuredClone([...DEFAULT_CATEGORIES]));
   private events = new Map<string, CalendarEvent>();
   private tasks = new Map<string, Task>();
   private settings: Settings | null = null;
@@ -43,6 +44,7 @@ export class MemoryRepository implements Repository {
   //       saved), with the stored revision
   async load(): Promise<StoredData> {
     return structuredClone({
+      categories: [...this.categories.values()],
       events: [...this.events.values()],
       tasks: [...this.tasks.values()],
       settings: this.settings,
@@ -76,11 +78,12 @@ export class MemoryRepository implements Repository {
   //       exactly a deep copy of data and the revision grows by 1; otherwise rejects with
   //       ConcurrentModificationError, storing nothing
   async replaceAll(
-    data: { events: CalendarEvent[]; tasks: Task[]; settings: Settings },
+    data: { events: CalendarEvent[]; tasks: Task[]; settings: Settings; categories: Category[] },
     expectedRevision: number,
   ): Promise<void> {
     requireRevision(this.revision, expectedRevision);
     const copy = structuredClone(data);
+    this.categories = mapById(copy.categories);
     this.events = mapById(copy.events);
     this.tasks = mapById(copy.tasks);
     this.settings = copy.settings;

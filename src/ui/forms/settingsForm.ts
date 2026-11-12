@@ -17,6 +17,7 @@ export interface BarredSlotFormValues {
 }
 
 export interface SettingsFormValues {
+  useWorkingHours: boolean;
   workDays: string[];
   workStart: string;
   workEnd: string;
@@ -88,6 +89,7 @@ export function newBarredSlotValues(id: string, days: readonly string[]): Barred
 // POST: returns the form values that show them
 export function settingsFormValues(settings: Settings): SettingsFormValues {
   return {
+    useWorkingHours: settings.useWorkingHours,
     workDays: settings.workDays.map(String),
     workStart: toClockInput(settings.workStartMin),
     workEnd: toClockInput(settings.workEndMin),
@@ -101,6 +103,7 @@ export function settingsFormValues(settings: Settings): SettingsFormValues {
 // POST: returns the Settings they describe; unreadable times and a non-whole buffer become NaN
 export function toSettings(form: SettingsFormValues): Settings {
   return {
+    useWorkingHours: form.useWorkingHours,
     workDays: toWeekdays(form.workDays),
     workStartMin: fromClockTime(form.workStart, false),
     workEndMin: fromClockTime(form.workEnd, true),

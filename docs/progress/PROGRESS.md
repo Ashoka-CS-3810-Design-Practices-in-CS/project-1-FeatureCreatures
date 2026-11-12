@@ -219,6 +219,7 @@ Binding design: `docs/extras/AUDIT_2.md` (D-01–D-19, C-01–C-08). Work in ord
   - Done when: Dexie v2→v3 upgrade test; v1/v2 import tests; samples re-exported; all existing tests pass (fixtures updated mechanically).
   - 2026-11-12 · Codex · branch `feat/wi-48-data-v3` · done: claimed after WI-47 and full main gate; storage/schema/state/UI references reviewed · next: failing T48 migration/import tests plus a retained v1 fixture, then types/validators, v3 migration, repositories/state/I/O, mechanical fixtures and samples · note: no category CRUD or new UI features until later WIs.
   - 2026-11-12 · Codex · branch `feat/wi-48-data-v3` · done: T48's four integration regressions fail for the intended reasons (no v3 category/field migration, export still v1, older duplicates rejected, v2 import rejected); original v1 sparse-week fixture retained · next: implement data contracts/migration and preserve category references across storage/state/export · note: test-first checkpoint; existing main remains green.
+  - 2026-11-12 · Codex · branch `feat/wi-48-data-v3` · done: T48 red→green; categories/new fields persist across v3 repositories, engine state/snapshot and v1/v2 I/O; old v1/v2 schemas untouched; legacy overlaps/duplicates preserved; all six samples regenerated as v2; typecheck/lint and 649 tests + 1 skipped green · next: contract/doc review, formatting, full branch gate (including coverage), finish/merge/main gate · note: mechanical category→categoryId and required-field fixture changes retain assertions; T25 now expects export v2 (D-17), T41's legacy seed still supplies enum fields.
 - [ ] **WI-49** Categories — owner S + Dv — depends on 48
   - Done when: New tests for CRUD, delete blocking, uniqueness, undo, filters.
 - [ ] **WI-50** Scheduling model and lock — owner S + Dv — depends on 49
@@ -269,6 +270,8 @@ Binding design: `docs/extras/AUDIT_2.md` (D-01–D-19, C-01–C-08). Work in ord
 - [ ] Turn on branch protection for `main` on GitHub (optional).
 
 ## Decisions log (append-only)
+
+- 2026-11-12 (WI-48, Codex): default category ids equal the five legacy enum strings, so migrations and v1 imports map deterministically without changing links. Seed `createdAt` is epoch minute 0 and seed order is lexical id order, matching both repository adapters. Initial colours are Meeting `#467b70`, Class `#9364a2`, Appointment `#a45c81`, Assignment `#7b7650`, Personal `#427e8c`; display/palette controls and their contrast checks belong to WI-49. Stored settings permit older overlaps/duplicates; new edits and v2 imports retain the current duplicate rule until WI-53 implements the new overlap validation.
 
 - 2026-11-12 (WI-45, user decision): #7's stretch list comes from a new read-only engine query (`explainWindow`), called by the picker only after an ER2/ER3 error, so the ER2/ER3 error objects and every existing exact-equality test stay unchanged. Asked and confirmed by the user.
 - 2026-11-12 (WI-42, user decision): the Fixed tag's tooltip says "…you can also edit its times or tick Flexible." instead of the brief's "untick Fixed", because the event dialog's control is the "Flexible (the planner may move it)" checkbox; asked and confirmed by the user.

@@ -2,8 +2,10 @@
 // so a failure anywhere rolls back everything (the atomicity Repository requires).
 
 import Dexie, { type Table } from 'dexie';
-import { INITIAL_REVISION } from '@/shared/constants';
-import type { CalendarEvent, Settings, Task } from '@/shared/types';
+import { DEFAULT_CATEGORIES, INITIAL_REVISION } from '@/shared/constants';
+import { migrateLegacyData } from '@/shared/legacy';
+import { legacyStoredDataSchema } from '@/shared/schemas';
+import type { CalendarEvent, Category, Settings, Task } from '@/shared/types';
 import { requireRevision, type ChangeSet, type Repository, type StoredData } from './repository';
 
 const SETTINGS_KEY = 'app';
@@ -20,6 +22,7 @@ interface RevisionRow {
 }
 
 class CalendarDb extends Dexie {
+  declare categories: Table<Category, string>;
   // `declare` instead of `!`: a class field would be re-initialised to undefined after super(),
   // wiping the tables Dexie attaches in version().stores().
   declare events: Table<CalendarEvent, string>;
@@ -28,8 +31,8 @@ class CalendarDb extends Dexie {
   declare meta: Table<RevisionRow, string>;
 
   // PRE:  name is a non-empty database name
-  // POST: creates (but does not open) the database with schema version 2; opening a version-1
-  //       database upgrades it, keeping every event, task and settings row
+  // POST: creates the v3 schema without opening it; older versions upgrade with every row kept,
+  //       category references mapped and new fields initialised; the revision is unchanged
   constructor(name: string) {
     super(name);
     // Never edit a shipped version in place; add the next version with its upgrade instead.
@@ -40,6 +43,27 @@ class CalendarDb extends Dexie {
       .upgrade((transaction) =>
         transaction.table('meta').put({ key: REVISION_KEY, value: INITIAL_REVISION }),
       );
+    this.version(3)
+      .stores({ categories: 'id' })
+      .upgrade(async (transaction) => {
+        const [events, tasks, settingsRow] = await Promise.all([
+          transaction.table('events').toArray(),
+          transaction.table('tasks').toArray(),
+          transaction.table('settings').get(SETTINGS_KEY),
+        ]);
+        const data = migrateLegacyData(
+          legacyStoredDataSchema.parse({ events, tasks, settings: settingsRow?.value ?? null }),
+        );
+        await transaction.table('events').bulkPut(data.events);
+        await transaction.table('tasks').bulkPut(data.tasks);
+        await transaction.table('categories').bulkPut(data.categories);
+        if (data.settings !== null) {
+          await transaction.table('settings').put({ key: SETTINGS_KEY, value: data.settings });
+        }
+      });
+    this.on('populate', (transaction) =>
+      transaction.table('categories').bulkPut(structuredClone([...DEFAULT_CATEGORIES])),
+    );
   }
 }
 
@@ -71,15 +95,18 @@ export class DexieRepository implements Repository {
   // POST: resolves to every stored event and task, the settings (null if never saved) and the
   //       revision, read in one consistent transaction
   async load(): Promise<StoredData> {
-    const { events, tasks, settings, meta } = this.db;
-    return this.db.transaction('r', events, tasks, settings, meta, async () => {
-      const [storedEvents, storedTasks, settingsRow, revision] = await Promise.all([
-        events.toArray(),
-        tasks.toArray(),
-        settings.get(SETTINGS_KEY),
-        this.storedRevision(),
-      ]);
+    const { events, tasks, settings, meta, categories } = this.db;
+    return this.db.transaction('r', [events, tasks, settings, meta, categories], async () => {
+      const [storedEvents, storedTasks, settingsRow, revision, storedCategories] =
+        await Promise.all([
+          events.toArray(),
+          tasks.toArray(),
+          settings.get(SETTINGS_KEY),
+          this.storedRevision(),
+          categories.toArray(),
+        ]);
       return {
+        categories: storedCategories,
         events: storedEvents,
         tasks: storedTasks,
         settings: settingsRow?.value ?? null,
@@ -132,13 +159,14 @@ export class DexieRepository implements Repository {
   // POST: when expectedRevision is the stored revision, the three data tables hold exactly data
   //       and the revision grows by 1; otherwise nothing changed and the promise rejects
   async replaceAll(
-    data: { events: CalendarEvent[]; tasks: Task[]; settings: Settings },
+    data: { events: CalendarEvent[]; tasks: Task[]; settings: Settings; categories: Category[] },
     expectedRevision: number,
   ): Promise<void> {
-    const { events, tasks, settings, meta } = this.db;
-    await this.db.transaction('rw', events, tasks, settings, meta, async () => {
+    const { events, tasks, settings, meta, categories } = this.db;
+    await this.db.transaction('rw', [events, tasks, settings, meta, categories], async () => {
       await this.claimRevision(expectedRevision);
-      await Promise.all([events.clear(), tasks.clear(), settings.clear()]);
+      await Promise.all([events.clear(), tasks.clear(), settings.clear(), categories.clear()]);
+      await categories.bulkPut(data.categories);
       await events.bulkPut(data.events);
       await tasks.bulkPut(data.tasks);
       await settings.put({ key: SETTINGS_KEY, value: data.settings });

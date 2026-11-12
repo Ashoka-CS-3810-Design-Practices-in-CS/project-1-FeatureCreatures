@@ -3,7 +3,12 @@
 
 import type { EngineError } from '@/shared/errors';
 import { err, ok, type Result } from '@/shared/result';
-import { eventInputSchema, parseInput, taskInputSchema } from '@/shared/schemas';
+import {
+  eventInputSchema,
+  parseCategorisedInput,
+  parseInput,
+  taskInputSchema,
+} from '@/shared/schemas';
 import type { CalendarEvent, EventInput, Interval, Minute, SlotOption, Task } from '@/shared/types';
 import { notBeforeFor } from '../search';
 import {
@@ -28,8 +33,8 @@ function findEvent(state: EngineState, id: string): Result<CalendarEvent, Engine
 // PRE:  event is an event
 // POST: returns the EventInput fields of event
 export function inputOf(event: CalendarEvent): EventInput {
-  const { title, description, category, priority, start, end, flexible, flexWindow } = event;
-  return { title, description, category, priority, start, end, flexible, flexWindow };
+  const { title, description, categoryId, priority, start, end, flexible, flexWindow } = event;
+  return { title, description, categoryId, priority, start, end, flexible, flexWindow };
 }
 
 // PRE:  state.events is sorted; eventId is in state.events; notBefore is now rounded to SNAP_MIN
@@ -64,7 +69,7 @@ export async function commitWithSuggestion(
 // POST: on valid input, persists a new fixed-or-flexible event with a fresh id and returns the
 //       outcome (label 'Create "<title>"'); err InvalidInput / InvalidTime otherwise
 export async function createEvent(context: PipelineContext, input: unknown): PipelineResult {
-  const parsed = parseInput(eventInputSchema, input);
+  const parsed = parseCategorisedInput(eventInputSchema, input, context.state.categories);
   if (!parsed.ok) {
     return parsed;
   }
@@ -72,6 +77,7 @@ export async function createEvent(context: PipelineContext, input: unknown): Pip
     ...parsed.value,
     id: context.newId(),
     taskId: null,
+    keptInBarred: [],
     createdAt: context.now,
     updatedAt: context.now,
   };
@@ -93,7 +99,7 @@ function mirrorTask(task: Task, event: CalendarEvent, now: Minute): Result<Task,
   const mirrored = parseInput(taskInputSchema, {
     name: event.title,
     description: task.description,
-    category: task.category,
+    categoryId: task.categoryId,
     priority: event.priority,
     durationMin: event.end - event.start,
     window: event.flexWindow,
@@ -112,7 +118,7 @@ async function editEvent(
   input: unknown,
   verb: string,
 ): PipelineResult {
-  const parsed = parseInput(eventInputSchema, input);
+  const parsed = parseCategorisedInput(eventInputSchema, input, context.state.categories);
   if (!parsed.ok) {
     return parsed;
   }

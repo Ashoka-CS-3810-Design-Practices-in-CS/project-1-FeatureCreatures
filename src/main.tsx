@@ -4,7 +4,7 @@ import { DexieRepository } from '@/data/dexieRepository';
 import { MemoryRepository } from '@/data/memoryRepository';
 import type { Repository } from '@/data/repository';
 import { createEngine } from '@/engine';
-import { DEFAULT_SETTINGS } from '@/shared/constants';
+import { DEFAULT_CATEGORIES, DEFAULT_SETTINGS } from '@/shared/constants';
 import { toMinute } from '@/shared/time';
 import { App } from '@/ui/App';
 import { ErrorBoundary } from '@/ui/components/ErrorBoundary/ErrorBoundary';
@@ -37,7 +37,10 @@ async function openRepository(): Promise<{ repo: Repository; storageWarning: boo
 //       (the fatal screen's Reset local data has no loaded state to compare against)
 async function emptyRepository(repo: Repository): Promise<void> {
   const { revision } = await repo.load();
-  await repo.replaceAll({ events: [], tasks: [], settings: DEFAULT_SETTINGS }, revision);
+  await repo.replaceAll(
+    { categories: [...DEFAULT_CATEGORIES], events: [], tasks: [], settings: DEFAULT_SETTINGS },
+    revision,
+  );
 }
 
 // PRE:  store is the app's store

@@ -1,3 +1,4 @@
+import { DEFAULT_CATEGORIES } from '@/shared/constants';
 import { MemoryRepository } from '@/data/memoryRepository';
 import type { Repository } from '@/data/repository';
 import { SAMPLES } from '@/data/samples';
@@ -77,7 +78,7 @@ describe('export / import (T25, B2, ER6)', () => {
       await source.engine.createEvent({
         title: 'Extra',
         description: '',
-        category: 'meeting',
+        categoryId: 'meeting',
         priority: 'medium',
         start: t('Fri 15:00'),
         end: t('Fri 16:00'),
@@ -115,7 +116,7 @@ describe('export / import (T25, B2, ER6)', () => {
     expect(text).toContain('\n  "format": "feature-creatures-calendar"');
     expect(JSON.parse(text)).toMatchObject({
       format: 'feature-creatures-calendar',
-      version: 1,
+      version: 2,
       exportedAt: '2026-11-02T08:30:00.000Z',
       events: [{ id: 'A' }],
     });
@@ -217,7 +218,7 @@ describe('export / import (T25, B2, ER6)', () => {
       await engine.createEvent({
         title: 'History',
         description: '',
-        category: 'meeting',
+        categoryId: 'meeting',
         priority: 'medium',
         start: t('Mon 11:00'),
         end: t('Mon 12:00'),
@@ -290,6 +291,7 @@ describe('init and stored links', () => {
     const keep = ev('Keep', 'Mon 09:00', 'Mon 10:00');
     await repo.replaceAll(
       {
+        categories: [...DEFAULT_CATEGORIES],
         events: [{ ...keep, start: Number.MAX_SAFE_INTEGER - 60, end: Number.MAX_SAFE_INTEGER }],
         tasks: [],
         settings: SAMPLES.backToBack.build(BASE_MONDAY).settings,
@@ -308,6 +310,7 @@ describe('init and stored links', () => {
     const repo = new MemoryRepository();
     await repo.replaceAll(
       {
+        categories: [...DEFAULT_CATEGORIES],
         events: [],
         tasks: [task('T', 60, WEEK, { status: 'scheduled', scheduledEventId: 'gone' })],
         settings: SAMPLES.backToBack.build(BASE_MONDAY).settings,

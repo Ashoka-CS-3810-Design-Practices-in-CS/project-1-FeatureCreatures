@@ -6,6 +6,7 @@ import { err, ok, type Result } from '@/shared/result';
 import {
   eventInputSchema,
   parseInput,
+  parseCategorisedInput,
   searchOptionsSchema,
   taskInputSchema,
 } from '@/shared/schemas';
@@ -88,7 +89,7 @@ async function commitPlain(context: PipelineContext, change: Change): PipelineRe
 // POST: on valid input, persists a new unscheduled task and returns the outcome
 //       (label 'Create task "<name>"'); err InvalidInput / InvalidTime otherwise (T31)
 export async function createTask(context: PipelineContext, input: unknown): PipelineResult {
-  const parsed = parseInput(taskInputSchema, input);
+  const parsed = parseCategorisedInput(taskInputSchema, input, context.state.categories);
   if (!parsed.ok) {
     return parsed;
   }
@@ -96,6 +97,7 @@ export async function createTask(context: PipelineContext, input: unknown): Pipe
     ...parsed.value,
     id: context.newId(),
     status: 'unscheduled',
+    doneAt: null,
     scheduledEventId: null,
     createdAt: context.now,
     updatedAt: context.now,
@@ -140,7 +142,7 @@ export async function updateTask(
   if (!found.ok) {
     return found;
   }
-  const parsed = parseInput(taskInputSchema, input);
+  const parsed = parseCategorisedInput(taskInputSchema, input, context.state.categories);
   if (!parsed.ok) {
     return parsed;
   }
@@ -319,13 +321,14 @@ export async function scheduleTask(
     id: context.newId(),
     title: task.name,
     description: task.description,
-    category: task.category,
+    categoryId: task.categoryId,
     priority: task.priority,
     start: request.slot.start,
     end: request.slot.end,
     flexible: true,
     flexWindow: task.window,
     taskId: task.id,
+    keptInBarred: [],
     createdAt: context.now,
     updatedAt: context.now,
   };

@@ -11,6 +11,7 @@ import {
   EMPHASIS_MS,
   EXPORT_FORMAT,
   EXPORT_VERSION,
+  DEFAULT_CATEGORIES,
   IMPORT_SPINNER_THRESHOLD,
 } from '@/shared/constants';
 import type { EngineError } from '@/shared/errors';
@@ -999,6 +1000,7 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
       //       replaceAll (it clears the undo history, like any import)
       clearAllData() {
         const empty: ExportFile = {
+          categories: [...DEFAULT_CATEGORIES],
           format: EXPORT_FORMAT,
           version: EXPORT_VERSION,
           exportedAt: fromMinute(options.now()).toISOString(),

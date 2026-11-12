@@ -1,3 +1,4 @@
+import { DEFAULT_CATEGORIES } from '@/shared/constants';
 import { createState } from '@/engine/state';
 import { fromMinute } from '@/shared/time';
 import type { BarredSlot, CalendarEvent, Settings, Snapshot } from '@/shared/types';
@@ -8,7 +9,12 @@ import { toFullCalendar } from './toFullCalendar';
 // PRE:  events have distinct ids
 // POST: returns the snapshot the engine would expose for them
 function snapshotOf(events: CalendarEvent[], withSettings: Settings = settings()): Snapshot {
-  const state = createState({ events, tasks: [], settings: withSettings });
+  const state = createState({
+    categories: [...DEFAULT_CATEGORIES],
+    events,
+    tasks: [],
+    settings: withSettings,
+  });
   return { ...state, canUndo: false, canRedo: false, undoLabel: null, redoLabel: null };
 }
 
