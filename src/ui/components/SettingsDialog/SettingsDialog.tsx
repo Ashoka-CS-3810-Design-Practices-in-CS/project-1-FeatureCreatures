@@ -37,21 +37,25 @@ const REPLACE_ALL_BODY = 'This replaces all your events, tasks and settings.';
 
 // PRE:  legend names the group; registration is RHF's register() result for a string[] field;
 //       error is that field's error, if any; errorId is the id its message gets
-// POST: shows one checkbox per weekday (Monday first) bound to the field, then its error
+//       hideLegend keeps the legend for assistive technology only (compact barred rows)
+// POST: shows one checkbox per weekday (Monday first) as a row of day chips (WI-46) bound to the
+//       field, then its error
 function WeekdayCheckboxes({
   legend,
   registration,
   error,
   errorId,
+  hideLegend = false,
 }: {
   legend: string;
   registration: UseFormRegisterReturn;
   error: Pick<FieldError, 'message'> | undefined;
   errorId: string;
+  hideLegend?: boolean;
 }) {
   return (
-    <fieldset aria-describedby={error === undefined ? undefined : errorId}>
-      <legend>{legend}</legend>
+    <fieldset className="day-chips" aria-describedby={error === undefined ? undefined : errorId}>
+      <legend className={hideLegend ? 'visually-hidden' : undefined}>{legend}</legend>
       {WEEKDAYS.map((day) => (
         <label key={day.value}>
           <input type="checkbox" value={day.value} {...registration} /> {day.label}
@@ -65,7 +69,9 @@ function WeekdayCheckboxes({
 // PRE:  index is the row's position in barredSlots; register is the settings form's; errors are
 //       this row's field errors, if any; onRemove deletes the row
 //       + additional props from: WeekdayCheckboxes, ErrorText
-// POST: shows one barred slot as a group "Barred slot N": label, from, to, days and Remove
+// POST: shows one barred slot as a compact one-line group "Barred slot N" (WI-46): label, from–to,
+//       day chips and a remove ×, with the field labels kept for assistive technology and any
+//       errors on a line below
 function BarredSlotRow({
   index,
   register,
@@ -88,41 +94,59 @@ function BarredSlotRow({
       : { 'aria-invalid': true, 'aria-describedby': errorId(field) };
 
   return (
-    <fieldset>
-      <legend>{name}</legend>
-      <label htmlFor={fieldId('label')}>Label</label>
+    <fieldset className="barred-row">
+      <legend className="visually-hidden">{name}</legend>
+      <label className="visually-hidden" htmlFor={fieldId('label')}>
+        Label
+      </label>
       <input
         id={fieldId('label')}
+        className="barred-label-input"
         type="text"
         {...register(`barredSlots.${index}.label`)}
         {...described('label')}
       />
-      <ErrorText id={errorId('label')} error={errors?.label} />
-      <label htmlFor={fieldId('start')}>From</label>
-      <input
-        id={fieldId('start')}
-        type="time"
-        {...register(`barredSlots.${index}.start`)}
-        {...described('start')}
-      />
-      <ErrorText id={errorId('start')} error={errors?.start} />
-      <label htmlFor={fieldId('end')}>To</label>
-      <input
-        id={fieldId('end')}
-        type="time"
-        {...register(`barredSlots.${index}.end`)}
-        {...described('end')}
-      />
-      <ErrorText id={errorId('end')} error={errors?.end} />
+      <span className="barred-times">
+        <label className="visually-hidden" htmlFor={fieldId('start')}>
+          From
+        </label>
+        <input
+          id={fieldId('start')}
+          type="time"
+          {...register(`barredSlots.${index}.start`)}
+          {...described('start')}
+        />
+        <span aria-hidden="true">–</span>
+        <label className="visually-hidden" htmlFor={fieldId('end')}>
+          To
+        </label>
+        <input
+          id={fieldId('end')}
+          type="time"
+          {...register(`barredSlots.${index}.end`)}
+          {...described('end')}
+        />
+      </span>
       <WeekdayCheckboxes
         legend="Days"
+        hideLegend
         registration={register(`barredSlots.${index}.days`)}
         error={errors?.days}
         errorId={errorId('days')}
       />
-      <button type="button" aria-label={`Remove ${name.toLowerCase()}`} onClick={onRemove}>
-        Remove
+      <button
+        type="button"
+        className="barred-remove"
+        aria-label={`Remove ${name.toLowerCase()}`}
+        onClick={onRemove}
+      >
+        ×
       </button>
+      <span className="barred-row-errors">
+        <ErrorText id={errorId('label')} error={errors?.label} />
+        <ErrorText id={errorId('start')} error={errors?.start} />
+        <ErrorText id={errorId('end')} error={errors?.end} />
+      </span>
     </fieldset>
   );
 }
@@ -130,9 +154,10 @@ function BarredSlotRow({
 // PRE:  rendered under StoreProvider; settings are the current settings; uses
 //       actions.updateSettings and closeDialog
 //       + additional props from: WeekdayCheckboxes, BarredSlotRow, ErrorText
-// POST: shows the settings form (working days and hours, default buffer, default ranking, barred
-//       slots with Add / Remove); Save validates with settingsResolver (errors inline, FR11) before
-//       saving, and closes the dialog once saved
+// POST: shows the settings form in headed sections (WI-46): Working time (days and hours),
+//       Scheduling defaults (buffer, ranking) and Barred slots (one compact row each, Add puts a
+//       new one at the end and focuses its label); Save validates with settingsResolver (errors
+//       inline, FR11) before saving, and closes the dialog once saved
 function SettingsForm({ settings }: { settings: Settings }) {
   const actions = useAppStore((state) => state.actions);
   const idPrefix = useId();
@@ -154,6 +179,7 @@ function SettingsForm({ settings }: { settings: Settings }) {
   });
   const fieldId = (name: string) => `${idPrefix}-${name}`;
   const errorId = (name: string) => `${idPrefix}-${name}-error`;
+  const headingId = (name: string) => `${idPrefix}-${name}-heading`;
   const described = (name: 'workStart' | 'workEnd' | 'bufferMin') =>
     errors[name] === undefined ? {} : { 'aria-invalid': true, 'aria-describedby': errorId(name) };
 
@@ -167,54 +193,78 @@ function SettingsForm({ settings }: { settings: Settings }) {
   }
 
   return (
-    <form noValidate onSubmit={(event) => void handleSubmit(save)(event)}>
-      <WeekdayCheckboxes
-        legend="Working days"
-        registration={register('workDays')}
-        error={errors.workDays}
-        errorId={errorId('workDays')}
-      />
+    <form className="settings-form" noValidate onSubmit={(event) => void handleSubmit(save)(event)}>
+      <section aria-labelledby={headingId('working')}>
+        <h3 id={headingId('working')}>Working time</h3>
+        <WeekdayCheckboxes
+          legend="Working days"
+          registration={register('workDays')}
+          error={errors.workDays}
+          errorId={errorId('workDays')}
+        />
+        <div className="field-pair">
+          <span>
+            <label htmlFor={fieldId('workStart')}>Working hours from</label>
+            <input
+              id={fieldId('workStart')}
+              type="time"
+              {...register('workStart')}
+              {...described('workStart')}
+            />
+          </span>
+          <span>
+            <label htmlFor={fieldId('workEnd')}>Working hours to</label>
+            <input
+              id={fieldId('workEnd')}
+              type="time"
+              {...register('workEnd')}
+              {...described('workEnd')}
+            />
+          </span>
+        </div>
+        <ErrorText id={errorId('workStart')} error={errors.workStart} />
+        <ErrorText id={errorId('workEnd')} error={errors.workEnd} />
+      </section>
 
-      <label htmlFor={fieldId('workStart')}>Working hours from</label>
-      <input
-        id={fieldId('workStart')}
-        type="time"
-        {...register('workStart')}
-        {...described('workStart')}
-      />
-      <ErrorText id={errorId('workStart')} error={errors.workStart} />
-      <label htmlFor={fieldId('workEnd')}>Working hours to</label>
-      <input
-        id={fieldId('workEnd')}
-        type="time"
-        {...register('workEnd')}
-        {...described('workEnd')}
-      />
-      <ErrorText id={errorId('workEnd')} error={errors.workEnd} />
+      <section aria-labelledby={headingId('defaults')}>
+        <h3 id={headingId('defaults')}>Scheduling defaults</h3>
+        <div className="field-pair">
+          <span>
+            <label htmlFor={fieldId('bufferMin')}>Default buffer (min)</label>
+            <input
+              id={fieldId('bufferMin')}
+              type="number"
+              min={0}
+              inputMode="numeric"
+              {...register('bufferMin')}
+              {...described('bufferMin')}
+            />
+          </span>
+          <span>
+            <label htmlFor={fieldId('defaultCriterion')}>Default ranking</label>
+            <select id={fieldId('defaultCriterion')} {...register('defaultCriterion')}>
+              {CRITERIA.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </span>
+        </div>
+        <ErrorText id={errorId('bufferMin')} error={errors.bufferMin} />
+      </section>
 
-      <label htmlFor={fieldId('bufferMin')}>Default buffer (min)</label>
-      <input
-        id={fieldId('bufferMin')}
-        type="number"
-        min={0}
-        inputMode="numeric"
-        {...register('bufferMin')}
-        {...described('bufferMin')}
-      />
-      <ErrorText id={errorId('bufferMin')} error={errors.bufferMin} />
-
-      <label htmlFor={fieldId('defaultCriterion')}>Default ranking</label>
-      <select id={fieldId('defaultCriterion')} {...register('defaultCriterion')}>
-        {CRITERIA.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-
-      <fieldset>
-        <legend>Barred slots</legend>
-        {fields.length === 0 && <p>No barred slots.</p>}
+      <section aria-labelledby={headingId('barred')}>
+        <h3 id={headingId('barred')}>Barred slots</h3>
+        {fields.length === 0 ? (
+          <p className="hint">No barred slots.</p>
+        ) : (
+          <p className="barred-columns" aria-hidden="true">
+            <span>Label</span>
+            <span>From – To</span>
+            <span>Days</span>
+          </p>
+        )}
         {fields.map((field, index) => (
           <BarredSlotRow
             key={field.rowKey}
@@ -226,11 +276,15 @@ function SettingsForm({ settings }: { settings: Settings }) {
         ))}
         <button
           type="button"
-          onClick={() => append(newBarredSlotValues(crypto.randomUUID(), getValues('workDays')))}
+          onClick={() =>
+            append(newBarredSlotValues(crypto.randomUUID(), getValues('workDays')), {
+              focusName: `barredSlots.${fields.length}.label`,
+            })
+          }
         >
           Add barred slot
         </button>
-      </fieldset>
+      </section>
 
       <div className="dialog-actions">
         <button type="submit" disabled={isSubmitting}>
@@ -366,7 +420,7 @@ export function SettingsDialog() {
   }
 
   return (
-    <Modal open title="Settings" onClose={closeDialog}>
+    <Modal open title="Settings" className="settings-dialog" onClose={closeDialog}>
       <SettingsForm settings={settings} />
       <DataSection />
     </Modal>

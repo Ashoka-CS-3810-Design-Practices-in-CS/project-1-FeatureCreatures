@@ -1,4 +1,4 @@
-import { defineConfig } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 import baseConfig from './playwright.config';
 
 // Its own port, and never an already-running server, so the captures always come from a fresh build
@@ -17,4 +17,7 @@ export default defineConfig({
     reuseExistingServer: false,
   },
   use: { ...baseConfig.use, baseURL: SCREENSHOT_URL },
+  // The e2e projects pin the e2e preview URL in their own `use`, which would override the one
+  // above (since WI-35); the captures need one Chrome project on the screenshot server.
+  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], baseURL: SCREENSHOT_URL } }],
 });

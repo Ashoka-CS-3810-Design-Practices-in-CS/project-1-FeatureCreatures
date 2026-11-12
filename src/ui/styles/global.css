@@ -674,6 +674,184 @@ dialog .flex-window input {
   margin: 0;
 }
 
+/* ── Settings (WI-46) ─────────────────────────────────────────────────── */
+
+/* Kept for assistive technology, hidden on screen (compact barred-slot rows). */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Wide enough for one barred slot per line: label, from–to, seven day chips and ×. */
+dialog.settings-dialog {
+  width: min(760px, calc(100vw - var(--space-6)));
+}
+
+.settings-form > section:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+/* Two related fields side by side, wrapping onto two lines when narrow. */
+.field-pair {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-4);
+}
+
+.field-pair > span {
+  display: flex;
+  flex: 1 1 12rem;
+  flex-direction: column;
+}
+
+.field-pair label {
+  margin: var(--space-4) 0 var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+/* Weekdays as pill chips: the native checkbox stays, invisible, over its chip, so it keeps its
+   name, keyboard focus and click; a checked chip uses the primary-button colour pair. */
+.day-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.day-chips > legend,
+.day-chips > .field-error {
+  flex: 0 0 100%;
+}
+
+/* As specific as the global checkbox-label rule, which would otherwise space the chips apart. */
+.day-chips > label:has(> input[type='checkbox']) {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  min-width: 2.25rem;
+  min-height: var(--target-min);
+  margin: 0;
+  padding: 0 var(--space-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--bg);
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+
+.day-chips > label > input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.day-chips > label:has(> input:checked) {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.day-chips > label:has(> input:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* One barred slot per line; the column captions above use the same tracks. */
+.barred-row,
+.barred-columns {
+  display: grid;
+  grid-template-columns: minmax(6rem, 1fr) 13rem 18.5rem var(--target-min);
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+}
+
+.barred-row {
+  margin: 0;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.barred-columns {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.barred-columns > span:last-child {
+  grid-column: 3 / -1;
+}
+
+.barred-times {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+dialog .barred-row .barred-label-input {
+  width: 100%;
+}
+
+dialog .barred-row input[type='time'] {
+  width: 6rem;
+}
+
+.barred-row .day-chips {
+  margin: 0;
+}
+
+dialog .barred-row > .barred-remove {
+  margin: 0;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--text-lg);
+  line-height: 1;
+}
+
+dialog .barred-row > .barred-remove:hover {
+  color: var(--danger);
+}
+
+.barred-row-errors {
+  grid-column: 1 / -1;
+}
+
+.barred-row-errors:empty {
+  display: none;
+}
+
+/* Too narrow for one line: label and × first, then the times, then the day chips. */
+@media (max-width: 800px) {
+  .barred-row {
+    grid-template-columns: 1fr var(--target-min);
+  }
+
+  .barred-row .barred-times,
+  .barred-row .day-chips {
+    grid-column: 1 / -1;
+  }
+
+  .barred-columns {
+    display: none;
+  }
+}
+
 /* The action row stays in view while a long dialog scrolls, so Apply is never out of reach. */
 .dialog-actions {
   position: sticky;

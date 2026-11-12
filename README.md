@@ -146,6 +146,7 @@ Every test case, with its exact inputs and expected outputs, is listed in [TEST_
 | Replan with both plans | [light](docs/screenshots/replan-light.png) | [dark](docs/screenshots/replan-dark.png) |
 | Event dialog | [light](docs/screenshots/event-dialog-light-1440.png) | [dark](docs/screenshots/event-dialog-dark-1440.png) |
 | Empty state | [light](docs/screenshots/empty-light.png) | [dark](docs/screenshots/empty-dark.png) |
+| Settings | [1440 px](docs/screenshots/settings-light-1440.png) · [900 px](docs/screenshots/settings-light-900.png) | [1440 px](docs/screenshots/settings-dark-1440.png) · [900 px](docs/screenshots/settings-dark-900.png) |
 
 ## Documentation
 
