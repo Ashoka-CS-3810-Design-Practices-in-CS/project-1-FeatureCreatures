@@ -9,6 +9,7 @@ import { t } from '../../../../tests/helpers/time';
 import { createCalendarHandlers, type ChangedEventInfo } from './calendarHandlers';
 import { EventContent } from './EventContent';
 import { toFullCalendar, type EventBlockProps } from './toFullCalendar';
+import type { AppStore } from '../../store/appStore';
 
 const seed = [
   ev('A', 'Mon 10:00', 'Mon 11:30', { priority: 'high' }),
@@ -24,6 +25,17 @@ function dropB(from: string, to: string): ChangedEventInfo {
   };
 }
 
+// PRE:  a drag of a fixed event has just opened its confirmation (WI-42)
+// POST: answers Move, as the user would, so the drag goes on to the engine
+function confirmFixedMove(store: AppStore): void {
+  const dialog = store.getState().dialog;
+  if (dialog?.kind !== 'confirm') {
+    throw new Error('expected the fixed-event confirmation');
+  }
+  store.getState().actions.closeDialog();
+  dialog.onConfirm();
+}
+
 describe('calendar handlers ↔ engine (T14, ER4, ER5)', () => {
   it('a drop into a conflict saves, flags both events and warns', async () => {
     const { engine } = await makeEngine({ events: seed });
@@ -32,6 +44,8 @@ describe('calendar handlers ↔ engine (T14, ER4, ER5)', () => {
     const info = dropB('Mon 11:00', 'Mon 12:00');
 
     await handlers.onDrop(info);
+    confirmFixedMove(store);
+    await vi.waitFor(() => expect(store.getState().snapshot.conflicts).toHaveLength(1));
 
     expect(info.revert).not.toHaveBeenCalled();
     const { snapshot, toasts } = store.getState();
@@ -68,6 +82,8 @@ describe('calendar handlers ↔ engine (T14, ER4, ER5)', () => {
     repo.failNextApply();
 
     await handlers.onResize(info);
+    confirmFixedMove(store);
+    await vi.waitFor(() => expect(info.revert).toHaveBeenCalledOnce());
 
     expect(info.revert).toHaveBeenCalledOnce();
     expect(store.getState().toasts.at(-1)?.text).toBe(

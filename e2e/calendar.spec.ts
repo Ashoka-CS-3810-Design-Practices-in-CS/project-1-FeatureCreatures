@@ -58,11 +58,17 @@ test('E2: dragging and resizing resolves the conflict and persists after reload'
   const rowHeight = (await rowTop(page, '11:30:00')) - (await rowTop(page, '11:00:00'));
   const grabAtY = (await rowTop(page, '11:00:00')) + rowHeight / 2 + GRAB_OFFSET_PX;
   await dragVertically(page, event, moveDistance, grabAtY);
+  // B is a meeting, so it is fixed: a manual drag asks first (WI-42).
+  const askB = page.getByRole('dialog', { name: 'B is fixed. Move it anyway?' });
+  await askB.getByRole('button', { name: 'Move', exact: true }).click();
   await expect(page.getByRole('button', { name: /^B, Mon 2 Nov 13:00–14:00/ })).toBeVisible();
   await expect(page.getByText('No conflicts', { exact: true })).toBeVisible();
 
   const resizeDistance = (await rowTop(page, '14:30:00')) - (await rowTop(page, '14:00:00'));
+  // The confirmation took the pointer away; the resize handle only shows while B is hovered.
+  await event.hover();
   await dragVertically(page, event.locator('.fc-event-resizer-end'), resizeDistance);
+  await askB.getByRole('button', { name: 'Move', exact: true }).click();
   await expect(page.getByRole('button', { name: /^B, Mon 2 Nov 13:00–14:30/ })).toBeVisible();
   await page.reload();
   await expect(page.getByRole('button', { name: /^B, Mon 2 Nov 13:00–14:30/ })).toBeVisible();

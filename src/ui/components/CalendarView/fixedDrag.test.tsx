@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 // T43 — dragging or resizing a fixed event asks first (peer report #1, WI-42).
-import { screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { fromMinute } from '@/shared/time';
 import { ev, flexEv, iv } from '../../../../tests/helpers/builders';
@@ -69,7 +69,10 @@ describe('T43: a fixed event asks before a manual drag or resize', () => {
     await handlers.onResize(info);
     expect(screen.getByRole('dialog', { name: 'Lecture is fixed. Move it anyway?' })).toBeVisible();
 
-    await userEvent.keyboard('{Escape}');
+    // Esc on a modal <dialog> fires 'cancel', then closes it, which queues 'close' (as in Modal.test).
+    const dialog = screen.getByRole<HTMLDialogElement>('dialog');
+    fireEvent(dialog, new Event('cancel', { cancelable: true }));
+    dialog.close();
 
     await waitFor(() => expect(info.revert).toHaveBeenCalledOnce());
     expect(await capture(engine, repo)).toEqual(before);

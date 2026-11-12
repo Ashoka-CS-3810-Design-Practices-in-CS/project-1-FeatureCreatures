@@ -71,6 +71,15 @@ export function sampleLoadedText(label: string): string {
 export const SETTINGS_SAVED_TEXT = 'Settings saved.';
 export const DATA_CLEARED_TEXT = 'All data cleared.';
 export const OTHER_TAB_UPDATED_TEXT = 'Calendar updated in another tab.';
+export const FIXED_MOVE_BODY = 'The planner never moves it on its own.';
+export const FIXED_TAG_HINT =
+  'Fixed: the planner never moves it. Dragging asks first; you can also edit its times or tick Flexible.';
+
+// PRE:  title is a fixed event's title
+// POST: returns the question a manual drag or resize of it asks first (WI-42, report #1)
+export function fixedMoveQuestion(title: string): string {
+  return `${title} is fixed. Move it anyway?`;
+}
 
 // PRE:  eventCount, taskCount ≥ 0 are what an import brought in
 // POST: returns the success toast after the import, e.g. "Imported 2 events and 1 task."
