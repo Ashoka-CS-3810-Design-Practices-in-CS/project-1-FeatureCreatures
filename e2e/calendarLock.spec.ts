@@ -71,6 +71,8 @@ test('T50: reload locks existing data; K unlocks; List toggle and deliberate cre
   await page.getByRole('button', { name: '+ Event', exact: true }).click();
   await expect(page.getByRole('dialog', { name: 'New event' })).toBeVisible();
   await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog', { name: 'New event' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '+ Event', exact: true })).toBeFocused();
   await page.keyboard.press('k');
   await expect(lock).toHaveAttribute('aria-pressed', 'false');
   await page.getByRole('button', { name: 'Day', exact: true }).click();

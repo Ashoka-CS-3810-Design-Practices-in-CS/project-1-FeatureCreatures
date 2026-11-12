@@ -37,6 +37,60 @@ function confirmFixedMove(store: AppStore): void {
 }
 
 describe('calendar handlers ↔ engine (T14, ER4, ER5)', () => {
+  it.each(['onDrop', 'onResize'] as const)(
+    'T50: %s reads the current lock and reverts without a write or confirmation',
+    async (gesture) => {
+      const { engine, repo } = await makeEngine({ events: seed });
+      const store = storeFor(engine);
+      store.getState().actions.toggleCalendarLock();
+      const handlers = createCalendarHandlers(
+        store.getState().actions,
+        () => store.getState().calendarLocked,
+      );
+      const before = await capture(engine, repo);
+      store.getState().actions.toggleCalendarLock();
+      const info = dropB('Mon 15:00', 'Mon 16:00');
+
+      await handlers[gesture](info);
+
+      expect(info.revert).toHaveBeenCalledOnce();
+      expect(store.getState().dialog).toBeNull();
+      expect(await capture(engine, repo)).toEqual(before);
+    },
+  );
+
+  it('T50: locked selection clears immediately; event editing and selection after unlock work', async () => {
+    const { engine, repo } = await makeEngine({ events: seed });
+    const store = storeFor(engine);
+    const handlers = createCalendarHandlers(
+      store.getState().actions,
+      () => store.getState().calendarLocked,
+    );
+    const before = await capture(engine, repo);
+    const unselect = vi.fn();
+    const selection = {
+      start: fromMinute(t('Tue 10:00')),
+      end: fromMinute(t('Tue 11:00')),
+      view: { calendar: { unselect } },
+    };
+
+    handlers.onSelect(selection);
+    expect(unselect).toHaveBeenCalledOnce();
+    expect(store.getState().dialog).toBeNull();
+    handlers.onClick({ event: { id: 'A', display: 'auto' } });
+    expect(store.getState().dialog).toEqual({ kind: 'event', mode: 'edit', id: 'A' });
+    store.getState().actions.closeDialog();
+    store.getState().actions.toggleCalendarLock();
+    handlers.onSelect(selection);
+    expect(unselect).toHaveBeenCalledTimes(2);
+    expect(store.getState().dialog).toMatchObject({
+      kind: 'event',
+      mode: 'create',
+      defaults: iv('Tue 10:00', 'Tue 11:00'),
+    });
+    expect(await capture(engine, repo)).toEqual(before);
+  });
+
   it('a drop into a conflict saves, flags both events and warns', async () => {
     const { engine } = await makeEngine({ events: seed });
     const store = storeFor(engine);
