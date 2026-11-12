@@ -7,15 +7,20 @@ import { err, ok, type Result } from '@/shared/result';
 import { parseInput, slotSchema } from '@/shared/schemas';
 import { buildDayFrames, ceilTo } from '@/shared/time';
 import type {
+  Boundary,
   CalendarEvent,
   Criterion,
   DayFrame,
+  FreeGap,
   Interval,
   Minute,
   Priority,
   SearchSubject,
   Segment,
   SlotSearchResult,
+  WindowExplanation,
+  WindowSplit,
+  WindowStretches,
 } from '@/shared/types';
 import { computeDayLoads } from './algorithms/dayLoad';
 import { freeGaps, largestGap } from './algorithms/gaps';
@@ -51,6 +56,32 @@ function eventsOnDays(
   return eventsIntersecting(state.events, days).filter((event) => !excludeIds.includes(event.id));
 }
 
+// PRE:  as search
+// POST: returns the day frames of request.window and its allowed segments (BR-5)
+function allowedFor(
+  state: EngineState,
+  request: SearchRequest,
+  notBefore: Minute,
+): { frames: DayFrame[]; segments: Segment[] } {
+  const frames = buildDayFrames(request.window, state.settings);
+  const segments = allowedSegments(request.window, frames, {
+    useWorkingHours: request.useWorkingHours,
+    notBefore,
+  });
+  return { frames, segments };
+}
+
+// PRE:  as search; segments are request's allowed segments
+// POST: returns the free gaps of segments once request's busy events (all but excludeIds, grown
+//       by the buffer) are taken out (BR-6)
+function freeGapsFor(state: EngineState, request: SearchRequest, segments: Segment[]): FreeGap[] {
+  // Expanded by the buffer, so an event just outside the window still pushes its buffer into it.
+  const near = eventsIntersecting(state.events, expand(request.window, request.bufferMin)).filter(
+    (event) => !request.excludeIds.includes(event.id),
+  );
+  return freeGaps(segments, mergeBusy(near, request.bufferMin));
+}
+
 // PRE:  state.events is sorted; request.window has start < end; request.durationMin > 0;
 //       request.bufferMin is an integer 0 … 120 (validated by the caller); notBefore is now rounded
 //       up to SNAP_MIN
@@ -62,11 +93,7 @@ export function search(
   request: SearchRequest,
   notBefore: Minute,
 ): Result<SlotSearchResult, EngineError> {
-  const frames = buildDayFrames(request.window, state.settings);
-  const segments = allowedSegments(request.window, frames, {
-    useWorkingHours: request.useWorkingHours,
-    notBefore,
-  });
+  const { frames, segments } = allowedFor(state, request, notBefore);
   const longest = maxLength(segments);
   if (request.durationMin > longest) {
     return err({
@@ -76,11 +103,7 @@ export function search(
     });
   }
 
-  // Expanded by the buffer, so an event just outside the window still pushes its buffer into it.
-  const near = eventsIntersecting(state.events, expand(request.window, request.bufferMin)).filter(
-    (event) => !request.excludeIds.includes(event.id),
-  );
-  const gaps = freeGaps(segments, mergeBusy(near, request.bufferMin));
+  const gaps = freeGapsFor(state, request, segments);
   const fitting = gaps.filter((gap) => length(gap) >= request.durationMin);
   if (fitting.length === 0) {
     const largest = largestGap(gaps);
@@ -114,6 +137,70 @@ export function search(
     fittingCount: fitting.length,
     options,
   });
+}
+
+// PRE:  ending is the boundary that ends one stretch; starting the one that starts the next
+// POST: returns the barred slot or event between them when both boundaries name the same one
+//       (same barred label, or same event), else null (a day or working-hours edge splits them)
+function splitBetween(ending: Boundary, starting: Boundary): WindowSplit | null {
+  const interval = { start: ending.at, end: starting.at };
+  if (ending.kind === 'barred' && starting.kind === 'barred' && ending.label === starting.label) {
+    return { kind: 'barred', label: ending.label, interval };
+  }
+  if (ending.kind === 'event' && starting.kind === 'event' && ending.eventId === starting.eventId) {
+    return { kind: 'event', label: ending.title, interval };
+  }
+  return null;
+}
+
+// PRE:  pieces are disjoint and in order, each with the boundaries that start and end it
+// POST: returns their intervals and every barred slot or event that lies between two neighbours
+function stretchesOf(
+  pieces: readonly { interval: Interval; starts: Boundary; ends: Boundary }[],
+): WindowStretches {
+  const splits: WindowSplit[] = [];
+
+  // INVARIANT: guard: 1 ≤ index ≤ pieces.length
+  //            behavior: splits holds the split between every neighbouring pair before index
+  for (let index = 1; index < pieces.length; index += 1) {
+    const before = pieces[index - 1] as (typeof pieces)[number];
+    const after = pieces[index] as (typeof pieces)[number];
+    const split = splitBetween(before.ends, after.starts);
+    if (split !== null) {
+      splits.push(split);
+    }
+  }
+  // POST: splits holds the split between every neighbouring pair that has one
+
+  return { stretches: pieces.map((piece) => piece.interval), splits };
+}
+
+// PRE:  as search
+// POST: returns what is left of request.window (WI-45, report #7): its allowed segments (what ER2
+//       measures) and its free gaps (what ER3 measures), each with what splits them; read-only
+export function explainSearch(
+  state: EngineState,
+  request: SearchRequest,
+  notBefore: Minute,
+): WindowExplanation {
+  const { segments } = allowedFor(state, request, notBefore);
+  const gaps = freeGapsFor(state, request, segments);
+  return {
+    allowed: stretchesOf(
+      segments.map((segment) => ({
+        interval: { start: segment.start, end: segment.end },
+        starts: segment.startEdge,
+        ends: segment.endEdge,
+      })),
+    ),
+    free: stretchesOf(
+      gaps.map((gap) => ({
+        interval: { start: gap.start, end: gap.end },
+        starts: gap.before,
+        ends: gap.after,
+      })),
+    ),
+  };
 }
 
 // PRE:  window.start < window.end; a search of window with useWorkingHours from notBefore found

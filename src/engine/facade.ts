@@ -29,13 +29,19 @@ import type {
   Task,
   TaskInput,
   UserCriterion,
+  WindowExplanation,
 } from '@/shared/types';
-import { applyAlternative, suggestAlternatives } from './pipelines/conflictResolution';
+import {
+  applyAlternative,
+  explainAlternativesWindow,
+  suggestAlternatives,
+} from './pipelines/conflictResolution';
 import { applyReplan, planReplan } from './pipelines/replan';
 import { createEvent, deleteEvent, moveEvent, updateEvent } from './pipelines/eventCrud';
 import {
   createTask,
   deleteTask,
+  explainTaskWindow,
   findSlots,
   orderForScheduling,
   scheduleTask,
@@ -61,6 +67,11 @@ export interface EngineDeps {
   newId: () => string;
   onCommit?: () => void; // called after every write the repository accepted (WI-40: tells other tabs)
 }
+
+/** The search explainWindow describes: a task's (as findSlots) or an event's alternatives. */
+export type WindowRequest =
+  | { taskId: string; bufferMin?: number }
+  | { eventId: string; useWorkingHours?: boolean; bufferMin?: number };
 
 export interface Engine {
   init(): Promise<Result<Snapshot>>;
@@ -102,6 +113,9 @@ export interface Engine {
     slot: Interval;
     baseVersion: number;
   }): Promise<Result<MutationResult>>;
+
+  // WI-45 (#7): what is left of the window findSlots / suggestAlternatives would search, read-only
+  explainWindow(req: WindowRequest): Result<WindowExplanation>;
 
   // ── Replan pipeline (FR10) ──
   planReplan(req: { range: Interval; bufferMin?: number }): Result<ReplanResult>;
@@ -374,6 +388,16 @@ class CalendarEngine implements Engine {
     baseVersion: number;
   }): Promise<Result<MutationResult>> {
     return this.mutate((context) => scheduleTask(context, req));
+  }
+
+  // PRE:  req comes from the UI (bufferMin validated by the pipelines)
+  // POST: as taskScheduler.explainTaskWindow (taskId) or conflictResolution.explainAlternativesWindow
+  //       (eventId) on the current state, with notBefore from now; changes nothing
+  explainWindow(req: WindowRequest): Result<WindowExplanation> {
+    const notBefore = notBeforeFor(this.deps.now());
+    return 'taskId' in req
+      ? explainTaskWindow(this.state, req, notBefore)
+      : explainAlternativesWindow(this.state, req, notBefore);
   }
 
   // PRE:  req comes from the UI (checked by the pipeline)

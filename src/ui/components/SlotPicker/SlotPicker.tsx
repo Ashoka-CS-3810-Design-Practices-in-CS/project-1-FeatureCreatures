@@ -1,6 +1,6 @@
 import { useId } from 'react';
 import type { Result } from '@/shared/result';
-import type { Minute, Priority, SlotSearchResult } from '@/shared/types';
+import type { Minute, Priority, SlotSearchResult, WindowExplanation } from '@/shared/types';
 import { errorMessage } from '../../format/errors';
 import {
   CRITERIA,
@@ -9,6 +9,7 @@ import {
   optionReasonText,
   priorityAwareText,
   searchSummaryText,
+  stretchesText,
 } from '../../format/explain';
 import { fmtDay, fmtDuration, fmtRange, fmtTime } from '../../format/time';
 import type { PickerState } from '../../store/pickerSlice';
@@ -20,26 +21,39 @@ type AlternativesPickerState = Extract<PickerState, { mode: 'alternatives' }>;
 
 const PRIORITY_NAME: Record<Priority, string> = { high: 'High', medium: 'Medium', low: 'Low' };
 
-// PRE:  result is the picker's search; selected is the chosen option; originalStart is the moved
-//       event's start in alternatives mode, else null; uses actions.pickerSelect
+// PRE:  result is the picker's search; explanation is what is left of its window after ER2 / ER3
+//       (null otherwise); selected is the chosen option; originalStart is the moved event's start
+//       in alternatives mode, else null; uses actions.pickerSelect
 // POST: shows the summary line and the ranked options as a radio group with their explanations
-//       (BR-8), or, when the search failed, the ER2 / ER3 explanation instead of an empty list
+//       (BR-8), or, when the search failed, the ER2 / ER3 explanation instead of an empty list,
+//       followed by the available stretches and what splits them (WI-45, #7)
 function SearchResults({
   result,
+  explanation,
   selected,
   originalStart,
 }: {
   result: Result<SlotSearchResult>;
+  explanation: WindowExplanation | null;
   selected: number;
   originalStart: Minute | null;
 }) {
   const pickerSelect = useAppStore((state) => state.actions.pickerSelect);
   const groupName = useId();
   if (!result.ok) {
+    const stretches =
+      explanation === null
+        ? null
+        : stretchesText(
+            result.error.code === 'NoSlotFound' ? explanation.free : explanation.allowed,
+          );
     return (
-      <p role="alert" className="picker-problem">
-        {errorMessage(result.error)}
-      </p>
+      <>
+        <p role="alert" className="picker-problem">
+          {errorMessage(result.error)}
+        </p>
+        {stretches !== null && <p className="picker-note">{stretches}</p>}
+      </>
     );
   }
   return (
@@ -158,7 +172,12 @@ function TaskPicker({ picker }: { picker: TaskPickerState }) {
       {picker.criterion === 'priorityAware' && effective !== undefined && (
         <p>{priorityAwareText(task.priority, effective)}</p>
       )}
-      <SearchResults result={picker.result} selected={picker.selected} originalStart={null} />
+      <SearchResults
+        result={picker.result}
+        explanation={picker.explanation}
+        selected={picker.selected}
+        originalStart={null}
+      />
       <div className="dialog-actions">
         <button
           type="button"
@@ -205,7 +224,13 @@ function AlternativesPicker({ picker }: { picker: AlternativesPickerState }) {
   if (target === undefined) {
     return null;
   }
-  const choices = other === undefined ? [target] : [target, other];
+  // The radios keep the order the picker opened with (WI-45, #5), whichever one is selected.
+  const choices =
+    other === undefined
+      ? [target]
+      : (picker.order ?? [target.id, other.id])
+          .map((id) => (id === target.id ? target : other))
+          .filter((event) => event !== undefined);
   return (
     <Modal
       open
@@ -238,6 +263,7 @@ function AlternativesPicker({ picker }: { picker: AlternativesPickerState }) {
       <BufferField bufferMin={picker.bufferMin} />
       <SearchResults
         result={picker.result}
+        explanation={picker.explanation}
         selected={picker.selected}
         originalStart={target.start}
       />

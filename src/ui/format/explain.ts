@@ -14,7 +14,10 @@ import type {
   SlotOption,
   SlotSearchResult,
   UserCriterion,
+  WindowStretches,
 } from '@/shared/types';
+import { MAX_LISTED_STRETCHES } from '@/shared/constants';
+import { startOfLocalDay } from '@/shared/time';
 import { fmtDuration, fmtRange, fmtTime } from './time';
 
 // PRE:  title is an event title
@@ -72,6 +75,44 @@ export const SETTINGS_SAVED_TEXT = 'Settings saved.';
 export const DATA_CLEARED_TEXT = 'All data cleared.';
 export const OTHER_TAB_UPDATED_TEXT = 'Calendar updated in another tab.';
 export const FIXED_MOVE_BODY = 'The planner never moves it on its own.';
+// PRE:  interval has start < end; sameDay says whether every listed time is on one local day
+// POST: returns "12:30–13:00" on one day, otherwise fmtRange's "Mon 2 Nov 12:30–13:00"
+function stretchRange(interval: Interval, sameDay: boolean): string {
+  return sameDay ? `${fmtTime(interval.start)}–${fmtTime(interval.end)}` : fmtRange(interval);
+}
+
+// PRE:  explained holds a window's stretches in order and the splits between them
+// POST: returns "Available: 12:30–13:00, 14:00–14:30 — Lunch 13:00–14:00 is barred." (WI-45, #7):
+//       at most MAX_LISTED_STRETCHES stretches ("… and N more" after them), each distinct split
+//       once ('"Meeting" 10:00–11:00 is booked' for an event); null when there is no stretch
+export function stretchesText(explained: WindowStretches): string | null {
+  const first = explained.stretches[0];
+  if (first === undefined) {
+    return null;
+  }
+  const day = startOfLocalDay(first.start);
+  const times = [...explained.stretches, ...explained.splits.map((split) => split.interval)];
+  const sameDay = times.every(
+    (interval) =>
+      startOfLocalDay(interval.start) === day && startOfLocalDay(interval.end - 1) === day,
+  );
+  const listed = explained.stretches
+    .slice(0, MAX_LISTED_STRETCHES)
+    .map((stretch) => stretchRange(stretch, sameDay));
+  const more = explained.stretches.length - listed.length;
+  const available = `Available: ${listed.join(', ')}${more > 0 ? ` and ${more} more` : ''}`;
+  const splits = [
+    ...new Set(
+      explained.splits.map((split) =>
+        split.kind === 'barred'
+          ? `${split.label} ${stretchRange(split.interval, sameDay)} is barred`
+          : `"${split.label}" ${stretchRange(split.interval, sameDay)} is booked`,
+      ),
+    ),
+  ];
+  return splits.length === 0 ? `${available}.` : `${available} — ${splits.join('; ')}.`;
+}
+
 export const ALL_HIDDEN_BY_FILTER_TEXT =
   'All events in this range are hidden by the priority filter';
 

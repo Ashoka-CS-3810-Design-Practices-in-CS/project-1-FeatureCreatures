@@ -2,16 +2,24 @@
 // inside every commit. This module proposes and applies alternative times for one event.
 
 import type { EngineError } from '@/shared/errors';
-import { err, type Result } from '@/shared/result';
+import { err, ok, type Result } from '@/shared/result';
 import { parseInput, searchOptionsSchema } from '@/shared/schemas';
 import { addLocalDays, startOfLocalDay } from '@/shared/time';
-import type { CalendarEvent, Interval, Minute, SlotSearchResult } from '@/shared/types';
+import type {
+  CalendarEvent,
+  Interval,
+  Minute,
+  SlotSearchResult,
+  WindowExplanation,
+} from '@/shared/types';
 import {
   emptyWindowCause,
+  explainSearch,
   requireCurrentVersion,
   requireNotPast,
   requireValidSlot,
   search,
+  type SearchRequest,
 } from '../search';
 import type { EngineState, PipelineContext, PipelineOutcome } from '../state';
 // eventCrud also imports this module (for the ER4 suggestion). The cycle is safe: each side only
@@ -49,6 +57,41 @@ function alternativesWindow(event: CalendarEvent): Interval {
   };
 }
 
+// PRE:  state.events is sorted; request comes from outside (bufferMin unchecked)
+// POST: returns the search an alternatives request runs: the event's duration over
+//       alternativesWindow, working hours unless request.useWorkingHours is false, the event
+//       excluded, nearest to its start, buffer request.bufferMin ?? settings.bufferMin; err
+//       InvalidInput for a bad bufferMin or NotFound for an unknown event
+function alternativesSearch(
+  state: EngineState,
+  request: AlternativesRequest,
+): Result<SearchRequest, EngineError> {
+  const options = parseInput(searchOptionsSchema, { bufferMin: request.bufferMin });
+  if (!options.ok) {
+    return options;
+  }
+  const event = state.events.find((candidate) => candidate.id === request.eventId);
+  if (event === undefined) {
+    return err({ code: 'NotFound', entity: 'event', id: request.eventId });
+  }
+  return ok({
+    durationMin: event.end - event.start,
+    priority: event.priority,
+    window: alternativesWindow(event),
+    useWorkingHours: request.useWorkingHours ?? true,
+    excludeIds: [event.id],
+    originalStart: event.start,
+    criterion: 'nearest',
+    bufferMin: options.value.bufferMin ?? state.settings.bufferMin,
+    subject: {
+      kind: 'event',
+      eventId: event.id,
+      title: event.title,
+      otherEventId: request.otherEventId ?? null,
+    },
+  });
+}
+
 // PRE:  state.events is sorted; request comes from outside (bufferMin unchecked); notBefore is now
 //       rounded up to SNAP_MIN
 // POST: returns the nearest-first alternative slots for the event (working hours only unless
@@ -61,37 +104,12 @@ export function suggestAlternatives(
   request: AlternativesRequest,
   notBefore: Minute,
 ): Result<SlotSearchResult, EngineError> {
-  const options = parseInput(searchOptionsSchema, { bufferMin: request.bufferMin });
-  if (!options.ok) {
-    return options;
+  const prepared = alternativesSearch(state, request);
+  if (!prepared.ok) {
+    return prepared;
   }
-  const event = state.events.find((candidate) => candidate.id === request.eventId);
-  if (event === undefined) {
-    return err({ code: 'NotFound', entity: 'event', id: request.eventId });
-  }
-
-  const window = alternativesWindow(event);
-  const useWorkingHours = request.useWorkingHours ?? true;
-  const found = search(
-    state,
-    {
-      durationMin: event.end - event.start,
-      priority: event.priority,
-      window,
-      useWorkingHours,
-      excludeIds: [event.id],
-      originalStart: event.start,
-      criterion: 'nearest',
-      bufferMin: options.value.bufferMin ?? state.settings.bufferMin,
-      subject: {
-        kind: 'event',
-        eventId: event.id,
-        title: event.title,
-        otherEventId: request.otherEventId ?? null,
-      },
-    },
-    notBefore,
-  );
+  const { window, useWorkingHours } = prepared.value;
+  const found = search(state, prepared.value, notBefore);
   if (
     found.ok ||
     found.error.code !== 'TaskLongerThanWindow' ||
@@ -103,6 +121,18 @@ export function suggestAlternatives(
     ...found.error,
     emptyCause: emptyWindowCause(state, window, useWorkingHours, notBefore),
   });
+}
+
+// PRE:  as suggestAlternatives
+// POST: returns explainSearch of the search suggestAlternatives would run for request (WI-45), or
+//       its InvalidInput / NotFound error
+export function explainAlternativesWindow(
+  state: EngineState,
+  request: AlternativesRequest,
+  notBefore: Minute,
+): Result<WindowExplanation, EngineError> {
+  const prepared = alternativesSearch(state, request);
+  return prepared.ok ? ok(explainSearch(state, prepared.value, notBefore)) : prepared;
 }
 
 // PRE:  request comes from the UI, normally an option of suggestAlternatives

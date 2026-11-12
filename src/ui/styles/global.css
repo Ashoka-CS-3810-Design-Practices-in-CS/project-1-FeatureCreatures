@@ -575,14 +575,37 @@ dialog::backdrop {
 
 dialog > h2 {
   margin-bottom: var(--space-4);
+  /* Room for the × close button in the top-right corner (WI-45). */
+  padding-right: calc(var(--target-min) + var(--space-2));
   font-size: var(--text-lg);
   letter-spacing: -0.01em;
 }
 
-/* Content after the action row (the Settings data section) still needs the bottom padding. */
+/* Content after the action row (the Settings data section) still needs the bottom padding. The ×
+   close button comes last in the DOM (WI-45), so "last" also means "just before it". */
 dialog > section:last-child,
-dialog > p:last-child {
+dialog > p:last-child,
+dialog > section:has(+ .dialog-close:last-child),
+dialog > p:has(+ .dialog-close:last-child) {
   margin-bottom: var(--space-6);
+}
+
+/* WI-45 (#11): every dismissible dialog's × sits top-right, quiet until hovered or focused. */
+dialog > .dialog-close {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  margin: 0;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--text-lg);
+  line-height: 1;
+}
+
+dialog > .dialog-close:hover {
+  color: var(--text);
 }
 
 dialog form > label,

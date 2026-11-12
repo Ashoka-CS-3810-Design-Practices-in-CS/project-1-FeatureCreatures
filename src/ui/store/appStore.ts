@@ -33,6 +33,7 @@ import type {
   SlotSearchResult,
   TaskInput,
   UserCriterion,
+  WindowExplanation,
 } from '@/shared/types';
 import { errorMessage } from '../format/errors';
 import { toDateInput } from '../forms/eventForm';
@@ -396,10 +397,40 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
       });
     }
 
+    // PRE:  picker is a picker state; result is its fresh search
+    // POST: returns, when result is ER2 or ER3, what is left of the searched window (WI-45, #7),
+    //       otherwise null
+    function explanationFor(
+      picker: PickerState,
+      result: Result<SlotSearchResult>,
+    ): WindowExplanation | null {
+      if (
+        result.ok ||
+        (result.error.code !== 'TaskLongerThanWindow' && result.error.code !== 'NoSlotFound')
+      ) {
+        return null;
+      }
+      const explained =
+        picker.mode === 'task'
+          ? engine.explainWindow({
+              taskId: picker.queue[picker.index] ?? '',
+              bufferMin: picker.bufferMin,
+            })
+          : engine.explainWindow({
+              eventId: picker.eventId,
+              useWorkingHours: picker.useWorkingHours,
+              bufferMin: picker.bufferMin,
+            });
+      return explained.ok ? explained.value : null;
+    }
+
     // PRE:  picker is the picker state to show
-    // POST: shows picker with a fresh search and the first option selected
+    // POST: shows picker with a fresh search, its ER2 / ER3 explanation and the first option selected
     function refresh(picker: PickerState): void {
-      set({ picker: { ...picker, result: searchFor(picker), selected: 0 } });
+      const result = searchFor(picker);
+      set({
+        picker: { ...picker, result, explanation: explanationFor(picker, result), selected: 0 },
+      });
     }
 
     // PRE:  picker is a task picker whose counts include the task just handled
@@ -461,9 +492,27 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
     }
 
     // PRE:  eventId names the event to search; otherEventId is the optional conflict counterpart
+    // POST: returns the order the Move radios keep (WI-45, #5): the pair's conflict as aId, bId,
+    //       or eventId, otherEventId when they no longer conflict; null without a counterpart
+    function moveOrder(
+      eventId: string,
+      otherEventId: string | null,
+    ): readonly [string, string] | null {
+      if (otherEventId === null) {
+        return null;
+      }
+      const conflict = get().snapshot.conflicts.find(
+        (candidate) =>
+          (candidate.aId === eventId && candidate.bId === otherEventId) ||
+          (candidate.aId === otherEventId && candidate.bId === eventId),
+      );
+      return conflict === undefined ? [eventId, otherEventId] : [conflict.aId, conflict.bId];
+    }
+
+    // PRE:  eventId names the event to search; otherEventId is the optional conflict counterpart
     // POST: opens the existing alternatives picker and refreshes via engine.suggestAlternatives;
     //       it searches working hours only, unless the event lies outside working hours or on a
-    //       non-working day, where it searches any time (WI-41)
+    //       non-working day, where it searches any time (WI-41); the Move radios keep moveOrder
     function openAlternativePicker(eventId: string, otherEventId: string | null): void {
       const { settings, events } = get().snapshot;
       const event = events.find((candidate) => candidate.id === eventId);
@@ -474,7 +523,9 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
         otherEventId,
         bufferMin: settings.bufferMin,
         useWorkingHours: event === undefined || overlapsWorkingHours(event, settings),
+        order: moveOrder(eventId, otherEventId),
         result: { ok: false, error: { code: 'StaleResult' } },
+        explanation: null,
         selected: 0,
       });
     }
@@ -682,19 +733,18 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
           return;
         }
         const { defaultCriterion, bufferMin } = get().snapshot.settings;
-        set({
-          dialog: null,
-          picker: {
-            mode: 'task',
-            queue,
-            index: 0,
-            criterion: defaultCriterion,
-            bufferMin,
-            result: engine.findSlots({ taskId: first, criterion: defaultCriterion, bufferMin }),
-            selected: 0,
-            scheduled: 0,
-            skipped: 0,
-          },
+        set({ dialog: null });
+        refresh({
+          mode: 'task',
+          queue,
+          index: 0,
+          criterion: defaultCriterion,
+          bufferMin,
+          result: { ok: false, error: { code: 'StaleResult' } },
+          explanation: null,
+          selected: 0,
+          scheduled: 0,
+          skipped: 0,
         });
       },
 

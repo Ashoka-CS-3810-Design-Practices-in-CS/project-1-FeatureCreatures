@@ -140,6 +140,25 @@ export type SearchSubject =
       readonly otherEventId: string | null;
     };
 
+/** What divides two stretches of a search window: a barred slot or a busy event (WI-45, #7). */
+export interface WindowSplit {
+  readonly kind: 'barred' | 'event';
+  readonly label: string; // the barred slot's label or the event's title
+  readonly interval: Interval;
+}
+
+/** Stretches of a window in order, with the barred slots / events found between neighbours. */
+export interface WindowStretches {
+  readonly stretches: readonly Interval[];
+  readonly splits: readonly WindowSplit[];
+}
+
+/** engine.explainWindow: the allowed segments (ER2's view) and the free gaps (ER3's view). */
+export interface WindowExplanation {
+  readonly allowed: WindowStretches;
+  readonly free: WindowStretches;
+}
+
 export interface SlotSearchResult {
   readonly baseVersion: number;
   readonly subject: SearchSubject;
