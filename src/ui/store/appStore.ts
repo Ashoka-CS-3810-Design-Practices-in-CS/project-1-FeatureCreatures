@@ -42,6 +42,8 @@ import {
   createdText,
   DATA_CLEARED_TEXT,
   deletedText,
+  FIXED_MOVE_BODY,
+  fixedMoveQuestion,
   OTHER_TAB_UPDATED_TEXT,
   historyText,
   importedText,
@@ -74,7 +76,15 @@ export type Dialog =
   | { kind: 'replan' }
   | { kind: 'settings' }
   | { kind: 'shortcuts' }
-  | { kind: 'confirm'; title: string; body: string; confirmLabel: string; onConfirm: () => void };
+  | {
+      kind: 'confirm';
+      title: string;
+      body: string;
+      confirmLabel: string;
+      onConfirm: () => void;
+      cancelLabel?: string; // default 'Cancel'
+      onCancel?: () => void; // runs on the cancel button, Esc or close (WI-42)
+    };
 
 export interface AppActions {
   dismissToast(id: string): void;
@@ -84,6 +94,7 @@ export interface AppActions {
   createEvent(input: EventInput): Promise<Result<MutationResult>>;
   updateEvent(id: string, input: EventInput): Promise<Result<MutationResult>>;
   moveEvent(id: string, to: Interval): Promise<Result<MutationResult>>;
+  dragEvent(id: string, to: Interval, revert: () => void): Promise<void>;
   deleteEvent(id: string): Promise<Result<MutationResult>>;
   setActiveRange(range: Interval): void;
   setView(type: ViewType, date: Minute): void;
@@ -526,6 +537,40 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
           () => engine.moveEvent(id, to),
           (value) => movedText(titleIn(value, id), to),
         );
+      },
+
+      // PRE:  to comes from a calendar drag or resize of event id; revert puts the block back
+      // POST: a fixed event asks first (WI-42, report #1): "<title> is fixed. Move it anyway?"
+      //       Move moves it through moveEvent, Keep it / Esc / close only revert (nothing written,
+      //       no history); any other event moves at once. A move the engine refuses reverts too
+      async dragEvent(id, to, revert) {
+        // PRE:  none
+        // POST: moves the event through moveEvent and reverts the block when that fails
+        async function moveOrRevert(): Promise<void> {
+          const result = await actions.moveEvent(id, to);
+          if (!result.ok) {
+            revert();
+          }
+        }
+
+        const event = get().snapshot.events.find((candidate) => candidate.id === id);
+        if (event === undefined || event.flexible) {
+          await moveOrRevert();
+          return;
+        }
+        set({
+          dialog: {
+            kind: 'confirm',
+            title: fixedMoveQuestion(event.title),
+            body: FIXED_MOVE_BODY,
+            confirmLabel: 'Move',
+            cancelLabel: 'Keep it',
+            onConfirm: () => {
+              void moveOrRevert();
+            },
+            onCancel: revert,
+          },
+        });
       },
 
       // PRE:  id is any string

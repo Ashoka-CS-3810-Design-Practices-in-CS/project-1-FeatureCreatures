@@ -1439,7 +1439,8 @@ interface AppState {
     | { kind: 'event'; mode: 'edit'; id: string }
     | { kind: 'task'; mode: 'create' } | { kind: 'task'; mode: 'edit'; id: string }
     | { kind: 'replan' } | { kind: 'settings' } | { kind: 'shortcuts' }
-    | { kind: 'confirm'; title: string; body: string; confirmLabel: string; onConfirm: () => void };
+    | { kind: 'confirm'; title: string; body: string; confirmLabel: string; onConfirm: () => void;
+        cancelLabel?: string; onCancel?: () => void };   // WI-42: onCancel runs on the cancel button, Esc or close
   picker: PickerState | null;                  // store/pickerSlice.ts
   emphasisIds: string[];                       // briefly highlighted after a change (1.5 s)
   panelsOpen: boolean;                         // UI-only narrow drawer state
@@ -1545,7 +1546,7 @@ FullCalendar is a **controlled, render-only view**. Its `events` prop is always 
 
 **`calendarHandlers.ts`** contains plain functions (not hooks), so tests can call them with fake `info` objects (T14):
 
-- **`onDrop(info)` / `onResize(info)`:** call `actions.moveEvent(info.event.id, {start: toMinute(info.event.start!), end: toMinute(info.event.end!)})`. If the result is an error, call `info.revert()`.
+- **`onDrop(info)` / `onResize(info)`:** when FullCalendar reports no start or end, call `info.revert()`. Otherwise call `actions.dragEvent(info.event.id, {start, end}, info.revert)` (WI-42). For a fixed event the store opens the confirm dialog "<title> is fixed. Move it anyway?" (body "The planner never moves it on its own.", buttons Move / Keep it) whose `onConfirm` runs `moveEvent` and `onCancel` is `info.revert`; for any other event it runs `moveEvent` at once. Either way an error result calls `info.revert()`. Only drags go through `dragEvent`, so no other path asks. The block's Fixed tag (`components/FixedTag`) has `FIXED_TAG_HINT` as its `title` and, through a hidden element, as the `aria-describedby` of the event button.
 - **`onSelect(info)`:** open the create dialog with `defaults.start/end` from the selection, then call `info.view.calendar.unselect()`. A plain click selects one `SNAP_MIN` step; a selection that short gets `end = start + CLICK_EVENT_MIN` instead (WI-35).
 - **`onClick(info)`:** do nothing for background events. Otherwise open the edit dialog.
 - **`onDatesSet(info)`:** store `activeRange = {start: toMinute(info.start), end: toMinute(info.end)}`.
@@ -1864,3 +1865,4 @@ Production URL: https://…vercel.app
 | 2026-11-12 | v1.28: §14 plans the peer bug fixes batch (WI-40–46, items A–G from 14 peer reports); later rows of this log record each item's contract changes. |
 | 2026-11-12 | v1.29 (WI-40, peer report #14): frozen §9.1 Repository contract changed — `load()` returns the stored `revision`, and `apply` / `saveSettings` / `replaceAll` take the expected revision and throw `ConcurrentModificationError` inside the same transaction when it differs. §9.2 Dexie version 2 adds `meta` (upgrade keeps v1 data); §5 adds ER8 `ConcurrentModification` and `INITIAL_REVISION` / `TAB_CHANNEL_NAME`; §6 `storedRevisionSchema`; §7.1 `EngineState.revision`, `createState(…, revision)`, `repositoryError`; §7.2 `Engine.reload()` and `EngineDeps.onCommit`; §4 and §11.1 the BroadcastChannel reload. Export format v1 unchanged. |
 | 2026-11-12 | v1.30 (WI-41, peer reports #3, #4, #9): §7.2/§7.4.2 `suggestAlternatives` takes optional `useWorkingHours` (omitted = true) and an empty search adds `emptyCause`; §5 `EmptyWindowCause`; §11.1 picker `useWorkingHours`, `pickerSetWorkingHours`, `overlapsWorkingHours` and the whole-day default flex window. Algorithms unchanged. |
+| 2026-11-12 | v1.31 (WI-42, peer report #1): §11.1 confirm dialogs take `cancelLabel` / `onCancel` and the store gains `dragEvent(id, to, revert)`; §11.3 drops and resizes go through it, so a fixed event asks before moving; `components/FixedTag` adds the tag's tooltip and description. Engine unchanged. |

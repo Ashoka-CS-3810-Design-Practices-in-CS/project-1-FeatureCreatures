@@ -35,26 +35,24 @@ export interface CalendarHandlers {
 }
 
 // PRE:  actions are the store's actions
-// POST: returns FullCalendar's handlers: a drag or resize moves the event and snaps it back when
-//       the engine refuses (ER5); a selection opens the create dialog for its times (a plain click,
+// POST: returns FullCalendar's handlers: a drag or resize goes through actions.dragEvent (a
+//       fixed event asks first, WI-42) and snaps back when refused (ER5); a selection opens the create dialog for its times (a plain click,
 //       which selects one SNAP_MIN step, gets CLICK_EVENT_MIN instead); a click on an event opens
 //       its edit dialog (background blocks are ignored); a date change records the view, its
 //       period start and the visible range
 export function createCalendarHandlers(
-  actions: Pick<AppActions, 'moveEvent' | 'openDialog' | 'setActiveRange' | 'setView'>,
+  actions: Pick<AppActions, 'dragEvent' | 'openDialog' | 'setActiveRange' | 'setView'>,
 ): CalendarHandlers {
   // PRE:  info describes a dragged or resized event
-  // POST: asks the store to move it; reverts FullCalendar's copy when that fails
+  // POST: hands it to actions.dragEvent with FullCalendar's revert; reverts at once when
+  //       FullCalendar reports it without both ends
   async function moveOrRevert(info: ChangedEventInfo): Promise<void> {
     const { id, start, end } = info.event;
     if (start === null || end === null) {
       info.revert();
       return;
     }
-    const result = await actions.moveEvent(id, { start: toMinute(start), end: toMinute(end) });
-    if (!result.ok) {
-      info.revert();
-    }
+    await actions.dragEvent(id, { start: toMinute(start), end: toMinute(end) }, info.revert);
   }
 
   return {

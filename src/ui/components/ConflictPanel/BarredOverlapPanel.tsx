@@ -1,9 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { fmtDuration, fmtRange } from '../../format/time';
 import { useAppStore } from '../../store/appStore';
+import { FixedTag } from '../FixedTag/FixedTag';
 
 // PRE:  rendered under StoreProvider; reads snapshot.barredOverlaps/events and barredViewRequest;
 //       uses openEventAlternatives for each warning's event
+//       + additional props from: FixedTag
 // POST: shows every barred overlap separately from event-pair conflicts, with a Fixed/Flexible tag and reused alternatives
 //       action; a View request focuses and scrolls the heading after the drawer has opened
 export function BarredOverlapPanel() {
@@ -12,6 +14,7 @@ export function BarredOverlapPanel() {
   const request = useAppStore((state) => state.barredViewRequest);
   const openAlternatives = useAppStore((state) => state.actions.openEventAlternatives);
   const heading = useRef<HTMLHeadingElement>(null);
+  const hintPrefix = useId();
   const byId = new Map(events.map((event) => [event.id, event]));
 
   useEffect(() => {
@@ -42,9 +45,11 @@ export function BarredOverlapPanel() {
               <strong>
                 {byId.get(warning.eventId)?.title ?? warning.eventId} · {warning.label}
               </strong>
-              <span className="tag">
-                {byId.get(warning.eventId)?.flexible ? 'Flexible' : 'Fixed'}
-              </span>
+              {byId.get(warning.eventId)?.flexible ? (
+                <span className="tag">Flexible</span>
+              ) : (
+                <FixedTag descriptionId={`${hintPrefix}-${index}`} />
+              )}
               <span>
                 {fmtRange(warning.overlap)} ({fmtDuration(warning.minutes)})
               </span>

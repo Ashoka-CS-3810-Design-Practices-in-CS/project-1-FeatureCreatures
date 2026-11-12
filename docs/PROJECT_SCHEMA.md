@@ -112,7 +112,7 @@ These optional features from the project description are also covered by the cor
 | **Minute** | An integer number of minutes since the Unix epoch (UTC). All stored times are Minutes. |
 | **Interval** | `{start, end}` in Minutes, **half-open** `[start, end)`, with `end > start`. |
 | **Event** | An Interval with title, description, category, priority, fixed/flexible flag, optional flex window, optional link to a task. Appears on the timeline. |
-| **Fixed event** | An event the app never proposes to move automatically (e.g. a class). The user may still move it by hand. |
+| **Fixed event** | An event the app never proposes to move automatically (e.g. a class). The user may still move it by hand: dragging or resizing it asks first ("<title> is fixed. Move it anyway?", WI-42), while editing its times in the dialog does not. Its **Fixed** tag explains this in a tooltip. |
 | **Flexible event** | An event the app may propose to move, but only inside its **flex window**. |
 | **Flex window** | An Interval within which a flexible event may be placed. |
 | **Task** | A to-do with name, duration, priority and an **allowable window**. It has no time until scheduled, and is shown only in the task panel. |
@@ -215,6 +215,8 @@ Each requirement lists its acceptance criteria. The tests that prove it are in `
   - Stale conflicts disappear and new ones appear in the same render.
   - A drag that the engine rejects snaps back.
   - If the event is linked to a task, the task's mirrored fields follow (BR-9).
+  - **A fixed event asks before a manual drag or resize** (WI-42, peer report #1): the app's confirmation dialog reads "<title> is fixed. Move it anyway?" with **Move** and **Keep it**. Move commits as any drag; Keep it, Esc or closing snap the block back and write nothing (no undo step). Flexible events drag without asking. Changing times in the event dialog, applying an alternative, undo/redo and Replan never ask, and Replan still never moves fixed events (BR-12).
+  - The **Fixed** tag on a block has the tooltip and accessible description "Fixed: the planner never moves it. Dragging asks first; you can also edit its times or tick Flexible."
 
 **FR3 — Delete event.**
 - **Behaviour:** after confirmation, the event is removed and conflicts are re-run.
@@ -581,7 +583,7 @@ Every search result also carries:
 | ID | Workflow | Steps → result |
 |---|---|---|
 | W1 | Create an event, see a conflict | + Event (or drag on empty time) → fill in the form → Save. The event appears. If it overlaps another, both are flagged, the panel lists the overlap, and the ER4 toast offers *Move to …*. |
-| W2 | Move or resize | Drag or resize the event. On drop the engine commits. Conflicts update. If the engine rejects the change (ER5), the event snaps back. |
+| W2 | Move or resize | Drag or resize the event. On drop the engine commits. Conflicts update. If the engine rejects the change (ER5), the event snaps back. A fixed event first asks "<title> is fixed. Move it anyway?": Move commits, Keep it or Esc snaps back (WI-42). |
 | W3 | Resolve a conflict | Conflict panel → *Suggest alternatives* → picker (alternatives mode) → choose → Apply. The conflict disappears and a success toast appears. |
 | W4 | Schedule one task | + Task → Save → *Find time* → review the options → Apply. The task is marked Scheduled and the event appears on the timeline. |
 | W5 | Schedule several tasks | Tick the tasks → *Find time for N selected* → the picker shows Task 1 of N → Apply or Skip → it moves on to the next task automatically → a summary toast: "Scheduled 2 of 3 tasks (1 skipped)". |
@@ -699,3 +701,4 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 | 2026-10-26 | v1.6 (WI-38): FR10/BR-12 define per-plan remaining-problem explanations and alternatives, including zero movable events; BR-15 adds Fixed/Flexible row tags. Placement rules unchanged. |
 | 2026-11-12 | v1.7 (WI-40, peer report #14): ER8 `ConcurrentModification` — a write from a tab whose view is out of date is refused and that tab reloads; other tabs reload after every stored change with "Calendar updated in another tab." (§5, §7.4, NFR4, §9 row 11). Single-tab behaviour unchanged. |
 | 2026-11-12 | v1.8 (WI-41, peer reports #3, #4, #9): FR7 adds the Search hours choice with its default, the fixed-target note and named empty-window causes; BR-5 alternatives no longer always respect working hours; §3.2 the default flex window is the whole local day outside working hours or on a non-working day. |
+| 2026-11-12 | v1.9 (WI-42, peer report #1): glossary *Fixed event*, FR2 and W2 — a manual drag or resize of a fixed event asks "<title> is fixed. Move it anyway?" (Move / Keep it); other paths never ask; the Fixed tag gets a tooltip and accessible description. |
