@@ -1,0 +1,223 @@
+{
+  "format": "feature-creatures-calendar",
+  "version": 1,
+  "exportedAt": "2026-11-02T00:00:00.000Z",
+  "events": [
+    {
+      "id": "sparse-algorithms",
+      "title": "Algorithms lecture",
+      "description": "",
+      "category": "class",
+      "priority": "high",
+      "start": 29893500,
+      "end": 29893590,
+      "flexible": false,
+      "flexWindow": null,
+      "taskId": null,
+      "createdAt": 29892960,
+      "updatedAt": 29892960
+    },
+    {
+      "id": "sparse-lecture",
+      "title": "Lecture",
+      "description": "",
+      "category": "class",
+      "priority": "high",
+      "start": 29895000,
+      "end": 29895090,
+      "flexible": false,
+      "flexWindow": null,
+      "taskId": null,
+      "createdAt": 29892960,
+      "updatedAt": 29892960
+    },
+    {
+      "id": "sparse-meeting",
+      "title": "Meeting",
+      "description": "",
+      "category": "meeting",
+      "priority": "medium",
+      "start": 29895060,
+      "end": 29895120,
+      "flexible": true,
+      "flexWindow": {
+        "start": 29893500,
+        "end": 29899800
+      },
+      "taskId": null,
+      "createdAt": 29892960,
+      "updatedAt": 29892960
+    },
+    {
+      "id": "sparse-lab",
+      "title": "Lab",
+      "description": "",
+      "category": "class",
+      "priority": "medium",
+      "start": 29896380,
+      "end": 29896440,
+      "flexible": false,
+      "flexWindow": null,
+      "taskId": null,
+      "createdAt": 29892960,
+      "updatedAt": 29892960
+    },
+    {
+      "id": "sparse-study",
+      "title": "Study",
+      "description": "",
+      "category": "personal",
+      "priority": "low",
+      "start": 29896740,
+      "end": 29896830,
+      "flexible": true,
+      "flexWindow": {
+        "start": 29893500,
+        "end": 29899800
+      },
+      "taskId": null,
+      "createdAt": 29892960,
+      "updatedAt": 29892960
+    },
+    {
+      "id": "sparse-seminar",
+      "title": "Seminar",
+      "description": "",
+      "category": "class",
+      "priority": "high",
+      "start": 29897880,
+      "end": 29898000,
+      "flexible": false,
+      "flexWindow": null,
+      "taskId": null,
+      "createdAt": 29892960,
+      "updatedAt": 29892960
+    },
+    {
+      "id": "sparse-office-hours",
+      "title": "Office hours",
+      "description": "",
+      "category": "appointment",
+      "priority": "low",
+      "start": 29898120,
+      "end": 29898180,
+      "flexible": false,
+      "flexWindow": null,
+      "taskId": null,
+      "createdAt": 29892960,
+      "updatedAt": 29892960
+    },
+    {
+      "id": "sparse-tutorial",
+      "title": "Tutorial",
+      "description": "",
+      "category": "class",
+      "priority": "medium",
+      "start": 29899290,
+      "end": 29899350,
+      "flexible": false,
+      "flexWindow": null,
+      "taskId": null,
+      "createdAt": 29892960,
+      "updatedAt": 29892960
+    }
+  ],
+  "tasks": [
+    {
+      "id": "sparse-report",
+      "name": "Write report",
+      "description": "",
+      "category": "assignment",
+      "priority": "high",
+      "durationMin": 90,
+      "window": {
+        "start": 29893500,
+        "end": 29899800
+      },
+      "useWorkingHours": true,
+      "status": "unscheduled",
+      "scheduledEventId": null,
+      "createdAt": 29892960,
+      "updatedAt": 29892960
+    },
+    {
+      "id": "sparse-chapter",
+      "name": "Read chapter 4",
+      "description": "",
+      "category": "assignment",
+      "priority": "medium",
+      "durationMin": 45,
+      "window": {
+        "start": 29893500,
+        "end": 29899800
+      },
+      "useWorkingHours": true,
+      "status": "unscheduled",
+      "scheduledEventId": null,
+      "createdAt": 29892960,
+      "updatedAt": 29892960
+    },
+    {
+      "id": "sparse-gym",
+      "name": "Gym",
+      "description": "",
+      "category": "personal",
+      "priority": "low",
+      "durationMin": 60,
+      "window": {
+        "start": 29893500,
+        "end": 29899800
+      },
+      "useWorkingHours": true,
+      "status": "unscheduled",
+      "scheduledEventId": null,
+      "createdAt": 29892960,
+      "updatedAt": 29892960
+    },
+    {
+      "id": "sparse-thesis",
+      "name": "Thesis draft",
+      "description": "",
+      "category": "assignment",
+      "priority": "medium",
+      "durationMin": 600,
+      "window": {
+        "start": 29893500,
+        "end": 29899800
+      },
+      "useWorkingHours": true,
+      "status": "unscheduled",
+      "scheduledEventId": null,
+      "createdAt": 29892960,
+      "updatedAt": 29892960
+    }
+  ],
+  "settings": {
+    "workDays": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "workStartMin": 540,
+    "workEndMin": 1080,
+    "bufferMin": 0,
+    "barredSlots": [
+      {
+        "id": "lunch",
+        "label": "Lunch",
+        "startMin": 780,
+        "endMin": 840,
+        "days": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      }
+    ],
+    "defaultCriterion": "earliest"
+  }
+}

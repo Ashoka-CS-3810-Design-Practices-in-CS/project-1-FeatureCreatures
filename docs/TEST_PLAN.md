@@ -222,6 +222,12 @@ All times are on Mon 2 Nov 2026 unless a day is given. Intervals are half-open.
 
 ---
 
+### 4.4 Round 2 data and behaviour tests
+
+| Test | Exact checks |
+|---|---|
+| T48 — data v3 / export v2 (WI-48, D-17) | `tests/integration/dataMigration.test.ts`: open the shipped v2 schema with one event per enum category, linked and unscheduled tasks, overlapping/duplicate barred slots and revision 7; upgrade keeps every field and link, maps `category` to seeded `categoryId`, adds `keptInBarred = []`, `doneAt = null`, `useWorkingHours = true`, and five categories. Engine init accepts the preserved legacy slots. A write at revision 7 succeeds once, the next rejects with ER8 and preserves all data. Retained `tests/fixtures/export-v1.json` imports and re-exports as v2. v1 overlapping slots are preserved. v2 imports/exports custom categories, kept ids, a done task and disabled working hours; an unknown event category gives ER6 at `events.0.categoryId`. |
+
 ## 5. UI tests (RTL) — additional required cases
 
 These are part of their WI's definition of done in TECH_SPEC §14.

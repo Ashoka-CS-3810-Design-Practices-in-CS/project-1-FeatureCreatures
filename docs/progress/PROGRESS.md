@@ -218,6 +218,7 @@ Binding design: `docs/extras/AUDIT_2.md` (D-01–D-19, C-01–C-08). Work in ord
 - [~] **WI-48** Data model v3 and migration — owner S + Dv — depends on 47
   - Done when: Dexie v2→v3 upgrade test; v1/v2 import tests; samples re-exported; all existing tests pass (fixtures updated mechanically).
   - 2026-11-12 · Codex · branch `feat/wi-48-data-v3` · done: claimed after WI-47 and full main gate; storage/schema/state/UI references reviewed · next: failing T48 migration/import tests plus a retained v1 fixture, then types/validators, v3 migration, repositories/state/I/O, mechanical fixtures and samples · note: no category CRUD or new UI features until later WIs.
+  - 2026-11-12 · Codex · branch `feat/wi-48-data-v3` · done: T48's four integration regressions fail for the intended reasons (no v3 category/field migration, export still v1, older duplicates rejected, v2 import rejected); original v1 sparse-week fixture retained · next: implement data contracts/migration and preserve category references across storage/state/export · note: test-first checkpoint; existing main remains green.
 - [ ] **WI-49** Categories — owner S + Dv — depends on 48
   - Done when: New tests for CRUD, delete blocking, uniqueness, undo, filters.
 - [ ] **WI-50** Scheduling model and lock — owner S + Dv — depends on 49
