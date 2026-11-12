@@ -206,6 +206,7 @@ Fourteen peer bug reports, each verified against `main` and the live build. One 
 
 ## Decisions log (append-only)
 
+- 2026-11-12 (WI-41, Claude Code): "lies outside working hours" means the event does not overlap its start day's working hours, or that day is not a working day (`overlapsWorkingHours`). An event that only partly sticks out (17:30–19:00) keeps the old defaults, so working-hours behaviour stays identical. The picker's Search hours choice is kept when the user toggles the target, because it was the user's choice. `emptyCause` is added only by `suggestAlternatives`, so task-search errors (and T28) are unchanged.
 - 2026-11-12 (WI-40, Claude Code): the revision is checked by the repository, not the engine, because only the repository's own transaction can make check-and-write atomic across tabs. `engine.reload()` clears undo/redo (the history describes records another tab may have replaced) and bumps the version so open pickers/plans are ER7. ER8 shows a warning toast with no Retry, since retrying would replay a command built on the old view. No broadcast in degraded mode: tabs then share no storage, and a message would only clear the other tab's history.
 
 

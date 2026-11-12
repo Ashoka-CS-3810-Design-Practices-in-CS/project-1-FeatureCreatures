@@ -157,7 +157,7 @@ The event dialog picks a default `flexible` value from the category. The user ca
 - **Fixed by default:** class, meeting, appointment.
 - **Flexible by default:** assignment, personal.
 
-The default flex window is the event's local day, from working start to working end.
+The default flex window is the event's local day, from working start to working end. When the event does not overlap its day's working hours (for example at night) or falls on a non-working day, the default is that whole local day, 00:00–24:00, so the window is never empty by default (WI-41, reports #4 and #9). This only fills the form of a new event or one without a window; stored events are never changed.
 
 #### Task
 
@@ -258,8 +258,11 @@ Each requirement lists its acceptance criteria. The tests that prove it are in `
 - **Behaviour:**
   1. Choose which event to move by the target rule (BR-10). The user can switch to the other event.
   2. Search for slots for the target's duration. A flexible target is searched within its flex window. A fixed target is searched from the start of the local day before to the end of the local day after its own day (3 local days).
-  3. Rank by `nearest` to the original start and return the top 5 with explanations.
-  4. Apply moves the target event (as FR2).
+  3. **Search hours** (WI-41, reports #3, #4, #9): the picker offers *Working hours only* or *Any time*. It defaults to *Any time* when the target does not overlap its day's working hours or is on a non-working day, and to *Working hours only* otherwise; switching re-runs the search, and the choice is kept when the user switches the target. Barred slots apply either way.
+  4. Rank by `nearest` to the original start and return the top 5 with explanations.
+  5. Apply moves the target event (as FR2).
+  6. When the target is fixed, the picker says: "<title> is fixed: the planner never moves it on its own, but you can choose to move it." BR-10's default target is unchanged.
+  7. When no minute of the window can be used, the picker names the cause instead of the generic ER2 text: "Its window is entirely in the past.", "Its window has no working hours. Choose "Any time" to search outside them." or "Its window is fully barred: every free minute in it is inside a barred slot."
 - **Acceptance:**
   - The conflict disappears after applying.
   - Any new conflicts caused elsewhere are reported immediately.
@@ -387,7 +390,7 @@ These rules are normative. The algorithms in TECH_SPEC §8 implement them exactl
   3. Subtract that day's barred slots.
   4. Clip everything to start no earlier than `notBefore`, which is now rounded up to the next multiple of 5 minutes.
 - **When working hours don't apply** (`useWorkingHours = false`): the segments are the search window minus barred slots, clipped at `notBefore`.
-- **Usage:** task searches use `task.useWorkingHours`. Alternatives and Replan always respect working hours.
+- **Usage:** task searches use `task.useWorkingHours`. Alternatives use the picker's *Search hours* choice (FR7; working hours by default unless the target lies outside them, WI-41). Replan always respects working hours.
 - **Edge labels:** each segment edge records why it is there (window start/end, working start/end, barred slot "Lunch", now). These labels are used in explanations.
 
 **BR-6 Busy blocks and free gaps.**
@@ -695,3 +698,4 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 | 2026-10-26 | v1.5 (WI-37): §7.1 specifies shared tagged/coloured priority radios, task scheduling-hours radios and a full-width flex-window group below End. UI only; schemas and engine unchanged. |
 | 2026-10-26 | v1.6 (WI-38): FR10/BR-12 define per-plan remaining-problem explanations and alternatives, including zero movable events; BR-15 adds Fixed/Flexible row tags. Placement rules unchanged. |
 | 2026-11-12 | v1.7 (WI-40, peer report #14): ER8 `ConcurrentModification` — a write from a tab whose view is out of date is refused and that tab reloads; other tabs reload after every stored change with "Calendar updated in another tab." (§5, §7.4, NFR4, §9 row 11). Single-tab behaviour unchanged. |
+| 2026-11-12 | v1.8 (WI-41, peer reports #3, #4, #9): FR7 adds the Search hours choice with its default, the fixed-target note and named empty-window causes; BR-5 alternatives no longer always respect working hours; §3.2 the default flex window is the whole local day outside working hours or on a non-working day. |
