@@ -7,7 +7,8 @@ let pageTrigger: HTMLElement | null = null;
 //       closes itself (Esc or form method="dialog"); children are its content
 //       dismissible permits Esc; className/id optionally identify the drawer
 // POST: renders a native <dialog> opened with showModal() while open (so focus is trapped and the
-//       page behind is inert), labelled by its title
+//       page behind is inert), labelled by its title; a dismissible dialog also shows a × button
+//       named Close that calls onClose exactly as Cancel / Esc do (WI-45, report #11)
 export function Modal({
   open,
   title,
@@ -72,6 +73,12 @@ export function Modal({
     >
       <h2 id={titleId}>{title}</h2>
       {children}
+      {/* Last in the DOM, so opening still focuses the first field; CSS puts it top-right. */}
+      {dismissible && (
+        <button type="button" className="dialog-close" aria-label="Close" onClick={onClose}>
+          ×
+        </button>
+      )}
     </dialog>
   );
 }

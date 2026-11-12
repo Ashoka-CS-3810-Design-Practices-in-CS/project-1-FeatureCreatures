@@ -17,7 +17,8 @@ const SHORTCUTS: { keys: string; action: string }[] = [
 
 // PRE:  rendered under StoreProvider; reads dialog (kind 'shortcuts'); uses actions.closeDialog
 //       + additional props from: Modal
-// POST: while the shortcut help is open, lists every shortcut with its action (B4), with Close
+// POST: while the shortcut help is open, lists every shortcut with its action (B4); the shared
+//       Modal's × (Close) or Esc closes it (WI-45 replaced the duplicate Close button)
 export function ShortcutHelp() {
   const isOpen = useAppStore((state) => state.dialog?.kind === 'shortcuts');
   const closeDialog = useAppStore((state) => state.actions.closeDialog);
@@ -46,11 +47,6 @@ export function ShortcutHelp() {
         </tbody>
       </table>
       <p>Shortcuts are off while you type in a field or while a dialog is open (except Esc).</p>
-      <div className="dialog-actions">
-        <button type="button" onClick={closeDialog}>
-          Close
-        </button>
-      </div>
     </Modal>
   );
 }

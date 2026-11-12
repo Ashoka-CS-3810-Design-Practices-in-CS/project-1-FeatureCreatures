@@ -16,9 +16,17 @@ import type {
   SlotSearchResult,
   Task,
   UserCriterion,
+  WindowExplanation,
 } from '@/shared/types';
 import { compareTasksForQueue } from '../algorithms/taskOrder';
-import { requireCurrentVersion, requireNotPast, requireValidSlot, search } from '../search';
+import {
+  explainSearch,
+  requireCurrentVersion,
+  requireNotPast,
+  requireValidSlot,
+  search,
+  type SearchRequest,
+} from '../search';
 import {
   commit,
   type Change,
@@ -218,16 +226,14 @@ export function orderForScheduling(state: EngineState, taskIds: readonly string[
     .map((task) => task.id);
 }
 
-// PRE:  state.events is sorted; request comes from outside (bufferMin unchecked); notBefore is now
-//       rounded up to SNAP_MIN
-// POST: returns the ranked slots for the unscheduled task (its window, working hours as the task
-//       says, criterion ?? settings.defaultCriterion, buffer ?? settings.bufferMin); err
-//       InvalidInput for a bad bufferMin or a scheduled task, NotFound, or the search's ER2 / ER3
-export function findSlots(
+// PRE:  state.events is sorted; request comes from outside (bufferMin unchecked)
+// POST: returns the search findSlots runs for the unscheduled task (its window, working hours as
+//       the task says, criterion ?? settings.defaultCriterion, buffer ?? settings.bufferMin); err
+//       InvalidInput for a bad bufferMin or a scheduled task, or NotFound
+function taskSearch(
   state: EngineState,
   request: FindSlotsRequest,
-  notBefore: Minute,
-): Result<SlotSearchResult, EngineError> {
+): Result<SearchRequest, EngineError> {
   const options = parseInput(searchOptionsSchema, { bufferMin: request.bufferMin });
   if (!options.ok) {
     return options;
@@ -240,21 +246,42 @@ export function findSlots(
   if (task.status === 'scheduled') {
     return err(ALREADY_SCHEDULED);
   }
-  return search(
-    state,
-    {
-      durationMin: task.durationMin,
-      priority: task.priority,
-      window: task.window,
-      useWorkingHours: task.useWorkingHours,
-      excludeIds: [],
-      originalStart: null,
-      criterion: request.criterion ?? state.settings.defaultCriterion,
-      bufferMin: options.value.bufferMin ?? state.settings.bufferMin,
-      subject: { kind: 'task', taskId: task.id, name: task.name },
-    },
-    notBefore,
-  );
+  return ok({
+    durationMin: task.durationMin,
+    priority: task.priority,
+    window: task.window,
+    useWorkingHours: task.useWorkingHours,
+    excludeIds: [],
+    originalStart: null,
+    criterion: request.criterion ?? state.settings.defaultCriterion,
+    bufferMin: options.value.bufferMin ?? state.settings.bufferMin,
+    subject: { kind: 'task', taskId: task.id, name: task.name },
+  });
+}
+
+// PRE:  state.events is sorted; request comes from outside (bufferMin unchecked); notBefore is now
+//       rounded up to SNAP_MIN
+// POST: returns the ranked slots for the unscheduled task (taskSearch); err InvalidInput for a bad
+//       bufferMin or a scheduled task, NotFound, or the search's ER2 / ER3
+export function findSlots(
+  state: EngineState,
+  request: FindSlotsRequest,
+  notBefore: Minute,
+): Result<SlotSearchResult, EngineError> {
+  const prepared = taskSearch(state, request);
+  return prepared.ok ? search(state, prepared.value, notBefore) : prepared;
+}
+
+// PRE:  as findSlots
+// POST: returns explainSearch of the search findSlots would run for request (WI-45), or its
+//       InvalidInput / NotFound error
+export function explainTaskWindow(
+  state: EngineState,
+  request: FindSlotsRequest,
+  notBefore: Minute,
+): Result<WindowExplanation, EngineError> {
+  const prepared = taskSearch(state, request);
+  return prepared.ok ? ok(explainSearch(state, prepared.value, notBefore)) : prepared;
 }
 
 // PRE:  request comes from the UI, normally an option of findSlots

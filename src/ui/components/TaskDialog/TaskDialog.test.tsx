@@ -118,11 +118,12 @@ describe('TaskDialog', () => {
     const store = renderDialogs(engine);
 
     act(() => store.getState().actions.openDialog({ kind: 'task', mode: 'create' }));
-    expect(buttonNames()).toEqual(['Save', 'Cancel']);
+    // The shared Modal adds its × (Close) last (WI-45).
+    expect(buttonNames()).toEqual(['Save', 'Cancel', '×']);
     act(() => store.getState().actions.openDialog({ kind: 'task', mode: 'edit', id: 'U' }));
-    expect(buttonNames()).toEqual(['Save', 'Cancel', 'Find time', 'Delete']);
+    expect(buttonNames()).toEqual(['Save', 'Cancel', 'Find time', 'Delete', '×']);
     act(() => store.getState().actions.openDialog({ kind: 'task', mode: 'edit', id: 'S' }));
-    expect(buttonNames()).toEqual(['Save', 'Cancel', 'Unschedule', 'Delete']);
+    expect(buttonNames()).toEqual(['Save', 'Cancel', 'Unschedule', 'Delete', '×']);
   });
 
   it('Find time opens the picker for the task; Unschedule unschedules and closes', async () => {

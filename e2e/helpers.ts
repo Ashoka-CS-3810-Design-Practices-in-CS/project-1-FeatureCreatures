@@ -3,6 +3,15 @@ import { expect, type Page } from '@playwright/test';
 const BASE_TIME = new Date('2026-11-02T08:00:00');
 const MONDAY_COLUMN = '.fc-timegrid-col[data-date="2026-11-02"]';
 export const DRAG_STEPS = 12;
+
+// The toolbar button that opens each dialog, and the dialog's accessible name.
+export const TOOLBAR_DIALOGS = [
+  { button: '+ Event', title: 'New event' },
+  { button: '+ Task', title: 'New task' },
+  { button: 'Replan', title: 'Replan' },
+  { button: 'Settings', title: 'Settings' },
+  { button: 'Keyboard shortcuts', title: 'Keyboard shortcuts' },
+];
 export const GRAB_OFFSET_PX = 2;
 
 // PRE:  page has a fresh browser context
