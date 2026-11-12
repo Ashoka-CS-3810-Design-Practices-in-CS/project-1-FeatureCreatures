@@ -13,7 +13,7 @@
 The session protocol for agents (start, commit, handoff, merge) lives in `AGENTS.md` at the repo root. Code style is governed by the `disciplined-coding` skill (`.agents/skills/disciplined-coding/SKILL.md`, mirrored in `.claude/skills/`). The rules below are the project-specific part.
 
 1. **Read before coding.** Read `PROJECT_SCHEMA.md` §2, §3 and §6. Then read this file's sections for your work item (§14), and the tests that work item lists in `TEST_PLAN.md`.
-2. **Progress file.** `docs/PROGRESS.md` holds one checkbox per work item (WI) from §14. It was created during repo setup, before WI-01.
+2. **Progress file.** `docs/progress/PROGRESS.md` holds one checkbox per work item (WI) from §14. It was created during repo setup, before WI-01.
    - Before you stop (including when your usage limit runs out), tick what you finished.
    - Under the WI, write a note of one to three lines: what is done, what is next, and anything surprising.
    - The next agent starts from that note.
@@ -109,8 +109,9 @@ Every file listed here exists by the end of the project. The WI column says whic
 /
 ├─ docs/
 │  ├─ PROJECT_SCHEMA.md  TECH_SPEC.md  TEST_PLAN.md   # these specs
-│  ├─ PROGRESS.md                                      # WI checklist + handoff notes (repo setup)
-│  ├─ AUDIT.md                                         # Codex review A01–A10 with resolutions (WI-36)
+│  ├─ progress/PROGRESS.md                             # WI checklist + handoff notes (WI-47 location)
+│  ├─ extras/                                         # audits, peer reports, prompts, planning evidence (WI-47)
+│  ├─ samples/                                        # six importable calendars and README
 │  └─ screenshots/                                     # design-review captures linked from README (WI-34)
 ├─ .github/workflows/ci.yml                            # WI-01
 ├─ index.html  vite.config.ts  vitest.config.ts  vitest.dst.config.ts
@@ -1750,7 +1751,7 @@ Data lives in each visitor's own browser. A grader opening the URL sees the empt
 
 ## 14. Build plan (work items)
 
-Phases match A3 §7. Owners follow A3: **S** = Samar, **Dv** = Divyam. Each WI is done only when its tests pass and `docs/PROGRESS.md` is updated.
+Phases match A3 §7. Owners follow A3: **S** = Samar, **Dv** = Divyam. Each WI is done only when its tests pass and `docs/progress/PROGRESS.md` is updated.
 
 **Follow dependencies: WI-32 and WI-33 are change requests that must finish before WI-30 and WI-31.**
 
@@ -1791,7 +1792,7 @@ Phases match A3 §7. Owners follow A3: **S** = Samar, **Dv** = Divyam. Each WI i
 | 33 | Change | Shortcuts button | S + Dv | `Toolbar` | 29 | Toolbar `?` button labelled Keyboard shortcuts opens the existing help; `?` key still works |
 | 34 | Change | Visual refresh (spacing, type, colour) | S + Dv | `styles/*`, `App.module.css`, class-only markup, `scripts/screenshots/*`, `docs/screenshots/*` | 33 | Appearance only: spacing/type tokens used instead of raw px, §11.4 updated to the final values, contrast test green in both themes, PROJECT_SCHEMA §7.5/§7.7 still true, full gate incl. `npm run e2e` green, screenshots committed and linked from README |
 | 35 | Change | Crash fixes (mirror events, StrictMode dialogs, error boundary) | S + Dv | `CalendarView/*`, `Modal`, `ErrorBoundary`, `main.tsx`, `e2e/*`, `playwright.config.ts` | 34 | A select-mirror event without extendedProps renders (regression test); Modal stays open under `<StrictMode>` and Esc still closes it; the error boundary shows "Something went wrong" with Reload / Export data (UI test); E4 (click and drag-select open New event with times prefilled) and the smoke flow fail on any uncaught page error, on both the built app and the StrictMode dev server |
-| 36 | Change | Audit findings A01–A10 | S + Dv | per finding, see `docs/AUDIT.md` | 35 | `docs/AUDIT.md` committed; every finding re-verified against `main` with a failing test first and a resolution line (fixed in <commit> / not reproducible / deferred with reason); full gate incl. `npm run e2e` green |
+| 36 | Change | Audit findings A01–A10 | S + Dv | per finding, see `docs/extras/AUDIT.md` | 35 | `docs/extras/AUDIT.md` committed; every finding re-verified against `main` with a failing test first and a resolution line (fixed in <commit> / not reproducible / deferred with reason); full gate incl. `npm run e2e` green |
 | 37 | Change | Dialog form polish | S + Dv | EventDialog, TaskDialog, shared PriorityRadioGroup, styles, RTL, e2e, dialog screenshots | 36 | Flex window is a full-width group below End; browser geometry checks at 1440, 1024 and drawer width in both themes; shared tagged/coloured native priority radios support arrow keys; task Working hours only (default) / Any time radios preserve useWorkingHours; schemas/engine unchanged; §7.1 and screenshots refreshed |
 | 38 | Change | Replan vs barred-slot overlaps | S + Dv | replan diagnostics, ReplanDialog, ConflictPanel, engine/UI tests, TEST_PLAN D4 | 37 | T39/T40: Minimal change moves future flexible barred events with reason barred and leaves fixed/started events static; classify unresolved conflicts/barred overlaps with per-event reasons and reused alternatives; no bare No changes needed when problems remain; fixed/flexible panel tags; FR10/BR-12 UX wording and D4 updated; full gate and browser suite green |
 | 39 | Change | Fix intermittent CI failures | S + Dv | useShortcuts, store context hook, RTL, Playwright config, ci.yml, test documentation | 38 | A deterministic close-then-immediate-shortcut regression fails on the old closure; one listener reads current dialog/picker/busy/actions at keypress time; 10 repeats with 2 workers pass warm and after deleting node_modules/.vite and restarting dev; CI has one retry, retained failure traces, HTML report and failure artifact; results recorded in PROGRESS/TEST_PLAN; gate and local merge green |
@@ -1823,7 +1824,7 @@ Binding design: `extras/AUDIT_2.md` §7. Each WI depends on the previous one; up
 | 58 | Round 2 | Dialog and format polish | S + Dv | Dialogs, formatting/List/Month, cancellation (D-16) | 57 | Field-order and format tests; U9/U19/U20/U23 checks |
 | 59 | Round 2 | Docs, smoke test and final gate | S + Dv | Main docs, smoke test/history, README (D-19) | 58 | Full gate against the baseline; smoke test written; human steps listed |
 
-**`docs/PROGRESS.md` format** (already created during repo setup):
+**`docs/progress/PROGRESS.md` format** (already created during repo setup):
 
 ```markdown
 # Progress
@@ -1884,7 +1885,7 @@ Production URL: https://…vercel.app
 | 2026-10-26 | v1.21 (WI-31): final layout/UI contract sync; §10 includes warning derivation in boot/commit/import complexity. All local WIs complete, with user-owned push/redeploy and viva checks explicitly retained in the release record. |
 | 2026-10-26 | v1.22 (WI-34): visual refresh, appearance only. §11.4 has the final light/dark token values, the spacing, type and shape scales, and where the single accent is used; §11.3 splits the week-header text into weekday and numeral spans; §1.3/§2 add the `screenshots` script, its config and `docs/screenshots/`; §14 adds WI-34. No new dependency (system font stack). |
 | 2026-10-26 | v1.23 (WI-35): §4 adds the top-level `ErrorBoundary`; §11.3 `onSelect` gives a click-sized selection `CLICK_EVENT_MIN` (new §5 constant) and `renderEventContent` renders an event without block props (FullCalendar's select mirror) as its time only; §12 polyfill queues `close` like the browser, and Playwright adds the `chromium-dev` project on the StrictMode dev server; §2 lists the new files; §14 adds WI-35 and WI-36. |
-| 2026-10-26 | v1.24 (WI-36, `docs/AUDIT.md`): §8.13/§10 replan plans repeat greedy passes with unplaced events pinned (A01, ≤ c + 1 passes); §5/§6 `MIN/MAX_SUPPORTED_MINUTE` bound every Minute (A02) and `slotSchema` validates slots via `requireValidSlot` (A06); §7.4.6 `linkIssues` checks the BR-9 mirror (A04); §7.5 day loads cover whole days (A05); §7.4.3/§7.4.4 `requireNotPast` makes overtaken results stale (A07) and the replan range is 1–14 whole local days; §11.1/§11.2 ER4 Move to uses its own version (A03), Replan inputs drop old plans (A08) and Month defaults to its first full week (A10); §6 description message (A09); §2 lists `docs/AUDIT.md`. |
+| 2026-10-26 | v1.24 (WI-36, `docs/extras/AUDIT.md`): §8.13/§10 replan plans repeat greedy passes with unplaced events pinned (A01, ≤ c + 1 passes); §5/§6 `MIN/MAX_SUPPORTED_MINUTE` bound every Minute (A02) and `slotSchema` validates slots via `requireValidSlot` (A06); §7.4.6 `linkIssues` checks the BR-9 mirror (A04); §7.5 day loads cover whole days (A05); §7.4.3/§7.4.4 `requireNotPast` makes overtaken results stale (A07) and the replan range is 1–14 whole local days; §11.1/§11.2 ER4 Move to uses its own version (A03), Replan inputs drop old plans (A08) and Month defaults to its first full week (A10); §6 description message (A09); §2 lists `docs/extras/AUDIT.md`. |
 | 2026-10-26 | v1.25 (WI-37/38): §14 adds dialog form polish and Replan diagnostics change requests, with regression checks and unchanged scheduling contracts. |
 | 2026-10-26 | v1.26 (WI-38): §5 ReplanResult adds derived notMoved by plan ID and ReplanNotMoved; §7.4.4/§11.2 document post-plan diagnostics and reused alternatives; §14 completion uses T39/T40. Heuristic, schemas and metrics unchanged; regression confirms barred moves work. |
 | 2026-10-26 | v1.27 (WI-39): §11.1/§11.5 expose useAppStoreApi and read current store state per keypress with one listener; §12/§13.1 add one CI retry, retained failure traces, GitHub/HTML reporters and failure artifacts; §14 adds the test-first race repair and warm/cold 10-repeat browser verification. |
@@ -1897,3 +1898,4 @@ Production URL: https://…vercel.app
 | 2026-11-12 | v1.34 (WI-45, peer reports #5, #7, #11): §7.2 frozen Engine interface gains read-only `explainWindow` (user decision: ER2/ER3 objects unchanged); §5 `WindowSplit` / `WindowStretches` / `WindowExplanation`, constant `MAX_LISTED_STRETCHES = 6`; §7.4.2/§7.4.3 shared request builders and `explainSearch`; §11.1 picker `order` and `explanation`; §11.2 the Modal × close button. Algorithms unchanged. |
 | 2026-11-12 | v1.35 (WI-46): §11.2 the Settings dialog markup (headed sections, compact barred rows, day chips, `.visually-hidden`); `global.css` Settings block; `playwright.screenshots.config.ts` gets its own Chrome project so captures use the screenshot server (fix found here); new settings screenshots. |
 | 2026-11-12 | v1.36: §14 plans Round 2 WI-47–59 from `extras/AUDIT_2.md` §7, in order, with the full branch/main gate and final baseline comparison. Behaviour and frozen contracts change in their implementing WIs. |
+| 2026-11-12 | v1.37 (WI-47, D-18): §0/§2/§14 and references use `docs/progress/PROGRESS.md` and `docs/extras/`; main specs, samples and screenshots stay in place. All local links and references checked, full Round 2 gate required before and after merge. |

@@ -1,6 +1,6 @@
 # Interactive Calendar and Intelligent Time Planner
 
-A browser-based week planner that detects every scheduling conflict, finds free time for your tasks and explains *why* each suggested slot fits.
+A browser-based week planner that detects every scheduling conflict, finds free time for your tasks and explains _why_ each suggested slot fits.
 
 **▶ Live app:** [int-calendarfeature-creatures.vercel.app](https://int-calendarfeature-creatures.vercel.app). Nothing to install; all data stays in your browser.
 
@@ -8,7 +8,7 @@ A browser-based week planner that detects every scheduling conflict, finds free 
 
 ## Team
 
-**Feature Creatures** · Project 4 of CS-3810 *Design Practices in Computer Science*, Ashoka University, Monsoon 2026
+**Feature Creatures** · Project 4 of CS-3810 _Design Practices in Computer Science_, Ashoka University, Monsoon 2026
 
 | Member           | Roll number |
 | ---------------- | ----------- |
@@ -18,16 +18,16 @@ A browser-based week planner that detects every scheduling conflict, finds free 
 ## What it does
 
 - **Calendar.** Create, edit, drag, resize and delete events in Day, Week, Month and List views.
-  - Each event has a category, a priority (High, Medium or Low) and an optional *flexible* window. Classes stay fixed; a gym session can move within its window.
+  - Each event has a category, a priority (High, Medium or Low) and an optional _flexible_ window. Classes stay fixed; a gym session can move within its window.
 - **Conflict detection.** Every pair of overlapping events is found automatically after each change.
   - Each conflict shows which events overlap, the exact overlap (e.g. 11:00–11:30) and its length in minutes.
   - Back-to-back events do not count as conflicts.
-- **Conflict resolution.** *Suggest alternatives* proposes free slots for the event that is better to move, closest to its original time first.
+- **Conflict resolution.** _Suggest alternatives_ proposes free slots for the event that is better to move, closest to its original time first.
 - **Best-time finder.** Tasks have a duration, a priority and a window, such as "90 minutes, sometime this week".
   - The app lists free slots that fit, ranked by the criterion you choose: earliest, tightest fit, or priority-aware.
   - Every slot says which gap it came from and what bounds it. When nothing fits, the app says why and shows the largest gap it found.
 - **Several tasks at once.** Selected tasks are offered one at a time, highest priority first. Each search sees the slots you already accepted.
-- **Replan.** For a chosen week, the app proposes two rearrangements of your flexible events: *Minimal change* and *Balanced week*.
+- **Replan.** For a chosen week, the app proposes two rearrangements of your flexible events: _Minimal change_ and _Balanced week_.
   - Each plan lists every move with a reason, plus before/after metrics. Apply one or neither.
   - Events Replan won't move (fixed or already started) are listed with the reason.
 - **Your rules.** Working days and hours, a buffer between events, and barred slots such as lunch. Events sitting inside a barred slot are flagged separately from conflicts.
@@ -38,9 +38,9 @@ Nothing changes without your say-so: suggestions and plans are previews until yo
 ## Try it in two minutes
 
 1. Open the [live app](https://int-calendarfeature-creatures.vercel.app) and click **Load sample week**.
-2. **Conflicts.** Look at Tuesday: *Lecture* and *Meeting* are flagged *Conflict 30 min*, and the right panel lists the overlap. Click **Suggest alternatives**, pick a slot and **Apply**. The conflict disappears.
-3. **Finding time.** In **Tasks**, click **Find time** on *Write report*. Switch the ranking between *Earliest*, *Best fit* and *Priority-aware* to see the order change, read an explanation, then **Apply**.
-4. **A task that can't fit.** Try **Find time** on *Thesis draft*, a 10-hour task. Lunch splits each day into four-hour stretches, so the app explains that the task can never fit, rather than just finding no slot.
+2. **Conflicts.** Look at Tuesday: _Lecture_ and _Meeting_ are flagged _Conflict 30 min_, and the right panel lists the overlap. Click **Suggest alternatives**, pick a slot and **Apply**. The conflict disappears.
+3. **Finding time.** In **Tasks**, click **Find time** on _Write report_. Switch the ranking between _Earliest_, _Best fit_ and _Priority-aware_ to see the order change, read an explanation, then **Apply**.
+4. **A task that can't fit.** Try **Find time** on _Thesis draft_, a 10-hour task. Lunch splits each day into four-hour stretches, so the app explains that the task can never fit, rather than just finding no slot.
 5. **Replan.** Click **Replan**, then **Compute plans**, and compare the two plans. Apply one and press **Undo** to revert it in a single step.
 6. **Your own events.** Drag across empty time to create an event, or drag an existing event onto another to create a conflict.
 
@@ -63,11 +63,11 @@ On Windows PowerShell setups that block npm's script wrappers, use `npm.cmd` and
 
 The app is a static React + TypeScript site with three layers. Each layer may only call the one below it, and ESLint rules enforce that.
 
-| Layer | What it does |
-| --- | --- |
-| **UI** (React, FullCalendar, zustand) | Draws the calendar and dialogs, and turns clicks and drags into commands. FullCalendar only renders; it makes no scheduling decisions. |
-| **Engine** (plain TypeScript) | Validates every command, runs four pipelines (event changes, conflict resolution, task scheduling, replan) and keeps undo history. Its algorithms are pure functions with no UI or storage code. |
-| **Storage** (Dexie / IndexedDB) | Saves events, tasks and settings in the browser, behind an interface that also has an in-memory version for tests. |
+| Layer                                 | What it does                                                                                                                                                                                     |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **UI** (React, FullCalendar, zustand) | Draws the calendar and dialogs, and turns clicks and drags into commands. FullCalendar only renders; it makes no scheduling decisions.                                                           |
+| **Engine** (plain TypeScript)         | Validates every command, runs four pipelines (event changes, conflict resolution, task scheduling, replan) and keeps undo history. Its algorithms are pure functions with no UI or storage code. |
+| **Storage** (Dexie / IndexedDB)       | Saves events, tasks and settings in the browser, behind an interface that also has an in-memory version for tests.                                                                               |
 
 **Key algorithms.** Here N is the number of events, n the number in the searched window, m the number of free gaps and k the number of conflicting pairs.
 
@@ -89,6 +89,7 @@ The app is a static React + TypeScript site with three layers. Each layer may on
 The full algorithm descriptions, correctness arguments and complexity table are in [TECH_SPEC.md](docs/TECH_SPEC.md) (§8 and §10). The data representation of events, tasks, priorities and intervals is in TECH_SPEC §5 and [PROJECT_SCHEMA.md](docs/PROJECT_SCHEMA.md) §3.
 
 **Limitations.**
+
 - There is no backend, account system, sync or sharing; data lives in one browser.
 - There are no recurring events.
 - Several tasks are scheduled one at a time, not jointly optimised.
@@ -108,17 +109,17 @@ Continuous integration runs these checks on every change to `main`.
 
 **Latest results** (12 November 2026, after the peer bug fixes):
 
-| Check | Result |
-| --- | --- |
-| Unit, integration and UI tests | 639 passing |
-| Randomised oracle tests | 5 properties × 10,000 random calendars each, all passing |
-| Daylight-saving tests (New York time zone) | 7 passing |
-| Browser tests (Chromium) | 25 passing; 125 of 125 runs passed when the suite was repeated 5 times (no flaky tests) |
-| Code coverage | 98.78% of lines and 94.23% of branches overall; 99.68% / 95.93% for the algorithms |
-| Performance | Conflict detection plus a slot search on a 5,000-event calendar: median 1.3 ms (target: under 100 ms) |
-| Manual checks on the live site | All five demo scripts passed; colour contrast and screen-reader announcements checked |
-| Independent code audit | 10 findings re-checked, then fixed with tests or deferred with reasons ([AUDIT.md](docs/AUDIT.md)) |
-| Peer bug reports | 14 reports re-checked: 11 fixed with tests, 1 clarified, 1 by design, 1 invalid ([BUG_REPORTS.md](docs/BUG_REPORTS.md)) |
+| Check                                      | Result                                                                                                                         |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| Unit, integration and UI tests             | 639 passing                                                                                                                    |
+| Randomised oracle tests                    | 5 properties × 10,000 random calendars each, all passing                                                                       |
+| Daylight-saving tests (New York time zone) | 7 passing                                                                                                                      |
+| Browser tests (Chromium)                   | 25 passing; 125 of 125 runs passed when the suite was repeated 5 times (no flaky tests)                                        |
+| Code coverage                              | 98.78% of lines and 94.23% of branches overall; 99.68% / 95.93% for the algorithms                                             |
+| Performance                                | Conflict detection plus a slot search on a 5,000-event calendar: median 1.3 ms (target: under 100 ms)                          |
+| Manual checks on the live site             | All five demo scripts passed; colour contrast and screen-reader announcements checked                                          |
+| Independent code audit                     | 10 findings re-checked, then fixed with tests or deferred with reasons ([AUDIT.md](docs/extras/AUDIT.md))                      |
+| Peer bug reports                           | 14 reports re-checked: 11 fixed with tests, 1 clarified, 1 by design, 1 invalid ([BUG_REPORTS.md](docs/extras/BUG_REPORTS.md)) |
 
 **Reproduce the results.** Install dependencies with `npm ci`, then:
 
@@ -140,25 +141,27 @@ Every test case, with its exact inputs and expected outputs, is listed in [TEST_
 - **Demo scripts.** Step-by-step scripts for event management, conflict detection, best-time finding, replanning and the extras are in [TEST_PLAN.md](docs/TEST_PLAN.md) §8, demos D1–D5.
 - **Screenshots** (in [docs/screenshots/](docs/screenshots/)):
 
-| View | Light | Dark |
-| --- | --- | --- |
-| Week | [1440 px](docs/screenshots/week-light-1440.png) · [1024 px](docs/screenshots/week-light-1024.png) | [1440 px](docs/screenshots/week-dark-1440.png) · [1024 px](docs/screenshots/week-dark-1024.png) |
-| Find time (slot picker) | [light](docs/screenshots/slot-picker-light.png) | [dark](docs/screenshots/slot-picker-dark.png) |
-| Replan with both plans | [light](docs/screenshots/replan-light.png) | [dark](docs/screenshots/replan-dark.png) |
-| Event dialog | [light](docs/screenshots/event-dialog-light-1440.png) | [dark](docs/screenshots/event-dialog-dark-1440.png) |
-| Empty state | [light](docs/screenshots/empty-light.png) | [dark](docs/screenshots/empty-dark.png) |
-| Settings | [1440 px](docs/screenshots/settings-light-1440.png) · [900 px](docs/screenshots/settings-light-900.png) | [1440 px](docs/screenshots/settings-dark-1440.png) · [900 px](docs/screenshots/settings-dark-900.png) |
+| View                    | Light                                                                                                   | Dark                                                                                                  |
+| ----------------------- | ------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Week                    | [1440 px](docs/screenshots/week-light-1440.png) · [1024 px](docs/screenshots/week-light-1024.png)       | [1440 px](docs/screenshots/week-dark-1440.png) · [1024 px](docs/screenshots/week-dark-1024.png)       |
+| Find time (slot picker) | [light](docs/screenshots/slot-picker-light.png)                                                         | [dark](docs/screenshots/slot-picker-dark.png)                                                         |
+| Replan with both plans  | [light](docs/screenshots/replan-light.png)                                                              | [dark](docs/screenshots/replan-dark.png)                                                              |
+| Event dialog            | [light](docs/screenshots/event-dialog-light-1440.png)                                                   | [dark](docs/screenshots/event-dialog-dark-1440.png)                                                   |
+| Empty state             | [light](docs/screenshots/empty-light.png)                                                               | [dark](docs/screenshots/empty-dark.png)                                                               |
+| Settings                | [1440 px](docs/screenshots/settings-light-1440.png) · [900 px](docs/screenshots/settings-light-900.png) | [1440 px](docs/screenshots/settings-dark-1440.png) · [900 px](docs/screenshots/settings-dark-900.png) |
 
 ## Documentation
 
-| Document | Read it for |
-| --- | --- |
-| [PROJECT_SCHEMA.md](docs/PROJECT_SCHEMA.md) | What the app does: requirements, error handling, exact scheduling rules, domain model and UX |
-| [TECH_SPEC.md](docs/TECH_SPEC.md) | How it is built: architecture, data types, algorithms with complexity, storage and the build plan |
-| [TEST_PLAN.md](docs/TEST_PLAN.md) | How it is verified: every test case, traceability, manual checks and demo scripts |
-| [AUDIT.md](docs/AUDIT.md) | An independent review of the finished code, and how each finding was resolved |
-| [BUG_REPORTS.md](docs/BUG_REPORTS.md) | The fourteen peer bug reports: each verdict, its evidence and the fix |
-| [PROGRESS.md](docs/PROGRESS.md) | The development log: each work item, its test results and the decisions made along the way |
+| Document                                     | Read it for                                                                                       |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| [PROJECT_SCHEMA.md](docs/PROJECT_SCHEMA.md)  | What the app does: requirements, error handling, exact scheduling rules, domain model and UX      |
+| [TECH_SPEC.md](docs/TECH_SPEC.md)            | How it is built: architecture, data types, algorithms with complexity, storage and the build plan |
+| [TEST_PLAN.md](docs/TEST_PLAN.md)            | How it is verified: every test case, traceability, manual checks and demo scripts                 |
+| [AUDIT.md](docs/extras/AUDIT.md)             | An independent review of the finished code, and how each finding was resolved                     |
+| [BUG_REPORTS.md](docs/extras/BUG_REPORTS.md) | The fourteen peer bug reports: each verdict, its evidence and the fix                             |
+| [PROGRESS.md](docs/progress/PROGRESS.md)     | The development log: each work item, its test results and the decisions made along the way        |
+| [AUDIT_2.md](docs/extras/AUDIT_2.md)         | The binding Round 2 redesign decisions and implementation plan                                    |
+| [PROMPTS.md](docs/extras/PROMPTS.md)         | The prompts that shaped the project; [Round 2 session prompt](docs/extras/PROMPT_ROUND_2.md)      |
 
 **Deviations from our earlier design assignments.** These documents replace our three design assignments, which were written separately before any code existed. Merging them meant settling where they disagreed, and a few changes came from real constraints:
 
@@ -167,7 +170,7 @@ Every test case, with its exact inputs and expected outputs, is listed in [TEST_
 - Events are stored in plain sorted arrays. A planned binary-search-tree upgrade was unnecessary at realistic sizes and was dropped.
 - Features the assignments described only loosely (Replan, scheduling several tasks, priority-aware ranking) were given exact rules.
 
-Each deviation is listed with its reason in [PROJECT_SCHEMA.md §9](docs/PROJECT_SCHEMA.md#9-deviations-from-the-submitted-assignments). Smaller decisions made during implementation are in the decisions log of [PROGRESS.md](docs/PROGRESS.md) and in each document's change log.
+Each deviation is listed with its reason in [PROJECT_SCHEMA.md §9](docs/PROJECT_SCHEMA.md#9-deviations-from-the-submitted-assignments). Smaller decisions made during implementation are in the decisions log of [PROGRESS.md](docs/progress/PROGRESS.md) and in each document's change log.
 
 ## How this project was built (AI-assisted development)
 
@@ -185,9 +188,8 @@ Our course permits AI for any task, on one condition: each student must be able 
 ├── .claude/settings.json             # commands agents could run; pushing and deploying were reserved for humans
 └── docs/
     ├── PROJECT_SCHEMA.md, TECH_SPEC.md, TEST_PLAN.md   # the specification agents built against
-    ├── PROGRESS.md                   # the work-item log and handover notes between sessions
-    ├── PROMPTS.md                    # the prompts we gave the agents, in order
-    └── AUDIT.md                      # a separate AI review of the code, and our fixes
+    ├── progress/PROGRESS.md          # the work-item log and handover notes between sessions
+    └── extras/                      # audits, peer reports, prompts and Round 2 planning evidence
 ```
 
 What these rules meant in practice:

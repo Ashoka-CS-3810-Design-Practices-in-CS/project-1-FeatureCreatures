@@ -446,7 +446,7 @@ An upgrade test with v2 data must prove every row is kept. Stored data written b
 ### D-18 Docs restructure
 
 - `docs/PROJECT_SCHEMA.md`, `docs/TECH_SPEC.md` and `docs/TEST_PLAN.md` stay directly in `docs/`. `docs/samples/` and `docs/screenshots/` stay as they are.
-- `docs/PROGRESS.md` moves to **`docs/progress/PROGRESS.md`**.
+- The root-level progress file moves into **`docs/progress/PROGRESS.md`** (implemented in WI-47).
 - Every other doc moves to **`docs/extras/`**: `AUDIT.md`, `BUG_REPORTS.md`, `PROMPTS.md`, this `AUDIT_2.md`, the feedback and audit-2 screenshot folders, and the round-2 prompt.
 - Every link and reference is fixed: AGENTS.md (including its docs table and session protocol), CLAUDE.md, README, the three main docs, the extras, the scripts, `.github`, and the skill copies if they mention paths. A grep for the old paths must come back empty.
 

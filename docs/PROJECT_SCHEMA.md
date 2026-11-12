@@ -16,6 +16,8 @@ They supersede Assignments 1–3 (A1, A2, A3) wherever those documents disagree.
 
 ### 0.2 Precedence when documents disagree
 
+For Round 2 (WI-47–59), [AUDIT_2.md](extras/AUDIT_2.md) is binding on the redesign decisions. Update these three main docs, with change-log entries, in the WI that implements each decision. The session state and baseline are in [PROGRESS.md](progress/PROGRESS.md).
+
 1. `PROJECT_SCHEMA.md` (this file) wins on behaviour: what the user sees, and what counts as correct.
 2. `TECH_SPEC.md` wins on structure: names, files, types, and algorithms.
 3. `TEST_PLAN.md` wins on exact expected values for concrete inputs. If a test disagrees with a rule here, treat that as a doc bug: fix the doc in the same PR.
@@ -700,7 +702,7 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 | 2026-10-26 | v1.1 (WI-32/33): BR-15 defines independent barred-slot warnings, settings feedback and alternatives; §7 adds text tags, a separate panel section and the accessible toolbar shortcuts button. |
 | 2026-10-26 | v1.2 (WI-31): final derived-model/help-entry sync; WI-32/33 retain independent warning/conflict semantics. Divyam's reported rehearsal evidence and remaining human release steps are recorded in TEST_PLAN/PROGRESS. |
 | 2026-10-26 | v1.3 (WI-35): §7.2 a plain click on empty time pre-fills a 30-minute event; §7.4 an unexpected crash shows Something went wrong with Reload / Export data. |
-| 2026-10-26 | v1.4 (WI-36, `docs/AUDIT.md`): BR-12 an unplaced event is busy for every other movable event (A01); ER1 dates must be in 1970–9999 (A02); ER4 a stale Move to opens fresh alternatives (A03); ER6 includes BR-9 mirror mismatches (A04); ER7 includes results overtaken by time (A07); §7.1 Replan inputs drop computed plans (A08) and Month defaults to its first full week (A10). |
+| 2026-10-26 | v1.4 (WI-36, `docs/extras/AUDIT.md`): BR-12 an unplaced event is busy for every other movable event (A01); ER1 dates must be in 1970–9999 (A02); ER4 a stale Move to opens fresh alternatives (A03); ER6 includes BR-9 mirror mismatches (A04); ER7 includes results overtaken by time (A07); §7.1 Replan inputs drop computed plans (A08) and Month defaults to its first full week (A10). |
 | 2026-10-26 | v1.5 (WI-37): §7.1 specifies shared tagged/coloured priority radios, task scheduling-hours radios and a full-width flex-window group below End. UI only; schemas and engine unchanged. |
 | 2026-10-26 | v1.6 (WI-38): FR10/BR-12 define per-plan remaining-problem explanations and alternatives, including zero movable events; BR-15 adds Fixed/Flexible row tags. Placement rules unchanged. |
 | 2026-11-12 | v1.7 (WI-40, peer report #14): ER8 `ConcurrentModification` — a write from a tab whose view is out of date is refused and that tab reloads; other tabs reload after every stored change with "Calendar updated in another tab." (§5, §7.4, NFR4, §9 row 11). Single-tab behaviour unchanged. |
@@ -710,3 +712,4 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 | 2026-11-12 | v1.11 (WI-44, peer reports #10, #12, #13): FR6 — the status line counts shown events plus those hidden by the filter; List explains an all-hidden range with Show all; List header, alignment and narrow wrapping. Conflicts still on all events. |
 | 2026-11-12 | v1.12 (WI-45, peer reports #5, #7, #11): FR7 Move radios keep the conflict order; §7.4 ER2/ER3 list the available stretches and what splits them (no behaviour change); §7.7 every dismissible dialog has a × named Close. |
 | 2026-11-12 | v1.13 (WI-46): §7.1 Settings is laid out in four headed sections with compact barred-slot rows and day chips. UI only; validation unchanged beyond WI-43. |
+| 2026-11-12 | v1.14 (WI-47, D-18): documentation reorganised under `progress/` and `extras/`; §0.2 links the relocated progress file and binding Round 2 design. Product behaviour changes in the later implementing WIs. |
