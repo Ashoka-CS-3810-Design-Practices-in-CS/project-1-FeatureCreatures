@@ -175,7 +175,8 @@ Fourteen peer bug reports, each verified against `main` and the live build. One 
 - [x] **WI-41** (B) Alternatives outside working hours (#3, #4, #9) — owner S + Dv — depends on 40
   - 2026-11-12 · Claude Code · branch `feat/wi-41-alternatives-any-time` · done: claimed after WI-40 merge and green main · next: failing tests for the picker hours radio, its default, defaultFlexWindow at night / non-working day, empty-window causes and the fixed-target note
   - 2026-11-12 · Claude Code · branch `feat/wi-41-alternatives-any-time` · done: T42 red first (10 cases), then green: optional `useWorkingHours` on suggestAlternatives (omitted = identical results, proven equal), picker Search hours radios with the outside-working-hours default, fixed-target note, whole-day default flex window, `emptyCause` past / noWorkingHours / barred with texts; docs (BR-5, FR7, §3.2, TECH_SPEC, T42, BUG_REPORTS #3/#4/#9). Gate: 612 tests, coverage 98.55% st / 94.2% br / 98.62% lines, DST 7, props 5×10,000, build, e2e 57/57 · next: WI-42 · surprises: none; no existing test needed a change
-- [ ] **WI-42** (C) Fixed events ask before a manual drag (#1) — owner S + Dv — depends on 41
+- [~] **WI-42** (C) Fixed events ask before a manual drag (#1) — owner S + Dv — depends on 41
+  - 2026-11-12 · Claude Code · branch `feat/wi-42-fixed-drag-confirm` · done: claimed after WI-41 merge and green main · next: failing handler/ConfirmDialog tests (fixed asks, Keep it/Esc reverts, Move moves, flexible unchanged), then E2 confirm and Playwright cancel/confirm
 - [ ] **WI-43** (D) Duplicate barred slots (#6) — owner S + Dv — depends on 42
 - [ ] **WI-44** (E) Filter vs count, List layout (#10, #12, #13) — owner S + Dv — depends on 43
 - [ ] **WI-45** (F) Small UX (#5, #7, #11) — owner S + Dv — depends on 44
