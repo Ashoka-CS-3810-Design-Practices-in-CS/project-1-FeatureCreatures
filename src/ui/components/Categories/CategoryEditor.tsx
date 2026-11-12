@@ -69,6 +69,12 @@ export function CategoryEditor({
         maxLength={MAX_CATEGORY_NAME_LENGTH}
         value={name}
         onChange={(event) => setName(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            if (!saving) void save();
+          }
+        }}
         aria-invalid={nameError !== undefined}
         aria-describedby={nameError === undefined ? undefined : `${idPrefix}-name-error`}
       />

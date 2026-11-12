@@ -26,8 +26,8 @@ function nextHourSlot(viewDate: number): Interval {
 }
 
 // PRE:  rendered under StoreProvider; dialog is the open event dialog; existing is the event being
-//       edited (undefined when creating); reads settings and view.date; uses event actions
-//       + additional props from: Modal, PriorityRadioGroup
+//       edited (undefined when creating); reads settings, categories, lastCategoryId and view.date;
+//       uses event actions; + additional props from: Modal, PriorityRadioGroup, CategorySelect
 // POST: shows the event form (title, categoryId, priority, start, end, flexible, flex window when
 //       flexible, description); Save validates with eventResolver and only then calls the engine,
 //       closing on success; Delete asks for confirmation first

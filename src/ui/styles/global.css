@@ -367,6 +367,12 @@ th {
   border: 0;
 }
 
+.category-filters button[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--surface);
+  color: var(--text);
+}
+
 .category-row {
   display: flex;
   align-items: center;

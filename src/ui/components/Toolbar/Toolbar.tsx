@@ -26,11 +26,12 @@ function historyTooltip(verb: 'Undo' | 'Redo', label: string | null): string {
   return label === null ? `Nothing to ${verb.toLowerCase()}` : `${verb}: ${label}`;
 }
 
-// PRE:  rendered under StoreProvider; reads view, eventPriorityFilter and snapshot's undo / redo
+// PRE:  rendered under StoreProvider; reads view, eventPriorityFilter, hiddenCategoryIds, categories and snapshot's undo / redo
 //       state; uses openDialog, toggleEventPriority, undo and redo; calendarRef points at the
 //       FullCalendar that CalendarView renders; theme is the current theme choice and onCycleTheme
 //       moves to the next one
 //       onOpenPanels, when supplied, opens the narrow-screen drawer; panelsOpen is its state
+//       + additional props from: CategoryTag
 // POST: shows the toolbar of Figure 1: previous / Today / next, the period title, the view switch,
 //       the priority filter chips, + Event, + Task, Replan, Undo / Redo (disabled when there is
 //       nothing to do, tooltip = the change), theme, Keyboard shortcuts and Settings

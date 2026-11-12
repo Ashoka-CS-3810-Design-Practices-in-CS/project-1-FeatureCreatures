@@ -409,7 +409,7 @@ function DataSection() {
 }
 
 // PRE:  rendered under StoreProvider; reads dialog and snapshot.settings; uses actions.closeDialog
-//       + additional props from: SettingsForm, DataSection
+//       + additional props from: SettingsForm, CategoriesSection, DataSection
 // POST: while the settings dialog is open, shows the settings form (fresh from the current
 //       settings each time it opens) and the Data section (FR11, B2)
 export function SettingsDialog() {

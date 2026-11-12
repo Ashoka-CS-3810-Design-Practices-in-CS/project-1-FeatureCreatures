@@ -58,7 +58,7 @@ function labelsByEvent(warnings: readonly BarredOverlap[]): Map<string, Set<stri
 }
 
 // PRE:  event is an event; conflictMinutes ≥ 0; emphasised says whether it was just changed;
-//       barredLabels contains its distinct overlapping labels
+//       barredLabels contains its distinct overlapping labels; category is its current category
 // POST: returns its FullCalendar entry with priority / conflict / emphasis classes and the
 //       props EventContent renders
 function toEntry(
@@ -115,9 +115,9 @@ function barredEntries(snapshot: Snapshot, activeRange: Interval | null): EventI
 }
 
 // PRE:  snapshot is the store's snapshot; filter lists the priorities to show (FR6);
-//       emphasisIds are the events changed a moment ago
-// POST: returns FullCalendar's events: every event whose priority is in filter, then the barred
-//       background blocks for activeRange
+//       emphasisIds are the events changed a moment ago; hiddenCategoryIds lists hidden categories
+// POST: returns FullCalendar's events: every event allowed by both filters with its current category,
+//       then the barred background blocks for activeRange
 export function toFullCalendar(
   snapshot: Snapshot,
   filter: readonly Priority[],

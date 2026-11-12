@@ -50,7 +50,7 @@ function FatalScreen() {
 }
 
 // PRE:  rendered under StoreProvider; reads status, storageWarning, snapshot, eventPriorityFilter
-//       and panelsOpen;
+//       hiddenCategoryIds and panelsOpen;
 //       uses setPanelsOpen to control the responsive drawer
 //       + additional props from: Toolbar, EmptyState, CalendarView, SidePanel, BusyOverlay,
 //       EventDialog, TaskDialog, ReplanDialog, SettingsDialog, ShortcutHelp, ConfirmDialog,

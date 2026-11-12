@@ -5,7 +5,7 @@ import { eventIsVisible } from '../../store/selectors';
 import { BarredOverlapPanel } from './BarredOverlapPanel';
 
 // PRE:  rendered under StoreProvider; reads snapshot.conflicts, snapshot.events and
-//       eventPriorityFilter; uses actions.openAlternatives
+//       eventPriorityFilter and hiddenCategoryIds; uses actions.openAlternatives
 //       + additional props from: BarredOverlapPanel
 // POST: lists the first CONFLICT_LIST_LIMIT conflicts ("⚠ A ↔ B", overlap and minutes), notes
 //       "(hidden by filter)" when either event is filtered out of the calendar (FR6), and offers

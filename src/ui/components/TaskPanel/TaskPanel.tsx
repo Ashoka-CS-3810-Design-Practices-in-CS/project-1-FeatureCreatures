@@ -15,9 +15,10 @@ const TAG_FOR: Record<Priority, string> = { high: '[H]', medium: '[M]', low: '[L
 type PanelState = AppState['taskPanel'];
 
 // PRE:  task is a task; event is its scheduled event, if any; selected says whether it is ticked;
-//       actions are the store's actions
+//       actions are the store's actions; reads snapshot.categories under StoreProvider
+//       + additional props from: CategoryTag
 // POST: renders one task row: a selection box (unscheduled tasks only), name, priority tag,
-//       duration, deadline, status, and the Find time / Edit buttons
+//       category tag, duration, deadline, status, and the Find time / Edit buttons
 function TaskRow({
   task,
   event,

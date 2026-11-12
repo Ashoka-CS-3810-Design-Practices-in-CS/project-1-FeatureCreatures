@@ -8,6 +8,7 @@ const PRIORITY_TAG = { high: '[H]', medium: '[M]', low: '[L]' } as const;
 
 // PRE:  title and timeText come from FullCalendar; the rest from toFullCalendar's extendedProps
 //       onOpen opens the event dialog when supplied for a List-view button
+//       + additional props from: CategoryTag
 // POST: renders an event block: title, time, the priority tag (BR-13, text as well as colour),
 //       a Task or Fixed tag, In <label> tags and "⚠ Conflict N min" when the event overlaps another; keeps its
 //       FullCalendar button's accessible name and tooltip complete even when the block is clipped;

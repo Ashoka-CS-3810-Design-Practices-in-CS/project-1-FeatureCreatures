@@ -11,6 +11,24 @@ import { TaskDialog } from '../TaskDialog/TaskDialog';
 import { TaskPanel } from '../TaskPanel/TaskPanel';
 
 describe('T49: category UI (D-11)', () => {
+  it('Enter in an inline category name saves only that category and keeps the item draft open', async () => {
+    const { engine } = await makeEngine();
+    const store = storeFor(engine);
+    renderWithStore(<EventDialog />, store);
+    act(() => store.getState().actions.openDialog({ kind: 'event', mode: 'create', defaults: {} }));
+    await userEvent.type(screen.getByLabelText('Title'), 'Draft');
+    await userEvent.selectOptions(screen.getByLabelText('Category'), '__new_category__');
+    await userEvent.type(screen.getByLabelText('Category name'), 'Research{Enter}');
+    await waitFor(() =>
+      expect(
+        store.getState().snapshot.categories.some((category) => category.name === 'Research'),
+      ).toBe(true),
+    );
+    expect(store.getState().snapshot.events).toEqual([]);
+    expect(screen.getByRole('dialog', { name: 'New event' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Title')).toHaveValue('Draft');
+    expect(screen.getByLabelText('Category')).toHaveFocus();
+  });
   it('creates, renames, recolours and deletes in Settings, with one undo step each', async () => {
     const { engine } = await makeEngine({ categories: [] });
     const store = storeFor(engine);

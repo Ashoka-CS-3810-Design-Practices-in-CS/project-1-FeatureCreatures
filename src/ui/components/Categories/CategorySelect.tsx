@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { useAppStore } from '../../store/appStore';
 import { CategoryEditor } from './CategoryEditor';
 
@@ -20,6 +20,7 @@ export function CategorySelect({
   const categories = useAppStore((state) => state.snapshot.categories);
   const rememberCategory = useAppStore((state) => state.actions.rememberCategory);
   const [creating, setCreating] = useState(false);
+  const selectRef = useRef<HTMLSelectElement>(null);
   const idPrefix = useId();
   const message = categories.length === 0 ? 'Create a category before saving.' : error;
 
@@ -34,6 +35,7 @@ export function CategorySelect({
     <div className="form-group">
       <label htmlFor={`${idPrefix}-category`}>Category</label>
       <select
+        ref={selectRef}
         id={`${idPrefix}-category`}
         value={categories.some((category) => category.id === value) ? value : ''}
         onChange={(event) =>
@@ -62,8 +64,12 @@ export function CategorySelect({
           onSaved={(id) => {
             select(id);
             setCreating(false);
+            selectRef.current?.focus();
           }}
-          onCancel={() => setCreating(false)}
+          onCancel={() => {
+            setCreating(false);
+            selectRef.current?.focus();
+          }}
         />
       )}
     </div>
