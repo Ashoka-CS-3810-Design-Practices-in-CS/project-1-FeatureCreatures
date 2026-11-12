@@ -6,7 +6,7 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** Peer bug fixes batch (WI-40–46, see "Peer bug fixes (batch)" below). WI-40 merged; next WI-41 (B) on `feat/wi-41-alternatives-any-time`.
+- **Active WI:** Peer bug fixes batch (WI-40–46, see "Peer bug fixes (batch)" below). WI-40 and WI-41 merged; next WI-42 (C) on `feat/wi-42-fixed-drag-confirm`.
 - **Last session:** 2026-11-12 · Claude Code · planned the peer bug fixes batch. Before that: 2026-10-26 · Codex · WI-39 merged; final main typecheck/lint/582 tests green; warm and cold browser hunts 360/360 passed with zero retries and no additional flakes.
 - **Gate status:** typecheck/lint, 582 tests (T15 opt-in), coverage 98.60% lines / 94.08% branches, build and 360/360 browser executions green (180 warm + 180 cold; each 10 repeats, 2 workers, zero retries). Seven DST and five 10,000-case properties were last verified before this UI-only fix. Run `npm run build` before `npm run e2e` while an existing `vite preview` holds port 4173.
 
@@ -172,8 +172,9 @@ Fourteen peer bug reports, each verified against `main` and the live build. One 
 - [x] **WI-40** (A) Multi-tab integrity (#14) — owner S + Dv — depends on 39
   - 2026-11-12 · Claude Code · branch `feat/wi-40-multi-tab` · done: claimed; baseline recorded · next: failing T41 (two engines, one repository), repository revision + Dexie v2 upgrade test, then ER8, reload, BroadcastChannel, store toasts, e2e
   - 2026-11-12 · Claude Code · branch `feat/wi-40-multi-tab` · done: T41 red first (tab B's move of an event tab A deleted resolved ok), then green: stored revision in both repositories (Dexie v2 `meta`, v1 database upgrade test keeps all rows), ER8 `ConcurrentModification`, `engine.reload()`, `EngineDeps.onCommit` → BroadcastChannel (`hooks/tabSync.ts`, not in degraded mode), store `handleError`/`reloadFromOtherTab` with both toasts, two-page Playwright T41; docs + `docs/BUG_REPORTS.md` + README link. Gate: typecheck/lint, 601 tests (+19), coverage 98.58% st / 94.16% br / 98.65% lines, DST 7, props 5×10,000, build, e2e 57/57 (19 × 3, 2 workers) · next: WI-41 · surprises: (1) the frozen Repository signature change forced mechanical edits in six existing test files (listed in commit a894bc3; no expectation loosened); (2) an edit dialog whose record another tab deleted rendered nothing yet kept `dialog` set, blocking shortcuts — the reload now closes it (store test added)
-- [~] **WI-41** (B) Alternatives outside working hours (#3, #4, #9) — owner S + Dv — depends on 40
+- [x] **WI-41** (B) Alternatives outside working hours (#3, #4, #9) — owner S + Dv — depends on 40
   - 2026-11-12 · Claude Code · branch `feat/wi-41-alternatives-any-time` · done: claimed after WI-40 merge and green main · next: failing tests for the picker hours radio, its default, defaultFlexWindow at night / non-working day, empty-window causes and the fixed-target note
+  - 2026-11-12 · Claude Code · branch `feat/wi-41-alternatives-any-time` · done: T42 red first (10 cases), then green: optional `useWorkingHours` on suggestAlternatives (omitted = identical results, proven equal), picker Search hours radios with the outside-working-hours default, fixed-target note, whole-day default flex window, `emptyCause` past / noWorkingHours / barred with texts; docs (BR-5, FR7, §3.2, TECH_SPEC, T42, BUG_REPORTS #3/#4/#9). Gate: 612 tests, coverage 98.55% st / 94.2% br / 98.62% lines, DST 7, props 5×10,000, build, e2e 57/57 · next: WI-42 · surprises: none; no existing test needed a change
 - [ ] **WI-42** (C) Fixed events ask before a manual drag (#1) — owner S + Dv — depends on 41
 - [ ] **WI-43** (D) Duplicate barred slots (#6) — owner S + Dv — depends on 42
 - [ ] **WI-44** (E) Filter vs count, List layout (#10, #12, #13) — owner S + Dv — depends on 43
@@ -206,6 +207,7 @@ Fourteen peer bug reports, each verified against `main` and the live build. One 
 
 ## Decisions log (append-only)
 
+- 2026-11-12 (WI-42, user decision): the Fixed tag's tooltip says "…you can also edit its times or tick Flexible." instead of the brief's "untick Fixed", because the event dialog's control is the "Flexible (the planner may move it)" checkbox; asked and confirmed by the user.
 - 2026-11-12 (WI-41, Claude Code): "lies outside working hours" means the event does not overlap its start day's working hours, or that day is not a working day (`overlapsWorkingHours`). An event that only partly sticks out (17:30–19:00) keeps the old defaults, so working-hours behaviour stays identical. The picker's Search hours choice is kept when the user toggles the target, because it was the user's choice. `emptyCause` is added only by `suggestAlternatives`, so task-search errors (and T28) are unchanged.
 - 2026-11-12 (WI-40, Claude Code): the revision is checked by the repository, not the engine, because only the repository's own transaction can make check-and-write atomic across tabs. `engine.reload()` clears undo/redo (the history describes records another tab may have replaced) and bumps the version so open pickers/plans are ER7. ER8 shows a warning toast with no Retry, since retrying would replay a command built on the old view. No broadcast in degraded mode: tabs then share no storage, and a message would only clear the other tab's history.
 
