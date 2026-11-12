@@ -178,7 +178,8 @@ Fourteen peer bug reports, each verified against `main` and the live build. One 
 - [x] **WI-42** (C) Fixed events ask before a manual drag (#1) — owner S + Dv — depends on 41
   - 2026-11-12 · Claude Code · branch `feat/wi-42-fixed-drag-confirm` · done: claimed after WI-41 merge and green main · next: failing handler/ConfirmDialog tests (fixed asks, Keep it/Esc reverts, Move moves, flexible unchanged), then E2 confirm and Playwright cancel/confirm
   - 2026-11-12 · Claude Code · branch `feat/wi-42-fixed-drag-confirm` · done: T43 red first (unit + browser), then green: store `dragEvent` opens the existing ConfirmDialog (new optional `cancelLabel`/`onCancel`) for fixed events, handlers route drops/resizes through it, `FixedTag` tooltip + hidden description (user chose "tick Flexible"); T14's two fixed drops and E2 now confirm Move (named in commit 37b69da); docs + BUG_REPORTS #1. Gate: 618 tests, coverage 98.65% st / 94.18% br / 98.73% lines, DST 7, props 5×10,000, build, e2e 60/60 · next: WI-43 · surprises: E2's resize needed a hover after the dialog, because FullCalendar shows the resize handle only on hover
-- [ ] **WI-43** (D) Duplicate barred slots (#6) — owner S + Dv — depends on 42
+- [~] **WI-43** (D) Duplicate barred slots (#6) — owner S + Dv — depends on 42
+  - 2026-11-12 · Claude Code · branch `feat/wi-43-duplicate-barred-slots` · done: claimed after WI-42 merge and green main · next: failing settingsSchema / Settings dialog / sample-import tests, then the schema refine
 - [ ] **WI-44** (E) Filter vs count, List layout (#10, #12, #13) — owner S + Dv — depends on 43
 - [ ] **WI-45** (F) Small UX (#5, #7, #11) — owner S + Dv — depends on 44
 - [ ] **WI-46** (G) Settings panel redesign — owner S + Dv — depends on 45
