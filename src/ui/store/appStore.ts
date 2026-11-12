@@ -190,6 +190,19 @@ function newlyWarnedEventCount(
   ).size;
 }
 
+// PRE:  dialog is the open dialog; snapshot is the data just reloaded from another tab's change
+// POST: returns null when dialog edits an event or task that snapshot no longer has (its
+//       component would render nothing, yet an open dialog blocks shortcuts), otherwise dialog
+function dialogAfterReload(dialog: Dialog, snapshot: Snapshot): Dialog {
+  if (dialog?.kind === 'event' && dialog.mode === 'edit') {
+    return snapshot.events.some((event) => event.id === dialog.id) ? dialog : null;
+  }
+  if (dialog?.kind === 'task' && dialog.mode === 'edit') {
+    return snapshot.tasks.some((task) => task.id === dialog.id) ? dialog : null;
+  }
+  return dialog;
+}
+
 // PRE:  engine is initialised (or failed to); options.init is its init result
 // POST: returns a store over engine whose status, snapshot and storage banner reflect options
 export function createAppStore(engine: Engine, options: AppStoreOptions): AppStore {
@@ -232,8 +245,9 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
     }
 
     // PRE:  toast says why the view is refreshed
-    // POST: adopts what the repository holds now (engine.reload: history cleared, version bumped)
-    //       and shows toast; when reloading fails shows that error's toast, whose Retry reloads
+    // POST: adopts what the repository holds now (engine.reload: history cleared, version bumped),
+    //       closes an edit dialog whose record is gone (dialogAfterReload) and shows toast; when
+    //       reloading fails shows that error's toast, whose Retry reloads
     async function reloadStored(toast: Omit<Toast, 'id'>): Promise<void> {
       const result = await engine.reload();
       if (!result.ok) {
@@ -242,7 +256,7 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
         });
         return;
       }
-      set({ snapshot: result.value });
+      set({ snapshot: result.value, dialog: dialogAfterReload(get().dialog, result.value) });
       pushToast(toast);
     }
 
