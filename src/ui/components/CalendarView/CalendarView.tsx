@@ -3,12 +3,13 @@ import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import { useMemo, type RefObject } from 'react';
+import { useMemo, useRef, type RefObject } from 'react';
 import { fromMinute } from '@/shared/time';
 import { MIN_CLICK_TARGET_PX } from '@/shared/constants';
 import type { Interval, Priority, Snapshot } from '@/shared/types';
 import { ALL_HIDDEN_BY_FILTER_TEXT } from '../../format/explain';
-import { useAppStore } from '../../store/appStore';
+import { useAppStore, useAppStoreApi } from '../../store/appStore';
+import { useCalendarPan } from '../../hooks/useCalendarPan';
 import { eventIsVisible } from '../../store/selectors';
 import { createCalendarHandlers } from './calendarHandlers';
 import { toClockTime } from '../../format/time';
@@ -73,8 +74,15 @@ export function CalendarView({ calendarRef }: { calendarRef: RefObject<FullCalen
   const hiddenCategories = useAppStore((state) => state.hiddenCategoryIds);
   const emphasisIds = useAppStore((state) => state.emphasisIds);
   const actions = useAppStore((state) => state.actions);
+  const locked = useAppStore((state) => state.calendarLocked);
+  const store = useAppStoreApi();
+  const rootRef = useRef<HTMLDivElement>(null);
+  useCalendarPan(rootRef, locked);
 
-  const handlers = useMemo(() => createCalendarHandlers(actions), [actions]);
+  const handlers = useMemo(
+    () => createCalendarHandlers(actions, () => store.getState().calendarLocked),
+    [actions, store],
+  );
   // The snapshot is replaced on every change, so it is the right memo key for its events.
   const events = useMemo(
     () => toFullCalendar(snapshot, filter, view.activeRange, emphasisIds, hiddenCategories),
@@ -84,61 +92,63 @@ export function CalendarView({ calendarRef }: { calendarRef: RefObject<FullCalen
   const hiddenByFilter = filterHidesEventsIn(snapshot, filter, view.activeRange, hiddenCategories);
 
   return (
-    <FullCalendar
-      ref={calendarRef}
-      plugins={PLUGINS}
-      initialView={view.type}
-      initialDate={fromMinute(view.date)}
-      firstDay={MONDAY}
-      headerToolbar={false}
-      views={{
-        // Separate spans let the week header set the date numeral large; the text stays "Mon 2".
-        timeGrid: {
-          dayHeaderContent: ({ date }) => (
-            <>
-              <span className="day-name">{WEEKDAY.format(date)}</span>{' '}
-              <span className="day-number">{date.getDate()}</span>
-            </>
-          ),
-        },
-      }}
-      allDaySlot={false}
-      height="100%"
-      slotDuration="00:30:00"
-      snapDuration="00:05:00"
-      scrollTime="08:00:00"
-      nowIndicator
-      slotLabelFormat={TWENTY_FOUR_HOUR}
-      eventTimeFormat={TWENTY_FOUR_HOUR}
-      editable
-      selectable
-      selectMirror
-      eventOverlap
-      eventMinHeight={MIN_CLICK_TARGET_PX}
-      businessHours={{
-        daysOfWeek: [...workDays],
-        startTime: toClockTime(workStartMin),
-        endTime: toClockTime(workEndMin),
-      }}
-      events={events}
-      noEventsContent={() =>
-        hiddenByFilter ? (
-          <HiddenByFilterNotice
-            onShowAll={actions.showAllEventPriorities}
-            categoriesHidden={hiddenCategories.length > 0}
-          />
-        ) : (
-          NO_EVENTS_TEXT
-        )
-      }
-      eventContent={(arg) =>
-        renderEventContent(arg, (id) => actions.openDialog({ kind: 'event', mode: 'edit', id }))
-      }
-      eventDrop={(info) => void handlers.onDrop(info)}
-      eventResize={(info) => void handlers.onResize(info)}
-      select={handlers.onSelect}
-      eventClick={handlers.onClick}
-      datesSet={handlers.onDatesSet}
-    />
+    <div ref={rootRef} className="calendar-surface">
+      <FullCalendar
+        ref={calendarRef}
+        plugins={PLUGINS}
+        initialView={view.type}
+        initialDate={fromMinute(view.date)}
+        firstDay={MONDAY}
+        headerToolbar={false}
+        views={{
+          // Separate spans let the week header set the date numeral large; the text stays "Mon 2".
+          timeGrid: {
+            dayHeaderContent: ({ date }) => (
+              <>
+                <span className="day-name">{WEEKDAY.format(date)}</span>{' '}
+                <span className="day-number">{date.getDate()}</span>
+              </>
+            ),
+          },
+        }}
+        allDaySlot={false}
+        height="100%"
+        slotDuration="00:30:00"
+        snapDuration="00:05:00"
+        scrollTime="08:00:00"
+        nowIndicator
+        slotLabelFormat={TWENTY_FOUR_HOUR}
+        eventTimeFormat={TWENTY_FOUR_HOUR}
+        editable={!locked}
+        selectable={!locked}
+        selectMirror
+        eventOverlap
+        eventMinHeight={MIN_CLICK_TARGET_PX}
+        businessHours={{
+          daysOfWeek: [...workDays],
+          startTime: toClockTime(workStartMin),
+          endTime: toClockTime(workEndMin),
+        }}
+        events={events}
+        noEventsContent={() =>
+          hiddenByFilter ? (
+            <HiddenByFilterNotice
+              onShowAll={actions.showAllEventPriorities}
+              categoriesHidden={hiddenCategories.length > 0}
+            />
+          ) : (
+            NO_EVENTS_TEXT
+          )
+        }
+        eventContent={(arg) =>
+          renderEventContent(arg, (id) => actions.openDialog({ kind: 'event', mode: 'edit', id }))
+        }
+        eventDrop={(info) => void handlers.onDrop(info)}
+        eventResize={(info) => void handlers.onResize(info)}
+        select={handlers.onSelect}
+        eventClick={handlers.onClick}
+        datesSet={handlers.onDatesSet}
+      />
+    </div>
   );
 }

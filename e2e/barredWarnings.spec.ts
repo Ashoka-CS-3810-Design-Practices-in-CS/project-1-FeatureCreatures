@@ -26,6 +26,7 @@ test('T38: settings warns separately, View opens the drawer, and alternatives cl
   const picker = page.getByRole('dialog', { name: /^Alternatives for/ });
   await expect(picker).toBeVisible();
   await expect(picker.getByRole('group', { name: 'Move', exact: true })).toHaveCount(0);
+  await picker.getByRole('checkbox', { name: 'Allow moving this event' }).check();
   await picker.getByRole('button', { name: 'Apply', exact: true }).click();
   await expect(picker).toHaveCount(0);
   await expect(drawer.getByRole('heading', { name: 'Barred-slot overlaps (0)' })).toBeVisible();

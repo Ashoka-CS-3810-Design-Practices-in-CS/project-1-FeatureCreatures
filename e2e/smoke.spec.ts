@@ -45,6 +45,7 @@ test('smoke: the main flows run without any page error', async ({ page }) => {
 
   await page.getByRole('button', { name: /^Suggest alternatives for / }).click();
   const alternatives = page.getByRole('dialog', { name: /^Alternatives for/ });
+  await alternatives.getByRole('checkbox', { name: 'Allow moving this event' }).check();
   await alternatives.getByRole('button', { name: 'Apply', exact: true }).click();
   await expect(alternatives).toHaveCount(0);
   await expect(page.getByText('No conflicts', { exact: true })).toBeVisible();

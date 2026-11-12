@@ -56,6 +56,7 @@ describe('T38 barred warning UI', () => {
       otherEventId: null,
     });
     expect(screen.queryByRole('group', { name: 'Move' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Allow moving this event' }));
     await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
     expect(
       await screen.findByRole('heading', { name: 'Barred-slot overlaps (0)' }),

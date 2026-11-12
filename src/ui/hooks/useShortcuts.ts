@@ -25,6 +25,7 @@ export type ShortcutCommand =
   | { kind: 'undo' }
   | { kind: 'redo' }
   | { kind: 'help' }
+  | { kind: 'lock' }
   | { kind: 'close' };
 
 // Plain keys (no Ctrl/Cmd); letters are matched in lower case, so Shift does not matter for them.
@@ -37,6 +38,7 @@ const PLAIN_KEY_COMMANDS: Record<string, ShortcutCommand> = {
   m: { kind: 'view', view: 'dayGridMonth' },
   l: { kind: 'view', view: 'listWeek' },
   r: { kind: 'replan' },
+  k: { kind: 'lock' },
   '?': { kind: 'help' },
 };
 const TEXT_FIELD_SELECTOR = 'input, textarea, select, [contenteditable]';
@@ -109,6 +111,9 @@ function runShortcut(
     case 'help':
       actions.openDialog({ kind: 'shortcuts' });
       return;
+    case 'lock':
+      actions.toggleCalendarLock();
+      return;
     case 'undo':
       void actions.undo();
       return;
@@ -150,20 +155,23 @@ export function useShortcuts(calendarRef: RefObject<FullCalendar | null>): void 
     // POST: reads current modal/loading state and runs any permitted shortcut instead of the browser's default
     function onKeyDown(event: KeyboardEvent): void {
       // A key can follow a store change before React commits or refreshes passive effects.
-      const { dialog, picker, busy, actions } = store.getState();
+      const { dialog, picker, busy, actions, view, lastCalendarView } = store.getState();
       const dialogOpen = dialog !== null;
       const nativeModalOpen = document.querySelector('dialog[open]') !== null;
       // Native Esc closes only the top dialog, including the drawer; a loading dialog cancels it.
       if (busy !== null || (event.key === 'Escape' && nativeModalOpen)) {
         return;
       }
-      const command = shortcutFor(
+      let command = shortcutFor(
         event,
         isTextField(event.target),
         dialogOpen || picker !== null || nativeModalOpen,
       );
       if (command === null) {
         return;
+      }
+      if (command.kind === 'view' && command.view === 'listWeek' && view.type === 'listWeek') {
+        command = { kind: 'view', view: lastCalendarView };
       }
       event.preventDefault();
       runShortcut(command, actions, calendarRef.current?.getApi() ?? null, dialogOpen);

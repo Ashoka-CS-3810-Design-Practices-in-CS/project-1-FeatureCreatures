@@ -34,19 +34,24 @@ export interface CalendarHandlers {
   onDatesSet: (info: DatesInfo) => void;
 }
 
-// PRE:  actions are the store's actions
+// PRE:  actions are the store's actions; isLocked reads the latest session lock
 // POST: returns FullCalendar's handlers: a drag or resize goes through actions.dragEvent (a
 //       fixed event asks first, WI-42) and snaps back when refused (ER5); a selection opens the create dialog for its times (a plain click,
 //       which selects one SNAP_MIN step, gets CLICK_EVENT_MIN instead); a click on an event opens
 //       its edit dialog (background blocks are ignored); a date change records the view, its
-//       period start and the visible range
+//       period start and the visible range; locked gestures are reverted/cleared without mutation
 export function createCalendarHandlers(
   actions: Pick<AppActions, 'dragEvent' | 'openDialog' | 'setActiveRange' | 'setView'>,
+  isLocked: () => boolean = () => false,
 ): CalendarHandlers {
   // PRE:  info describes a dragged or resized event
   // POST: hands it to actions.dragEvent with FullCalendar's revert; reverts at once when
   //       FullCalendar reports it without both ends
   async function moveOrRevert(info: ChangedEventInfo): Promise<void> {
+    if (isLocked()) {
+      info.revert();
+      return;
+    }
     const { id, start, end } = info.event;
     if (start === null || end === null) {
       info.revert();
@@ -59,6 +64,10 @@ export function createCalendarHandlers(
     onDrop: moveOrRevert,
     onResize: moveOrRevert,
     onSelect(info) {
+      if (isLocked()) {
+        info.view.calendar.unselect();
+        return;
+      }
       const start = toMinute(info.start);
       const selectedEnd = toMinute(info.end);
       const end = selectedEnd - start <= SNAP_MIN ? start + CLICK_EVENT_MIN : selectedEnd;

@@ -10,7 +10,7 @@ const PRIORITY_TAG = { high: '[H]', medium: '[M]', low: '[L]' } as const;
 //       onOpen opens the event dialog when supplied for a List-view button
 //       + additional props from: CategoryTag
 // POST: renders an event block: title, time, the priority tag (BR-13, text as well as colour),
-//       a Task or Fixed tag, In <label> tags and "⚠ Conflict N min" when the event overlaps another; keeps its
+//       a Task, Fixed or Flexible tag, In <label> tags and "⚠ Conflict N min" when the event overlaps another; keeps its
 //       FullCalendar button's accessible name and tooltip complete even when the block is clipped;
 //       a fixed block is described by the Fixed tag's hint (WI-42)
 export function EventContent({
@@ -27,7 +27,7 @@ export function EventContent({
 }: EventBlockProps & { title: string; timeText: string; onOpen?: () => void }) {
   const contentRef = useRef<HTMLDivElement>(null);
   const hintId = useId();
-  const kind = isTask ? 'Task' : flexible ? null : 'Fixed';
+  const kind = isTask ? 'Task' : flexible ? 'Flexible' : 'Fixed';
   useEffect(() => {
     const eventElement = contentRef.current?.closest<HTMLElement>('.ev');
     if (eventElement !== null && eventElement !== undefined) {
@@ -56,6 +56,7 @@ export function EventContent({
       <span className={`tag prio-${priority}`}>{PRIORITY_TAG[priority]}</span>
       {category !== undefined && <CategoryTag category={category} />}
       {kind === 'Task' && <span className="tag">Task</span>}
+      {kind === 'Flexible' && <span className="tag">Flexible</span>}
       {kind === 'Fixed' && <FixedTag descriptionId={hintId} />}
     </>
   );

@@ -13,13 +13,21 @@ import {
   EXPORT_VERSION,
   DEFAULT_CATEGORIES,
   IMPORT_SPINNER_THRESHOLD,
+  FIXED_ALTERNATIVE_RANGE_DAYS,
 } from '@/shared/constants';
 import type { EngineError } from '@/shared/errors';
 import type { Result } from '@/shared/result';
 import { parseExportFile } from '@/shared/schemas';
-import { fromMinute, overlapsWorkingHours, startOfLocalWeek } from '@/shared/time';
+import {
+  addLocalDays,
+  fromMinute,
+  overlapsWorkingHours,
+  startOfLocalDay,
+  startOfLocalWeek,
+} from '@/shared/time';
 import type {
   Conflict,
+  CalendarEvent,
   CategoryInput,
   BarredOverlap,
   EventInput,
@@ -69,6 +77,7 @@ import type { PickerState } from './pickerSlice';
 import { withoutToast, type Toast } from './toastSlice';
 
 export type ViewType = 'timeGridDay' | 'timeGridWeek' | 'dayGridMonth' | 'listWeek';
+export type CalendarViewType = Exclude<ViewType, 'listWeek'>;
 
 export type Dialog =
   | null
@@ -105,6 +114,7 @@ export interface AppActions {
   deleteEvent(id: string): Promise<Result<MutationResult>>;
   setActiveRange(range: Interval): void;
   setView(type: ViewType, date: Minute): void;
+  toggleCalendarLock(): void;
   toggleEventPriority(priority: Priority): void;
   toggleEventCategory(id: string): void;
   showAllEventPriorities(): void;
@@ -126,6 +136,8 @@ export interface AppActions {
   pickerSetBuffer(bufferMin: number): void;
   pickerToggleTarget(): void;
   pickerSetWorkingHours(useWorkingHours: boolean): void;
+  pickerSetAllowMoving(allowMoving: boolean): void;
+  pickerSetRange(range: Interval): void;
   pickerApply(): Promise<void>;
   pickerSkip(): void;
   pickerStop(): void;
@@ -150,6 +162,8 @@ export interface AppState {
   busy: string | null;
   snapshot: Snapshot;
   view: { type: ViewType; date: Minute; activeRange: Interval | null };
+  lastCalendarView: CalendarViewType;
+  calendarLocked: boolean;
   eventPriorityFilter: Priority[];
   hiddenCategoryIds: string[];
   lastCategoryId: string | null;
@@ -174,6 +188,7 @@ export interface AppStoreOptions {
   now: () => Minute;
   resetStorage: () => Promise<void>; // empties the repository, for the fatal screen's Reset
   initialView?: ViewType; // the view remembered from the last visit (default: week)
+  initialCalendarView?: CalendarViewType;
 }
 
 export type AppStore = StoreApi<AppState>;
@@ -403,6 +418,8 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
         otherEventId: picker.otherEventId ?? undefined,
         bufferMin: picker.bufferMin,
         useWorkingHours: picker.useWorkingHours,
+        allowMoving: picker.allowMoving,
+        range: picker.range,
       });
     }
 
@@ -428,6 +445,8 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
           : engine.explainWindow({
               eventId: picker.eventId,
               useWorkingHours: picker.useWorkingHours,
+              allowMoving: picker.allowMoving,
+              range: picker.range,
               bufferMin: picker.bufferMin,
             });
       return explained.ok ? explained.value : null;
@@ -500,6 +519,14 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
       return result;
     }
 
+    // PRE:  event is the selected event, or absent if it disappeared
+    // POST: returns its day through the next day, clipped to now, for this dialog's temporary range
+    function temporaryRangeFor(event: CalendarEvent | undefined): Interval {
+      const now = options.now();
+      const day = startOfLocalDay(Math.max(event?.start ?? now, now));
+      return { start: Math.max(day, now), end: addLocalDays(day, FIXED_ALTERNATIVE_RANGE_DAYS) };
+    }
+
     // PRE:  eventId names the event to search; otherEventId is the optional conflict counterpart
     // POST: returns the order the Move radios keep (WI-45, #5): the pair's conflict as aId, bId,
     //       or eventId, otherEventId when they no longer conflict; null without a counterpart
@@ -530,6 +557,8 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
         mode: 'alternatives',
         eventId,
         otherEventId,
+        allowMoving: false,
+        range: temporaryRangeFor(event),
         bufferMin: settings.bufferMin,
         useWorkingHours: event === undefined || overlapsWorkingHours(event, settings),
         order: moveOrder(eventId, otherEventId),
@@ -634,7 +663,7 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
       },
 
       // PRE:  to comes from a calendar drag or resize of event id; revert puts the block back
-      // POST: a fixed event asks first (WI-42, report #1): "<title> is fixed. Move it anyway?"
+      // POST: a fixed event asks first with the destination or new duration (D-03)
       //       Move moves it through moveEvent, Keep it / Esc / close only revert (nothing written,
       //       no history); any other event moves at once. A move the engine refuses reverts too
       async dragEvent(id, to, revert) {
@@ -655,9 +684,13 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
         set({
           dialog: {
             kind: 'confirm',
-            title: fixedMoveQuestion(event.title),
+            title: fixedMoveQuestion(
+              event.title,
+              to,
+              to.end - to.start !== event.end - event.start,
+            ),
             body: FIXED_MOVE_BODY,
-            confirmLabel: 'Move',
+            confirmLabel: to.end - to.start === event.end - event.start ? 'Move' : 'Change',
             cancelLabel: 'Keep it',
             onConfirm: () => {
               void moveOrRevert();
@@ -684,9 +717,18 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
       },
 
       // PRE:  type is the view FullCalendar shows; date is the start of the period it shows
-      // POST: view.type is type and view.date is date
+      // POST: view.type/date are updated; a calendar view becomes the return view from List
       setView(type, date) {
-        set({ view: { ...get().view, type, date } });
+        set({
+          view: { ...get().view, type, date },
+          lastCalendarView: type === 'listWeek' ? get().lastCalendarView : type,
+        });
+      },
+
+      // PRE:  none
+      // POST: toggles the timeline gesture lock for this session without writing domain data
+      toggleCalendarLock() {
+        set({ calendarLocked: !get().calendarLocked });
       },
 
       // PRE:  priority is a priority
@@ -868,12 +910,33 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
         }
       },
 
+      // PRE:  allowMoving is the current dialog's explicit consent
+      // POST: refreshes this alternatives picker; consent is never stored with its event
+      pickerSetAllowMoving(allowMoving) {
+        const picker = get().picker;
+        if (picker?.mode === 'alternatives') refresh({ ...picker, allowMoving });
+      },
+
+      // PRE:  range comes from the temporary date fields and may be invalid
+      // POST: refreshes the alternatives picker; the engine validates the range before searching
+      pickerSetRange(range) {
+        const picker = get().picker;
+        if (picker?.mode === 'alternatives') refresh({ ...picker, range });
+      },
+
       // PRE:  none
       // POST: an alternatives picker with an other event swaps which of the two is moved
       pickerToggleTarget() {
         const { picker } = get();
         if (picker?.mode === 'alternatives' && picker.otherEventId !== null) {
-          refresh({ ...picker, eventId: picker.otherEventId, otherEventId: picker.eventId });
+          const target = get().snapshot.events.find((event) => event.id === picker.otherEventId);
+          refresh({
+            ...picker,
+            eventId: picker.otherEventId,
+            otherEventId: picker.eventId,
+            allowMoving: false,
+            range: temporaryRangeFor(target),
+          });
         }
       },
 
@@ -1106,6 +1169,11 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
       busy: null,
       snapshot: options.init.ok ? options.init.value : engine.snapshot(),
       view: { type: options.initialView ?? 'timeGridWeek', date: now, activeRange: null },
+      lastCalendarView:
+        options.initialView !== undefined && options.initialView !== 'listWeek'
+          ? options.initialView
+          : (options.initialCalendarView ?? 'timeGridWeek'),
+      calendarLocked: (options.init.ok ? options.init.value : engine.snapshot()).events.length > 0,
       eventPriorityFilter: [...ALL_PRIORITIES],
       hiddenCategoryIds: [],
       lastCategoryId: null,

@@ -2,9 +2,10 @@
 // §3.2). Storage can be blocked (private mode, site settings), so every access is guarded and a
 // failure just means the preference is not remembered.
 
-import type { AppStore, ViewType } from '../store/appStore';
+import type { AppStore, CalendarViewType, ViewType } from '../store/appStore';
 
 export const VIEW_KEY = 'fc-view';
+export const CALENDAR_VIEW_KEY = 'fc-calendar-view';
 const VIEW_TYPES: readonly string[] = ['timeGridDay', 'timeGridWeek', 'dayGridMonth', 'listWeek'];
 
 // PRE:  key is a localStorage key
@@ -35,13 +36,23 @@ export function storedView(): ViewType | undefined {
   return stored !== null && VIEW_TYPES.includes(stored) ? (stored as ViewType) : undefined;
 }
 
+// PRE:  none
+// POST: returns the remembered non-List view, or undefined for missing/invalid storage
+export function storedCalendarView(): CalendarViewType | undefined {
+  const stored = readPreference(CALENDAR_VIEW_KEY);
+  return stored !== null && stored !== 'listWeek' && VIEW_TYPES.includes(stored)
+    ? (stored as CalendarViewType)
+    : undefined;
+}
+
 // PRE:  store comes from createAppStore
-// POST: from now on, every change of the store's view type is written to localStorage['fc-view'];
-//       returns the function that stops this
+// POST: remembers the active side/view in fc-view and its Calendar return view in fc-calendar-view;
+//       returns the function that stops these subscriptions
 export function rememberView(store: AppStore): () => void {
   return store.subscribe((state, previous) => {
     if (state.view.type !== previous.view.type) {
       writePreference(VIEW_KEY, state.view.type);
+      writePreference(CALENDAR_VIEW_KEY, state.lastCalendarView);
     }
   });
 }

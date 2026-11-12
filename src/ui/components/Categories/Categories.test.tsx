@@ -129,7 +129,7 @@ describe('T49: category UI (D-11)', () => {
         store.getState().actions.openDialog({ kind: 'event', mode: 'create', defaults: {} }),
       );
       expect(screen.getByLabelText('Category')).toHaveValue('id-1');
-      expect(screen.getByRole('checkbox', { name: /Flexible/ })).not.toBeChecked();
+      expect(screen.getByRole('radio', { name: /Flexible/ })).not.toBeChecked();
     },
   );
 

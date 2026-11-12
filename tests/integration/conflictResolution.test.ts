@@ -50,10 +50,15 @@ describe('Conflict Resolution (T20, FR7, BR-10)', () => {
     );
   });
 
-  it('toggling to the fixed event searches the day before through the day after', async () => {
+  it('D-02: opting into a fixed event searches its explicitly supplied temporary range', async () => {
     const { engine } = await makeEngine({ events: [lecture, meeting] });
 
-    const found = engine.suggestAlternatives({ eventId: 'Lecture', otherEventId: 'Meeting' });
+    const found = engine.suggestAlternatives({
+      eventId: 'Lecture',
+      otherEventId: 'Meeting',
+      allowMoving: true,
+      range: { start: t('2026-11-01 00:00'), end: t('Wed 00:00') },
+    });
 
     expect(found.ok).toBe(true);
     if (!found.ok) return;

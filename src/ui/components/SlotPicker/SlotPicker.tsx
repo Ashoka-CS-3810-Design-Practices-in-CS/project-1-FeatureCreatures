@@ -1,4 +1,6 @@
 import { useId } from 'react';
+import { addLocalDays } from '@/shared/time';
+import { fromDateInput, toDateInput } from '../../forms/eventForm';
 import type { Result } from '@/shared/result';
 import type { Minute, Priority, SlotSearchResult, WindowExplanation } from '@/shared/types';
 import { errorMessage } from '../../format/errors';
@@ -18,6 +20,51 @@ import { Modal } from '../Modal/Modal';
 
 type TaskPickerState = Extract<PickerState, { mode: 'task' }>;
 type AlternativesPickerState = Extract<PickerState, { mode: 'alternatives' }>;
+
+// PRE:  minute is a supported Minute or NaN while a date input is empty
+// POST: returns its date-input value, or '' for an empty/invalid input
+function rangeDate(minute: Minute): string {
+  return Number.isFinite(minute) ? toDateInput(minute) : '';
+}
+
+// PRE:  picker is an alternatives picker; uses pickerSetRange
+// POST: edits an inclusive From/To pair mapped to the engine's half-open temporary range
+function TemporaryRange({ picker }: { picker: AlternativesPickerState }) {
+  const setRange = useAppStore((state) => state.actions.pickerSetRange);
+  const id = useId();
+  return (
+    <div className="field-pair">
+      <span>
+        <label htmlFor={`${id}-from`}>From</label>
+        <input
+          id={`${id}-from`}
+          type="date"
+          value={rangeDate(picker.range.start)}
+          onChange={(event) =>
+            setRange({ ...picker.range, start: fromDateInput(event.target.value) })
+          }
+        />
+      </span>
+      <span>
+        <label htmlFor={`${id}-to`}>To</label>
+        <input
+          id={`${id}-to`}
+          type="date"
+          value={rangeDate(picker.range.end - 1)}
+          onChange={(event) =>
+            setRange({
+              ...picker.range,
+              end:
+                event.target.value === ''
+                  ? Number.NaN
+                  : addLocalDays(fromDateInput(event.target.value), 1),
+            })
+          }
+        />
+      </span>
+    </div>
+  );
+}
 
 const PRIORITY_NAME: Record<Priority, string> = { high: 'High', medium: 'Medium', low: 'Low' };
 
@@ -211,9 +258,9 @@ function TaskPicker({ picker }: { picker: TaskPickerState }) {
 
 // PRE:  picker is an alternatives picker; reads its two events; uses the picker actions
 //       + additional props from: SearchResults, BufferField
-//       + SearchHoursField
+//       + SearchHoursField, TemporaryRange
 // POST: shows "Alternatives for <event>" with the Move toggle between the two events, a note when
-//       the target is fixed (BR-10 may still pick it), the search hours, the buffer, the
+//       the target is fixed (BR-10 may still pick it), opt-in/range controls, the search hours, the buffer, the
 //       nearest-first results with their distance from the original time, and Apply / Cancel
 function AlternativesPicker({ picker }: { picker: AlternativesPickerState }) {
   const events = useAppStore((state) => state.snapshot.events);
@@ -254,19 +301,35 @@ function AlternativesPicker({ picker }: { picker: AlternativesPickerState }) {
         </fieldset>
       )}
       {!target.flexible && (
-        <p className="picker-note">
-          {target.title} is fixed: the planner never moves it on its own, but you can choose to move
-          it.
-        </p>
+        <div>
+          {!picker.allowMoving && (
+            <p className="picker-note">
+              {target.title} is fixed, so no suggestions are made for it.
+            </p>
+          )}
+          <label>
+            <input
+              type="checkbox"
+              checked={picker.allowMoving}
+              onChange={(event) => actions.pickerSetAllowMoving(event.target.checked)}
+            />{' '}
+            Allow moving this event
+          </label>
+          {picker.allowMoving && <TemporaryRange picker={picker} />}
+        </div>
       )}
-      <SearchHoursField useWorkingHours={picker.useWorkingHours} />
-      <BufferField bufferMin={picker.bufferMin} />
-      <SearchResults
-        result={picker.result}
-        explanation={picker.explanation}
-        selected={picker.selected}
-        originalStart={target.start}
-      />
+      {(target.flexible || picker.allowMoving) && (
+        <>
+          <SearchHoursField useWorkingHours={picker.useWorkingHours} />
+          <BufferField bufferMin={picker.bufferMin} />
+          <SearchResults
+            result={picker.result}
+            explanation={picker.explanation}
+            selected={picker.selected}
+            originalStart={target.start}
+          />
+        </>
+      )}
       <div className="dialog-actions">
         <button
           type="button"

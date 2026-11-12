@@ -115,7 +115,8 @@ These optional features from the project description are also covered by the cor
 | **Minute** | An integer number of minutes since the Unix epoch (UTC). All stored times are Minutes. |
 | **Interval** | `{start, end}` in Minutes, **half-open** `[start, end)`, with `end > start`. |
 | **Event** | An Interval with title, description, category, priority, fixed/flexible flag, optional flex window, optional link to a task. Appears on the timeline. |
-| **Fixed event** | An event the app never proposes to move automatically (e.g. a class). The user may still move it by hand: dragging or resizing it asks first ("<title> is fixed. Move it anyway?", WI-42), while editing its times in the dialog does not. Its **Fixed** tag explains this in a tooltip. |
+| **Fixed event** | The planner leaves it alone. Replan never moves it; alternatives require Allow moving this event and a temporary range. An unlocked manual drag/resize asks an action-specific question (BR-17). Dialog edits remain available. |
+| **Calendar lock** | A session-only control disabling timeline creation/move/resize gestures; locked time-grid dragging pans it. Event clicks and deliberate actions remain available (BR-17). |
 | **Flexible event** | An event the app may propose to move, but only inside its **flex window**. |
 | **Flex window** | An Interval within which a flexible event may be placed. |
 | **Task** | A to-do with name, duration, priority and an **allowable window**. It has no time until scheduled, and is shown only in the task panel. |
@@ -228,8 +229,8 @@ Each requirement lists its acceptance criteria. The tests that prove it are in `
   - Stale conflicts disappear and new ones appear in the same render.
   - A drag that the engine rejects snaps back.
   - If the event is linked to a task, the task's mirrored fields follow (BR-9).
-  - **A fixed event asks before a manual drag or resize** (WI-42, peer report #1): the app's confirmation dialog reads "<title> is fixed. Move it anyway?" with **Move** and **Keep it**. Move commits as any drag; Keep it, Esc or closing snap the block back and write nothing (no undo step). Flexible events drag without asking. Changing times in the event dialog, applying an alternative, undo/redo and Replan never ask, and Replan still never moves fixed events (BR-12).
-  - The **Fixed** tag on a block has the tooltip and accessible description "Fixed: the planner never moves it. Dragging asks first; you can also edit its times or tick Flexible."
+  - **Calendar lock and fixed confirmations:** BR-17 governs timeline gestures. A fixed move asks for the destination (Move / Keep it); a fixed resize asks for the new duration and times (Change / Keep it). Keep it, Esc and close revert without writing. Flexible gestures ask nothing. Dialog edits, Apply, history and Replan never ask.
+  - The **Fixed** tag's tooltip/description is "Fixed: the planner leaves it alone. You can edit its times, unlock the calendar to drag it with confirmation, or allow moving it in the suggestion picker."
 
 **FR3 — Delete event.**
 - **Behaviour:** after confirmation, the event is removed and conflicts are re-run.
@@ -275,12 +276,12 @@ Each requirement lists its acceptance criteria. The tests that prove it are in `
 - **Input:** a conflict (from the panel or a flagged event).
 - **Behaviour:**
   1. Choose which event to move by the target rule (BR-10). The user can switch to the other event.
-  2. Search for slots for the target's duration. A flexible target is searched within its flex window. A fixed target is searched from the start of the local day before to the end of the local day after its own day (3 local days).
+  2. A flexible target searches within its flex window. A fixed target initially shows no options. Allow moving this event enables a temporary From/To range (inclusive dates), prefilled from its day through the next day, never before now; the user may edit it, including outside the former three-day window. Consent/range are dialog state and are never stored on the event. Reopening or switching targets resets consent.
   3. **Search hours** (WI-41, reports #3, #4, #9): the picker offers *Working hours only* or *Any time*. It defaults to *Any time* when the target does not overlap its day's working hours or is on a non-working day, and to *Working hours only* otherwise; switching re-runs the search, and the choice is kept when the user switches the target. Barred slots apply either way.
   4. Rank by `nearest` to the original start and return the top 5 with explanations.
   5. Apply moves the target event (as FR2).
   6. The **Move** radios keep the conflict's order (its first event, then its second) whichever one is selected (WI-45, report #5).
-  7. When the target is fixed, the picker says: "<title> is fixed: the planner never moves it on its own, but you can choose to move it." BR-10's default target is unchanged.
+  7. With a fixed target and consent off, the picker says "<title> is fixed, so no suggestions are made for it." Apply is disabled. Invalid opted-in ranges give InvalidTime. The fixed/flexible kind is preserved by Apply; BR-10's target order is unchanged.
   8. When no minute of the window can be used, the picker names the cause instead of the generic ER2 text: "Its window is entirely in the past.", "Its window has no working hours. Choose "Any time" to search outside them." or "Its window is fully barred: every free minute in it is inside a barred slot."
 - **Acceptance:**
   - The conflict disappears after applying.
@@ -529,6 +530,8 @@ Every search result also carries:
 
 Twelve curated colours include the five seeds. Free colours are normalised six-digit hex, at least `MIN_CATEGORY_COLOUR_DISTANCE = 0.04` apart in OKLab from other categories and reserved fills, conflict/priority colours. A dot has at least 3:1 contrast on its tag in both themes; its name uses normal text at least 4.5:1. Deleting/recolouring frees a swatch. Imports and stored-data validation enforce the same colour safety. Calendar blocks, accessible names/tooltips and task rows resolve the category by id. Multi-category and category-less items remain out of scope.
 
+**BR-17 Calendar lock and manual confirmations (D-03/D-04).** Calendar lock is an icon plus Locked/Unlocked, accessible name Calendar lock and aria-pressed; K toggles it. At a page load it is on if stored events exist and off when empty. It is not persisted, exported, undoable or automatically changed when events are later added/removed in the session. While locked, no event can be dragged/resized and no timeline click/drag creates an event; time-grid dragging scrolls horizontally/vertically. Clicking an event still edits it. + Event, N, dialog edits, Apply, Replan and undo/redo keep working. An unlocked fixed move asks `"Class" is fixed. Move it to Fri 13 Nov 10:00–11:00?` with Move/Keep it. A resize asks `"Class" is fixed. Change it to 1 h 30 min (10:00–11:30)?` with Change/Keep it. Keep it, Esc and close revert with no write/history. Fixed manual mutation commands still ask when invoked directly; the lock prevents the timeline gesture from invoking them. Flexible events ask nothing.
+
 ## 7. UX specification
 
 ### 7.1 Screens and views
@@ -538,7 +541,7 @@ Twelve curated colours include the five seeds. Free colours are normalised six-d
    - The calendar in the centre, with Day, Week (the default), Month and List views.
    - On the right, the task panel above the conflict panel.
    - Below 1024 px, the right column collapses into a drawer opened from the toolbar.
-2. **Event dialog** (create and edit): title, category, priority, start, end, flexible toggle, flex window (shown when flexible), description. Priority uses a fieldset with a legend and native High / Medium / Low radios, each with its [H]/[M]/[L] tag and priority colour; arrow keys change the selected option. The flex window is its own full-width group below End, without overlap or clipping at desktop and drawer widths in either theme. It has Save and Cancel buttons, plus Delete when editing.
+2. **Event dialog** (create and edit): title, category, priority, start, end, Fixed/Flexible scheduling radios, flex window (shown when flexible), description. Priority uses a fieldset with a legend and native High / Medium / Low radios, each with its [H]/[M]/[L] tag and priority colour; arrow keys change the selected option. The flex window is its own full-width group below End, without overlap or clipping at desktop and drawer widths in either theme. It has Save and Cancel buttons, plus Delete when editing.
 3. **Task dialog** (create and edit): name, duration (h and min), the same priority radio group, category, window from/to, Scheduling hours radios ("Working hours only", the default, and "Any time"), description. These radios still map to `useWorkingHours` true / false; barred slots apply to both. It has Save and Cancel buttons, plus Delete, Unschedule and Find time when editing.
 4. **Slot picker:**
    - **Task mode:** the header shows the task name, duration, priority and "Task i of N". It contains the criterion selector, a buffer override, a summary line, ranked options with explanations, and the Apply, Skip and Stop buttons.
@@ -605,7 +608,7 @@ Twelve curated colours include the five seeds. Free colours are normalised six-d
 | ID | Workflow | Steps → result |
 |---|---|---|
 | W1 | Create an event, see a conflict | + Event (or drag on empty time) → fill in the form → Save. The event appears. If it overlaps another, both are flagged, the panel lists the overlap, and the ER4 toast offers *Move to …*. |
-| W2 | Move or resize | Drag or resize the event. On drop the engine commits. Conflicts update. If the engine rejects the change (ER5), the event snaps back. A fixed event first asks "<title> is fixed. Move it anyway?": Move commits, Keep it or Esc snaps back (WI-42). |
+| W2 | Move or resize | Unlock the calendar, then drag/resize. Fixed events ask the BR-17 destination/duration question; Move/Change commits, Keep it/Esc/close reverts. Engine rejection also reverts. Flexible events commit without a confirmation. |
 | W3 | Resolve a conflict | Conflict panel → *Suggest alternatives* → picker (alternatives mode) → choose → Apply. The conflict disappears and a success toast appears. |
 | W4 | Schedule one task | + Task → Save → *Find time* → review the options → Apply. The task is marked Scheduled and the event appears on the timeline. |
 | W5 | Schedule several tasks | Tick the tasks → *Find time for N selected* → the picker shows Task 1 of N → Apply or Skip → it moves on to the next task automatically → a summary toast: "Scheduled 2 of 3 tasks (1 skipped)". |
@@ -649,7 +652,9 @@ All toasts are announced through an ARIA live region. Errors use `assertive`; ev
 | `Shift+N` | New task |
 | `T` | Go to today |
 | `←` / `→` | Previous / next period |
-| `D` / `W` / `M` / `L` | Day / Week / Month / List view |
+| `D` / `W` / `M` | Calendar in Day / Week / Month |
+| `L` | Toggle Calendar / List; List always shows a week |
+| `K` | Toggle Calendar lock |
 | `R` | Open Replan |
 | `Ctrl/Cmd+Z` | Undo |
 | `Ctrl/Cmd+Shift+Z`, `Ctrl+Y` | Redo |
@@ -731,3 +736,5 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 | 2026-11-12 | v1.14 (WI-47, D-18): documentation reorganised under `progress/` and `extras/`; §0.2 links the relocated progress file and binding Round 2 design. Product behaviour changes in the later implementing WIs. |
 | 2026-11-12 | v1.15 (WI-48, D-17): §3.2 category entities/references, kept ids, done status/completion time and the global working-time field; BR-9 copies `categoryId`. Dexie v3 preserves old rows/revision/overlaps; exports v2 include categories, imports accept v1/v2. UI and commands for the new fields follow in WI-49/53/54. |
 | 2026-11-12 | v1.16 (WI-49, D-11/C-01): BR-16 specifies category CRUD/history, blocked deletion, shared colour validation, inline creation, tags, category filters and session defaults. FR6/FR11 include the controls; new events start Fixed regardless of category. T49 replaces category-based flexibility expectations. |
+| 2026-11-12 | v1.17 (WI-50, D-01–D-05): fixed/flexible scheduling radios; explicit fixed-search consent and temporary range; action-specific move/resize confirmations; session Calendar lock and grab-to-pan; separate persisted Calendar/List toggle and last Calendar view. FR2/FR7, glossary, BR-17, workflows and shortcuts updated; prior default three-day search removed. |
+| 2026-11-13 | WI-50 verification: releasing a locked-grid pan outside the calendar ends it, including before pointer capture; returning to the grid after release must not scroll it. T50 covers the regression. |

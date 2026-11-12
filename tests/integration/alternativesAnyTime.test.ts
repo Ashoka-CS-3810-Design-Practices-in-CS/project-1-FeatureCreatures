@@ -5,12 +5,17 @@ import { makeEngine } from '../helpers/engine';
 
 const gig = ev('Gig', 'Mon 21:00', 'Mon 22:00');
 const show = ev('Show', 'Mon 21:30', 'Mon 22:30');
+const CONSENT = { allowMoving: true, range: iv('2026-11-01 00:00', 'Wed 00:00') };
 
 describe('T42: suggestAlternatives with useWorkingHours', () => {
   it('Any time searches the night around a night event', async () => {
     const { engine } = await makeEngine({ events: [gig, show] });
 
-    const found = engine.suggestAlternatives({ eventId: 'Gig', useWorkingHours: false });
+    const found = engine.suggestAlternatives({
+      eventId: 'Gig',
+      useWorkingHours: false,
+      ...CONSENT,
+    });
 
     expect(found.ok).toBe(true);
     if (!found.ok) return;
@@ -23,8 +28,12 @@ describe('T42: suggestAlternatives with useWorkingHours', () => {
   it('Working hours only (and the default) give exactly today’s working-hours results', async () => {
     const { engine } = await makeEngine({ events: [gig, show] });
 
-    const omitted = engine.suggestAlternatives({ eventId: 'Gig' });
-    const explicit = engine.suggestAlternatives({ eventId: 'Gig', useWorkingHours: true });
+    const omitted = engine.suggestAlternatives({ eventId: 'Gig', ...CONSENT });
+    const explicit = engine.suggestAlternatives({
+      eventId: 'Gig',
+      useWorkingHours: true,
+      ...CONSENT,
+    });
 
     expect(explicit).toEqual(omitted);
     expect(omitted.ok && omitted.value.options.map((option) => option.slot)).toEqual([
@@ -41,7 +50,11 @@ describe('T42: suggestAlternatives with useWorkingHours', () => {
       }),
     });
 
-    const found = engine.suggestAlternatives({ eventId: 'Gig', useWorkingHours: false });
+    const found = engine.suggestAlternatives({
+      eventId: 'Gig',
+      useWorkingHours: false,
+      ...CONSENT,
+    });
 
     // 20:30–21:30 is gone (Dinner); the 21:00–21:30 stretch is too short.
     expect(found.ok && found.value.options.map((option) => option.slot)).toEqual([

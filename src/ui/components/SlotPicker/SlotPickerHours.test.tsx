@@ -7,8 +7,7 @@ import { makeEngine } from '../../../../tests/helpers/engine';
 import { renderWithStore, storeFor } from '../../../../tests/helpers/render';
 import { SlotPicker } from './SlotPicker';
 
-const FIXED_GIG_NOTE =
-  'Gig is fixed: the planner never moves it on its own, but you can choose to move it.';
+const FIXED_GIG_NOTE = 'Gig is fixed, so no suggestions are made for it.';
 
 const firstSlotLabel = () =>
   (
@@ -26,10 +25,11 @@ describe('SlotPicker — alternatives search hours (T42)', () => {
     renderWithStore(<SlotPicker />, store);
 
     act(() => store.getState().actions.openEventAlternatives('Gig'));
+    expect(screen.getByText(FIXED_GIG_NOTE)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Allow moving this event' }));
 
     const hours = screen.getByRole('group', { name: 'Search hours' });
     expect(within(hours).getByRole('radio', { name: 'Any time' })).toBeChecked();
-    expect(screen.getByText(FIXED_GIG_NOTE)).toBeInTheDocument();
     expect(firstSlotLabel()).toMatch(/^1\. Mon 2 Nov 20:30–21:30/);
 
     await userEvent.click(within(hours).getByRole('radio', { name: 'Working hours only' }));
@@ -53,7 +53,7 @@ describe('SlotPicker — alternatives search hours (T42)', () => {
     act(() => store.getState().actions.openAlternatives(conflict));
 
     expect(screen.getByRole('radio', { name: 'Working hours only' })).toBeChecked();
-    expect(screen.queryByText(/is fixed: the planner never moves it/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/is fixed, so no suggestions are made/)).not.toBeInTheDocument();
     expect(firstSlotLabel()).toMatch(/^1\. Mon 2 Nov 12:00–13:00/);
   });
 

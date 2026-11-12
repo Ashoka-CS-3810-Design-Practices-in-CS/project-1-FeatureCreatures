@@ -79,7 +79,13 @@ export interface EngineDeps {
 /** The search explainWindow describes: a task's (as findSlots) or an event's alternatives. */
 export type WindowRequest =
   | { taskId: string; bufferMin?: number }
-  | { eventId: string; useWorkingHours?: boolean; bufferMin?: number };
+  | {
+      eventId: string;
+      useWorkingHours?: boolean;
+      bufferMin?: number;
+      allowMoving?: boolean;
+      range?: Interval;
+    };
 
 export interface Engine {
   init(): Promise<Result<Snapshot>>;
@@ -101,6 +107,8 @@ export interface Engine {
     otherEventId?: string;
     bufferMin?: number;
     useWorkingHours?: boolean; // WI-41; omitted = true
+    allowMoving?: boolean;
+    range?: Interval;
   }): Result<SlotSearchResult>;
   applyAlternative(req: {
     eventId: string;
@@ -369,6 +377,8 @@ class CalendarEngine implements Engine {
     otherEventId?: string;
     bufferMin?: number;
     useWorkingHours?: boolean;
+    allowMoving?: boolean;
+    range?: Interval;
   }): Result<SlotSearchResult> {
     return suggestAlternatives(this.state, req, notBeforeFor(this.deps.now()));
   }

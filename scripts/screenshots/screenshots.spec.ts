@@ -55,6 +55,20 @@ for (const theme of THEMES) {
       await loadSampleWeek(page);
       await capture(page, `week-${theme}-${width}`);
     });
+
+    test(`fixed alternatives ${theme} ${width}`, async ({ page }) => {
+      await openApp(page, theme, width);
+      await createEvent(page, 'Lecture', '2026-11-02T13:00', '2026-11-02T14:00');
+      await addLunchBarredSlot(page);
+      await page.getByRole('button', { name: 'Suggest alternatives for Lecture in Lunch' }).click();
+      const picker = page.getByRole('dialog', { name: /^Alternatives for/ });
+      await expect(picker.getByRole('button', { name: 'Apply', exact: true })).toBeDisabled();
+      await capture(page, `fixed-alternatives-off-${theme}-${width}`);
+      await picker.getByRole('checkbox', { name: 'Allow moving this event' }).check();
+      await expect(picker.getByLabel('From', { exact: true })).toBeVisible();
+      await expect(picker.getByRole('button', { name: 'Apply', exact: true })).toBeEnabled();
+      await capture(page, `fixed-alternatives-on-${theme}-${width}`);
+    });
   }
   // POST: this theme's week is captured at every width
 
@@ -77,7 +91,7 @@ for (const theme of THEMES) {
       await page.getByRole('button', { name: '+ Event', exact: true }).click();
       const dialog = page.getByRole('dialog', { name: 'New event' });
       await dialog.getByLabel('Title', { exact: true }).fill('Study session');
-      await dialog.getByRole('checkbox', { name: /Flexible/ }).check();
+      await dialog.getByRole('radio', { name: /Flexible/ }).check();
       await capture(page, `event-dialog-${theme}-${width}`);
     });
 
