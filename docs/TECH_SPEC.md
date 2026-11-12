@@ -729,6 +729,7 @@ export interface Engine {
   scheduleTask(req: { taskId: string; slot: Interval; baseVersion: number }): Promise<Result<MutationResult>>;
 
   // ── Replan pipeline (FR10) ──
+  explainWindow(req: { taskId: string; bufferMin?: number } | { eventId: string; useWorkingHours?: boolean; bufferMin?: number }): Result<WindowExplanation>; // WI-45, read-only
   planReplan(req: { range: Interval; bufferMin?: number }): Result<ReplanResult>;
   applyReplan(req: { baseVersion: number; planId: ReplanPlan['id'] }): Promise<Result<MutationResult>>;
 
@@ -810,6 +811,8 @@ Every mutation pipeline follows the same skeleton: validate → look up → buil
 1. If `baseVersion !== state.version`, return `StaleResult`.
 2. Check the slot with `requireValidSlot(slot, event.end − event.start)`: `slotSchema` issues (AUDIT A06), or `InvalidTime` at `slot` when the length differs.
 3. Otherwise behave as `moveEvent(eventId, slot)`, with the label `Move "<title>"`.
+
+**`explainWindow` (WI-45, report #7).** `alternativesSearch(state, request)` builds the exact `SearchRequest` that `suggestAlternatives` runs (and `taskSearch` the one `findSlots` runs), so `explainAlternativesWindow` / `explainTaskWindow` return `explainSearch(state, request, notBefore)` (`search.ts`) over the same window, hours, buffer and exclusions. `explainSearch` shares `allowedFor` / `freeGapsFor` with `search` and returns `{allowed, free}`: each a `WindowStretches` of intervals plus `WindowSplit`s (`{kind: 'barred' | 'event', label, interval}`) found where one stretch ends and the next starts at the same barred slot or event. It writes nothing; error objects (ER2/ER3) are unchanged.
 
 #### 7.4.3 Task Scheduler (`pipelines/taskScheduler.ts`)
 
@@ -1453,7 +1456,9 @@ type PickerState =
       result: Result<SlotSearchResult>; selected: number; scheduled: number; skipped: number }
   | { mode: 'alternatives'; eventId: string; otherEventId: string | null; bufferMin: number;
       useWorkingHours: boolean;   // WI-41 Search hours; default overlapsWorkingHours(target, settings)
-      result: Result<SlotSearchResult>; selected: number };
+      order: readonly [string, string] | null;   // WI-45: Move radio order, the conflict's [aId, bId]
+      result: Result<SlotSearchResult>; explanation: WindowExplanation | null; selected: number };
+  // both modes carry explanation (WI-45): engine.explainWindow after an ER2 / ER3 result, else null
 interface Toast { id: string; tone: 'success' | 'info' | 'warning' | 'error'; text: string;
                   actions?: { label: string; run: () => void }[]; sticky?: boolean }
 ```
@@ -1500,7 +1505,7 @@ All sample loads and imports with more than `IMPORT_SPINNER_THRESHOLD` events pl
 | `SlotPicker` | Both picker modes (Figure 2), summary line, options as a radio group, ER2/ER3 blocks with suggestions + "Edit task" | `picker` | picker actions |
 | `ReplanDialog` | Range (date inputs, default `view.activeRange` when it is at most 14 days, else the first full Monday–Sunday week from `view.date` (Month, AUDIT A10), or the week of `view.date` before the first `datesSet`), inputs that drop computed plans when edited (A08), buffer override, Compute, two plan cards (metrics + moves + unplaced), Apply | engine via action | `planReplan`, `applyReplan` |
 | `SettingsDialog` | Settings form + Data section (export, import, samples, clear) | `snapshot.settings` | `updateSettings`, `importData` |
-| `ConfirmDialog`, `ShortcutHelp`, `Toasts`, `Modal`, `EmptyState` | as named; `Toasts` is the ARIA live region; `Modal` wraps native `<dialog>` + `showModal()` | | |
+| `ConfirmDialog`, `ShortcutHelp`, `Toasts`, `Modal`, `EmptyState` | as named; `Toasts` is the ARIA live region; `Modal` wraps native `<dialog>` + `showModal()` and, when `dismissible`, renders a last-in-DOM `.dialog-close` × button (`aria-label="Close"`, calls `onClose` like Cancel/Esc; CSS puts it top-right; WI-45). `ShortcutHelp` relies on it instead of its own Close button | | |
 
 WI-38: Replan plan cards also show **Not moved by Replan** with the derived per-plan reasons, problem names and per-event alternatives. Zero-move cards count remaining entries instead of saying only "No changes needed"; diagnostic cards appear even with zero movable events. Barred-overlap rows carry Fixed/Flexible tags. The alternatives action uses `openEventAlternatives(eventId)` for any diagnostic event; this is the existing flow, with no target toggle.
 
@@ -1869,3 +1874,4 @@ Production URL: https://…vercel.app
 | 2026-11-12 | v1.31 (WI-42, peer report #1): §11.1 confirm dialogs take `cancelLabel` / `onCancel` and the store gains `dragEvent(id, to, revert)`; §11.3 drops and resizes go through it, so a fixed event asks before moving; `components/FixedTag` adds the tag's tooltip and description. Engine unchanged. |
 | 2026-11-12 | v1.32 (WI-43, peer report #6): §6 `settingsSchema` rejects duplicate barred slots (same days, start and end) with "Duplicate of barred slot N." at the later slot's `days`; imports use the same schema. Export format v1 unchanged; existing samples still valid. |
 | 2026-11-12 | v1.33 (WI-44, peer reports #10, #12, #13): §11.3 status line and List empty content follow the priority filter (`eventCountText`, `HiddenByFilterNotice`, store `showAllEventPriorities`); List CSS for the sticky header, row alignment and narrow wrapping. FR6 conflicts unchanged. |
+| 2026-11-12 | v1.34 (WI-45, peer reports #5, #7, #11): §7.2 frozen Engine interface gains read-only `explainWindow` (user decision: ER2/ER3 objects unchanged); §5 `WindowSplit` / `WindowStretches` / `WindowExplanation`, constant `MAX_LISTED_STRETCHES = 6`; §7.4.2/§7.4.3 shared request builders and `explainSearch`; §11.1 picker `order` and `explanation`; §11.2 the Modal × close button. Algorithms unchanged. |

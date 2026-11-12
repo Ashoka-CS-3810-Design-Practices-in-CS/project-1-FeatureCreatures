@@ -266,8 +266,9 @@ Each requirement lists its acceptance criteria. The tests that prove it are in `
   3. **Search hours** (WI-41, reports #3, #4, #9): the picker offers *Working hours only* or *Any time*. It defaults to *Any time* when the target does not overlap its day's working hours or is on a non-working day, and to *Working hours only* otherwise; switching re-runs the search, and the choice is kept when the user switches the target. Barred slots apply either way.
   4. Rank by `nearest` to the original start and return the top 5 with explanations.
   5. Apply moves the target event (as FR2).
-  6. When the target is fixed, the picker says: "<title> is fixed: the planner never moves it on its own, but you can choose to move it." BR-10's default target is unchanged.
-  7. When no minute of the window can be used, the picker names the cause instead of the generic ER2 text: "Its window is entirely in the past.", "Its window has no working hours. Choose "Any time" to search outside them." or "Its window is fully barred: every free minute in it is inside a barred slot."
+  6. The **Move** radios keep the conflict's order (its first event, then its second) whichever one is selected (WI-45, report #5).
+  7. When the target is fixed, the picker says: "<title> is fixed: the planner never moves it on its own, but you can choose to move it." BR-10's default target is unchanged.
+  8. When no minute of the window can be used, the picker names the cause instead of the generic ER2 text: "Its window is entirely in the past.", "Its window has no working hours. Choose "Any time" to search outside them." or "Its window is fully barred: every free minute in it is inside a barred slot."
 - **Acceptance:**
   - The conflict disappears after applying.
   - Any new conflicts caused elsewhere are reported immediately.
@@ -602,7 +603,7 @@ Every search result also carries:
 |---|---|
 | Success | A non-blocking toast for 4 s. Examples: "Event created", "Moved "Gym" to Tue 14:00–15:00", "Task scheduled for Wed 14:00–15:30", "Plan applied: 2 events moved". The changed events are emphasised for 1.5 s. |
 | Validation errors | Inline under the field; the dialog stays open and the input is kept. |
-| ER2 / ER3 | An explanatory block inside the picker (never an empty list), with suggestions. |
+| ER2 / ER3 | An explanatory block inside the picker (never an empty list), with suggestions, followed by what is left of the window and what splits it (WI-45, report #7): "Available: 12:30–13:00, 14:00–14:30 — Lunch 13:00–14:00 is barred." For ER2 the stretches are the allowed segments; for ER3 they are the free gaps, and events read e.g. '"Meeting" 10:00–11:00 is booked'. At most 6 stretches are listed ("… and N more"). Times only on one day, otherwise with the date. |
 | ER4 | A warning toast with *Move to …* and *View conflict* (8 s; it stays while hovered or focused). |
 | ER5 | An error toast with *Retry* (it stays until dismissed). |
 | ER7 | A brief info toast, then the options are recomputed automatically. |
@@ -643,7 +644,7 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 
 - **Not colour alone:** conflicts and priorities always carry text.
 - **Contrast:** WCAG AA (4.5:1 for body text) in both themes. Click targets are at least 32 px.
-- **Dialogs:** use the native `<dialog>` element with `showModal()`, which gives focus trapping and `Esc` handling. Focus returns to the trigger on close.
+- **Dialogs:** use the native `<dialog>` element with `showModal()`, which gives focus trapping and `Esc` handling. Focus returns to the trigger on close. Every dismissible dialog also shows a visible **×** button named "Close" in its top-right corner that acts exactly like Cancel / Esc (WI-45, report #11); it comes last in the focus order, so opening a dialog still focuses its first field. The loading overlay has none.
 - **Keyboard:** everything is operable by keyboard. Move and resize are available through the dialog.
 - **Screen readers:**
   - The List view is a plain text agenda.
@@ -707,3 +708,4 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 | 2026-11-12 | v1.9 (WI-42, peer report #1): glossary *Fixed event*, FR2 and W2 — a manual drag or resize of a fixed event asks "<title> is fixed. Move it anyway?" (Move / Keep it); other paths never ask; the Fixed tag gets a tooltip and accessible description. |
 | 2026-11-12 | v1.10 (WI-43, peer report #6): §3.2 Settings and FR11 — two barred slots with the same days, start and end are rejected ("Duplicate of barred slot N."), in the dialog and on import. |
 | 2026-11-12 | v1.11 (WI-44, peer reports #10, #12, #13): FR6 — the status line counts shown events plus those hidden by the filter; List explains an all-hidden range with Show all; List header, alignment and narrow wrapping. Conflicts still on all events. |
+| 2026-11-12 | v1.12 (WI-45, peer reports #5, #7, #11): FR7 Move radios keep the conflict order; §7.4 ER2/ER3 list the available stretches and what splits them (no behaviour change); §7.7 every dismissible dialog has a × named Close. |
