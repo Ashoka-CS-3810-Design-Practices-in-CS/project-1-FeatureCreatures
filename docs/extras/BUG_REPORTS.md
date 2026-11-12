@@ -1,6 +1,6 @@
 # Peer bug reports — findings and resolutions
 
-Fourteen bug reports came from peer testing of the live site. Each one was checked against `main` and a local build whose asset hashes match production. The fixes are the "Peer bug fixes" batch: WI-40–46 in `TECH_SPEC.md` §14, with the session log in `PROGRESS.md`. Each accepted finding got a failing test before its fix.
+Fourteen bug reports came from peer testing of the live site. Each one was checked against `main` and a local build whose asset hashes match production. The fixes are the "Peer bug fixes" batch: WI-40–46 in [TECH_SPEC.md](../TECH_SPEC.md) §14, with the session log in [PROGRESS.md](../progress/PROGRESS.md). Each accepted finding got a failing test before its fix.
 
 **Verdicts.** *Fixed*: the behaviour changed and a test now proves it. *Clarified*: the app was already correct, so only its explanation was improved. *By design*: the app works as specified, and the spec section is cited. *Invalid*: the reported behaviour does not occur. *Accepted, fix pending*: verified, and its work item is not merged yet.
 

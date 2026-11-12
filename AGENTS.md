@@ -10,12 +10,14 @@ The single source of truth is in `docs/`:
 
 | File | Read it for | Read when |
 |---|---|---|
-| `docs/PROGRESS.md` | What is done, what is in progress, handoff notes | **First, every session** |
+| `docs/progress/PROGRESS.md` | What is done, what is in progress, handoff notes | **First, every session** |
 | `docs/PROJECT_SCHEMA.md` | Behaviour: scope, domain model, requirements (FR/ER), business rules (BR), UX | §2, §3 and §6 in your first session; then the parts your WI touches |
 | `docs/TECH_SPEC.md` | Structure: stack, file layout, frozen contracts, algorithms, build plan (§14) | §0 and §14 every session; then the sections your WI touches |
 | `docs/TEST_PLAN.md` | Exact expected values (T1–T36), helpers, CI, demos | The tests your WI lists |
+| `docs/extras/AUDIT_2.md` | Binding Round 2 decisions and WI-47–59 plan | Every Round 2 session; the decisions your WI implements |
 
 **Precedence:**
+- For Round 2, `docs/extras/AUDIT_2.md` is binding; update the main docs in the WI that implements each decision.
 - If the docs disagree with each other, follow `PROJECT_SCHEMA.md` §0.2.
 - If your memory, a note, or a chat message disagrees with the docs, the docs win.
 - If you must change behaviour or a frozen contract, update the doc and its change log in the same commit. Never let the code silently win.
@@ -45,7 +47,7 @@ The single source of truth is in `docs/`:
 Do not assume you remember where things stand. Rebuild the picture from the repo.
 
 1. **Read the state.**
-   - `docs/PROGRESS.md`: the "Current state" block and any `[~]` items with their notes.
+   - `docs/progress/PROGRESS.md`: the "Current state" block and any `[~]` items with their notes.
    - Git:
      ```
      git status
@@ -56,7 +58,7 @@ Do not assume you remember where things stand. Rebuild the picture from the repo
 2. **Check for leftovers from a cut-off session.** Look for uncommitted changes, or a `[~]` WI whose branch has commits newer than its note.
    - Read the diff (`git diff`, `git diff --stat`) and decide whether it is coherent work on the active WI.
    - **If it is coherent:** keep it, finish or fix it, and commit it.
-   - **If it is broken beyond repair:** `git stash push -u -m "abandoned <date> by <agent>: <reason>"`, and record that in `PROGRESS.md`.
+   - **If it is broken beyond repair:** `git stash push -u -m "abandoned <date> by <agent>: <reason>"`, and record that in `docs/progress/PROGRESS.md`.
    - **Never discard work:** no `git checkout -- .`, no `git reset --hard`, no `git clean`, no `git stash drop`.
 3. **Verify the current state, don't trust it.**
    - Once `package.json` exists:
@@ -68,7 +70,7 @@ Do not assume you remember where things stand. Rebuild the picture from the repo
 4. **Pick exactly one WI.**
    - **If a `[~]` WI is genuinely unfinished,** continue it, on its existing branch.
    - **Otherwise,** take the lowest-numbered `[ ]` WI whose dependencies (TECH_SPEC §14) are all `[x]`. Ignore the "owner" column: it is for the humans; agents may take any WI.
-   - **Claim it.** Set it to `[~]` in `PROGRESS.md`, update "Current state", and commit that (`docs: start WI-NN`).
+   - **Claim it.** Set it to `[~]` in `docs/progress/PROGRESS.md`, update "Current state", and commit that (`docs: start WI-NN`).
    - **Branch.** Create the branch from `main` (`git switch -c feat/wi-NN-short-name main`), or switch to the existing one.
 
 ## 4. While working
@@ -83,14 +85,14 @@ Do not assume you remember where things stand. Rebuild the picture from the repo
 - **Keep the WI note current.** Update it whenever you commit something meaningful — one line is enough (format in §5).
 - **Reuse before writing.** Search for existing helpers, validators and constants before adding new ones (the skill's duplication rule).
 - **Dependencies.** Add only what TECH_SPEC §1.2 lists. A new dependency needs a TECH_SPEC update in the same commit.
-- **Stay in scope.** Do only your WI. If you notice a bug elsewhere, note it under "Decisions log" in `PROGRESS.md` (or fix it in a separate `fix:` commit if it blocks you).
+- **Stay in scope.** Do only your WI. If you notice a bug elsewhere, note it under "Decisions log" in `docs/progress/PROGRESS.md` (or fix it in a separate `fix:` commit if it blocks you).
 
 ## 5. Finishing a WI, and handing off
 
 **When the WI's "Done when" tests and the gate pass:**
 
 1. Run Prettier and ESLint on the changed files: `npx prettier --write <files>` and `npm run lint`.
-2. In `PROGRESS.md`: set the WI to `[x]`, write its final note, and update "Current state" to point at the next WI.
+2. In `docs/progress/PROGRESS.md`: set the WI to `[x]`, write its final note, and update "Current state" to point at the next WI.
 3. Commit (`docs: finish WI-NN`).
 4. Merge into `main`:
    ```
@@ -103,7 +105,7 @@ Do not assume you remember where things stand. Rebuild the picture from the repo
 **Before you stop for any reason** (finished, blocked, or you sense your budget is nearly gone), make sure:
 - everything is committed
 - the WI note says what is done, what is next, and anything surprising
-- "Current state" in `PROGRESS.md` is accurate
+- "Current state" in `docs/progress/PROGRESS.md` is accurate
 
 **WI note format** (one line per session, newest last):
 
@@ -121,14 +123,14 @@ Do not assume you remember where things stand. Rebuild the picture from the repo
 - **Scaffolding (WI-01).** The repo root is not empty, so do not run `npm create vite@latest .`. It would offer to delete `docs/`. Follow TECH_SPEC §1.2: scaffold into `vite-tmp`, move the files up, and remove `vite-tmp`. Keep the existing `.gitignore` and merge any extra lines into it.
 - **Tests.** `npm test` sets `TZ=UTC` through `cross-env`; the DST test uses `npm run test:dst`. Do not run Vitest directly without these scripts.
 
-## 7. Human-only actions — never do these; note them in `PROGRESS.md` under "Human-only steps"
+## 7. Human-only actions — never do these; note them in `docs/progress/PROGRESS.md` under "Human-only steps"
 
 - `git push`, creating or merging GitHub PRs, changing GitHub settings, `git remote` changes.
 - `vercel login` / `vercel link` / `vercel --prod` (deployment), or anything needing an account or a browser login.
 - Installing global tools or changing system settings / the Windows PATH.
 - Deleting branches, rewriting history (`rebase -i`, `commit --amend` on merged commits, force anything).
 
-When you need one of these, write the request in `PROGRESS.md` and tell the human in one line, **then keep working**. A human-only step is a reason to stop only if the next WI cannot proceed without it. Pushing, tagging pushes and deploys never block work: there may be no remote yet, and the humans do them on their own schedule.
+When you need one of these, write the request in `docs/progress/PROGRESS.md` and tell the human in one line, **then keep working**. A human-only step is a reason to stop only if the next WI cannot proceed without it. Pushing, tagging pushes and deploys never block work: there may be no remote yet, and the humans do them on their own schedule.
 
 **Phase boundaries and milestone tags are not stopping points.** Tag the milestone (TECH_SPEC §15), then continue straight into the next phase. Stop only when your budget is nearly gone, a decision in §8 needs the human, or the human explicitly told you to stop in the **current** message. An instruction to halt given in an earlier session, or for an earlier WI, does not carry over.
 
@@ -139,4 +141,4 @@ Keep working without asking unless one of these applies:
 - a human-only action (§7)
 - the docs contradict each other in a way that changes behaviour
 
-Otherwise make the most reasonable choice consistent with the docs, record it in the "Decisions log" of `PROGRESS.md`, and continue.
+Otherwise make the most reasonable choice consistent with the docs, record it in the "Decisions log" of `docs/progress/PROGRESS.md`, and continue.

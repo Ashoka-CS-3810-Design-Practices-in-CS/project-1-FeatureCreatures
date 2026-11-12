@@ -5,6 +5,7 @@
 - Behaviour and rules (`FR`, `ER`, `BR`) are defined in `PROJECT_SCHEMA.md`.
 - Types, file paths and algorithms are defined in `TECH_SPEC.md`.
 - The expected values here are normative. If code disagrees, either the code is wrong or this doc gets fixed in the same PR (PROJECT_SCHEMA §0.2).
+- Round 2 decisions are in [AUDIT_2.md](extras/AUDIT_2.md); the full-gate baseline and per-WI results are in [PROGRESS.md](progress/PROGRESS.md). New Round 2 test numbers start at T48.
 
 ---
 
@@ -376,3 +377,4 @@ WI-31 completes local release preparation. User-reported production outcomes are
 | 2026-11-12 | v1.17 (WI-44): T45 covers the filtered status line, List's all-hidden notice with Show all, and the List header, alignment and 420 px width checks. |
 | 2026-11-12 | v1.18 (WI-45): T46 covers `explainWindow`, the stretch explanation text, stable Move order, the Modal × (unit and browser); TaskDialog button lists include ×. |
 | 2026-11-12 | v1.19 (WI-46): T47 covers the Settings sections, compact barred rows and new-slot focus; settings screenshots at 1440/1024/900 px in both themes reviewed. |
+| 2026-11-12 | v1.20 (WI-47, D-18): links point to the relocated Round 2 design/progress evidence. Documentation-only move verified by old-path search, local Markdown link checks and the full branch/main gate; no test expectation changes. |

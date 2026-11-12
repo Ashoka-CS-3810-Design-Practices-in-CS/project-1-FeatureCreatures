@@ -2,13 +2,13 @@
 
 This file records the prompts that directly shaped the project, in the order they were used.
 
-- **Human-written prompts** (by Divyam) are quoted as written, with obvious typos left in.
+- **Human-written prompts** (by Divyam) are quoted as written, with obvious typos left in. WI-47 updates documentation paths and relative links throughout this historical record.
 - **Agent prompts** were drafted with Claude and then pasted by the team into Codex and Claude Code sessions.
 - **Not recorded here:** short in-session nudges (for example "halt after WI-01") and the prompt used for the independent audit in [AUDIT.md](AUDIT.md).
 
 How these prompts fit together:
 - The three spec documents in `docs/` are the source of truth.
-- [`AGENTS.md`](../AGENTS.md) is the session protocol for agents.
+- [`AGENTS.md`](../../AGENTS.md) is the session protocol for agents.
 - The `disciplined-coding` skill sets the code style.
 - Each prompt below either created those, or started a block of work items against them.
 
@@ -71,7 +71,7 @@ Bonus: Dark mode + keyboard shortcuts, JSON import/export, Undo/redo.
 
 ## 3. Multi-agent setup
 
-This prompt produced `AGENTS.md`, `CLAUDE.md`, the two skill copies, `.claude/settings.json`, `.gitattributes` and `docs/PROGRESS.md`. The `disciplined-coding` skill itself was written by Divyam with a separate AI assistant.
+This prompt produced `AGENTS.md`, `CLAUDE.md`, the two skill copies, `.claude/settings.json`, `.gitattributes` and `docs/progress/PROGRESS.md`. The `disciplined-coding` skill itself was written by Divyam with a separate AI assistant.
 
 ```text
 [...] give me the steps I need to follow to basically be in a condition from where I can prompt an codex or claude code agent open within vscode inside the project folder to work and it begins working. [...] So I wanted any agent that works on this to use a skill that I have attached disciplined-coding while working on the project. So again give me the exact steps that I need to follow, things that I need to ensure are installed and available on my windows PATH, the agents.md and claude.md files, etc so that I can prompt an agent to begin. Aslo after the steps give me a concise reusable prompt that I can give any agent that has limit to work on the directory - something along the lines of: You are one of several agents working on this project one at a time, go through the docs to understand what's going on, another agent or you could previously have worked on this and halted because of usage limit, figure out where the work was halted and resume, don't try to force resume on whatever you were previously working on before halting as another agent may already have picked it up and completed that work so do a quick review and then work. Use the disciplined-coding skill. [...]
@@ -87,7 +87,7 @@ This prompt was pasted at the start of every agent session, whether Codex or Cla
 You are one of several AI coding agents (Codex and Claude Code) that take turns on this repository, one at a time. Any of us — including you in an earlier session — may have been cut off mid-task by a usage limit.
 
 1. Read AGENTS.md and follow its session protocol exactly. Load the disciplined-coding skill ($disciplined-coding in Codex, /disciplined-coding in Claude Code) and apply it to every line of code you write or change.
-2. Rebuild the current state from the repo, not from memory: docs/PROGRESS.md, git status, branches, recent log, and the test gate. Trust what the code and tests show over any note, including your own earlier ones — another agent may have finished, changed or abandoned that work. Don't blindly resume what you were last doing; verify first.
+2. Rebuild the current state from the repo, not from memory: docs/progress/PROGRESS.md, git status, branches, recent log, and the test gate. Trust what the code and tests show over any note, including your own earlier ones — another agent may have finished, changed or abandoned that work. Don't blindly resume what you were last doing; verify first.
 3. Pick the active or next work item as AGENTS.md §3 describes, claim it in PROGRESS.md, and implement it test-first against docs/TECH_SPEC.md §14 and the TEST_PLAN cases it lists.
 4. Commit small and often and keep the PROGRESS.md note current, because you can be stopped at any moment. When a work item's tests and the gate pass, finish and merge it as AGENTS.md §5 says, then continue with the next one.
 5. Only stop to ask me for human-only steps (push, deploy, accounts) or a decision the docs don't settle. Otherwise keep going.
@@ -176,7 +176,7 @@ WI-35 — Crash fixes (production is affected, so this comes first).
 (c) Add a top-level React error boundary. It shows "Something went wrong" with Reload and Export data actions instead of a blank page, and is covered by a test.
 (d) Close the gap that let these through. Add an e2e smoke that runs the main flows (each toolbar dialog, click-create, drag-create, open an event, alternatives, find time, replan compute) and fails on any uncaught page error. Record in TEST_PLAN that dev-mode/StrictMode behaviour is covered.
 
-WI-36 — Audit findings. AUDIT.md at the repo root is an untracked read-only review (findings A01–A10 plus cleanup notes) written against commit bde3387. Move it to docs/AUDIT.md and commit it. Then for each finding: re-verify it against the current main; if it is real, write the failing test first, fix it, and append a short resolution (fixed in <commit> / not reproducible / deferred with reason) under that finding. Do the P1s (A01, A02) first, then A03–A10, then the cleanup notes only if cheap. Where a fix changes behaviour or a contract, update PROJECT_SCHEMA/TECH_SPEC/TEST_PLAN accordingly.
+WI-36 — Audit findings. AUDIT.md at the repo root is an untracked read-only review (findings A01–A10 plus cleanup notes) written against commit bde3387. Move it to docs/extras/AUDIT.md and commit it. Then for each finding: re-verify it against the current main; if it is real, write the failing test first, fix it, and append a short resolution (fixed in <commit> / not reproducible / deferred with reason) under that finding. Do the P1s (A01, A02) first, then A03–A10, then the cleanup notes only if cheap. Where a fix changes behaviour or a contract, update PROJECT_SCHEMA/TECH_SPEC/TEST_PLAN accordingly.
 
 After WI-36, finish as usual and tell me when main is ready to redeploy.
 ```

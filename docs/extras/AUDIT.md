@@ -23,7 +23,7 @@ P1 means a persistent failure or a significant scheduling-safety problem. P2 mea
 
 ### A01 · P1 · Replan can introduce a conflict with a later unplaced event
 
-**Locations:** [replanHeuristics.ts:237](../src/engine/algorithms/replanHeuristics.ts#L237), [replanHeuristics.props.test.ts:144](../src/engine/algorithms/replanHeuristics.props.test.ts#L144). **Evidence: reproduced.**
+**Locations:** [replanHeuristics.ts:237](../../src/engine/algorithms/replanHeuristics.ts#L237), [replanHeuristics.props.test.ts:144](../../src/engine/algorithms/replanHeuristics.props.test.ts#L144). **Evidence: reproduced.**
 
 On Monday 2 November 2026, create high-priority flexible A at 10:00–11:00 with flex window 09:00–10:00, and low-priority flexible B at 09:00–10:00 with its flex window on Tuesday. Replan Monday. Both plans move A onto B at 09:00–10:00, leave B unplaced at its original time, and report conflicts **0 → 1**. Applying the plan succeeds.
 
@@ -33,7 +33,7 @@ On Monday 2 November 2026, create high-priority flexible A at 10:00–11:00 with
 
 ### A02 · P1 · Import accepts dates that crash rendering and remain saved
 
-**Locations:** [schemas.ts:24](../src/shared/schemas.ts#L24), [facade.ts:400](../src/engine/facade.ts#L400), [time.ts:24](../src/ui/format/time.ts#L24). **Evidence: reproduced.**
+**Locations:** [schemas.ts:24](../../src/shared/schemas.ts#L24), [facade.ts:400](../../src/engine/facade.ts#L400), [time.ts:24](../../src/ui/format/time.ts#L24). **Evidence: reproduced.**
 
 An otherwise valid export with an event from `Number.MAX_SAFE_INTEGER - 60` to `Number.MAX_SAFE_INTEGER` passes import. Formatting its start then throws `RangeError: Invalid time value`. The shared minute schema checks integer shape but not JavaScript Date representability; the calendar's accessible-label formatting uses these dates during rendering. With IndexedDB, the accepted record survives reload and passes startup validation again.
 
@@ -43,7 +43,7 @@ Validate representable calendar dates at the shared boundary before persistence.
 
 ### A03 · P2 · Conflict-toast actions bypass stale-result protection
 
-**Locations:** [appStore.ts:234](../src/ui/store/appStore.ts#L234), [appStore.ts:733](../src/ui/store/appStore.ts#L733). **Evidence: reproduced.**
+**Locations:** [appStore.ts:234](../../src/ui/store/appStore.ts#L234), [appStore.ts:733](../../src/ui/store/appStore.ts#L733). **Evidence: reproduced.**
 
 Create A 10:00–11:00 and B 10:30–11:30. B's warning offers 11:00–12:00. Add another event occupying that suggestion, then use the old warning action. The move succeeds and conflicts with the new event. The store supplies the **current** version when applying the **old** slot, so the engine cannot detect staleness.
 
@@ -53,7 +53,7 @@ Capture the suggestion's original snapshot version in the toast action. On `Stal
 
 ### A04 · P2 · Import validates links but not linked-record invariants
 
-**Locations:** [schemas.ts:261](../src/shared/schemas.ts#L261), [facade.ts:193](../src/engine/facade.ts#L193). **Evidence: reproduced.**
+**Locations:** [schemas.ts:261](../../src/shared/schemas.ts#L261), [facade.ts:193](../../src/engine/facade.ts#L193). **Evidence: reproduced.**
 
 Export a scheduled task and edit the JSON so its name/duration differ from the linked event; make that event fixed with a null flex window. Import still succeeds when the IDs point back correctly. The reproduced pair had a 120-minute task named “Different” linked to a fixed 60-minute event named “Original”. Startup uses the same checks and accepts it too.
 
@@ -63,7 +63,7 @@ Extend cross-record validation to BR-9's mirrored name/title, priority, duration
 
 ### A05 · P2 · Partial-day windows produce incorrect day loads and ranking
 
-**Locations:** [search.ts:64](../src/engine/search.ts#L64), [search.ts:85](../src/engine/search.ts#L85). **Evidence: reproduced.**
+**Locations:** [search.ts:64](../../src/engine/search.ts#L64), [search.ts:85](../../src/engine/search.ts#L85). **Evidence: reproduced.**
 
 Book Monday 09:00–17:00. Search for a low-priority 60-minute task whose window is Monday 17:00 through Tuesday 10:00, using `priorityAware`. The engine reports both days' loads as zero and ranks Monday 17:00 first. Under the documented whole-working-day definition, Monday's load is **480 minutes**, Tuesday's is zero, so Tuesday should rank first.
 
@@ -73,7 +73,7 @@ Busy-gap selection correctly uses the narrow search window, but day-load computa
 
 ### A06 · P2 · Scheduling can persist invalid minute values
 
-**Locations:** [search.ts:133](../src/engine/search.ts#L133), [taskScheduler.ts:281](../src/engine/pipelines/taskScheduler.ts#L281). **Evidence: reproduced through the facade.**
+**Locations:** [search.ts:133](../../src/engine/search.ts#L133), [taskScheduler.ts:281](../../src/engine/pipelines/taskScheduler.ts#L281). **Evidence: reproduced through the facade.**
 
 `scheduleTask` checks version, task status and slot length, then constructs an event without schema validation. A 60-minute slot starting at 09:00:30 and ending at 10:00:30—fractional epoch minutes—succeeds. Initializing another engine from that repository then fails with `StorageError: Saved data is damaged.`
 
@@ -83,7 +83,7 @@ Validate slot endpoints as supported integer Minutes and validate the constructe
 
 ### A07 · P2 · Elapsed time does not invalidate options or plans
 
-**Locations:** [replan.ts:86](../src/engine/pipelines/replan.ts#L86), [taskScheduler.ts:269](../src/engine/pipelines/taskScheduler.ts#L269), [conflictResolution.ts:90](../src/engine/pipelines/conflictResolution.ts#L90). **Evidence: reproduced with the injected clock.**
+**Locations:** [replan.ts:86](../../src/engine/pipelines/replan.ts#L86), [taskScheduler.ts:269](../../src/engine/pipelines/taskScheduler.ts#L269), [conflictResolution.ts:90](../../src/engine/pipelines/conflictResolution.ts#L90). **Evidence: reproduced with the injected clock.**
 
 Compute a plan at 08:00 for a flexible event starting at 09:30. Advance the clock to 09:45 without changing data. Applying the plan still moves the now-started event, contrary to FR10. Likewise, a previously offered task slot can be applied after its start has passed. Data versions do not change merely because time passes.
 
@@ -93,7 +93,7 @@ Recheck time-sensitive eligibility inside the queued apply operation. Refresh ex
 
 ### A08 · P2 · Replan input edits leave old plans applicable
 
-**Locations:** [ReplanDialog.tsx:93](../src/ui/components/ReplanDialog/ReplanDialog.tsx#L93), [ReplanDialog.tsx:123](../src/ui/components/ReplanDialog/ReplanDialog.tsx#L123). **Evidence: source-confirmed.**
+**Locations:** [ReplanDialog.tsx:93](../../src/ui/components/ReplanDialog/ReplanDialog.tsx#L93), [ReplanDialog.tsx:123](../../src/ui/components/ReplanDialog/ReplanDialog.tsx#L123). **Evidence: source-confirmed.**
 
 Compute plans, then change From, To or Buffer without pressing Compute again. The old cards and Apply buttons remain. Apply uses the old result's version/plan ID, so an unchanged calendar accepts a plan computed for different parameters than those currently displayed.
 
@@ -103,7 +103,7 @@ Invalidate the result whenever a planning parameter changes, or bind the preview
 
 ### A09 · P2 · Description validation errors are invisible
 
-**Locations:** [EventDialog.tsx:185](../src/ui/components/EventDialog/EventDialog.tsx#L185), [TaskDialog.tsx:151](../src/ui/components/TaskDialog/TaskDialog.tsx#L151). **Evidence: resolver reproduced; rendering source-confirmed.**
+**Locations:** [EventDialog.tsx:185](../../src/ui/components/EventDialog/EventDialog.tsx#L185), [TaskDialog.tsx:151](../../src/ui/components/TaskDialog/TaskDialog.tsx#L151). **Evidence: resolver reproduced; rendering source-confirmed.**
 
 Enter a description longer than 1,000 characters and Save. The resolver returns `errors.description` and blocks submission, but neither dialog renders that error or associates it with the textarea. The form stays open without explaining why saving failed, contrary to ER1 feedback requirements.
 
@@ -113,7 +113,7 @@ Render the description error and accessible invalid-field attributes in both for
 
 ### A10 · P2 · Opening Replan from Month defaults to an invalid range
 
-**Locations:** [ReplanDialog.tsx:20](../src/ui/components/ReplanDialog/ReplanDialog.tsx#L20), [calendarHandlers.ts:75](../src/ui/components/CalendarView/calendarHandlers.ts#L75). **Evidence: source-confirmed.**
+**Locations:** [ReplanDialog.tsx:20](../../src/ui/components/ReplanDialog/ReplanDialog.tsx#L20), [calendarHandlers.ts:75](../../src/ui/components/CalendarView/calendarHandlers.ts#L75). **Evidence: source-confirmed.**
 
 Month view supplies its entire visible grid as `activeRange`, normally 35 or 42 days. Replan copies that range into its defaults, then rejects it because the maximum is 14 days. The documented default is the visible week; a user entering the feature from Month immediately encounters an avoidable validation failure.
 
@@ -125,7 +125,7 @@ Use a valid week based on the focused calendar date when the visible range excee
 
 | ID | Observation | Suggested follow-up |
 | --- | --- | --- |
-| R01 · P3 | [TaskPanel.tsx:147](../src/ui/components/TaskPanel/TaskPanel.tsx#L147) searches all events and scans selected IDs for every shown task: O(T·N + T·S), quadratic when these grow together. | Build an event-ID map and selected-ID set once per render/memoized input. This is a source-level complexity finding, not a measured latency failure. |
+| R01 · P3 | [TaskPanel.tsx:147](../../src/ui/components/TaskPanel/TaskPanel.tsx#L147) searches all events and scans selected IDs for every shown task: O(T·N + T·S), quadratic when these grow together. | Build an event-ID map and selected-ID set once per render/memoized input. This is a source-level complexity finding, not a measured latency failure. |
 | R02 · P3 | A normal file import calls `parseExportFile` in `checkImport`, again to count records in the store, and again in the engine. The second full parse happens before the loading overlay. | Reuse preflight metadata for the count; retain authoritative engine validation. UI validation plus engine validation is intentional defense, not redundant by itself. |
 | R03 · P3 | Category options, priority labels and priority tags repeat across EventDialog, TaskDialog, TaskPanel, SlotPicker, EventContent and `format/explain.ts`. | Share stable UI metadata while retaining intentional differences in option order. Avoid a broad form abstraction merely because markup looks similar. |
 
@@ -140,8 +140,8 @@ Use a valid week based on the focused calendar date when the visible range excee
 
 ## Additional contract/usability notes
 
-- **Range validator is weaker than BR-12.** [replan.ts:36](../src/engine/pipelines/replan.ts#L36) accepts a one-minute range and, in UTC, 14 days plus one minute; both were reproduced. It checks only positive elapsed duration against a fixed DST allowance, not local-midnight endpoints or 1–14 local calendar days. TECH_SPEC currently describes this weaker check; align the contract and implementation with PROJECT_SCHEMA before treating it as correct. **Resolution (WI-36):** reproduced and fixed in f13f109: both ends must be local midnights and the range 1 to `MAX_REPLAN_DAYS` local days (`addLocalDays`), as BR-12 says; integration cases for one minute, 14 days + 1 minute, a 09:00 start and exactly 14 days. TECH_SPEC §7.4.4 updated.
-- **“View conflict” does not navigate to the panel.** [appStore.ts:256](../src/ui/store/appStore.ts#L256) only emphasizes the event IDs. It does not open the narrow drawer, focus the row, or scroll to a conflict outside the visible period. This limitation was already noted in PROGRESS; the newer barred-warning View action demonstrates the missing drawer/focus behavior. **Resolution (WI-36):** deferred. It is a usability gap, not incorrect behaviour: the conflict is still listed and both events are emphasised. Opening the drawer and focusing the conflict row (like the barred-warning View) is a small UI feature for a later WI.
+- **Range validator is weaker than BR-12.** [replan.ts:36](../../src/engine/pipelines/replan.ts#L36) accepts a one-minute range and, in UTC, 14 days plus one minute; both were reproduced. It checks only positive elapsed duration against a fixed DST allowance, not local-midnight endpoints or 1–14 local calendar days. TECH_SPEC currently describes this weaker check; align the contract and implementation with PROJECT_SCHEMA before treating it as correct. **Resolution (WI-36):** reproduced and fixed in f13f109: both ends must be local midnights and the range 1 to `MAX_REPLAN_DAYS` local days (`addLocalDays`), as BR-12 says; integration cases for one minute, 14 days + 1 minute, a 09:00 start and exactly 14 days. TECH_SPEC §7.4.4 updated.
+- **“View conflict” does not navigate to the panel.** [appStore.ts:256](../../src/ui/store/appStore.ts#L256) only emphasizes the event IDs. It does not open the narrow drawer, focus the row, or scroll to a conflict outside the visible period. This limitation was already noted in PROGRESS; the newer barred-warning View action demonstrates the missing drawer/focus behavior. **Resolution (WI-36):** deferred. It is a usability gap, not incorrect behaviour: the conflict is still listed and both events are emphasised. Opening the drawer and focusing the conflict row (like the barred-warning View) is a small UI feature for a later WI.
 
 ## Verification and limits
 
@@ -153,7 +153,7 @@ Use a valid week based on the focused calendar date when the visible range excee
 | `npm.cmd run test:dst -- --no-cache --no-fsModuleCache --configLoader runner` | 4 files / 7 tests passed |
 | In-memory probes against actual modules | Confirmed A01–A07, A09 resolver behavior, and the range-validator note; no probe files saved |
 
-Read `docs/PROGRESS.md`, PROJECT_SCHEMA's requirements/business rules/UX, TECH_SPEC's contracts/pipelines/algorithms/build plan, and TEST_PLAN's catalogue, UI cases and release evidence before assessing implementation. Reviewed production source across shared validation/time/types, all engine algorithms and pipelines, facade/history, repositories/samples, store/forms, calendar integration, dialogs/panels, shortcuts/preferences, bootstrap and test/configuration coverage. Styling was outside scope.
+Read `docs/progress/PROGRESS.md`, PROJECT_SCHEMA's requirements/business rules/UX, TECH_SPEC's contracts/pipelines/algorithms/build plan, and TEST_PLAN's catalogue, UI cases and release evidence before assessing implementation. Reviewed production source across shared validation/time/types, all engine algorithms and pipelines, facade/history, repositories/samples, store/forms, calendar integration, dialogs/panels, shortcuts/preferences, bootstrap and test/configuration coverage. Styling was outside scope.
 
 The principal test gap is **composition and state transitions**, especially later unplaced events, partial-day load inputs, malformed-but-linked imports, clock advancement, and parameter edits after computation. A01 specifically shows an oracle that omits an important class of remaining events.
 
