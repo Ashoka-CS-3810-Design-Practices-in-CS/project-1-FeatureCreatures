@@ -16,7 +16,7 @@ import {
 import type { EngineError } from '@/shared/errors';
 import type { Result } from '@/shared/result';
 import { parseExportFile } from '@/shared/schemas';
-import { fromMinute, startOfLocalWeek } from '@/shared/time';
+import { fromMinute, overlapsWorkingHours, startOfLocalWeek } from '@/shared/time';
 import type {
   Conflict,
   BarredOverlap,
@@ -105,6 +105,7 @@ export interface AppActions {
   pickerSetCriterion(criterion: UserCriterion): void;
   pickerSetBuffer(bufferMin: number): void;
   pickerToggleTarget(): void;
+  pickerSetWorkingHours(useWorkingHours: boolean): void;
   pickerApply(): Promise<void>;
   pickerSkip(): void;
   pickerStop(): void;
@@ -379,6 +380,7 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
         eventId: picker.eventId,
         otherEventId: picker.otherEventId ?? undefined,
         bufferMin: picker.bufferMin,
+        useWorkingHours: picker.useWorkingHours,
       });
     }
 
@@ -447,14 +449,19 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
     }
 
     // PRE:  eventId names the event to search; otherEventId is the optional conflict counterpart
-    // POST: opens the existing alternatives picker and refreshes via engine.suggestAlternatives
+    // POST: opens the existing alternatives picker and refreshes via engine.suggestAlternatives;
+    //       it searches working hours only, unless the event lies outside working hours or on a
+    //       non-working day, where it searches any time (WI-41)
     function openAlternativePicker(eventId: string, otherEventId: string | null): void {
+      const { settings, events } = get().snapshot;
+      const event = events.find((candidate) => candidate.id === eventId);
       set({ dialog: null });
       refresh({
         mode: 'alternatives',
         eventId,
         otherEventId,
-        bufferMin: get().snapshot.settings.bufferMin,
+        bufferMin: settings.bufferMin,
+        useWorkingHours: event === undefined || overlapsWorkingHours(event, settings),
         result: { ok: false, error: { code: 'StaleResult' } },
         selected: 0,
       });
@@ -693,6 +700,16 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
         const { picker } = get();
         if (picker !== null) {
           refresh({ ...picker, bufferMin });
+        }
+      },
+
+      // PRE:  none
+      // POST: an alternatives picker searches working hours only (true) or any time (false); its
+      //       search re-runs. The choice is kept when the target is toggled
+      pickerSetWorkingHours(useWorkingHours) {
+        const { picker } = get();
+        if (picker?.mode === 'alternatives') {
+          refresh({ ...picker, useWorkingHours });
         }
       },
 

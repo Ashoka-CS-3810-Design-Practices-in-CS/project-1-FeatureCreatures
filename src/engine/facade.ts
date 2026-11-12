@@ -78,6 +78,7 @@ export interface Engine {
     eventId: string;
     otherEventId?: string;
     bufferMin?: number;
+    useWorkingHours?: boolean; // WI-41; omitted = true
   }): Result<SlotSearchResult>;
   applyAlternative(req: {
     eventId: string;
@@ -310,6 +311,7 @@ class CalendarEngine implements Engine {
     eventId: string;
     otherEventId?: string;
     bufferMin?: number;
+    useWorkingHours?: boolean;
   }): Result<SlotSearchResult> {
     return suggestAlternatives(this.state, req, notBeforeFor(this.deps.now()));
   }

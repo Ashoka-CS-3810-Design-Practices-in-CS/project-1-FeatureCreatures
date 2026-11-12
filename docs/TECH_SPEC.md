@@ -495,7 +495,8 @@ export interface FieldIssue { readonly path: string; readonly message: string } 
 export type EngineError =
   | { code: 'InvalidInput'; issues: FieldIssue[] }                                   // ER1 (shape)
   | { code: 'InvalidTime'; issues: FieldIssue[] }                                    // ER1 (ordering)
-  | { code: 'TaskLongerThanWindow'; durationMin: number; longestStretchMin: number } // ER2
+  | { code: 'TaskLongerThanWindow'; durationMin: number; longestStretchMin: number; emptyCause?: EmptyWindowCause } // ER2
+// EmptyWindowCause = 'past' | 'noWorkingHours' | 'barred' (WI-41; set by suggestAlternatives when longestStretchMin = 0)
   | { code: 'NoSlotFound'; durationMin: number; largestGapMin: number; largestGap: Interval | null; bufferMin: number } // ER3
   | { code: 'StorageError'; message: string }                                        // ER5
   | { code: 'InvalidImport'; issues: FieldIssue[] }                                  // ER6
@@ -715,7 +716,7 @@ export interface Engine {
   deleteEvent(id: string): Promise<Result<MutationResult>>;
 
   // ── Conflict Resolution pipeline (FR4 is automatic inside commit; FR7) ──
-  suggestAlternatives(req: { eventId: string; otherEventId?: string; bufferMin?: number }): Result<SlotSearchResult>;
+  suggestAlternatives(req: { eventId: string; otherEventId?: string; bufferMin?: number; useWorkingHours?: boolean }): Result<SlotSearchResult>; // useWorkingHours: WI-41, omitted = true
   applyAlternative(req: { eventId: string; slot: Interval; baseVersion: number }): Promise<Result<MutationResult>>;
 
   // ── Task Scheduler pipeline (FR5, FR8, FR9) ──
@@ -795,13 +796,14 @@ Every mutation pipeline follows the same skeleton: validate → look up → buil
 
 **Detection (FR4)** is not a command. It runs inside every `commit` (§8.4), and `Conflict.targetId` is filled by `chooseTarget` (§8.11).
 
-**`suggestAlternatives({eventId, otherEventId, bufferMin})`**
+**`suggestAlternatives({eventId, otherEventId, bufferMin, useWorkingHours})`**
 
 1. Look up the event, or return `NotFound`.
 2. Choose the search window:
    - flexible event: `searchWindow = event.flexWindow`
    - fixed event: `searchWindow = [addLocalDays(startOfLocalDay(event.start), −1), addLocalDays(startOfLocalDay(event.start), 2))`
-3. Return `search({durationMin: event.end − event.start, priority: event.priority, window: searchWindow, useWorkingHours: true, excludeIds: [eventId], originalStart: event.start, criterion: 'nearest', bufferMin: bufferMin ?? settings.bufferMin, subject: {kind: 'event', eventId, title, otherEventId: otherEventId ?? null}})` (§7.5).
+3. Return `search({durationMin: event.end − event.start, priority: event.priority, window: searchWindow, useWorkingHours: useWorkingHours ?? true, excludeIds: [eventId], originalStart: event.start, criterion: 'nearest', bufferMin: bufferMin ?? settings.bufferMin, subject: {kind: 'event', eventId, title, otherEventId: otherEventId ?? null}})` (§7.5). Omitting `useWorkingHours` gives exactly the pre-WI-41 results; barred slots apply either way.
+4. When that search fails with `TaskLongerThanWindow` and `longestStretchMin = 0`, add `emptyCause = emptyWindowCause(state, searchWindow, useWorkingHours, notBefore)` (`search.ts`): `'past'` when `searchWindow.end ≤ notBefore`; else `'barred'` when the same segments built with no barred slots are non-empty; else `'noWorkingHours'`. `findSlots` does not add it, so task errors are unchanged.
 
 **`applyAlternative({eventId, slot, baseVersion})`**
 
@@ -1449,12 +1451,15 @@ type PickerState =
   | { mode: 'task'; queue: string[]; index: number; criterion: UserCriterion; bufferMin: number;
       result: Result<SlotSearchResult>; selected: number; scheduled: number; skipped: number }
   | { mode: 'alternatives'; eventId: string; otherEventId: string | null; bufferMin: number;
+      useWorkingHours: boolean;   // WI-41 Search hours; default overlapsWorkingHours(target, settings)
       result: Result<SlotSearchResult>; selected: number };
 interface Toast { id: string; tone: 'success' | 'info' | 'warning' | 'error'; text: string;
                   actions?: { label: string; run: () => void }[]; sticky?: boolean }
 ```
 
 `createAppStore(engine, {storageWarning, init, now, resetStorage, initialView?})` builds the store; `now` dates the samples and `resetStorage` empties the repository for the fatal screen's *Reset local data*. `initialView` is the view remembered in `localStorage['fc-view']` (`storedView()` in `hooks/preferences.ts`); `main.tsx` calls `rememberView(store)` so later view changes are remembered too. `onDatesSet` records `view.type` and `view.date` (the shown period's first day, for the toolbar title) as well as `activeRange`. `StoreProvider`, `useAppStore(selector)` and `useAppStoreApi()` live in `appStore.ts`; the API hook exposes the provided store without a render subscription for handlers that need current state (WI-39).
+
+**Alternatives search hours (WI-41).** Opening the alternatives picker sets `useWorkingHours = overlapsWorkingHours(target, settings)` (`shared/time.ts`: the start's local day is a working day and the event overlaps its working hours). `pickerSetWorkingHours(value)` re-runs the search; `pickerToggleTarget` keeps the choice. `forms/eventForm.ts` `defaultFlexWindow(start, settings, end = start)` returns the whole local day when `overlapsWorkingHours({start, end})` is false.
 
 **Other tabs (WI-40).** `actions.reloadFromOtherTab()` runs `engine.reload()`, adopts its snapshot, closes an event or task edit dialog whose record no longer exists, and shows the info toast "Calendar updated in another tab." Every command's error goes through `handleError`: ER8 reloads the same way and shows the ER8 text as a warning toast with no Retry; every other error goes to `showError` as before. A failed reload shows its StorageError toast, whose Retry reloads again.
 
@@ -1858,3 +1863,4 @@ Production URL: https://…vercel.app
 | 2026-10-26 | v1.27 (WI-39): §11.1/§11.5 expose useAppStoreApi and read current store state per keypress with one listener; §12/§13.1 add one CI retry, retained failure traces, GitHub/HTML reporters and failure artifacts; §14 adds the test-first race repair and warm/cold 10-repeat browser verification. |
 | 2026-11-12 | v1.28: §14 plans the peer bug fixes batch (WI-40–46, items A–G from 14 peer reports); later rows of this log record each item's contract changes. |
 | 2026-11-12 | v1.29 (WI-40, peer report #14): frozen §9.1 Repository contract changed — `load()` returns the stored `revision`, and `apply` / `saveSettings` / `replaceAll` take the expected revision and throw `ConcurrentModificationError` inside the same transaction when it differs. §9.2 Dexie version 2 adds `meta` (upgrade keeps v1 data); §5 adds ER8 `ConcurrentModification` and `INITIAL_REVISION` / `TAB_CHANNEL_NAME`; §6 `storedRevisionSchema`; §7.1 `EngineState.revision`, `createState(…, revision)`, `repositoryError`; §7.2 `Engine.reload()` and `EngineDeps.onCommit`; §4 and §11.1 the BroadcastChannel reload. Export format v1 unchanged. |
+| 2026-11-12 | v1.30 (WI-41, peer reports #3, #4, #9): §7.2/§7.4.2 `suggestAlternatives` takes optional `useWorkingHours` (omitted = true) and an empty search adds `emptyCause`; §5 `EmptyWindowCause`; §11.1 picker `useWorkingHours`, `pickerSetWorkingHours`, `overlapsWorkingHours` and the whole-day default flex window. Algorithms unchanged. |

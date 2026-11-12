@@ -718,6 +718,12 @@ dialog .flex-window input {
   border-left: var(--edge) solid var(--warning);
 }
 
+/* WI-41: says a fixed target is moved only because the user chooses to. */
+.picker-note {
+  margin: 0 0 var(--space-3);
+  color: var(--muted);
+}
+
 .picker-option {
   margin: 0 calc(var(--space-3) * -1);
   padding: var(--space-3);

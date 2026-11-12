@@ -86,6 +86,37 @@ function BufferField({ bufferMin }: { bufferMin: number }) {
   );
 }
 
+// PRE:  useWorkingHours is the alternatives picker's choice; uses actions.pickerSetWorkingHours
+// POST: shows the "Search hours" radios Working hours only / Any time (WI-41); a change re-runs
+//       the search (barred slots apply either way)
+function SearchHoursField({ useWorkingHours }: { useWorkingHours: boolean }) {
+  const pickerSetWorkingHours = useAppStore((state) => state.actions.pickerSetWorkingHours);
+  const groupName = useId();
+  return (
+    <fieldset>
+      <legend>Search hours</legend>
+      <label>
+        <input
+          type="radio"
+          name={groupName}
+          checked={useWorkingHours}
+          onChange={() => pickerSetWorkingHours(true)}
+        />{' '}
+        Working hours only
+      </label>
+      <label>
+        <input
+          type="radio"
+          name={groupName}
+          checked={!useWorkingHours}
+          onChange={() => pickerSetWorkingHours(false)}
+        />{' '}
+        Any time
+      </label>
+    </fieldset>
+  );
+}
+
 // PRE:  picker is a task picker; reads the queued task; uses the picker actions and openDialog
 //       + additional props from: SearchResults, BufferField
 // POST: shows "Find time — <task> — Task i of N" with the window, buffer, rank-by choice, the
@@ -161,8 +192,10 @@ function TaskPicker({ picker }: { picker: TaskPickerState }) {
 
 // PRE:  picker is an alternatives picker; reads its two events; uses the picker actions
 //       + additional props from: SearchResults, BufferField
-// POST: shows "Alternatives for <event>" with the Move toggle between the two events, the buffer,
-//       the nearest-first results with their distance from the original time, and Apply / Cancel
+//       + SearchHoursField
+// POST: shows "Alternatives for <event>" with the Move toggle between the two events, a note when
+//       the target is fixed (BR-10 may still pick it), the search hours, the buffer, the
+//       nearest-first results with their distance from the original time, and Apply / Cancel
 function AlternativesPicker({ picker }: { picker: AlternativesPickerState }) {
   const events = useAppStore((state) => state.snapshot.events);
   const actions = useAppStore((state) => state.actions);
@@ -195,6 +228,13 @@ function AlternativesPicker({ picker }: { picker: AlternativesPickerState }) {
           ))}
         </fieldset>
       )}
+      {!target.flexible && (
+        <p className="picker-note">
+          {target.title} is fixed: the planner never moves it on its own, but you can choose to move
+          it.
+        </p>
+      )}
+      <SearchHoursField useWorkingHours={picker.useWorkingHours} />
       <BufferField bufferMin={picker.bufferMin} />
       <SearchResults
         result={picker.result}

@@ -20,6 +20,7 @@ export type PickerState =
       eventId: string;
       otherEventId: string | null;
       bufferMin: number;
+      useWorkingHours: boolean; // WI-41: the "Working hours only / Any time" choice
       result: Result<SlotSearchResult>;
       selected: number;
     };

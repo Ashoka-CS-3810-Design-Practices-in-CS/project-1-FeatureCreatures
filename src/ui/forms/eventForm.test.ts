@@ -65,6 +65,27 @@ describe('eventForm', () => {
     expect(defaultFlexWindow(t('Tue 15:00'), settings())).toEqual(iv('Tue 09:00', 'Tue 18:00'));
   });
 
+  it('defaults the flex window to the whole local day outside working hours (#4, #9)', () => {
+    const night = iv('Tue 22:00', 'Tue 23:00');
+    const saturday = iv('Sat 10:00', 'Sat 11:00');
+    const evening = iv('Tue 17:30', 'Tue 19:00');
+
+    expect(defaultFlexWindow(night.start, settings(), night.end)).toEqual(
+      iv('Tue 00:00', 'Wed 00:00'),
+    );
+    expect(defaultFlexWindow(saturday.start, settings(), saturday.end)).toEqual(
+      iv('Sat 00:00', 'Sun 00:00'),
+    );
+    expect(defaultFlexWindow(evening.start, settings(), evening.end)).toEqual(
+      iv('Tue 09:00', 'Tue 18:00'),
+    );
+    expect(eventFormValues({ ...night, category: 'personal' }, settings())).toMatchObject({
+      flexible: true,
+      flexStart: '2026-11-03T00:00',
+      flexEnd: '2026-11-04T00:00',
+    });
+  });
+
   it('builds form values from create defaults and from an existing event', () => {
     expect(
       eventFormValues({ ...iv('Mon 10:00', 'Mon 11:00'), category: 'assignment' }, settings()),
