@@ -6,9 +6,9 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** Round 2 overhaul; WI-48 complete on its branch, merging for the full main gate. Next: WI-49 Categories.
+- **Active WI:** WI-49 Categories on `feat/wi-49-categories`; WI-47 and WI-48 merged with full main gates green.
 - **Last session:** 2026-11-12 · Codex · initialised Round 2 baseline/plan, merged WI-47 and completed WI-48's v3 migration/v2 export contracts and regressions.
-- **Gate status:** 2026-11-12 on `feat/wi-48-data-v3` at `9412ace`: full gate green (649 tests + 1 skipped, 98.82% statements / 94.31% branches / 98.26% functions / 98.90% lines, 7 DST, five properties × 10,000, build, 75/75 browser runs, zero retries). Full main gate next.
+- **Gate status:** 2026-11-12 on `main` at `9f44754`: full gate green (649 tests + 1 skipped, 98.82% statements / 94.31% branches / 98.26% functions / 98.90% lines, algorithms unchanged, 7 DST, five properties × 10,000, build, 75/75 browser runs, zero retries).
 
 ## Work items
 
@@ -222,8 +222,10 @@ Binding design: `docs/extras/AUDIT_2.md` (D-01–D-19, C-01–C-08). Work in ord
   - 2026-11-12 · Codex · branch `feat/wi-48-data-v3` · done: T48 red→green; categories/new fields persist across v3 repositories, engine state/snapshot and v1/v2 I/O; old v1/v2 schemas untouched; legacy overlaps/duplicates preserved; all six samples regenerated as v2; typecheck/lint and 649 tests + 1 skipped green · next: contract/doc review, formatting, full branch gate (including coverage), finish/merge/main gate · note: mechanical category→categoryId and required-field fixture changes retain assertions; T25 now expects export v2 (D-17), T41's legacy seed still supplies enum fields.
   - 2026-11-12 · Codex · branch `feat/wi-48-data-v3` · done: implementation/contracts/fixture inventory committed as `9412ace`; branch typecheck/lint, 649 + 1 skipped, coverage 98.82% statements / 94.31% branches / 98.26% functions / 98.90% lines (algorithms unchanged), DST 7, five 10,000-case properties and build green · next: browser repeats, finish/merge/main gate · note: T25 “export is pretty-printed ExportFile JSON stamped with now” and “exportFileSchema prefixes nested issue paths with the array index (T25 path format)” expect v2; T41 “keeps the events, tasks and settings of a version-1 database and starts at revision 0” keeps all assertions against mapped rows (D-17).
   - 2026-11-12 · Codex · branch `feat/wi-48-data-v3` · done: full branch gate green, including 75/75 browser runs (25 checks × 3, zero retries); all ten new T48 cases and all old assertions pass; six v2 sample files import; contract comments reviewed and formatting/lint clean · next: merge, full main gate, WI-49 · note: minimal UI field/type adaptation only; category controls and new visual tokens belong to WI-49/57.
-- [ ] **WI-49** Categories — owner S + Dv — depends on 48
+  - 2026-11-12 · Codex · branch `main` · done: WI-48 merged as `9f44754`, branch retained; full post-merge gate green with 649 + 1 skipped, identical branch coverage, DST 7, five 10,000-case properties, build and 75/75 browser runs · next: WI-49.
+- [~] **WI-49** Categories — owner S + Dv — depends on 48
   - Done when: New tests for CRUD, delete blocking, uniqueness, undo, filters.
+  - 2026-11-12 · Codex · branch `feat/wi-49-categories` · done: claimed after the full WI-48 main gate; D-11 and the category/repository/history/UI touchpoints reviewed · next: failing category command/undo/validation tests, then implementation, palette/free picker, Settings/inline creation, tags and filters, and removal of category-based flexibility · note: category entity/storage/import validation already exist from WI-48.
 - [ ] **WI-50** Scheduling model and lock — owner S + Dv — depends on 49
   - Done when: T43 updated to the new wording; tests for the lock's gestures and grab-to-pan; D-02 search tests.
 - [ ] **WI-51** Suggestion pickers — owner S + Dv — depends on 50
