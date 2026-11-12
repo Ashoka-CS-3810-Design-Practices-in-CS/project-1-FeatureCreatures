@@ -29,31 +29,30 @@ export class FailingRepository implements Repository {
 
   // PRE:  as Repository.apply
   // POST: rejects (storing nothing) if a failure was requested, otherwise behaves like MemoryRepository
-  async apply(changes: ChangeSet): Promise<void> {
+  async apply(changes: ChangeSet, expectedRevision: number): Promise<void> {
     if (this.applyShouldFail) {
       this.applyShouldFail = false;
       throw new Error('Simulated storage failure (apply)');
     }
-    await this.inner.apply(changes);
+    await this.inner.apply(changes, expectedRevision);
   }
 
   // PRE:  as Repository.saveSettings
   // POST: rejects (storing nothing) if a failure was requested, otherwise behaves like MemoryRepository
-  async saveSettings(settings: Settings): Promise<void> {
+  async saveSettings(settings: Settings, expectedRevision: number): Promise<void> {
     if (this.saveSettingsShouldFail) {
       this.saveSettingsShouldFail = false;
       throw new Error('Simulated storage failure (saveSettings)');
     }
-    await this.inner.saveSettings(settings);
+    await this.inner.saveSettings(settings, expectedRevision);
   }
 
   // PRE:  as Repository.replaceAll
   // POST: behaves like MemoryRepository.replaceAll
-  async replaceAll(data: {
-    events: CalendarEvent[];
-    tasks: Task[];
-    settings: Settings;
-  }): Promise<void> {
-    await this.inner.replaceAll(data);
+  async replaceAll(
+    data: { events: CalendarEvent[]; tasks: Task[]; settings: Settings },
+    expectedRevision: number,
+  ): Promise<void> {
+    await this.inner.replaceAll(data, expectedRevision);
   }
 }

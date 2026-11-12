@@ -22,15 +22,16 @@ function change(
   return { label, events: events.map(recordOf), tasks: tasks.map(recordOf) };
 }
 
-// PRE:  repo holds exactly the given events and tasks
-// POST: returns a fresh state over those records with default settings
+// PRE:  repo is fresh (revision 0)
+// POST: stores exactly the given events and tasks in repo and returns a fresh state over those
+//       records with default settings, at the repository's revision
 async function seeded(
   repo: MemoryRepository | FailingRepository,
   events: CalendarEvent[],
   tasks: Task[] = [],
 ): Promise<EngineState> {
-  await repo.replaceAll({ events, tasks, settings: settings() });
-  return createState({ events, tasks, settings: settings() });
+  await repo.replaceAll({ events, tasks, settings: settings() }, 0);
+  return createState({ events, tasks, settings: settings() }, (await repo.load()).revision);
 }
 
 describe('createState', () => {

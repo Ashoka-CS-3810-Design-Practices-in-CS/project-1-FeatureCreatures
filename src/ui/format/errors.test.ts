@@ -78,6 +78,11 @@ describe('format/errors', () => {
       'The calendar changed since these options were computed. Refreshing…',
     ],
     ['NotFound', { code: 'NotFound', entity: 'task', id: 'x' }, 'That task no longer exists.'],
+    [
+      'ER8',
+      { code: 'ConcurrentModification' },
+      'This changed in another tab — your view has been refreshed. Nothing was overwritten.',
+    ],
   ])('%s has its message', (_case, error, text) => {
     expect(errorMessage(error)).toBe(text);
   });

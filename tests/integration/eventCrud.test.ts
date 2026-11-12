@@ -301,6 +301,7 @@ describe('init', () => {
         events: [ev('A', 'Mon 11:00', 'Mon 10:00')],
         tasks: [],
         settings: null,
+        revision: 0,
       })),
       now: () => 0,
       newId: () => 'x',
@@ -319,7 +320,7 @@ describe('init', () => {
   it('reports StorageError when saving the first-run settings fails', async () => {
     const engine = createEngine({
       repo: {
-        ...repoWith(async () => ({ events: [], tasks: [], settings: null })),
+        ...repoWith(async () => ({ events: [], tasks: [], settings: null, revision: 0 })),
         saveSettings: async () => {
           throw new Error('quota');
         },

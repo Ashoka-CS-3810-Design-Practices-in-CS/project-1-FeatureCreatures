@@ -42,6 +42,7 @@ import {
   createdText,
   DATA_CLEARED_TEXT,
   deletedText,
+  OTHER_TAB_UPDATED_TEXT,
   historyText,
   importedText,
   movedText,
@@ -118,6 +119,7 @@ export interface AppActions {
   clearAllData(): Promise<Result<Snapshot>>;
   retryInit(): Promise<void>;
   resetLocalData(): Promise<void>;
+  reloadFromOtherTab(): Promise<void>;
 }
 
 export interface AppState {
@@ -229,6 +231,33 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
       });
     }
 
+    // PRE:  toast says why the view is refreshed
+    // POST: adopts what the repository holds now (engine.reload: history cleared, version bumped)
+    //       and shows toast; when reloading fails shows that error's toast, whose Retry reloads
+    async function reloadStored(toast: Omit<Toast, 'id'>): Promise<void> {
+      const result = await engine.reload();
+      if (!result.ok) {
+        showError(result.error, () => {
+          void reloadStored(toast);
+        });
+        return;
+      }
+      set({ snapshot: result.value });
+      pushToast(toast);
+    }
+
+    // PRE:  error is an engine error; retry re-runs the failed command
+    // POST: for ER8 (another tab saved first) reloads the stored data and says nothing was
+    //       overwritten, with no Retry since the command was based on an old view; otherwise as
+    //       showError
+    async function handleError(error: EngineError, retry: () => void): Promise<void> {
+      if (error.code === 'ConcurrentModification') {
+        await reloadStored({ tone: 'warning', text: errorMessage(error) });
+        return;
+      }
+      showError(error, retry);
+    }
+
     // PRE:  slot was suggested for eventId at snapshot version baseVersion (ER4); otherEventId is
     //       the event it conflicted with
     // POST: moves eventId to slot when nothing changed since baseVersion; when something did
@@ -285,14 +314,14 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
 
     // PRE:  command calls one engine mutation; describe gives its success text (null = no toast)
     // POST: runs command; on ok adopts the snapshot, emphasises the changed events and shows the
-    //       success (or ER4) toast; on err shows the error toast; returns the result either way
+    //       success (or ER4) toast; on err handles the error (handleError); returns the result
     async function runMutation(
       command: () => Promise<Result<MutationResult>>,
       describe: (value: MutationResult) => string | null,
     ): Promise<Result<MutationResult>> {
       const result = await command();
       if (!result.ok) {
-        showError(result.error, () => {
+        await handleError(result.error, () => {
           void runMutation(command, describe);
         });
         return result;
@@ -365,7 +394,7 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
     //       message; busy is the loading message, or null for an instant operation
     // POST: optionally paints loading feedback before building/importing data; on ok adopts the snapshot, closes the picker,
     //       clears the task selection (both may name records that are gone) and shows describe's
-    //       toast; on err shows the error toast and changes nothing; returns the result
+    //       toast; on err handles the error (handleError) and changes nothing; returns the result
     async function replaceAll(
       buildJson: () => string,
       describe: (snapshot: Snapshot) => string,
@@ -389,7 +418,7 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
         set({ busy: null });
       }
       if (!result.ok) {
-        showError(result.error, () => {
+        await handleError(result.error, () => {
           void replaceAll(buildJson, describe, busy);
         });
         return result;
@@ -775,13 +804,13 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
 
       // PRE:  settings come from the settings dialog (validated by the engine)
       // POST: saves them (not undoable, FR11); on ok adopts the snapshot and toasts "Settings
-      //       saved." plus info/View for newly introduced barred warnings; on err shows the error
-      //       toast and keeps the old settings
+      //       saved." plus info/View for newly introduced barred warnings; on err handles the
+      //       error (handleError) and keeps the old settings
       async updateSettings(settings) {
         const previous = get().snapshot.barredOverlaps;
         const result = await engine.updateSettings(settings);
         if (!result.ok) {
-          showError(result.error, () => {
+          await handleError(result.error, () => {
             void actions.updateSettings(settings);
           });
           return result;
@@ -872,6 +901,13 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
           return;
         }
         await actions.retryInit();
+      },
+
+      // PRE:  another tab stored a change (TAB_CHANNEL_NAME message)
+      // POST: adopts the stored data through reloadStored, with the info toast "Calendar updated in
+      //       another tab."; open pickers and plans are now stale (ER7) and undo / redo are empty
+      reloadFromOtherTab() {
+        return reloadStored({ tone: 'info', text: OTHER_TAB_UPDATED_TEXT });
       },
     };
 

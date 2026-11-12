@@ -11,9 +11,11 @@ import {
   parseInput,
   settingsSchema,
   storedDataSchema,
+  storedRevisionSchema,
 } from '@/shared/schemas';
 import { fromMinute } from '@/shared/time';
 import type {
+  CalendarEvent,
   EventInput,
   ExportFile,
   Interval,
@@ -24,6 +26,7 @@ import type {
   Settings,
   SlotSearchResult,
   Snapshot,
+  Task,
   TaskInput,
   UserCriterion,
 } from '@/shared/types';
@@ -44,6 +47,7 @@ import {
   createState,
   barredOverlapsFor,
   replay,
+  repositoryError,
   type EngineState,
   type PipelineContext,
   type PipelineOutcome,
@@ -55,10 +59,12 @@ export interface EngineDeps {
   repo: Repository;
   now: () => Minute;
   newId: () => string;
+  onCommit?: () => void; // called after every write the repository accepted (WI-40: tells other tabs)
 }
 
 export interface Engine {
   init(): Promise<Result<Snapshot>>;
+  reload(): Promise<Result<Snapshot>>; // adopt what another tab stored; clears history (WI-40)
   snapshot(): Snapshot;
 
   // ── Event CRUD pipeline (FR1–FR3) ──
@@ -112,12 +118,18 @@ export interface Engine {
 }
 
 // PRE:  error is any value thrown by a repository
-// POST: returns err StorageError carrying error's message (ER5)
+// POST: returns err ConcurrentModification (ER8) when another tab wrote first, otherwise err
+//       StorageError carrying error's message (ER5)
 function storageError(error: unknown): Result<never, EngineError> {
-  return err({
-    code: 'StorageError',
-    message: error instanceof Error ? error.message : String(error),
-  });
+  return err(repositoryError(error));
+}
+
+/** What the repository holds, validated, with its revision. */
+interface LoadedData {
+  readonly events: readonly CalendarEvent[];
+  readonly tasks: readonly Task[];
+  readonly settings: Settings | null;
+  readonly revision: number;
 }
 
 class CalendarEngine implements Engine {
@@ -163,7 +175,11 @@ class CalendarEngine implements Engine {
       if (!result.ok) {
         return result;
       }
+      const wrote = result.value.state.revision !== this.state.revision;
       this.state = result.value.state;
+      if (wrote) {
+        this.deps.onCommit?.();
+      }
       const { label, changedEventIds, introducedConflicts, resolvedConflicts, suggestion } =
         result.value;
       return ok({
@@ -178,30 +194,70 @@ class CalendarEngine implements Engine {
   }
 
   // PRE:  none (Repository.load() returns untrusted data)
+  // POST: returns the stored events, tasks, settings and revision once validated (shapes, links
+  //       and the BR-9 mirror); err StorageError when loading fails or the data is damaged
+  private async loadStored(): Promise<Result<LoadedData>> {
+    let loaded: unknown;
+    try {
+      loaded = await this.deps.repo.load();
+    } catch (error) {
+      return storageError(error);
+    }
+    const parsed = parseInput(storedDataSchema, loaded);
+    const revision = parseInput(storedRevisionSchema, loaded);
+    if (
+      !parsed.ok ||
+      !revision.ok ||
+      linkIssues(parsed.value.events, parsed.value.tasks).length > 0
+    ) {
+      return storageError(new Error('Saved data is damaged.'));
+    }
+    return ok({ ...parsed.value, revision: revision.value.revision });
+  }
+
+  // PRE:  none (Repository.load() returns untrusted data)
   // POST: replaces the state with the validated stored data (events sorted, conflicts detected,
   //       empty history); first run saves DEFAULT_SETTINGS; err StorageError when loading or saving
-  //       fails or the stored data is damaged, leaving the state unchanged
+  //       fails or the stored data is damaged (ConcurrentModification when another tab saved the
+  //       first settings meanwhile), leaving the state unchanged
   init(): Promise<Result<Snapshot>> {
     return this.run(async () => {
-      let loaded: unknown;
+      const loaded = await this.loadStored();
+      if (!loaded.ok) {
+        return loaded;
+      }
+      const { events, tasks, revision } = loaded.value;
+      if (loaded.value.settings !== null) {
+        this.state = createState({ events, tasks, settings: loaded.value.settings }, revision);
+        return ok(this.snapshot());
+      }
       try {
-        loaded = await this.deps.repo.load();
+        await this.deps.repo.saveSettings(DEFAULT_SETTINGS, revision);
       } catch (error) {
         return storageError(error);
       }
-      const parsed = parseInput(storedDataSchema, loaded);
-      if (!parsed.ok || linkIssues(parsed.value.events, parsed.value.tasks).length > 0) {
-        return storageError(new Error('Saved data is damaged.'));
+      this.state = createState({ events, tasks, settings: DEFAULT_SETTINGS }, revision + 1);
+      this.deps.onCommit?.();
+      return ok(this.snapshot());
+    });
+  }
+
+  // PRE:  none (Repository.load() returns untrusted data)
+  // POST: queued; replaces the state with what is stored now, as after an import: events sorted,
+  //       conflicts and barred overlaps detected, history and lastReplan cleared (they describe
+  //       data another tab replaced) and version + 1, so open options and plans are StaleResult;
+  //       err StorageError when loading fails or the data is damaged, leaving the state unchanged
+  reload(): Promise<Result<Snapshot>> {
+    return this.run(async () => {
+      const loaded = await this.loadStored();
+      if (!loaded.ok) {
+        return loaded;
       }
-      const settings = parsed.value.settings ?? DEFAULT_SETTINGS;
-      if (parsed.value.settings === null) {
-        try {
-          await this.deps.repo.saveSettings(settings);
-        } catch (error) {
-          return storageError(error);
-        }
-      }
-      this.state = createState({ ...parsed.value, settings });
+      const { events, tasks, revision } = loaded.value;
+      const settings = loaded.value.settings ?? DEFAULT_SETTINGS;
+      const fresh = createState({ events, tasks, settings }, revision);
+      this.state = { ...fresh, version: this.state.version + 1 };
+      this.lastReplan = null;
       return ok(this.snapshot());
     });
   }
@@ -340,8 +396,9 @@ class CalendarEngine implements Engine {
 
   // PRE:  settings comes from the UI (any shape)
   // POST: on valid settings, persists them, adopts them and bumps the version (no history entry,
-  //       conflicts unchanged, barred warnings recomputed, §7.4.5); err InvalidInput / InvalidTime, or StorageError when saving
-  //       fails, leaving the state unchanged
+  //       conflicts unchanged, barred warnings recomputed, §7.4.5); err InvalidInput / InvalidTime,
+  //       StorageError when saving fails, or ConcurrentModification (ER8) when another tab saved
+  //       first, leaving the state unchanged
   updateSettings(settings: Settings): Promise<Result<Snapshot>> {
     return this.run(async () => {
       const parsed = parseInput(settingsSchema, settings);
@@ -349,7 +406,7 @@ class CalendarEngine implements Engine {
         return parsed;
       }
       try {
-        await this.deps.repo.saveSettings(parsed.value);
+        await this.deps.repo.saveSettings(parsed.value, this.state.revision);
       } catch (error) {
         return storageError(error);
       }
@@ -358,7 +415,9 @@ class CalendarEngine implements Engine {
         settings: parsed.value,
         barredOverlaps: barredOverlapsFor(this.state.events, parsed.value),
         version: this.state.version + 1,
+        revision: this.state.revision + 1,
       };
+      this.deps.onCommit?.();
       return ok(this.snapshot());
     });
   }
@@ -396,7 +455,8 @@ class CalendarEngine implements Engine {
   // PRE:  json is untrusted text (validated here)
   // POST: on a valid export, replaces everything stored and in memory with it (events sorted,
   //       conflicts detected, history and lastReplan cleared, version + 1, §7.4.6); err
-  //       InvalidImport (ER6) or StorageError, leaving the state and the repository unchanged
+  //       InvalidImport (ER6), StorageError or ConcurrentModification (ER8), leaving the state and
+  //       the repository unchanged
   importData(json: string): Promise<Result<Snapshot>> {
     return this.run(async () => {
       const parsed = parseExportFile(json);
@@ -405,13 +465,17 @@ class CalendarEngine implements Engine {
       }
       const { events, tasks, settings } = parsed.value;
       try {
-        await this.deps.repo.replaceAll({ events: [...events], tasks: [...tasks], settings });
+        await this.deps.repo.replaceAll(
+          { events: [...events], tasks: [...tasks], settings },
+          this.state.revision,
+        );
       } catch (error) {
         return storageError(error);
       }
-      const fresh = createState({ events, tasks, settings });
+      const fresh = createState({ events, tasks, settings }, this.state.revision + 1);
       this.state = { ...fresh, version: this.state.version + 1 };
       this.lastReplan = null;
+      this.deps.onCommit?.();
       return ok(this.snapshot());
     });
   }

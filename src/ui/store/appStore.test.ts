@@ -257,25 +257,28 @@ describe('createAppStore', () => {
   it('retryInit recovers from a failed start, and resetLocalData empties storage first', async () => {
     let failLoad = true;
     const inner = new MemoryRepository();
-    await inner.replaceAll({
-      events: [ev('A', 'Mon 10:00', 'Mon 11:00')],
-      tasks: [],
-      settings: (await makeEngine()).engine.snapshot().settings,
-    });
+    await inner.replaceAll(
+      {
+        events: [ev('A', 'Mon 10:00', 'Mon 11:00')],
+        tasks: [],
+        settings: (await makeEngine()).engine.snapshot().settings,
+      },
+      0,
+    );
     const repo: Repository = {
       load: async () => {
         if (failLoad) throw new Error('blocked');
         return inner.load();
       },
-      apply: (changes) => inner.apply(changes),
-      saveSettings: (settings) => inner.saveSettings(settings),
-      replaceAll: (data) => inner.replaceAll(data),
+      apply: (changes, revision) => inner.apply(changes, revision),
+      saveSettings: (settings, revision) => inner.saveSettings(settings, revision),
+      replaceAll: (data, revision) => inner.replaceAll(data, revision),
     };
     const engine = createEngine({ repo, now: () => 0, newId: () => 'x' });
     const init = await engine.init();
     const reset = vi.fn(async () => {
-      const settings = (await inner.load()).settings;
-      if (settings !== null) await inner.replaceAll({ events: [], tasks: [], settings });
+      const { settings, revision } = await inner.load();
+      if (settings !== null) await inner.replaceAll({ events: [], tasks: [], settings }, revision);
     });
     const store = createAppStore(engine, {
       storageWarning: false,

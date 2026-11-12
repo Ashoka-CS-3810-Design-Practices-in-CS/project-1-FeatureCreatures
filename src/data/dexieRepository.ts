@@ -2,14 +2,21 @@
 // so a failure anywhere rolls back everything (the atomicity Repository requires).
 
 import Dexie, { type Table } from 'dexie';
+import { INITIAL_REVISION } from '@/shared/constants';
 import type { CalendarEvent, Settings, Task } from '@/shared/types';
-import type { ChangeSet, Repository, StoredData } from './repository';
+import { requireRevision, type ChangeSet, type Repository, type StoredData } from './repository';
 
 const SETTINGS_KEY = 'app';
+const REVISION_KEY = 'revision';
 
 interface SettingsRow {
   key: typeof SETTINGS_KEY;
   value: Settings;
+}
+
+interface RevisionRow {
+  key: typeof REVISION_KEY;
+  value: number;
 }
 
 class CalendarDb extends Dexie {
@@ -18,13 +25,21 @@ class CalendarDb extends Dexie {
   declare events: Table<CalendarEvent, string>;
   declare tasks: Table<Task, string>;
   declare settings: Table<SettingsRow, string>;
+  declare meta: Table<RevisionRow, string>;
 
   // PRE:  name is a non-empty database name
-  // POST: creates (but does not open) the database with schema version 1
+  // POST: creates (but does not open) the database with schema version 2; opening a version-1
+  //       database upgrades it, keeping every event, task and settings row
   constructor(name: string) {
     super(name);
-    // Schema changes need this.version(2).stores(...).upgrade(...); never edit version 1 in place.
+    // Never edit a shipped version in place; add the next version with its upgrade instead.
     this.version(1).stores({ events: 'id, start, taskId', tasks: 'id, status', settings: 'key' });
+    // Version 2 (WI-40) only adds the meta table; Dexie keeps the tables it does not name.
+    this.version(2)
+      .stores({ meta: 'key' })
+      .upgrade((transaction) =>
+        transaction.table('meta').put({ key: REVISION_KEY, value: INITIAL_REVISION }),
+      );
   }
 }
 
@@ -53,25 +68,48 @@ export class DexieRepository implements Repository {
   }
 
   // PRE:  the database is open
-  // POST: resolves to every stored event and task, and the settings (null if never saved), read
-  //       in one consistent transaction
+  // POST: resolves to every stored event and task, the settings (null if never saved) and the
+  //       revision, read in one consistent transaction
   async load(): Promise<StoredData> {
-    const { events, tasks, settings } = this.db;
-    return this.db.transaction('r', events, tasks, settings, async () => {
-      const [storedEvents, storedTasks, settingsRow] = await Promise.all([
+    const { events, tasks, settings, meta } = this.db;
+    return this.db.transaction('r', events, tasks, settings, meta, async () => {
+      const [storedEvents, storedTasks, settingsRow, revision] = await Promise.all([
         events.toArray(),
         tasks.toArray(),
         settings.get(SETTINGS_KEY),
+        this.storedRevision(),
       ]);
-      return { events: storedEvents, tasks: storedTasks, settings: settingsRow?.value ?? null };
+      return {
+        events: storedEvents,
+        tasks: storedTasks,
+        settings: settingsRow?.value ?? null,
+        revision,
+      };
     });
   }
 
+  // PRE:  called inside a transaction that includes the meta table
+  // POST: resolves to the stored revision (INITIAL_REVISION when the row was never written)
+  private async storedRevision(): Promise<number> {
+    return (await this.db.meta.get(REVISION_KEY))?.value ?? INITIAL_REVISION;
+  }
+
+  // PRE:  called inside a 'rw' transaction that includes the meta table, before its other writes
+  // POST: when the stored revision is expectedRevision, stores expectedRevision + 1; otherwise
+  //       throws ConcurrentModificationError, which aborts the whole transaction
+  private async claimRevision(expectedRevision: number): Promise<void> {
+    requireRevision(await this.storedRevision(), expectedRevision);
+    await this.db.meta.put({ key: REVISION_KEY, value: expectedRevision + 1 });
+  }
+
   // PRE:  the database is open; changes holds well-formed rows
-  // POST: all deletes and then all puts of changes are stored, or none are and the promise rejects
-  async apply(changes: ChangeSet): Promise<void> {
-    const { events, tasks } = this.db;
-    await this.db.transaction('rw', events, tasks, async () => {
+  // POST: when expectedRevision is the stored revision, all deletes and then all puts of changes
+  //       are stored and the revision grows by 1; otherwise nothing is and the promise rejects
+  //       (ConcurrentModificationError for a stale revision)
+  async apply(changes: ChangeSet, expectedRevision: number): Promise<void> {
+    const { events, tasks, meta } = this.db;
+    await this.db.transaction('rw', events, tasks, meta, async () => {
+      await this.claimRevision(expectedRevision);
       await events.bulkDelete(changes.deleteEventIds);
       await tasks.bulkDelete(changes.deleteTaskIds);
       await events.bulkPut(changes.putEvents);
@@ -80,20 +118,26 @@ export class DexieRepository implements Repository {
   }
 
   // PRE:  the database is open; settings satisfies settingsSchema
-  // POST: settings is stored as the single settings row
-  async saveSettings(settings: Settings): Promise<void> {
-    await this.db.settings.put({ key: SETTINGS_KEY, value: settings });
+  // POST: when expectedRevision is the stored revision, settings is stored as the single settings
+  //       row and the revision grows by 1; otherwise nothing is and the promise rejects
+  async saveSettings(settings: Settings, expectedRevision: number): Promise<void> {
+    const { meta } = this.db;
+    await this.db.transaction('rw', this.db.settings, meta, async () => {
+      await this.claimRevision(expectedRevision);
+      await this.db.settings.put({ key: SETTINGS_KEY, value: settings });
+    });
   }
 
   // PRE:  the database is open; data holds well-formed rows and settings
-  // POST: the three tables hold exactly data, or nothing changed and the promise rejects
-  async replaceAll(data: {
-    events: CalendarEvent[];
-    tasks: Task[];
-    settings: Settings;
-  }): Promise<void> {
-    const { events, tasks, settings } = this.db;
-    await this.db.transaction('rw', events, tasks, settings, async () => {
+  // POST: when expectedRevision is the stored revision, the three data tables hold exactly data
+  //       and the revision grows by 1; otherwise nothing changed and the promise rejects
+  async replaceAll(
+    data: { events: CalendarEvent[]; tasks: Task[]; settings: Settings },
+    expectedRevision: number,
+  ): Promise<void> {
+    const { events, tasks, settings, meta } = this.db;
+    await this.db.transaction('rw', events, tasks, settings, meta, async () => {
+      await this.claimRevision(expectedRevision);
       await Promise.all([events.clear(), tasks.clear(), settings.clear()]);
       await events.bulkPut(data.events);
       await tasks.bulkPut(data.tasks);
