@@ -166,6 +166,7 @@ Every file listed here exists by the end of the project. The WI column says whic
       │  └─ EmptyState/  ErrorBoundary/ (top-level crash screen, WI-35)
       ├─ hooks/useShortcuts.ts  hooks/useTheme.ts  hooks/preferences.ts  # guarded localStorage (theme, last view)
       │  hooks/download.ts     # downloadJson(): Settings export and the crash screen's Export data
+      │  hooks/tabSync.ts      # WI-40: BroadcastChannel between tabs (announce / reload)
       ├─ format/time.ts  format/explain.ts  format/errors.ts   # all user-facing strings built here
       ├─ forms/eventForm.ts  forms/taskForm.ts  forms/settingsForm.ts  # form ⇄ input converters + resolvers
       └─ styles/tokens.css  styles/global.css  styles/fullcalendar.css
@@ -259,20 +260,25 @@ async function bootstrap() {
   let storageWarning = false;
   try { repo = await DexieRepository.open('feature-creatures-calendar'); }
   catch { repo = new MemoryRepository(); storageWarning = true; }       // degraded mode banner
+  const channel = storageWarning ? null : openTabChannel();             // WI-40, hooks/tabSync.ts
   const engine = createEngine({
     repo,
     now: () => toMinute(new Date()),
     newId: () => crypto.randomUUID(),
+    onCommit: channel === null ? undefined : () => announceStoredChange(channel),
   });
   const init = await engine.init();                                     // loads + sorts + sweeps
-  const store = createAppStore(engine, { storageWarning, init });
+  const store = createAppStore(engine, { storageWarning, init, … });
+  if (channel !== null) reloadOnOtherTabChanges(channel, store);        // → actions.reloadFromOtherTab
   createRoot(document.getElementById('root')!).render(
     <StrictMode><ErrorBoundary onReload={…} onExport={…}><StoreProvider store={store}><App /></StoreProvider></ErrorBoundary></StrictMode>);
 }
 bootstrap();
 ```
 
-If `init` returns an error, `App` shows a full-page error with the buttons **Retry** and **Reset local data**. Reset calls `repo.replaceAll(empty)` and then `init` again.
+If `init` returns an error, `App` shows a full-page error with the buttons **Retry** and **Reset local data**. Reset loads the stored revision, calls `repo.replaceAll(empty, revision)` and then `init` again.
+
+**Several tabs (WI-40, peer report #14).** Every tab has its own engine over the same IndexedDB. `hooks/tabSync.ts` opens a `BroadcastChannel` named `TAB_CHANNEL_NAME` (null when the browser has none, and not used in degraded mode, where tabs share nothing). The engine's `onCommit` posts `'stored'` after every write the repository accepted; the other tabs run `actions.reloadFromOtherTab()`. A write that races the message is refused by the stored revision (§9.1, ER8).
 
 `ErrorBoundary` (WI-35, `components/ErrorBoundary/`) wraps everything, outside the store provider, so any render crash shows **Something went wrong** with **Reload** (`location.reload()`) and **Export data** (`store.getState().actions.exportFile()` through `hooks/download.ts`; a failed export says so) instead of an unmounted, blank page. It is the only class component, because React offers error boundaries only as classes.
 
@@ -494,6 +500,7 @@ export type EngineError =
   | { code: 'StorageError'; message: string }                                        // ER5
   | { code: 'InvalidImport'; issues: FieldIssue[] }                                  // ER6
   | { code: 'StaleResult' }                                                          // ER7
+  | { code: 'ConcurrentModification' }                                               // ER8 (WI-40)
   | { code: 'NotFound'; entity: 'event' | 'task'; id: string };
 ```
 
@@ -516,6 +523,8 @@ export const DRAWER_BREAKPOINT_PX = 1024;
 export const MIN_CLICK_TARGET_PX = 32;
 export const CLICK_EVENT_MIN = 30;        // a click on empty time creates one calendar row (WI-35)
 export const IMPORT_SPINNER_THRESHOLD = 1000;
+export const INITIAL_REVISION = 0;                        // WI-40: stored revision before any write
+export const TAB_CHANNEL_NAME = 'feature-creatures-calendar'; // WI-40: BroadcastChannel between tabs
 export const MINUTES_PER_DAY = 1440;
 export const MIN_SUPPORTED_MINUTE = 0;              // 1970-01-01T00:00Z (AUDIT A02)
 export const MAX_SUPPORTED_MINUTE = 4_223_371_679;  // 9999-12-31T23:59Z: always a valid JS Date
@@ -597,7 +606,7 @@ export const exportFileSchema = z.object({
 
 `storedEventSchema` and `storedTaskSchema` extend the input schemas with `id`, `taskId`, `status`, `scheduledEventId`, `createdAt` and `updatedAt`.
 
-`storedDataSchema = {events: storedEvent[], tasks: storedTask[], settings: settings | null}` validates `Repository.load()` in `engine.init()`. `searchOptionsSchema = {bufferMin?: int 0–120}` validates the `bufferMin` override of `findSlots`, `suggestAlternatives` and `planReplan`; it shares one `bufferMinSchema` with `settingsSchema`. `slotSchema = {slot: interval}` (AUDIT A06) validates the slot of `scheduleTask` and `applyAlternative` through `requireValidSlot` in `search.ts`.
+`storedDataSchema = {events: storedEvent[], tasks: storedTask[], settings: settings | null}` validates `Repository.load()` in `engine.init()` and `engine.reload()`; `storedRevisionSchema = {revision: int ≥ 0}` validates its revision (WI-40). `searchOptionsSchema = {bufferMin?: int 0–120}` validates the `bufferMin` override of `findSlots`, `suggestAlternatives` and `planReplan`; it shares one `bufferMinSchema` with `settingsSchema`. `slotSchema = {slot: interval}` (AUDIT A06) validates the slot of `scheduleTask` and `applyAlternative` through `requireValidSlot` in `search.ts`.
 
 - Zod 4 cannot `.extend()` a refined object, so each schema is a plain object shape plus a named refine function (`refineEventTiming`, `refineTaskWindow`), and the stored schemas extend the shape and re-apply the same refinements.
 - `storedTaskSchema` also checks `(status = 'scheduled') ⟺ (scheduledEventId ≠ null)` as a shape issue at `scheduledEventId`: "A task has an event id exactly when it is scheduled."
@@ -638,6 +647,7 @@ The facade validates every command with `parseInput`. `importData` uses `toField
 ```ts
 export interface EngineState {
   readonly version: number;
+  readonly revision: number;                   // repository revision it was loaded from or last wrote (WI-40)
   readonly events: readonly CalendarEvent[];   // ALWAYS sorted by compareEvents (start, end, id)
   readonly tasks: readonly Task[];
   readonly settings: Settings;
@@ -671,27 +681,31 @@ It returns the new `{events, tasks}`.
 
 1. Set `direction` to `'backward'` when `mode === 'undo'`, and to `'forward'` otherwise.
 2. Compute `next = applyChange(state, change, direction)`.
-3. Build `changeSet` (§9.1) from the images for that direction, and `await repo.apply(changeSet)`. On a throw, return `err({code:'StorageError', message})`. The state is untouched.
+3. Build `changeSet` (§9.1) from the images for that direction, and `await repo.apply(changeSet, state.revision)`. On a throw, return `err(repositoryError(error))`: `ConcurrentModification` (ER8) for a `ConcurrentModificationError`, otherwise `{code:'StorageError', message}`. The state is untouched.
 4. Compute `conflicts = detectConflicts(next.events)` (§8.4) and `barredOverlaps = barredOverlapsFor(next.events, settings)` (§8.4a).
 5. `introduced` = new conflicts whose key is not among the old keys. `resolved` = the reverse.
 6. Update the history:
    - `do`: push to `undo` (dropping the oldest beyond 50) and clear `redo`.
    - `undo`: move the change to `redo`.
    - `redo`: move the change back to `undo`.
-7. Set `version + 1` and return the new state and the `MutationResult` parts.
+7. Set `version + 1` and `revision + 1`, and return the new state and the `MutationResult` parts.
 
 **`changedEventIds`** are the IDs of records whose image in that direction is non-null.
 
-`commit` resolves to `Result<CommitOutcome, EngineError>`, where `CommitOutcome = {state, label, changedEventIds, introducedConflicts, resolvedConflicts}`. The facade adds the `snapshot` and `suggestion` to make the `MutationResult`. **`createState({events, tasks, settings})`** builds version 0: it sorts the events, detects their conflicts and starts with empty history. `engine.init()` uses it after `load()`.
+`commit` resolves to `Result<CommitOutcome, EngineError>`, where `CommitOutcome = {state, label, changedEventIds, introducedConflicts, resolvedConflicts}`. The facade adds the `snapshot` and `suggestion` to make the `MutationResult`. **`createState({events, tasks, settings}, revision = INITIAL_REVISION)`** builds version 0 at `revision`: it sorts the events, detects their conflicts and starts with empty history. `engine.init()` and `engine.reload()` use it after `load()`, with the loaded revision.
 
 ### 7.2 Engine interface (`src/engine/facade.ts`) — frozen contract
 
 ```ts
-export interface EngineDeps { repo: Repository; now: () => Minute; newId: () => string }
+export interface EngineDeps {
+  repo: Repository; now: () => Minute; newId: () => string;
+  onCommit?: () => void;   // WI-40: after every write the repository accepted (commit, settings, import, first-run settings)
+}
 export function createEngine(deps: EngineDeps): Engine;
 
 export interface Engine {
   init(): Promise<Result<Snapshot>>;
+  reload(): Promise<Result<Snapshot>>;   // WI-40: adopt what is stored now (another tab's change)
   snapshot(): Snapshot;
 
   // ── Event CRUD pipeline (FR1–FR3) ──
@@ -1274,20 +1288,26 @@ invalidReason(e, win, segs, occupied, b, frames):   // first failing check, in t
 ### 9.1 Repository interface — frozen contract
 
 ```ts
-export interface StoredData { events: CalendarEvent[]; tasks: Task[]; settings: Settings | null }
+export interface StoredData { events: CalendarEvent[]; tasks: Task[]; settings: Settings | null; revision: number }
 export interface ChangeSet {
   putEvents: CalendarEvent[]; deleteEventIds: string[];
   putTasks: Task[];           deleteTaskIds: string[];
 }
 export interface Repository {
   load(): Promise<StoredData>;
-  apply(changes: ChangeSet): Promise<void>;          // MUST be atomic (all or nothing)
-  saveSettings(settings: Settings): Promise<void>;
-  replaceAll(data: { events: CalendarEvent[]; tasks: Task[]; settings: Settings }): Promise<void>; // atomic
+  apply(changes: ChangeSet, expectedRevision: number): Promise<void>;          // MUST be atomic (all or nothing)
+  saveSettings(settings: Settings, expectedRevision: number): Promise<void>;
+  replaceAll(data: { events: CalendarEvent[]; tasks: Task[]; settings: Settings }, expectedRevision: number): Promise<void>; // atomic
 }
+export class ConcurrentModificationError extends Error { … }
+export function requireRevision(storedRevision: number, expectedRevision: number): void; // throws ConcurrentModificationError
 ```
 
-`engine.init()` calls `load()`, validates it with `storedDataSchema`, sorts the events, and uses `DEFAULT_SETTINGS` when `settings` is `null`. It also saves those defaults. A failing `load()` or `saveSettings()`, or damaged stored data, gives `StorageError` (message "Saved data is damaged." for the latter), which the App shows as the full-page error of §4.
+**Revision (WI-40, peer report #14).** The repository counts the writes it has accepted (`INITIAL_REVISION = 0` when nothing was written). Every write names the revision its caller last loaded or wrote. Inside the write's own transaction the repository compares it with the stored revision: equal → it writes and stores `expectedRevision + 1`; different → it throws `ConcurrentModificationError` and writes nothing. The engine keeps the revision in `EngineState.revision` and maps the error to `ConcurrentModification` (ER8). So a tab whose view is out of date can never overwrite another tab's change, even when the cross-tab message (§4) has not arrived yet.
+
+`engine.init()` calls `load()`, validates it with `storedDataSchema` and `storedRevisionSchema`, sorts the events, and uses `DEFAULT_SETTINGS` when `settings` is `null`. It also saves those defaults (at the loaded revision). A failing `load()` or `saveSettings()`, or damaged stored data, gives `StorageError` (message "Saved data is damaged." for the latter), which the App shows as the full-page error of §4.
+
+`engine.reload()` (queued like a command) loads and validates the same way, then replaces the state as an import does: events sorted, conflicts and barred overlaps detected, undo/redo and `lastReplan` cleared (they describe data another tab replaced) and `version + 1`, so open options and plans give `StaleResult` (ER7). It never writes and never calls `onCommit`.
 
 ### 9.2 `dexieRepository.ts`
 
@@ -1299,6 +1319,8 @@ class CalendarDb extends Dexie {
   constructor(name: string) {
     super(name);
     this.version(1).stores({ events: 'id, start, taskId', tasks: 'id, status', settings: 'key' });
+    this.version(2).stores({ meta: 'key' })                     // WI-40: { key: 'revision', value }
+      .upgrade((tx) => tx.table('meta').put({ key: 'revision', value: INITIAL_REVISION }));
   }
 }
 // apply(): db.transaction('rw', db.events, db.tasks, async () => { bulkDelete…; bulkPut… })
@@ -1306,18 +1328,18 @@ class CalendarDb extends Dexie {
 // static open(name): new CalendarDb(name).open() — throws if IndexedDB is unavailable (→ degraded mode).
 ```
 
-Schema changes later require `this.version(2).stores(...).upgrade(...)`. Never edit version 1 in place.
+Schema changes add the next version with its upgrade; never edit a shipped version in place. Version 2 (WI-40) only adds the `meta` table: Dexie keeps the tables a later version does not name, so a version-1 database keeps every event, task and settings row (tested by opening a real version-1 database in fake-indexeddb). `load()` reads the revision in its read transaction; `apply`, `saveSettings` and `replaceAll` each check and bump it first inside their `'rw'` transaction, which now includes `meta`. IndexedDB serialises overlapping `'rw'` transactions across tabs, so the check and the write are atomic.
 
 ### 9.3 `memoryRepository.ts`
 
-This keeps `Map`s of events and tasks plus the settings, and has the same semantics. It deep-copies data on load and apply, so tests cannot alias engine state.
+This keeps `Map`s of events and tasks plus the settings and the revision, and has the same semantics (including the revision check, which cannot interleave because each write runs synchronously). It deep-copies data on load and apply, so tests cannot alias engine state.
 
 It is used for:
 - all engine and integration tests
 - degraded mode in the app
 - the "storage unavailable" banner path
 
-`tests/helpers/failingRepository.ts` wraps it. It rejects `apply` on demand, for ER5 tests.
+`tests/helpers/failingRepository.ts` wraps it. It rejects `apply` on demand, for ER5 tests; otherwise it forwards the expected revision.
 
 ### 9.4 Export file
 
@@ -1433,6 +1455,8 @@ interface Toast { id: string; tone: 'success' | 'info' | 'warning' | 'error'; te
 ```
 
 `createAppStore(engine, {storageWarning, init, now, resetStorage, initialView?})` builds the store; `now` dates the samples and `resetStorage` empties the repository for the fatal screen's *Reset local data*. `initialView` is the view remembered in `localStorage['fc-view']` (`storedView()` in `hooks/preferences.ts`); `main.tsx` calls `rememberView(store)` so later view changes are remembered too. `onDatesSet` records `view.type` and `view.date` (the shown period's first day, for the toolbar title) as well as `activeRange`. `StoreProvider`, `useAppStore(selector)` and `useAppStoreApi()` live in `appStore.ts`; the API hook exposes the provided store without a render subscription for handlers that need current state (WI-39).
+
+**Other tabs (WI-40).** `actions.reloadFromOtherTab()` runs `engine.reload()`, adopts its snapshot, closes an event or task edit dialog whose record no longer exists, and shows the info toast "Calendar updated in another tab." Every command's error goes through `handleError`: ER8 reloads the same way and shows the ER8 text as a warning toast with no Retry; every other error goes to `showError` as before. A failed reload shows its StorageError toast, whose Retry reloads again.
 
 `SidePanel` renders the panels once: an `aside` at 1024 px and wider, a native `Modal` drawer below it. `useNarrowLayout` listens for media-query changes. The UI store owns the drawer's open state; App wires its toolbar trigger. Nested dialogs keep the drawer open; native Esc closes only the top dialog. Modal cleanup returns focus to the connected trigger, with the page trigger retained across confirmation replacements.
 
@@ -1833,3 +1857,4 @@ Production URL: https://…vercel.app
 | 2026-10-26 | v1.26 (WI-38): §5 ReplanResult adds derived notMoved by plan ID and ReplanNotMoved; §7.4.4/§11.2 document post-plan diagnostics and reused alternatives; §14 completion uses T39/T40. Heuristic, schemas and metrics unchanged; regression confirms barred moves work. |
 | 2026-10-26 | v1.27 (WI-39): §11.1/§11.5 expose useAppStoreApi and read current store state per keypress with one listener; §12/§13.1 add one CI retry, retained failure traces, GitHub/HTML reporters and failure artifacts; §14 adds the test-first race repair and warm/cold 10-repeat browser verification. |
 | 2026-11-12 | v1.28: §14 plans the peer bug fixes batch (WI-40–46, items A–G from 14 peer reports); later rows of this log record each item's contract changes. |
+| 2026-11-12 | v1.29 (WI-40, peer report #14): frozen §9.1 Repository contract changed — `load()` returns the stored `revision`, and `apply` / `saveSettings` / `replaceAll` take the expected revision and throw `ConcurrentModificationError` inside the same transaction when it differs. §9.2 Dexie version 2 adds `meta` (upgrade keeps v1 data); §5 adds ER8 `ConcurrentModification` and `INITIAL_REVISION` / `TAB_CHANNEL_NAME`; §6 `storedRevisionSchema`; §7.1 `EngineState.revision`, `createState(…, revision)`, `repositoryError`; §7.2 `Engine.reload()` and `EngineDeps.onCommit`; §4 and §11.1 the BroadcastChannel reload. Export format v1 unchanged. |

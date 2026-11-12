@@ -27,7 +27,7 @@ They supersede Assignments 1–3 (A1, A2, A3) wherever those documents disagree.
 |---|---|---|
 | `FR` | Functional requirement (FR1–FR7 kept from A1, FR8–FR11 added) | §4 |
 | `B` | Bonus feature | §4.3 |
-| `ER` | Error condition (ER1–ER4 kept from A1, ER5–ER7 added) | §5 |
+| `ER` | Error condition (ER1–ER4 kept from A1, ER5–ER8 added) | §5 |
 | `BR` | Business rule (exact semantics) | §6 |
 | `W` | User workflow | §7.3 |
 | `NFR` | Non-functional requirement | §8 |
@@ -66,7 +66,7 @@ The app is a static site (Vite + React + TypeScript) hosted on Vercel. All data 
 | Scheduling queue | Select several tasks, then the app offers options for one task at a time in priority order. The user applies or skips each, and every search sees the earlier placements. | FR9 |
 | Replan | For a date range: two alternative plans (Minimal change, Balanced week) for flexible events; preview with metrics; apply as one step | FR10 |
 | Settings | Working days and hours, default buffer, barred slots (e.g. lunch), default ranking criterion | FR11 |
-| Error handling | Typed errors, inline messages, nothing partially saved | ER1–ER7 |
+| Error handling | Typed errors, inline messages, nothing partially saved | ER1–ER8 |
 | Sample data | "Load sample calendar" presets so a grader opening the hosted URL sees something immediately | part of B2 |
 
 ### 2.2 Bonus features (in scope, built after core is tested)
@@ -346,10 +346,13 @@ Every engine command returns either success or a typed error (§5). Errors never
 | ER5 | Storage failure (IndexedDB write rejected or quota exceeded) | The repository promise rejects | `StorageError` | Error toast: "Couldn't save your change. Nothing was changed." with a **Retry** button. A dragged event snaps back. | Rolled back (the in-memory state is not committed) |
 | ER6 | Invalid import file (not JSON, wrong format or version, an invalid record, duplicate IDs, a broken task ↔ event link or a scheduled task whose event does not mirror it per BR-9) | Zod validation of the whole file | `InvalidImport {issues}` | "That file isn't a valid calendar export: events[3].end — End time must be after the start time." | Cancelled; existing data untouched |
 | ER7 | A stale option or plan: the calendar changed between computing the options and applying them, or time passed so that an offered slot, a planned move's target or a planned event now starts before "now" (AUDIT A07) | Version check; start ≥ now rounded up to 5 min when applying | `StaleResult` | "The calendar changed since these options were computed. Refreshing…" The options are recomputed automatically. | Cancelled, then refreshed |
+| ER8 | Another tab of the app, open on the same browser data, saved a change after this tab last loaded (peer report #14, WI-40) | Every write names the stored revision it was based on; the repository refuses it in the same transaction when the stored revision differs | `ConcurrentModification` | Warning toast: "This changed in another tab — your view has been refreshed. Nothing was overwritten." The tab reloads the stored data first (history cleared). | Cancelled; nothing stored; view refreshed |
 | — | A referenced ID no longer exists | Lookup | `NotFound {entity, id}` | "That item no longer exists." | Cancelled |
 | — | IndexedDB is unavailable (e.g. a locked-down private window) | Opening the DB fails at startup | — | Persistent banner: "Storage unavailable: changes will be lost when you close this tab." The app runs on the in-memory repository. | Degraded mode |
 
 ER4 is our decision: allow with a warning, as in A1. It keeps the user in control.
+
+**Several tabs (WI-40).** Each tab keeps its own copy of the data in memory. After a tab stores a change it tells the other tabs, which reload the stored data and show the info toast "Calendar updated in another tab." Reloading clears their undo/redo history (it described data that has since been replaced), makes open options and plans stale (ER7), and closes an edit dialog whose event or task was deleted. ER8 covers a write that races that message. In degraded mode (no IndexedDB) tabs share nothing, so nothing is announced.
 
 ---
 
@@ -595,6 +598,8 @@ Every search result also carries:
 | ER4 | A warning toast with *Move to …* and *View conflict* (8 s; it stays while hovered or focused). |
 | ER5 | An error toast with *Retry* (it stays until dismissed). |
 | ER7 | A brief info toast, then the options are recomputed automatically. |
+| ER8 | The view is reloaded first, then a warning toast (8 s) says nothing was overwritten; no Retry, because the command was based on the old view. |
+| Another tab saved a change | The view reloads and an info toast reads "Calendar updated in another tab."; undo/redo are cleared. |
 | Long operations | Loading a sample or importing more than 1,000 records shows a spinner overlay. Every other operation is instant. |
 
 | Unexpected crash | A full page saying **Something went wrong** with **Reload** and **Export data**, never a blank page (WI-35). Saved changes are kept in the browser. |
@@ -646,7 +651,7 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 | NFR1 | Responsiveness | Engine queries are synchronous and in memory. On the 5,000-event stress calendar, conflict detection plus one free-gap search has a median under 100 ms (T15). Drags feel instant. |
 | NFR2 | Algorithmic efficiency | Conflict sweep O(N log N + k), plus O(k log k) to order the output; slot search O(log N + n + s + m log m) on the pre-sorted store; replan O(c·(n + s + m log m)). No O(N²) code paths except the test oracle (TECH_SPEC §10). |
 | NFR3 | Correctness | The sweep and gap search match brute-force oracles on random inputs (T12, T33). Coverage is at least 90% of lines and branches in `src/engine/algorithms`, and at least 70% overall. |
-| NFR4 | Reliability | No command leaves partial data. A storage failure rolls back (ER5). An invalid import changes nothing (ER6). |
+| NFR4 | Reliability | No command leaves partial data. A storage failure rolls back (ER5). An invalid import changes nothing (ER6). A tab with an out-of-date view never overwrites another tab's saved change (ER8). |
 | NFR5 | Modularity | Algorithms are pure, with no imports from React, Dexie, the UI or date-fns. Layer boundaries are enforced by ESLint (TECH_SPEC §3.2). |
 | NFR6 | Maintainability | TypeScript strict mode, no `any`, typed commands and results, conventional commits, a CI gate on every PR. |
 | NFR7 | Portability | Runs in current Chrome, Edge, Firefox and Safari. Hosted as a static site. No backend. |
@@ -669,7 +674,7 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 | 8 | Busy-block cache with per-window invalidation (A1 §5.4.6, A3 §4.5) | No cache. Recompute on each request, and run a global conflict sweep after each change. | The cost is tiny (NFR1), and it removes a whole class of stale-cache bugs. |
 | 9 | Load only the visible window from the database (A3 §4.1) | Load everything into a sorted in-memory array at startup; window queries use binary search. | Simpler; at most a few thousand records. |
 | 10 | Conflict clusters in the panel (A3 §4.3) | A flat list sorted by time. Above 50 pairs it shows the first 50 plus "and N more". | Simpler; clusters are not needed at realistic sizes. |
-| 11 | Error names `InvalidTime`, `TaskLongerThanWindow`, `NoSlotFound` | These are kept, plus `InvalidInput`, `NotFound`, `StorageError`, `InvalidImport`, `StaleResult`. | Covers ER5–ER7 and malformed input. |
+| 11 | Error names `InvalidTime`, `TaskLongerThanWindow`, `NoSlotFound` | These are kept, plus `InvalidInput`, `NotFound`, `StorageError`, `InvalidImport`, `StaleResult`, `ConcurrentModification`. | Covers ER5–ER8 and malformed input. |
 | 12 | date-fns confined to the UI boundary (A3 R3) | date-fns is allowed only in `src/shared/time.ts` and `src/ui/**`. Algorithms never import it. | Local-day expansion (working hours, DST) must happen before the pure algorithms run. |
 | 13 | Property tests: 10,000 sets per run (A3 T12) | 1,000 runs with a fixed seed in CI; 10,000 runs with a random seed before each milestone | Keeps CI fast while keeping A3's stated practice. |
 | 14 | Undo/redo and import/export listed as not promised (A3 L4) | Both are in scope as bonuses B1 and B2. | The team chose them as quick wins. |
@@ -689,3 +694,4 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 | 2026-10-26 | v1.4 (WI-36, `docs/AUDIT.md`): BR-12 an unplaced event is busy for every other movable event (A01); ER1 dates must be in 1970–9999 (A02); ER4 a stale Move to opens fresh alternatives (A03); ER6 includes BR-9 mirror mismatches (A04); ER7 includes results overtaken by time (A07); §7.1 Replan inputs drop computed plans (A08) and Month defaults to its first full week (A10). |
 | 2026-10-26 | v1.5 (WI-37): §7.1 specifies shared tagged/coloured priority radios, task scheduling-hours radios and a full-width flex-window group below End. UI only; schemas and engine unchanged. |
 | 2026-10-26 | v1.6 (WI-38): FR10/BR-12 define per-plan remaining-problem explanations and alternatives, including zero movable events; BR-15 adds Fixed/Flexible row tags. Placement rules unchanged. |
+| 2026-11-12 | v1.7 (WI-40, peer report #14): ER8 `ConcurrentModification` — a write from a tab whose view is out of date is refused and that tab reloads; other tabs reload after every stored change with "Calendar updated in another tab." (§5, §7.4, NFR4, §9 row 11). Single-tab behaviour unchanged. |
