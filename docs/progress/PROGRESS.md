@@ -6,9 +6,9 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-49 finished on `feat/wi-49-categories`; merge and full main gate next, then claim WI-50 Scheduling model and lock.
-- **Last session:** 2026-11-12 · Codex · implemented and verified categories, including keyboard/focus fixes; all three specs and README updated, 52-scene screenshot set reviewed and committed. WI-49 branch gate fully green.
-- **Gate status:** 2026-11-12 WI-49 branch at `3da6322`: full gate green (693 tests + 1 skipped, 98.64% statements / 94.05% branches / 98.01% functions / 98.68% lines, algorithms 99.70/95.93/100/99.68, 7 DST, five properties × 10,000, build, 81/81 browser runs, zero retries). Full post-merge main gate next.
+- **Active WI:** WI-50 Scheduling model and lock, claimed on `feat/wi-50-scheduling-lock`. Next: test-first regressions for D-01–D-05; no WI-50 production code changed.
+- **Last session:** 2026-11-12 · Codex · completed WI-49 Categories, merged as `97c5354` with branch retained, full branch and main gates green; 52-scene screenshot set reviewed and committed. Starting WI-50.
+- **Gate status:** 2026-11-12 on `main` at `97c5354`: full gate green (693 tests + 1 skipped, 98.64% statements / 94.05% branches / 98.01% functions / 98.68% lines, algorithms 99.70/95.93/100/99.68, 7 DST, five properties × 10,000, build, 81/81 browser runs, zero retries).
 
 ## Work items
 
@@ -232,8 +232,10 @@ Binding design: `docs/extras/AUDIT_2.md` (D-01–D-19, C-01–C-08). Work in ord
   - 2026-11-12 · Codex · branch `feat/wi-49-categories` · done: Enter-in-inline-editor regression failed first, now saves only the category and returns focus to Category (7 editor RTL cases green); T38/E3/accessibility browser selectors require the full category-bearing names (D-11), all original assertions retained; compact surface-backed category chips keep E2's real resize gesture working (three repeats green); full pre-focus gate passed 693 + 1 skipped, coverage 98.68/94.05/98.01/98.73, algorithms unchanged, DST 7, five properties × 10,000 and 81/81 browsers with zero retries · next: finish/review refreshed 52-scene captures, final post-focus branch gate, merge and full main gate · note: Windows sandbox prevented Playwright child-server shutdown; running local browser gates with process permission lets cleanup exit normally. No test timeouts, property counts, retries or thresholds changed.
   - 2026-11-12 · Codex · branch `feat/wi-49-categories` · done: all 52 screenshot scenes passed (60 PNGs); reviewed light/dark Week and category editors at 1440/1280/1024 plus representative event/task forms; compact outlined category chips read on the tested surface background; README links the new captures · next: final post-focus branch gate is running, then finish/merge WI-49 and full main gate · note: final unit count is 693 + 1 skipped, overall coverage 98.64% statements / 94.05% branches / 98.01% functions / 98.68% lines, algorithms 99.70/95.93/100/99.68. No further production changes planned for WI-49.
   - 2026-11-12 · Codex · branch `feat/wi-49-categories` · done: final post-focus full gate green on the committed implementation: typecheck/lint, 693 + 1 skipped, overall 98.64/94.05/98.01/98.68, algorithms unchanged, DST 7, five properties × 10,000, build and 81/81 browser runs (27 checks × 3, zero retries); 52 screenshot scenes/60 reviewed PNGs committed, all D-11 Done-when cases covered · next: merge with branch retained, full main gate, then WI-50 · note: compared with BASELINE, tests +54 and all coverage drops <0.5 points; no remaining WI-49 work.
-- [ ] **WI-50** Scheduling model and lock — owner S + Dv — depends on 49
+  - 2026-11-12 · Codex · branch `main` · done: WI-49 merged as `97c5354`, branch retained; full post-merge gate green with the same 693 + 1 skipped and coverage, DST 7, five 10,000-case properties, build and 81/81 browser runs, zero retries · next: WI-50.
+- [~] **WI-50** Scheduling model and lock — owner S + Dv — depends on 49
   - Done when: T43 updated to the new wording; tests for the lock's gestures and grab-to-pan; D-02 search tests.
+  - 2026-11-12 · Codex · branch `feat/wi-50-scheduling-lock` · done: claimed after the complete WI-49 main gate; D-01–D-05/C-02/C-05 reviewed, current gesture/shortcut/store/alternatives paths inspected · next: failing scheduling/lock/confirmation tests, then D-02 engine search tests and implementation; no production code changed yet.
 - [ ] **WI-51** Suggestion pickers — owner S + Dv — depends on 50
   - Done when: Generator unit and property tests; picker RTL tests; e2e apply flows.
 - [ ] **WI-52** Past time — owner S + Dv — depends on 51
