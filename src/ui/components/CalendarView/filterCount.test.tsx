@@ -41,8 +41,13 @@ describe('T45: priority filter vs counts and List', () => {
       /^3 events \(1 hidden by filter\) · 0 tasks · 1 conflict$/,
     );
 
-    hideAll(store);
-    act(() => store.getState().actions.toggleEventPriority('low'));
+    act(() => {
+      const { toggleEventPriority } = store.getState().actions;
+      toggleEventPriority('low');
+      toggleEventPriority('high');
+      toggleEventPriority('medium');
+    });
+    expect(store.getState().eventPriorityFilter).toEqual(['low']);
     expect(statusLine()).toHaveTextContent(
       /^1 event \(3 hidden by filter\) · 0 tasks · 1 conflict$/,
     );

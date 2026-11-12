@@ -290,6 +290,45 @@
 
 .fc .fc-list-event td {
   padding: var(--space-3) var(--space-4);
+  /* WI-44 (#12): time, dot and the title line share one centre line. */
+  vertical-align: middle;
+}
+
+/* WI-44 (#12): the sticky day header paints above the rows' dashed conflict outlines and tag
+   outlines while scrolling, and is opaque in both themes. */
+.fc .fc-list-sticky .fc-list-day > * {
+  z-index: 2;
+  background: var(--bg);
+}
+
+/* WI-44 (#13): a row's content wraps instead of widening the table past a narrow list. */
+.fc .event-list-button {
+  /* Block-level, so it does not sit on the cell's text baseline (which put the title low). */
+  display: flex;
+  flex-wrap: wrap;
+  min-width: 0;
+  row-gap: 2px;
+  overflow-wrap: anywhere;
+}
+
+.fc .fc-list-event-title {
+  min-width: 0;
+}
+
+/* Below the drawer breakpoint the time and the day header may wrap too; wider screens keep the
+   one-line time column (phone layout stays best effort). */
+@media (max-width: 640px) {
+  .fc .fc-list-event-time {
+    white-space: normal;
+  }
+
+  .fc .fc-list-event td {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .fc .fc-list-day-cushion {
+    padding: var(--space-2) var(--space-3);
+  }
 }
 
 /* ── Barred slots: hatched background blocks with their label (FR11) ── */

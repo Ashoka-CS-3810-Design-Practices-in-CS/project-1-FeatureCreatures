@@ -72,6 +72,15 @@ export const SETTINGS_SAVED_TEXT = 'Settings saved.';
 export const DATA_CLEARED_TEXT = 'All data cleared.';
 export const OTHER_TAB_UPDATED_TEXT = 'Calendar updated in another tab.';
 export const FIXED_MOVE_BODY = 'The planner never moves it on its own.';
+export const ALL_HIDDEN_BY_FILTER_TEXT =
+  'All events in this range are hidden by the priority filter';
+
+// PRE:  visible ≥ 0 events pass the priority filter; hidden ≥ 0 do not
+// POST: returns "N events", plus " (M hidden by filter)" when M > 0 (WI-44, report #10)
+export function eventCountText(visible: number, hidden: number): string {
+  const shown = `${visible} event${visible === 1 ? '' : 's'}`;
+  return hidden === 0 ? shown : `${shown} (${hidden} hidden by filter)`;
+}
 export const FIXED_TAG_HINT =
   'Fixed: the planner never moves it. Dragging asks first; you can also edit its times or tick Flexible.';
 
