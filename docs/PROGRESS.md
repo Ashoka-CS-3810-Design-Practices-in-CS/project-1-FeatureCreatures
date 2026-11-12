@@ -6,7 +6,7 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** Round 2 overhaul (WI-47–59). Batch plan and baseline recorded; next WI-47 Docs restructure.
+- **Active WI:** WI-47 Docs restructure on `feat/wi-47-docs-restructure`; Round 2 baseline and plan committed on main.
 - **Last session:** 2026-11-12 · Codex · committed the unchanged Round 2 planning inputs, verified clean main and WI-46 tests, recorded the full baseline, and planned WI-47–59.
 - **Gate status:** 2026-11-12 on `main` at `2cc3824`: full Round 2 baseline green (639 tests + 1 skipped, 7 DST, five properties × 10,000, build, 75/75 browser runs); exact coverage below.
 
@@ -209,8 +209,9 @@ Binding design: `docs/extras/AUDIT_2.md` (D-01–D-19, C-01–C-08). Work in ord
 
 - **BASELINE** (2026-11-12, Codex, `main` at `2cc3824`): typecheck and lint clean; `test:coverage` **639 passed + 1 skipped** (T15 opt-in), 83 passed files + 1 skipped; overall coverage **98.71% statements / 94.23% branches / 98.23% functions / 98.78% lines**; algorithms **99.70% statements / 95.93% branches / 100% functions / 99.68% lines**; `test:dst` **7/7**; `test:props:full` **5/5 × 10,000 cases**, random seeds; `build` **OK**; `npx playwright test --repeat-each=3 --workers=2` **75/75** (25 checks × 3, both projects, zero retries, exit 0). Spot-check: WI-46's three Settings layout/focus tests exist and passed within the coverage run.
 
-- [ ] **WI-47** Docs restructure — owner S + Dv — depends on 46
+- [~] **WI-47** Docs restructure — owner S + Dv — depends on 46
   - Done when: Files moved with `git mv`; a grep for the old paths finds nothing outside change logs; the gate is green.
+  - 2026-11-12 · Codex · branch `feat/wi-47-docs-restructure` · done: baseline and batch setup committed; existing path/link references inventoried · next: `git mv` progress/extras, fix all references and relative links, full branch/main gate · note: no application behaviour or test expectations change (D-18).
 - [ ] **WI-48** Data model v3 and migration — owner S + Dv — depends on 47
   - Done when: Dexie v2→v3 upgrade test; v1/v2 import tests; samples re-exported; all existing tests pass (fixtures updated mechanically).
 - [ ] **WI-49** Categories — owner S + Dv — depends on 48
