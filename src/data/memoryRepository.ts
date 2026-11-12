@@ -40,7 +40,7 @@ export class MemoryRepository implements Repository {
   private revision = INITIAL_REVISION;
 
   // PRE:  none
-  // POST: resolves to deep copies of every stored event, task and the settings (null if never
+  // POST: resolves to deep copies of every stored category, event, task and the settings (null if never
   //       saved), with the stored revision
   async load(): Promise<StoredData> {
     return structuredClone({
@@ -74,7 +74,7 @@ export class MemoryRepository implements Repository {
   }
 
   // PRE:  data holds well-formed rows and settings
-  // POST: when expectedRevision is the stored revision, the stored events, tasks and settings are
+  // POST: when expectedRevision is the stored revision, stored categories, events, tasks and settings are
   //       exactly a deep copy of data and the revision grows by 1; otherwise rejects with
   //       ConcurrentModificationError, storing nothing
   async replaceAll(

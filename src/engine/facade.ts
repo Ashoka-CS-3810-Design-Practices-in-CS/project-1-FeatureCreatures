@@ -221,7 +221,7 @@ class CalendarEngine implements Engine {
   }
 
   // PRE:  none (Repository.load() returns untrusted data)
-  // POST: returns the stored events, tasks, settings and revision once validated (shapes, links
+  // POST: returns stored categories, events, tasks, settings and revision once validated (shapes, links
   //       and the BR-9 mirror); err StorageError when loading fails or the data is damaged
   private async loadStored(): Promise<Result<LoadedData>> {
     let loaded: unknown;
@@ -483,7 +483,7 @@ class CalendarEngine implements Engine {
   }
 
   // PRE:  none
-  // POST: returns the current events, tasks and settings as pretty-printed ExportFile JSON (§9.4),
+  // POST: returns categories, events, tasks and settings as pretty-printed v2 ExportFile JSON (§9.4),
   //       stamped with now
   exportData(): string {
     const { categories, events, tasks, settings } = this.state;

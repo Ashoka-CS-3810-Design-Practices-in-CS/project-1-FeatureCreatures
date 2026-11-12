@@ -85,10 +85,10 @@ export function barredOverlapsFor(
   return warnings;
 }
 
-// PRE:  events have distinct ids, in any order; tasks have distinct ids; records/settings are valid;
+// PRE:  categories, events and tasks have distinct ids per kind; records/settings and references are valid;
 //       revision is the repository revision the records were loaded from or written as
 // POST: returns version 0 at revision over these records: events sorted by compareEvents, their
-//       conflicts and barred overlaps detected, and empty undo / redo stacks
+//       conflicts and barred overlaps detected, categories retained, and empty undo / redo stacks
 export function createState(
   data: {
     categories: readonly Category[];

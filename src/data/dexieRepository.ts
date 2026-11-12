@@ -92,7 +92,7 @@ export class DexieRepository implements Repository {
   }
 
   // PRE:  the database is open
-  // POST: resolves to every stored event and task, the settings (null if never saved) and the
+  // POST: resolves to every stored category, event and task, the settings (null if never saved) and the
   //       revision, read in one consistent transaction
   async load(): Promise<StoredData> {
     const { events, tasks, settings, meta, categories } = this.db;
@@ -156,7 +156,7 @@ export class DexieRepository implements Repository {
   }
 
   // PRE:  the database is open; data holds well-formed rows and settings
-  // POST: when expectedRevision is the stored revision, the three data tables hold exactly data
+  // POST: when expectedRevision is the stored revision, the four data tables hold exactly data
   //       and the revision grows by 1; otherwise nothing changed and the promise rejects
   async replaceAll(
     data: { events: CalendarEvent[]; tasks: Task[]; settings: Settings; categories: Category[] },
