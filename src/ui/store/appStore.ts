@@ -99,6 +99,7 @@ export interface AppActions {
   setActiveRange(range: Interval): void;
   setView(type: ViewType, date: Minute): void;
   toggleEventPriority(priority: Priority): void;
+  showAllEventPriorities(): void;
   createTask(input: TaskInput): Promise<Result<MutationResult>>;
   updateTask(id: string, input: TaskInput): Promise<Result<MutationResult>>;
   deleteTask(id: string): Promise<Result<MutationResult>>;
@@ -605,6 +606,12 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
             candidate === priority ? !shown.includes(candidate) : shown.includes(candidate),
           ),
         });
+      },
+
+      // PRE:  none
+      // POST: the calendar's priority filter shows every priority again (List's Show all, WI-44)
+      showAllEventPriorities() {
+        set({ eventPriorityFilter: [...ALL_PRIORITIES] });
       },
 
       // PRE:  input comes from the task dialog (validated by the engine)

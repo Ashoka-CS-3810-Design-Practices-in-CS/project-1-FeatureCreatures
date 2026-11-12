@@ -14,6 +14,7 @@ import { SidePanel } from './components/SidePanel/SidePanel';
 import { Toasts } from './components/Toasts/Toasts';
 import { Toolbar } from './components/Toolbar/Toolbar';
 import { errorMessage } from './format/errors';
+import { eventCountText } from './format/explain';
 import { useShortcuts } from './hooks/useShortcuts';
 import { useTheme } from './hooks/useTheme';
 import { useNarrowLayout } from './hooks/useNarrowLayout';
@@ -47,14 +48,16 @@ function FatalScreen() {
   );
 }
 
-// PRE:  rendered under StoreProvider; reads status, storageWarning, snapshot and panelsOpen;
+// PRE:  rendered under StoreProvider; reads status, storageWarning, snapshot, eventPriorityFilter
+//       and panelsOpen;
 //       uses setPanelsOpen to control the responsive drawer
 //       + additional props from: Toolbar, EmptyState, CalendarView, SidePanel, BusyOverlay,
 //       EventDialog, TaskDialog, ReplanDialog, SettingsDialog, ShortcutHelp, ConfirmDialog,
 //       SlotPicker, Toasts, FatalScreen
 // POST: applies the theme and listens for shortcuts (B3, B4); shows the loading line, the fatal
 //       screen, or the app: the degraded-mode banner when storage is unavailable, the toolbar, the
-//       empty state on a blank calendar, the status line, the calendar, the task and conflict
+//       empty state on a blank calendar, the status line (events the priority filter shows, and
+//       how many it hides; conflicts always count every event, FR6), the calendar, the task and conflict
 //       panels, the open dialog, the picker and the toasts
 export function App() {
   const calendarRef = useRef<FullCalendar>(null);
@@ -66,6 +69,7 @@ export function App() {
   const status = useAppStore((state) => state.status);
   const storageWarning = useAppStore((state) => state.storageWarning);
   const snapshot = useAppStore((state) => state.snapshot);
+  const filter = useAppStore((state) => state.eventPriorityFilter);
 
   if (status === 'loading') {
     return <p role="status">Loading your calendar…</p>;
@@ -75,6 +79,7 @@ export function App() {
   }
 
   const isEmpty = snapshot.events.length === 0 && snapshot.tasks.length === 0;
+  const visibleCount = snapshot.events.filter((event) => filter.includes(event.priority)).length;
   return (
     <div className={`app ${styles.app}`}>
       {storageWarning && (
@@ -95,7 +100,8 @@ export function App() {
       <main>
         {isEmpty && <EmptyState />}
         <p className="status-line">
-          {countOf(snapshot.events.length, 'event')} · {countOf(snapshot.tasks.length, 'task')} ·{' '}
+          {eventCountText(visibleCount, snapshot.events.length - visibleCount)} ·{' '}
+          {countOf(snapshot.tasks.length, 'task')} ·{' '}
           {countOf(snapshot.conflicts.length, 'conflict')}
         </p>
         <CalendarView calendarRef={calendarRef} />
