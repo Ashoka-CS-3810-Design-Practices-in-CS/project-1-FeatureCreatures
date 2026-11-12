@@ -34,6 +34,26 @@ describe('format/errors', () => {
       'Its window has no available time (it may be in the past, outside working days/hours, or fully barred).',
     ],
     [
+      'ER2, window entirely past',
+      { code: 'TaskLongerThanWindow', durationMin: 60, longestStretchMin: 0, emptyCause: 'past' },
+      'Its window is entirely in the past.',
+    ],
+    [
+      'ER2, window without working hours',
+      {
+        code: 'TaskLongerThanWindow',
+        durationMin: 60,
+        longestStretchMin: 0,
+        emptyCause: 'noWorkingHours',
+      },
+      'Its window has no working hours. Choose "Any time" to search outside them.',
+    ],
+    [
+      'ER2, window fully barred',
+      { code: 'TaskLongerThanWindow', durationMin: 60, longestStretchMin: 0, emptyCause: 'barred' },
+      'Its window is fully barred: every free minute in it is inside a barred slot.',
+    ],
+    [
       'ER3',
       {
         code: 'NoSlotFound',
