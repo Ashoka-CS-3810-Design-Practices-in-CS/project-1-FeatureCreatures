@@ -1,10 +1,30 @@
 // Derived views of the snapshot for the panels (FR6). They never change the snapshot itself.
 
 import { PRIORITY_RANK } from '@/shared/constants';
-import type { Task } from '@/shared/types';
+import type { CalendarEvent, Priority, Task } from '@/shared/types';
 import type { AppState } from './appStore';
 
 type TaskPanelState = AppState['taskPanel'];
+
+// PRE:  state supplies current categories and the last session choice
+// POST: returns that choice if still present, otherwise the first id or '' when none remain
+export function defaultCategoryId(state: Pick<AppState, 'snapshot' | 'lastCategoryId'>): string {
+  return (
+    state.snapshot.categories.find((category) => category.id === state.lastCategoryId)?.id ??
+    state.snapshot.categories[0]?.id ??
+    ''
+  );
+}
+
+// PRE:  event is a calendar event; priorities and hiddenCategoryIds are the UI filters
+// POST: returns whether both filters permit this event; never alters domain data
+export function eventIsVisible(
+  event: CalendarEvent,
+  priorities: readonly Priority[],
+  hiddenCategoryIds: readonly string[],
+): boolean {
+  return priorities.includes(event.priority) && !hiddenCategoryIds.includes(event.categoryId);
+}
 
 // PRE:  first and second are tasks
 // POST: returns < 0 when first has the higher priority, > 0 when second does, else 0

@@ -79,7 +79,7 @@ test('List event names are complete and keyboard editing can move and resize an 
   await loadSample(page);
   await page.getByRole('button', { name: 'List', exact: true }).click();
   const lecture = page.getByRole('button', {
-    name: 'Lecture, Tue 3 Nov 10:00–11:30, High priority, Fixed, Conflict 30 min',
+    name: 'Lecture, Tue 3 Nov 10:00–11:30, High priority, Fixed, Conflict 30 min, Class',
     exact: true,
   });
   await lecture.focus();
@@ -92,7 +92,7 @@ test('List event names are complete and keyboard editing can move and resize an 
   await page.keyboard.press('Enter');
   await expect(dialog).toBeHidden();
   const moved = page.getByRole('button', {
-    name: 'Lecture, Tue 3 Nov 14:00–16:00, High priority, Fixed',
+    name: 'Lecture, Tue 3 Nov 14:00–16:00, High priority, Fixed, Class',
     exact: true,
   });
   await expect(moved).toBeVisible();

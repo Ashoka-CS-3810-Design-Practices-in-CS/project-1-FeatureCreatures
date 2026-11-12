@@ -296,6 +296,7 @@ export type LegacyCategory = 'meeting' | 'class' | 'appointment' | 'assignment' 
 export interface Category {
   readonly id: string; readonly name: string; readonly colour: string; readonly createdAt: Minute;
 }
+export type CategoryInput = Pick<Category, 'name' | 'colour'>;
 export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;  // 0 = Sunday (JS Date convention)
 
 export interface CalendarEvent extends Interval {
@@ -511,7 +512,8 @@ export type EngineError =
   | { code: 'InvalidImport'; issues: FieldIssue[] }                                  // ER6
   | { code: 'StaleResult' }                                                          // ER7
   | { code: 'ConcurrentModification' }                                               // ER8 (WI-40)
-  | { code: 'NotFound'; entity: 'event' | 'task'; id: string };
+  | { code: 'CategoryInUse'; eventCount: number; taskCount: number }
+  | { code: 'NotFound'; entity: 'event' | 'task' | 'category'; id: string };
 ```
 
 `src/shared/constants.ts`:
@@ -623,6 +625,8 @@ export const exportFileSchema = z.object({
 
 WI-48 adds `keptInBarred` to stored events and `doneAt` to stored tasks. `categorySchema` validates `{id, name, colour, createdAt}`; hex colours normalise to lowercase. `parseCategorisedInput(schema, input, categories)` validates new/edited event and task inputs, including that `categoryId` exists. `linkIssues(events, tasks, categories)` additionally checks category identity/name/colour uniqueness and every reference on import/init/reload. `shared/legacy.ts` is the only enum-to-id mapping, shared by Dexie upgrades and v1 import.
 
+WI-49: `categoryInputSchema` picks name/colour from `categorySchema`; `parseCategoryInput(input, categories, editingId?) → Result<CategoryInput>` checks the shape, case-insensitive name uniqueness, and `categoryColourIssue` against other ids. `categoryColourIssue(hex, otherCategories) → string | null` checks reserved and occupied colours at OKLab distance `< MIN_CATEGORY_COLOUR_DISTANCE` (0.04), then both tag backgrounds at `MIN_NON_TEXT_CONTRAST` (3). `shared/colours.ts` supplies pure `colourDistance` and `contrastRatio`; standard sRGB/OKLab coefficients, palette and reserved colours are named in `constants.ts`. Imports/init/reload run the same colour checks through `linkIssues`. The twelve swatches include the five seeded colours; reserved neutral event fills are `#363631` and `#ebe6d9` for WI-57, plus both themes' current danger and priority colours. `tokens.test.ts` ties tag backgrounds to CSS `surface` in both themes and tests every swatch and text pair.
+
 `storedDataSchema = {categories: Category[], events: storedEvent[], tasks: storedTask[], settings: storedSettings | null}` validates `Repository.load()` in `engine.init()` and `engine.reload()`; `storedRevisionSchema = {revision: int ≥ 0}` validates its revision (WI-40). `searchOptionsSchema = {bufferMin?: int 0–120}` validates the `bufferMin` override of `findSlots`, `suggestAlternatives` and `planReplan`; it shares one `bufferMinSchema` with `settingsSchema`. `slotSchema = {slot: interval}` (AUDIT A06) validates the slot of `scheduleTask` and `applyAlternative` through `requireValidSlot` in `search.ts`.
 
 - Zod 4 cannot `.extend()` a refined object, so each schema is a plain object shape plus a named refine function (`refineEventTiming`, `refineTaskWindow`), and the stored schemas extend the shape and re-apply the same refinements.
@@ -677,6 +681,7 @@ export interface EngineState {
 export interface RecordChange<T> { readonly id: string; readonly before: T | null; readonly after: T | null }
 export interface Change {
   readonly label: string;
+  readonly categories?: readonly RecordChange<Category>[];
   readonly events: readonly RecordChange<CalendarEvent>[];
   readonly tasks: readonly RecordChange<Task>[];
 }
@@ -693,7 +698,7 @@ export interface Change {
 - removes the old copy, with `removeById`
 - inserts the new copy, if it is non-null, with `insertSorted` for events, or by replacing in place / appending for tasks
 
-It returns the new `{events, tasks}`.
+It returns the new `{categories, events, tasks}`. Categories use the same in-place replacement/append rule as tasks; absent category changes mean an empty list.
 
 **`commit(state, change, mode, repo)`**, where `mode` is `'do' | 'undo' | 'redo'`:
 
@@ -725,6 +730,10 @@ export interface Engine {
   init(): Promise<Result<Snapshot>>;
   reload(): Promise<Result<Snapshot>>;   // WI-40: adopt what is stored now (another tab's change)
   snapshot(): Snapshot;
+
+  createCategory(input: CategoryInput): Promise<Result<MutationResult>>;
+  updateCategory(id: string, input: CategoryInput): Promise<Result<MutationResult>>;
+  deleteCategory(id: string): Promise<Result<MutationResult>>;
 
   // ── Event CRUD pipeline (FR1–FR3) ──
   createEvent(input: EventInput): Promise<Result<MutationResult>>;
@@ -764,6 +773,8 @@ export interface Engine {
 - **`bufferMin` overrides** must be integers from 0 to 120. Anything else gives `InvalidInput`.
 
 ### 7.3 Command queue
+
+Category commands run through this queue and `pipelines/categories.ts`. Create trims/normalises before assigning `newId()`/`now`; edit keeps the id/time and all referring rows; delete counts every referring event/task (done included) before committing. Every accepted change is one history entry and one revision-checked repository apply, including categories in the Dexie transaction. `CategoryInUse` contains event/task counts and writes nothing; labels are `Create/Edit/Delete category "<name>"`.
 
 The facade serialises mutations, so two quick drags can never interleave:
 
@@ -1313,6 +1324,7 @@ invalidReason(e, win, segs, occupied, b, frames):   // first failing check, in t
 ```ts
 export interface StoredData { categories: Category[]; events: CalendarEvent[]; tasks: Task[]; settings: Settings | null; revision: number }
 export interface ChangeSet {
+  putCategories?: Category[]; deleteCategoryIds?: string[];
   putEvents: CalendarEvent[]; deleteEventIds: string[];
   putTasks: Task[];           deleteTaskIds: string[];
 }
@@ -1459,6 +1471,8 @@ interface AppState {
   view: { type: 'timeGridDay' | 'timeGridWeek' | 'dayGridMonth' | 'listWeek'; date: Minute;
           activeRange: Interval | null };      // activeRange from FullCalendar datesSet
   eventPriorityFilter: Priority[];             // calendar filter (FR6), default all
+  hiddenCategoryIds: string[];                // calendar only; default [] shows new categories too
+  lastCategoryId: string | null;             // session choice; missing id falls back to first
   taskPanel: { sort: 'priority' | 'windowEnd'; priorities: Priority[]; status: 'unscheduled' | 'scheduled' | 'all';
                selectedIds: string[] };
   dialog: null
@@ -1523,7 +1537,7 @@ All sample loads and imports with more than `IMPORT_SPINNER_THRESHOLD` events pl
 | `EventContent` | Renders an event block: title, time, `[H]/[M]/[L]` tag, `Fixed`/`Task` tag, `⚠ Conflict N min` | props | — |
 | `TaskPanel` | Sort/filter controls, task rows with checkbox, status, *Find time*, context menu; "Find time for N selected" | `snapshot.tasks`, `taskPanel` | `openTaskPicker`, dialogs |
 | `ConflictPanel` | List conflicts (first 50 + "and N more"), each "⚠ A ↔ B · Tue 3 Nov 11:00–11:30 (30 min)" (via `fmtRange`), "(hidden by filter)" note, *Suggest alternatives*; empty state text "No conflicts" | `snapshot.conflicts`, `events` | `openAlternatives` |
-| `EventDialog` | RHF form with `eventResolver`, shared native priority radios, category-based flexible default, full-width flex-window group below End, delete with confirm | `dialog`, event | `createEvent/updateEvent/deleteEvent` |
+| `EventDialog` | RHF form with `eventResolver`, shared priority radios and CategorySelect/inline creation; new events Fixed independent of category; full-width flex-window group below End, delete with confirm | `dialog`, event | `createEvent/updateEvent/deleteEvent` |
 | `TaskDialog` | RHF form with `taskResolver`; shared priority radios; Controller maps Working hours only / Any time to boolean useWorkingHours; Find time / Unschedule / Delete in edit mode | task | task actions |
 | `PriorityRadioGroup` | Native radios in a Priority fieldset; [H]/[M]/[L] tags use existing priority tokens; browser provides arrow-key navigation | RHF registration | registration callbacks |
 | `SlotPicker` | Both picker modes (Figure 2), summary line, options as a radio group, ER2/ER3 blocks with suggestions + "Edit task" | `picker` | picker actions |
@@ -1534,6 +1548,10 @@ All sample loads and imports with more than `IMPORT_SPINNER_THRESHOLD` events pl
 WI-38: Replan plan cards also show **Not moved by Replan** with the derived per-plan reasons, problem names and per-event alternatives. Zero-move cards count remaining entries instead of saying only "No changes needed"; diagnostic cards appear even with zero movable events. Barred-overlap rows carry Fixed/Flexible tags. The alternatives action uses `openEventAlternatives(eventId)` for any diagnostic event; this is the existing flow, with no target toggle.
 
 ### 11.3 FullCalendar integration (`CalendarView/`)
+
+WI-49: shared CategoryEditor/CategorySelect/CategoryTag components serve Settings and both item dialogs. The editor is an inline fieldset with type=button actions so it never submits the enclosing item form. Unavailable swatches stay visible but disabled; free-picker/name errors use shared validators and field descriptions. New item forms resolve `lastCategoryId` when it exists, otherwise the first current id or empty; item save requires a category. Selection remembers the id for this store session only. `eventFormValues` defaults flexible=false; there is no `flexibleByDefault`.
+
+`toFullCalendar(snapshot, priorityFilter, activeRange, emphasisIds, hiddenCategoryIds = [])` resolves current Category records by id for tags and appends the name to the accessible label/tooltip. Category chips sit beside H/M/L. Both filters apply to calendar rendering and status counts; ConflictPanel's hidden note uses both, while detection/searches/tasks remain independent. Show all and Reset filters clear both. With categories hidden, empty List says "All events in this range are hidden by the calendar filters"; the priority-only wording remains for priority-only filtering. Categories created later are visible automatically.
 
 FullCalendar is a **controlled, render-only view**. Its `events` prop is always derived from `snapshot`, and it is never the source of truth.
 
@@ -1557,7 +1575,7 @@ FullCalendar is a **controlled, render-only view**. Its `events` prop is always 
 />
 ```
 
-**`toFullCalendar.ts`** maps each visible event (after the priority filter) to:
+**`toFullCalendar.ts`** maps each visible event (after priority and category filters) to:
 
 ```ts
 {
@@ -1923,3 +1941,4 @@ Production URL: https://…vercel.app
 | 2026-11-12 | v1.36: §14 plans Round 2 WI-47–59 from `extras/AUDIT_2.md` §7, in order, with the full branch/main gate and final baseline comparison. Behaviour and frozen contracts change in their implementing WIs. |
 | 2026-11-12 | v1.37 (WI-47, D-18): §0/§2/§14 and references use `docs/progress/PROGRESS.md` and `docs/extras/`; main specs, samples and screenshots stay in place. All local links and references checked, full Round 2 gate required before and after merge. |
 | 2026-11-12 | v1.38 (WI-48, D-17): frozen §5 types/constants gain Category, `categoryId`, kept ids, done/doneAt, global working-time switch and export v2. §6 legacy/stored/category schemas and category-reference validation; §7 state/snapshot/import/export carry categories; §9 repositories load/replace categories atomically and Dexie v3 migrates without editing v1/v2 or changing the revision. T48 retains v1 compatibility and six samples are v2. |
+| 2026-11-12 | v1.39 (WI-49, D-11): CategoryInput and queued category CRUD; CategoryInUse/NotFound category; optional category before/after images and repository puts/deletes share the revision-checked transaction and history. Shared OKLab/contrast validators, twelve swatches, CategoryEditor/Select/Tag, Settings section, session default and calendar filters. New events Fixed (C-01); removed flexibleByDefault. |

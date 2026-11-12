@@ -171,6 +171,33 @@ describe.each(adapters)('%s (Repository contract)', (_name, openRepository) => {
 
     expect((await repository.load()).events[0]?.title).toBe('a');
   });
+
+  it('T49: category puts/deletes share the record transaction and reject stale revisions', async () => {
+    const repository = await openRepository();
+    const category = { id: 'research', name: 'Research', colour: '#577d35', createdAt: 0 };
+    await repository.apply(
+      changeSet({
+        putCategories: [category],
+        putEvents: [{ ...lectureA, categoryId: category.id }],
+      }),
+      0,
+    );
+    expect((await repository.load()).categories).toContainEqual(category);
+    const before = await repository.load();
+    await expect(
+      repository.apply(
+        changeSet({ deleteCategoryIds: [category.id], deleteEventIds: [lectureA.id] }),
+        0,
+      ),
+    ).rejects.toThrow();
+    expect(await repository.load()).toEqual(before);
+    await repository.apply(
+      changeSet({ deleteCategoryIds: [category.id], deleteEventIds: [lectureA.id] }),
+      1,
+    );
+    expect((await repository.load()).categories).toEqual(DEFAULT_CATEGORIES);
+    expect((await repository.load()).events).toEqual([]);
+  });
 });
 
 describe('DexieRepository (IndexedDB specifics)', () => {
@@ -185,6 +212,22 @@ describe('DexieRepository (IndexedDB specifics)', () => {
       repository.apply(changeSet({ deleteEventIds: ['a'], putEvents: [keyless] }), 1),
     ).rejects.toThrow();
     expect((await repository.load()).events.map((row) => row.id)).toEqual(['a']);
+  });
+
+  it('T49: a later event failure rolls back category edits and the revision too', async () => {
+    const repository = await openFreshDexie();
+    const before = await repository.load();
+    await expect(
+      repository.apply(
+        changeSet({
+          deleteCategoryIds: ['meeting'],
+          putCategories: [{ id: 'research', name: 'Research', colour: '#577d35', createdAt: 0 }],
+          putEvents: [keyless],
+        }),
+        0,
+      ),
+    ).rejects.toThrow();
+    expect(await repository.load()).toEqual(before);
   });
 
   it('replaceAll is atomic: a failing put keeps the old data', async () => {

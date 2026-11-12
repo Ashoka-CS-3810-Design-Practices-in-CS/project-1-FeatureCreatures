@@ -4,6 +4,7 @@ import type { Priority } from '@/shared/types';
 import { fmtViewTitle } from '../../format/time';
 import type { ThemeChoice } from '../../hooks/useTheme';
 import { useAppStore, type ViewType } from '../../store/appStore';
+import { CategoryTag } from '../Categories/CategoryTag';
 
 const VIEWS: { type: ViewType; label: string }[] = [
   { type: 'timeGridDay', label: 'Day' },
@@ -25,11 +26,12 @@ function historyTooltip(verb: 'Undo' | 'Redo', label: string | null): string {
   return label === null ? `Nothing to ${verb.toLowerCase()}` : `${verb}: ${label}`;
 }
 
-// PRE:  rendered under StoreProvider; reads view, eventPriorityFilter and snapshot's undo / redo
+// PRE:  rendered under StoreProvider; reads view, eventPriorityFilter, hiddenCategoryIds, categories and snapshot's undo / redo
 //       state; uses openDialog, toggleEventPriority, undo and redo; calendarRef points at the
 //       FullCalendar that CalendarView renders; theme is the current theme choice and onCycleTheme
 //       moves to the next one
 //       onOpenPanels, when supplied, opens the narrow-screen drawer; panelsOpen is its state
+//       + additional props from: CategoryTag
 // POST: shows the toolbar of Figure 1: previous / Today / next, the period title, the view switch,
 //       the priority filter chips, + Event, + Task, Replan, Undo / Redo (disabled when there is
 //       nothing to do, tooltip = the change), theme, Keyboard shortcuts and Settings
@@ -48,6 +50,8 @@ export function Toolbar({
 }) {
   const view = useAppStore((state) => state.view);
   const filter = useAppStore((state) => state.eventPriorityFilter);
+  const categories = useAppStore((state) => state.snapshot.categories);
+  const hiddenCategories = useAppStore((state) => state.hiddenCategoryIds);
   const canUndo = useAppStore((state) => state.snapshot.canUndo);
   const canRedo = useAppStore((state) => state.snapshot.canRedo);
   const undoLabel = useAppStore((state) => state.snapshot.undoLabel);
@@ -108,6 +112,21 @@ export function Toolbar({
             </button>
           ))}
         </div>
+        <div role="group" aria-label="Category filter" className="category-filters">
+          {categories.map((category) => (
+            <button
+              key={category.id}
+              type="button"
+              aria-pressed={!hiddenCategories.includes(category.id)}
+              onClick={() => actions.toggleEventCategory(category.id)}
+            >
+              <CategoryTag category={category} />
+            </button>
+          ))}
+        </div>
+        <button type="button" onClick={actions.showAllEventPriorities}>
+          Reset filters
+        </button>
         <button
           type="button"
           className="primary"

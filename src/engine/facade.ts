@@ -22,6 +22,7 @@ import { fromMinute } from '@/shared/time';
 import type {
   CalendarEvent,
   Category,
+  CategoryInput,
   EventInput,
   ExportFile,
   Interval,
@@ -55,6 +56,7 @@ import {
   updateTask,
 } from './pipelines/taskScheduler';
 import { notBeforeFor } from './search';
+import { createCategory, updateCategory, deleteCategory } from './pipelines/categories';
 import {
   createState,
   barredOverlapsFor,
@@ -83,6 +85,9 @@ export interface Engine {
   init(): Promise<Result<Snapshot>>;
   reload(): Promise<Result<Snapshot>>; // adopt what another tab stored; clears history (WI-40)
   snapshot(): Snapshot;
+  createCategory(input: CategoryInput): Promise<Result<MutationResult>>;
+  updateCategory(id: string, input: CategoryInput): Promise<Result<MutationResult>>;
+  deleteCategory(id: string): Promise<Result<MutationResult>>;
 
   // ── Event CRUD pipeline (FR1–FR3) ──
   createEvent(input: EventInput): Promise<Result<MutationResult>>;
@@ -313,6 +318,24 @@ class CalendarEngine implements Engine {
       undoLabel: undo.at(-1)?.label ?? null,
       redoLabel: redo.at(-1)?.label ?? null,
     };
+  }
+
+  // PRE:  input comes from the UI (validated by the category pipeline)
+  // POST: queues one atomic, undoable category creation
+  createCategory(input: CategoryInput): Promise<Result<MutationResult>> {
+    return this.mutate((context) => createCategory(context, input));
+  }
+
+  // PRE:  id is any string; input comes from the UI
+  // POST: queues a validated category edit, with references preserved
+  updateCategory(id: string, input: CategoryInput): Promise<Result<MutationResult>> {
+    return this.mutate((context) => updateCategory(context, id, input));
+  }
+
+  // PRE:  id is any string
+  // POST: queues deletion of an unused category, or returns CategoryInUse/NotFound
+  deleteCategory(id: string): Promise<Result<MutationResult>> {
+    return this.mutate((context) => deleteCategory(context, id));
   }
 
   // PRE:  input comes from the UI (validated by the pipeline)

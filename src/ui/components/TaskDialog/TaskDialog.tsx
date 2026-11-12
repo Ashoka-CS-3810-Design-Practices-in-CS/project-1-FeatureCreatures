@@ -11,24 +11,19 @@ import { useAppStore } from '../../store/appStore';
 import { ErrorText } from '../Modal/ErrorText';
 import { Modal } from '../Modal/Modal';
 import { PriorityRadioGroup } from '../PriorityRadioGroup/PriorityRadioGroup';
-
-const CATEGORIES: { value: string; label: string }[] = [
-  { value: 'assignment', label: 'Assignment' },
-  { value: 'personal', label: 'Personal' },
-  { value: 'meeting', label: 'Meeting' },
-  { value: 'class', label: 'Class' },
-  { value: 'appointment', label: 'Appointment' },
-];
+import { CategorySelect } from '../Categories/CategorySelect';
+import { defaultCategoryId } from '../../store/selectors';
 
 // PRE:  rendered under StoreProvider; existing is the task being edited (undefined when creating);
-//       reads view.date; uses the task actions, openTaskPicker, openDialog and closeDialog
-//       + additional props from: Modal, ErrorText, PriorityRadioGroup
+//       reads view.date, categories and lastCategoryId; uses the task actions, openTaskPicker,
+//       openDialog and closeDialog; + additional props from: Modal, ErrorText, PriorityRadioGroup, CategorySelect
 // POST: shows the task form (name, duration in hours + minutes, priority, categoryId, window,
 //       scheduling-hours radios, description); Save validates with taskResolver before calling the
 //       engine; in edit mode it also offers Find time (unscheduled), Unschedule (scheduled) and
 //       Delete (after confirmation)
 function TaskForm({ existing }: { existing: Task | undefined }) {
   const viewDate = useAppStore((state) => state.view.date);
+  const categoryId = useAppStore(defaultCategoryId);
   const actions = useAppStore((state) => state.actions);
   const idPrefix = useId();
   const {
@@ -38,7 +33,10 @@ function TaskForm({ existing }: { existing: Task | undefined }) {
     formState: { errors, isSubmitting },
   } = useForm<TaskFormValues>({
     resolver: taskResolver,
-    defaultValues: taskFormValues(existing, viewDate),
+    defaultValues: {
+      ...taskFormValues(existing, viewDate),
+      categoryId: existing?.categoryId ?? categoryId,
+    },
   });
   const fieldId = (name: keyof TaskFormValues) => `${idPrefix}-${name}`;
   const errorId = (name: keyof TaskFormValues) => `${idPrefix}-${name}-error`;
@@ -108,14 +106,17 @@ function TaskForm({ existing }: { existing: Task | undefined }) {
 
         <PriorityRadioGroup registration={register('priority')} />
 
-        <label htmlFor={fieldId('categoryId')}>Category</label>
-        <select id={fieldId('categoryId')} {...register('categoryId')}>
-          {CATEGORIES.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+        <Controller
+          control={control}
+          name="categoryId"
+          render={({ field }) => (
+            <CategorySelect
+              value={field.value}
+              onChange={field.onChange}
+              error={errors.categoryId?.message}
+            />
+          )}
+        />
 
         <label htmlFor={fieldId('windowStart')}>Window from</label>
         <input

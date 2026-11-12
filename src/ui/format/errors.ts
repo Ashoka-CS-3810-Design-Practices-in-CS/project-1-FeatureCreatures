@@ -56,6 +56,8 @@ export function errorMessage(error: EngineError): string {
       return 'The calendar changed since these options were computed. Refreshing…';
     case 'NotFound':
       return `That ${error.entity} no longer exists.`;
+    case 'CategoryInUse':
+      return `Used by ${error.eventCount} ${error.eventCount === 1 ? 'event' : 'events'} and ${error.taskCount} ${error.taskCount === 1 ? 'task' : 'tasks'}. Change their category or delete them first.`;
     case 'ConcurrentModification':
       return 'This changed in another tab — your view has been refreshed. Nothing was overwritten.';
   }

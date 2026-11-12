@@ -24,13 +24,19 @@ async function renderSettings() {
 }
 
 describe('T47: Settings layout', () => {
-  it('groups the settings into four headed sections, in order', async () => {
+  it('T49 D-11: groups the settings into five headed sections, in order', async () => {
     await renderSettings();
 
     const headings = screen
       .getAllByRole('heading', { level: 3 })
       .map((heading) => heading.textContent);
-    expect(headings).toEqual(['Working time', 'Scheduling defaults', 'Barred slots', 'Data']);
+    expect(headings).toEqual([
+      'Working time',
+      'Scheduling defaults',
+      'Barred slots',
+      'Categories',
+      'Data',
+    ]);
 
     const workingTime = screen.getByRole('region', { name: 'Working time' });
     expect(within(workingTime).getByRole('group', { name: 'Working days' })).toBeInTheDocument();
@@ -42,6 +48,7 @@ describe('T47: Settings layout', () => {
     const barred = screen.getByRole('region', { name: 'Barred slots' });
     expect(within(barred).getAllByRole('group', { name: /^Barred slot \d$/ })).toHaveLength(2);
     expect(screen.getByRole('region', { name: 'Data' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Categories' })).toBeInTheDocument();
   });
 
   it('shows each barred slot as one compact row: label, from–to, day chips and a remove ×', async () => {

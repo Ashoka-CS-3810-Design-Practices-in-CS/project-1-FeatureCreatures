@@ -1,12 +1,11 @@
 import { useId } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { MINUTES_PER_HOUR } from '@/shared/constants';
 import { ceilTo } from '@/shared/time';
 import type { CalendarEvent, Interval } from '@/shared/types';
 import {
   eventFormValues,
   eventResolver,
-  flexibleByDefault,
   toEventInput,
   type EventFormValues,
 } from '../../forms/eventForm';
@@ -14,16 +13,10 @@ import { useAppStore, type Dialog } from '../../store/appStore';
 import { ErrorText } from '../Modal/ErrorText';
 import { Modal } from '../Modal/Modal';
 import { PriorityRadioGroup } from '../PriorityRadioGroup/PriorityRadioGroup';
+import { CategorySelect } from '../Categories/CategorySelect';
+import { defaultCategoryId } from '../../store/selectors';
 
 type EventDialogState = Extract<Exclude<Dialog, null>, { kind: 'event' }>;
-
-const CATEGORIES: { value: string; label: string }[] = [
-  { value: 'meeting', label: 'Meeting' },
-  { value: 'class', label: 'Class' },
-  { value: 'appointment', label: 'Appointment' },
-  { value: 'assignment', label: 'Assignment' },
-  { value: 'personal', label: 'Personal' },
-];
 
 // PRE:  viewDate is the calendar's current date (a Minute)
 // POST: returns the interval a new event gets when no time was selected: the next whole hour, 1 h
@@ -33,8 +26,8 @@ function nextHourSlot(viewDate: number): Interval {
 }
 
 // PRE:  rendered under StoreProvider; dialog is the open event dialog; existing is the event being
-//       edited (undefined when creating); reads settings and view.date; uses event actions
-//       + additional props from: Modal, PriorityRadioGroup
+//       edited (undefined when creating); reads settings, categories, lastCategoryId and view.date;
+//       uses event actions; + additional props from: Modal, PriorityRadioGroup, CategorySelect
 // POST: shows the event form (title, categoryId, priority, start, end, flexible, flex window when
 //       flexible, description); Save validates with eventResolver and only then calls the engine,
 //       closing on success; Delete asks for confirmation first
@@ -47,14 +40,14 @@ function EventForm({
 }) {
   const settings = useAppStore((state) => state.snapshot.settings);
   const viewDate = useAppStore((state) => state.view.date);
+  const categoryId = useAppStore(defaultCategoryId);
   const actions = useAppStore((state) => state.actions);
   const idPrefix = useId();
   const defaults = dialog.mode === 'create' ? dialog.defaults : {};
-  const source = existing ?? { ...nextHourSlot(viewDate), ...defaults };
+  const source = existing ?? { ...nextHourSlot(viewDate), categoryId, ...defaults };
   const {
     register,
     handleSubmit,
-    setValue,
     control,
     formState: { errors, isSubmitting },
   } = useForm<EventFormValues>({
@@ -93,7 +86,6 @@ function EventForm({
     });
   }
 
-  const categoryField = register('categoryId');
   return (
     <Modal
       open
@@ -105,23 +97,17 @@ function EventForm({
         <input id={fieldId('title')} type="text" {...register('title')} {...described('title')} />
         <ErrorText id={errorId('title')} error={errors.title} />
 
-        <label htmlFor={fieldId('categoryId')}>Category</label>
-        <select
-          id={fieldId('categoryId')}
-          {...categoryField}
-          onChange={(event) => {
-            void categoryField.onChange(event);
-            if (existing === undefined) {
-              setValue('flexible', flexibleByDefault(event.target.value as string));
-            }
-          }}
-        >
-          {CATEGORIES.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+        <Controller
+          control={control}
+          name="categoryId"
+          render={({ field }) => (
+            <CategorySelect
+              value={field.value}
+              onChange={field.onChange}
+              error={errors.categoryId?.message}
+            />
+          )}
+        />
 
         <PriorityRadioGroup registration={register('priority')} />
 

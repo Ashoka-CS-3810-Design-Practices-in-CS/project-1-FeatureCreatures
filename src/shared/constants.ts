@@ -11,6 +11,56 @@ export const EXPORT_FORMAT = 'feature-creatures-calendar'; // §9.4
 export const EXPORT_VERSION = 2;
 export const LEGACY_EXPORT_VERSION = 1;
 export const MAX_CATEGORY_NAME_LENGTH = 40;
+export const MIN_CATEGORY_COLOUR_DISTANCE = 0.04;
+export const MIN_NON_TEXT_CONTRAST = 3;
+export const CATEGORY_TAG_BACKGROUNDS = ['#f4f1ea', '#1c1e1b'] as const;
+export const CATEGORY_PALETTE: readonly string[] = [
+  '#467b70',
+  '#9364a2',
+  '#a45c81',
+  '#7b7650',
+  '#427e8c',
+  '#577d35',
+  '#7e6ac0',
+  '#a96048',
+  '#368259',
+  '#6f7a96',
+  '#716b75',
+  '#967151',
+];
+export const RESERVED_COLOURS: readonly string[] = [
+  '#363631',
+  '#ebe6d9',
+  '#b3302a',
+  '#ff8076',
+  '#b0281f',
+  '#ff978c',
+  '#8f5506',
+  '#f0b356',
+  '#395883',
+  '#9cb9e8',
+];
+export const COLOUR_CHANNEL_OFFSETS = [1, 3, 5] as const;
+export const COLOUR_CHANNEL_DIGITS = 2;
+export const COLOUR_HEX_RADIX = 16;
+export const COLOUR_CHANNEL_MAX = 255;
+export const SRGB_LINEAR_THRESHOLD = 0.04045;
+export const SRGB_LINEAR_SLOPE = 12.92;
+export const SRGB_GAMMA_OFFSET = 0.055;
+export const SRGB_GAMMA = 2.4;
+export const LUMINANCE_WEIGHTS = [0.2126, 0.7152, 0.0722] as const;
+export const CONTRAST_LUMINANCE_OFFSET = 0.05;
+// Standard OKLab matrices convert linear sRGB to perceptually uniform coordinates.
+export const OKLAB_LMS_MATRIX = [
+  [0.4122214708, 0.5363325363, 0.0514459929],
+  [0.2119034982, 0.6806995451, 0.1073969566],
+  [0.0883024619, 0.2817188376, 0.6299787005],
+] as const;
+export const OKLAB_MATRIX = [
+  [0.2104542553, 0.793617785, -0.0040720468],
+  [1.9779984951, -2.428592205, 0.4505937099],
+  [0.0259040371, 0.7827717662, -0.808675766],
+] as const;
 export const REPLAN_DST_SLACK_MIN = 120; // a replan range of 14 local days may span DST changes
 export const CONFLICT_LIST_LIMIT = 50;
 export const TOAST_MS = 4000; // success and info toasts (PROJECT_SCHEMA UX feedback)

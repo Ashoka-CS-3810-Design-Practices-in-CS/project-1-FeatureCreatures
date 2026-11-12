@@ -10,7 +10,7 @@ test('T38: settings warns separately, View opens the drawer, and alternatives cl
   await createEvent(page, 'Lunch event', '2026-11-02T13:00', '2026-11-02T14:00');
   await addLunchBarredSlot(page);
   await expect(page.getByText('1 event overlaps barred slots', { exact: true })).toBeVisible();
-  const block = page.getByRole('button', { name: /^Lunch event,.*In Lunch$/ });
+  const block = page.getByRole('button', { name: /^Lunch event,.*In Lunch, Appointment$/ });
   await expect(block.getByText('In Lunch', { exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Conflicts (0)', exact: true })).toBeVisible();
   await page.setViewportSize(NARROW_VIEWPORT);

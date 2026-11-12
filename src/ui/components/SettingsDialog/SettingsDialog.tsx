@@ -20,6 +20,7 @@ import { downloadJson, EXPORT_MIME_TYPE } from '../../hooks/download';
 import { useAppStore } from '../../store/appStore';
 import { ErrorText } from '../Modal/ErrorText';
 import { Modal } from '../Modal/Modal';
+import { CategoriesSection } from '../Categories/CategoriesSection';
 
 // Monday first, as on the calendar; the values are the weekday numbers (0 = Sunday).
 const WEEKDAYS: { value: string; label: string }[] = [
@@ -408,7 +409,7 @@ function DataSection() {
 }
 
 // PRE:  rendered under StoreProvider; reads dialog and snapshot.settings; uses actions.closeDialog
-//       + additional props from: SettingsForm, DataSection
+//       + additional props from: SettingsForm, CategoriesSection, DataSection
 // POST: while the settings dialog is open, shows the settings form (fresh from the current
 //       settings each time it opens) and the Data section (FR11, B2)
 export function SettingsDialog() {
@@ -422,6 +423,7 @@ export function SettingsDialog() {
   return (
     <Modal open title="Settings" className="settings-dialog" onClose={closeDialog}>
       <SettingsForm settings={settings} />
+      <CategoriesSection />
       <DataSection />
     </Modal>
   );

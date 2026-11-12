@@ -14,6 +14,8 @@ export interface Category {
   readonly colour: string;
   readonly createdAt: Minute;
 }
+
+export type CategoryInput = Pick<Category, 'name' | 'colour'>;
 export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6; // 0 = Sunday (JS Date convention)
 
 export interface CalendarEvent extends Interval {

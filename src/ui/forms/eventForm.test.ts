@@ -5,7 +5,6 @@ import {
   defaultFlexWindow,
   eventFormValues,
   eventResolver,
-  flexibleByDefault,
   fromDateInput,
   fromDateTimeLocal,
   toDateInput,
@@ -53,12 +52,14 @@ describe('eventForm', () => {
     expect(fromDateInput('')).toBeNaN();
   });
 
-  it('makes assignments and personal events flexible by default, the rest fixed', () => {
-    expect(flexibleByDefault('class')).toBe(false);
-    expect(flexibleByDefault('meeting')).toBe(false);
-    expect(flexibleByDefault('appointment')).toBe(false);
-    expect(flexibleByDefault('assignment')).toBe(true);
-    expect(flexibleByDefault('personal')).toBe(true);
+  it('T49 D-11/C-01: new events start fixed for every category', () => {
+    ['class', 'meeting', 'appointment', 'assignment', 'personal', 'custom'].forEach(
+      (categoryId) => {
+        expect(
+          eventFormValues({ ...iv('Mon 10:00', 'Mon 11:00'), categoryId }, settings()).flexible,
+        ).toBe(false);
+      },
+    );
   });
 
   it('defaults the flex window to the local working day of the start', () => {
@@ -80,7 +81,7 @@ describe('eventForm', () => {
       iv('Tue 09:00', 'Tue 18:00'),
     );
     expect(eventFormValues({ ...night, categoryId: 'personal' }, settings())).toMatchObject({
-      flexible: true,
+      flexible: false,
       flexStart: '2026-11-03T00:00',
       flexEnd: '2026-11-04T00:00',
     });
@@ -89,7 +90,7 @@ describe('eventForm', () => {
   it('builds form values from create defaults and from an existing event', () => {
     expect(
       eventFormValues({ ...iv('Mon 10:00', 'Mon 11:00'), categoryId: 'assignment' }, settings()),
-    ).toEqual(form({ title: '', categoryId: 'assignment', flexible: true }));
+    ).toEqual(form({ title: '', categoryId: 'assignment', flexible: false }));
     const existing = flexEv('E', 'Wed 14:00', 'Wed 15:00', ['Wed 12:00', 'Wed 17:00']);
     expect(eventFormValues(existing, settings())).toMatchObject({
       title: 'E',
