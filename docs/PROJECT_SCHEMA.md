@@ -183,7 +183,7 @@ The default flex window is the event's local day, from working start to working 
 | `workStartMin` | minutes after local midnight | `540` (09:00) | 0–1439 |
 | `workEndMin` | minutes after local midnight | `1080` (18:00) | `> workStartMin`, ≤ 1440 |
 | `bufferMin` | integer | `0` | 0–120 |
-| `barredSlots` | `{id, label, startMin, endMin, days}[]` | `[]` | `endMin > startMin`; label 1–40 characters |
+| `barredSlots` | `{id, label, startMin, endMin, days}[]` | `[]` | `endMin > startMin`; label 1–40 characters; no two slots with the same days (in any order), `startMin` and `endMin` — the label does not count (WI-43, report #6) |
 | `defaultCriterion` | `earliest \| bestFit \| priorityAware` | `earliest` | — |
 
 UI-only preferences (theme and last view) are stored in `localStorage`, not in Settings.
@@ -308,7 +308,7 @@ Each requirement lists its acceptance criteria. The tests that prove it are in `
 **FR11 — Settings.**
 - **Editable:** working days and hours, default buffer, barred slots (add, edit, remove), default criterion.
 - **Behaviour:** changes apply immediately to every later search. Barred slots are shown on the calendar as shaded background blocks with their label, and non-working hours are shaded.
-- **Acceptance:** invalid settings (end ≤ start, buffer out of range) are rejected inline.
+- **Acceptance:** invalid settings (end ≤ start, buffer out of range, a duplicate barred slot) are rejected inline. A barred slot that repeats an earlier slot's days, start and end shows "Duplicate of barred slot N." under its Days, where N is the earlier slot's number; an import with such settings is rejected (ER6) with the same message.
 
 ### 4.2 Error handling (cross-cutting)
 
@@ -702,3 +702,4 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 | 2026-11-12 | v1.7 (WI-40, peer report #14): ER8 `ConcurrentModification` — a write from a tab whose view is out of date is refused and that tab reloads; other tabs reload after every stored change with "Calendar updated in another tab." (§5, §7.4, NFR4, §9 row 11). Single-tab behaviour unchanged. |
 | 2026-11-12 | v1.8 (WI-41, peer reports #3, #4, #9): FR7 adds the Search hours choice with its default, the fixed-target note and named empty-window causes; BR-5 alternatives no longer always respect working hours; §3.2 the default flex window is the whole local day outside working hours or on a non-working day. |
 | 2026-11-12 | v1.9 (WI-42, peer report #1): glossary *Fixed event*, FR2 and W2 — a manual drag or resize of a fixed event asks "<title> is fixed. Move it anyway?" (Move / Keep it); other paths never ask; the Fixed tag gets a tooltip and accessible description. |
+| 2026-11-12 | v1.10 (WI-43, peer report #6): §3.2 Settings and FR11 — two barred slots with the same days, start and end are rejected ("Duplicate of barred slot N."), in the dialog and on import. |
