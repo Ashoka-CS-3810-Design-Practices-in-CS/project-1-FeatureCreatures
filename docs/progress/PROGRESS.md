@@ -6,9 +6,9 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** Round 2 overhaul; WI-47 complete on its branch, merging to main for the post-merge gate. Next: WI-48 Data model v3 and migration.
+- **Active WI:** WI-48 Data model v3 and migration on `feat/wi-48-data-v3`; WI-47 merged and its full main gate passed.
 - **Last session:** 2026-11-12 · Codex · committed the unchanged planning inputs and Round 2 plan/baseline; completed WI-47 documentation moves and link updates.
-- **Gate status:** 2026-11-12 on `feat/wi-47-docs-restructure` at `735168a`: full gate green (639 tests + 1 skipped, unchanged baseline coverage, 7 DST, five properties × 10,000, build, 75/75 browser runs, zero retries). Main post-merge gate next.
+- **Gate status:** 2026-11-12 on `main` at `7566f35`: full gate green (639 tests + 1 skipped, unchanged baseline coverage, 7 DST, five properties × 10,000, build, 75/75 browser runs, zero retries).
 
 ## Work items
 
@@ -214,8 +214,10 @@ Binding design: `docs/extras/AUDIT_2.md` (D-01–D-19, C-01–C-08). Work in ord
   - 2026-11-12 · Codex · branch `feat/wi-47-docs-restructure` · done: baseline and batch setup committed; existing path/link references inventoried · next: `git mv` progress/extras, fix all references and relative links, full branch/main gate · note: no application behaviour or test expectations change (D-18).
   - 2026-11-12 · Codex · branch `feat/wi-47-docs-restructure` · done: four files moved with `git mv`; agent instructions, README trees/links, main-doc navigation/change logs, audit source links and reusable prompts updated; old-path grep empty · next: local-link verification and full branch gate, finish/merge and full main gate · note: scripts, CI, Playwright configs and both skill copies contain no moved-path references; no test changes.
   - 2026-11-12 · Codex · branch `feat/wi-47-docs-restructure` · done: 75 local Markdown links resolve, old-path grep empty, Prettier invoked (hand-written specs remain excluded by repo config), full gate green: 639 + 1 skipped, coverage identical to BASELINE, DST 7, five properties × 10,000, build OK, e2e 75/75 (25 × 3, zero retries) · next: merge, full main gate, WI-48 · note: no test expectations or application behaviour changed.
-- [ ] **WI-48** Data model v3 and migration — owner S + Dv — depends on 47
+  - 2026-11-12 · Codex · branch `main` · done: merged WI-47 as `7566f35`, branch retained, full post-merge gate green with the same counts/coverage and 75/75 browser runs · next: WI-48.
+- [~] **WI-48** Data model v3 and migration — owner S + Dv — depends on 47
   - Done when: Dexie v2→v3 upgrade test; v1/v2 import tests; samples re-exported; all existing tests pass (fixtures updated mechanically).
+  - 2026-11-12 · Codex · branch `feat/wi-48-data-v3` · done: claimed after WI-47 and full main gate; storage/schema/state/UI references reviewed · next: failing T48 migration/import tests plus a retained v1 fixture, then types/validators, v3 migration, repositories/state/I/O, mechanical fixtures and samples · note: no category CRUD or new UI features until later WIs.
 - [ ] **WI-49** Categories — owner S + Dv — depends on 48
   - Done when: New tests for CRUD, delete blocking, uniqueness, undo, filters.
 - [ ] **WI-50** Scheduling model and lock — owner S + Dv — depends on 49
