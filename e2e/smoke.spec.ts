@@ -1,16 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
-import { clickTime, collectPageErrors, dragSelect, openCalendar } from './helpers';
+import { clickTime, collectPageErrors, dragSelect, openCalendar, TOOLBAR_DIALOGS } from './helpers';
 
 // WI-35: runs on the built app and on the StrictMode dev server (playwright.config.ts), so a
 // crash or a dialog that closes itself in either mode fails here.
-
-const TOOLBAR_DIALOGS = [
-  { button: '+ Event', title: 'New event' },
-  { button: '+ Task', title: 'New task' },
-  { button: 'Replan', title: 'Replan' },
-  { button: 'Settings', title: 'Settings' },
-  { button: 'Keyboard shortcuts', title: 'Keyboard shortcuts' },
-];
 
 // PRE:  page shows the New event dialog
 // POST: names the event and saves it, waiting until the dialog has gone
