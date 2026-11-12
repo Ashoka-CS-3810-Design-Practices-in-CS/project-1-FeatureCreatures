@@ -6,7 +6,7 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** Peer bug fixes batch (WI-40–46, see "Peer bug fixes (batch)" below). WI-40–45 merged; next WI-46 (G) on `feat/wi-46-settings-redesign`.
+- **Active WI:** Peer bug fixes batch (WI-40–46, see "Peer bug fixes (batch)" below). WI-40–46 merged; next: the batch finish (final gate vs baseline, README results, smoke checklist).
 - **Last session:** 2026-11-12 · Claude Code · planned the peer bug fixes batch. Before that: 2026-10-26 · Codex · WI-39 merged; final main typecheck/lint/582 tests green; warm and cold browser hunts 360/360 passed with zero retries and no additional flakes.
 - **Gate status:** typecheck/lint, 582 tests (T15 opt-in), coverage 98.60% lines / 94.08% branches, build and 360/360 browser executions green (180 warm + 180 cold; each 10 repeats, 2 workers, zero retries). Seven DST and five 10,000-case properties were last verified before this UI-only fix. Run `npm run build` before `npm run e2e` while an existing `vite preview` holds port 4173.
 
@@ -187,8 +187,9 @@ Fourteen peer bug reports, each verified against `main` and the live build. One 
 - [x] **WI-45** (F) Small UX (#5, #7, #11) — owner S + Dv — depends on 44
   - 2026-11-12 · Claude Code · branch `feat/wi-45-small-ux` · done: claimed after WI-44 merge and green main · next: failing tests for the Modal × (Close), stable Move radio order and the ER2/ER3 stretch explanation (new read-only `explainWindow` query, user decision)
   - 2026-11-12 · Claude Code · branch `feat/wi-45-small-ux` · done: T46 red first (9 cases), then green: Modal × (last in DOM, calls onClose, not on the busy overlay), picker `order` from the conflict, read-only `engine.explainWindow` with shared request builders and `explainSearch`, stretch text after ER2/ER3; browser check that × closes every toolbar dialog and returns focus; docs + BUG_REPORTS #5/#7/#11. Gate: 636 tests, coverage 98.71% st / 94.22% br / 98.78% lines, DST 7, props 5×10,000, build, e2e 75/75 · next: WI-46 · surprises: (1) ShortcutHelp had its own text Close button, now redundant with the ×, so it was removed (its test still passes unchanged); (2) the `:last-child` dialog spacing rules needed a `:has(+ .dialog-close)` twin; (3) TaskDialog's exact button lists now end with × (named in commit caaa3ed)
-- [~] **WI-46** (G) Settings panel redesign — owner S + Dv — depends on 45
+- [x] **WI-46** (G) Settings panel redesign — owner S + Dv — depends on 45
   - 2026-11-12 · Claude Code · branch `feat/wi-46-settings-redesign` · done: claimed after WI-45 merge and green main · next: failing RTL checks for the four headed sections, compact barred rows and focus on a new slot's label; then markup/CSS and both-theme screenshots at 1440/1024/900
+  - 2026-11-12 · Claude Code · branch `feat/wi-46-settings-redesign` · done: T47 red first, then green: headed sections, compact `.barred-row` grid with day chips (checked = tested on-accent/accent pair) and remove ×, legends/labels kept visually hidden so every accessible name is unchanged, focus on a new slot's label; 760 px dialog so rows fit one line at 1440/1024/900 (wrap below 800 px); all screenshots refreshed and reviewed in both themes; docs + README Settings row. Gate: 639 tests, coverage 98.71% st / 94.23% br / 98.78% lines, DST 7, props 5×10,000, build, e2e 75/75 · next: batch finish · surprises: `npm run screenshots` had been broken since WI-35 (the e2e projects' baseURL overrode the screenshot port); fixed in its own commit 6a917c3
 - [x] Cleanup: delete `test-results/claude-verify-snapshot.tgz` and `.git/stale-maintenance-lock-claude` if they exist (nothing else). 2026-11-12 · Claude Code: both existed and were deleted by exact path.
 - [ ] Finish: full gate vs baseline (e2e `--repeat-each=5`), README test results, smoke checklist for the deployed site.
 
