@@ -527,7 +527,7 @@ Every search result also carries:
    - **Alternatives mode:** the header shows the target and a toggle for which event to move. The criterion is fixed to "Closest to original time". There are Apply and Cancel buttons.
 5. **Replan dialog:** range from/to (default the visible week; from Month, whose grid exceeds 14 days, the first full week of the month, AUDIT A10), a buffer override, and a *Compute plans* button. Below them are two plan cards side by side (stacked when narrow). Each card shows its metrics and list of moves, with an *Apply this plan* button. Changing the range or buffer removes the cards until *Compute plans* runs again, so a plan is only applied for the inputs shown (AUDIT A08). Cancel closes the dialog.
 6. **Settings dialog:**
-   - Working days and hours, default buffer, barred slots table, default criterion.
+   - Four headed sections (WI-46): **Working time** (working days as day chips, working hours from / to), **Scheduling defaults** (default buffer, default ranking), **Barred slots** (one compact row per slot: label, from–to, day chips and a remove ×; *Add barred slot* puts a new row at the end and focuses its label) and **Data**. Save / Cancel stay in the sticky footer, and the dialog has the × of §7.7.
    - A **Data** section: Export JSON, Import JSON, Load sample calendar (menu), Clear all data (with confirmation).
 7. **Confirm dialog:** used for delete, import and clear.
 8. **Shortcut help overlay:** lists the shortcuts in §7.6.
@@ -709,3 +709,4 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 | 2026-11-12 | v1.10 (WI-43, peer report #6): §3.2 Settings and FR11 — two barred slots with the same days, start and end are rejected ("Duplicate of barred slot N."), in the dialog and on import. |
 | 2026-11-12 | v1.11 (WI-44, peer reports #10, #12, #13): FR6 — the status line counts shown events plus those hidden by the filter; List explains an all-hidden range with Show all; List header, alignment and narrow wrapping. Conflicts still on all events. |
 | 2026-11-12 | v1.12 (WI-45, peer reports #5, #7, #11): FR7 Move radios keep the conflict order; §7.4 ER2/ER3 list the available stretches and what splits them (no behaviour change); §7.7 every dismissible dialog has a × named Close. |
+| 2026-11-12 | v1.13 (WI-46): §7.1 Settings is laid out in four headed sections with compact barred-slot rows and day chips. UI only; validation unchanged beyond WI-43. |
