@@ -6,9 +6,9 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** Peer bug fixes batch (WI-40–46, see "Peer bug fixes (batch)" below). Peer bug fixes batch complete (WI-40–46 merged, final gate green). Next: human push, `npx vercel --prod`, then the smoke checklist under the batch heading.
-- **Last session:** 2026-11-12 · Claude Code · planned and completed the peer bug fixes batch (WI-40–46); final main gate 639 tests, coverage 98.78% lines / 94.23% branches, e2e 125/125 over 5 repeats. Before that: 2026-10-26 · Codex · WI-39 merged; final main typecheck/lint/582 tests green; warm and cold browser hunts 360/360 passed with zero retries and no additional flakes.
-- **Gate status:** 2026-11-12 on `main` 222e3bf: typecheck/lint, 639 tests (T15 opt-in; median 1.278 ms), coverage 98.71% statements / 94.23% branches / 98.78% lines, 7 DST, five 10,000-case properties, build, and 125/125 browser runs (25 checks × 5 repeats, 2 workers, zero retries). `npm run screenshots` works again (fixed in WI-46).
+- **Active WI:** Round 2 overhaul (WI-47–59). Batch plan and baseline recorded; next WI-47 Docs restructure.
+- **Last session:** 2026-11-12 · Codex · committed the unchanged Round 2 planning inputs, verified clean main and WI-46 tests, recorded the full baseline, and planned WI-47–59.
+- **Gate status:** 2026-11-12 on `main` at `2cc3824`: full Round 2 baseline green (639 tests + 1 skipped, 7 DST, five properties × 10,000, build, 75/75 browser runs); exact coverage below.
 
 ## Work items
 
@@ -202,6 +202,41 @@ Fourteen peer bug reports, each verified against `main` and the live build. One 
 - [ ] **Duplicate barred slot (#6).** Settings → *Add barred slot* twice (two default Lunch rows) → Save: "Duplicate of barred slot 1." appears under slot 2, the dialog stays open and nothing is saved. Remove slot 2 → Save works.
 - [ ] **All priorities off (#10, #12, #13).** With the sample loaded, turn off H, M and L: the status line reads "0 events (8 hidden by filter) · 4 tasks · 1 conflict". Switch to **List**: "All events in this range are hidden by the priority filter" with **Show all**, which brings every event back. Scroll List: day headers stay above the conflict outlines. On a phone (or a 420 px wide window) List rows wrap instead of being cut off.
 - [ ] **Settings in both themes (G, #11).** Set the theme to Light, open Settings: four sections (Working time, Scheduling defaults, Barred slots, Data), barred slots as one-line rows with day chips, text readable, × closes the dialog. Repeat in Dark. Also check that × closes the event dialog and Keyboard shortcuts, and that an ER2 task (e.g. 45 min in a 12:30–14:30 window with Lunch) lists "Available: … — Lunch 13:00–14:00 is barred.".
+
+### Round 2 overhaul (batch)
+
+Binding design: `docs/extras/AUDIT_2.md` (D-01–D-19, C-01–C-08). Work in order, one branch per WI; the full Round 2 gate runs on the branch and again on main. Planning inputs were committed unchanged in `2cc3824`.
+
+- **BASELINE** (2026-11-12, Codex, `main` at `2cc3824`): typecheck and lint clean; `test:coverage` **639 passed + 1 skipped** (T15 opt-in), 83 passed files + 1 skipped; overall coverage **98.71% statements / 94.23% branches / 98.23% functions / 98.78% lines**; algorithms **99.70% statements / 95.93% branches / 100% functions / 99.68% lines**; `test:dst` **7/7**; `test:props:full` **5/5 × 10,000 cases**, random seeds; `build` **OK**; `npx playwright test --repeat-each=3 --workers=2` **75/75** (25 checks × 3, both projects, zero retries, exit 0). Spot-check: WI-46's three Settings layout/focus tests exist and passed within the coverage run.
+
+- [ ] **WI-47** Docs restructure — owner S + Dv — depends on 46
+  - Done when: Files moved with `git mv`; a grep for the old paths finds nothing outside change logs; the gate is green.
+- [ ] **WI-48** Data model v3 and migration — owner S + Dv — depends on 47
+  - Done when: Dexie v2→v3 upgrade test; v1/v2 import tests; samples re-exported; all existing tests pass (fixtures updated mechanically).
+- [ ] **WI-49** Categories — owner S + Dv — depends on 48
+  - Done when: New tests for CRUD, delete blocking, uniqueness, undo, filters.
+- [ ] **WI-50** Scheduling model and lock — owner S + Dv — depends on 49
+  - Done when: T43 updated to the new wording; tests for the lock's gestures and grab-to-pan; D-02 search tests.
+- [ ] **WI-51** Suggestion pickers — owner S + Dv — depends on 50
+  - Done when: Generator unit and property tests; picker RTL tests; e2e apply flows.
+- [ ] **WI-52** Past time — owner S + Dv — depends on 51
+  - Done when: Panel grouping and counts; muted past styling; Replan wording.
+- [ ] **WI-53** Barred slots and working hours — owner S + Dv — depends on 52
+  - Done when: Overlap rejection; older-data banner; Keep here behaviour and its automatic clearing; the switch behaviour across all three searches.
+- [ ] **WI-54** Done tasks — owner S + Dv — depends on 53
+  - Done when: Atomic mark-done and unschedule; Reopen; bulk preview and apply; undo.
+- [ ] **WI-55** Replan strategies and dialog — owner S + Dv — depends on 54
+  - Done when: Strategy keys unit-tested; properties for each strategy; dialog RTL tests.
+- [ ] **WI-56** Layout — owner S + Dv — depends on 55
+  - Done when: Five regions at 1440, 1280 and 1024 (drawers) in both themes; no duplicate controls; e2e updated.
+- [ ] **WI-57** Visual system — owner S + Dv — depends on 56
+  - Done when: `tokens.test.ts` covers fills, tags, accents and shading; screenshots refreshed and reviewed.
+- [ ] **WI-58** Dialog and format polish — owner S + Dv — depends on 57
+  - Done when: Field-order and format tests; U9/U19/U20/U23 checks.
+- [ ] **WI-59** Docs, smoke test and final gate — owner S + Dv — depends on 58
+  - Done when: Full gate against the baseline; smoke test written; human steps listed.
+- [ ] **Finish** — depends on 59: full main gate with five browser repeats; compare test count and all coverage measures against BASELINE (no test-count drop, no coverage drop > 0.5 points); publish results in README.
+- [ ] **Human: push, deploy, run the smoke test** — push main, all branches and tags; `npx vercel --prod`; run TEST_PLAN §7 on the live site.
 
 ## Milestones
 

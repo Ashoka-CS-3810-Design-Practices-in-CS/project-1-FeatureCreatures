@@ -1803,6 +1803,26 @@ Phases match A3 §7. Owners follow A3: **S** = Samar, **Dv** = Divyam. Each WI i
 | 45 | Peer bugs (F) | Small UX (#5, #7, #11) | S + Dv | Modal × close, alternatives Move radio order, ER2/ER3 explanation | 44 | Every dialog has a × (aria-label Close) acting like Cancel/Esc with focus trap/return kept; Move radios in aId, bId order; ER2/ER3 explanation lists available stretches and what splits them |
 | 46 | Peer bugs (G) | Settings panel redesign | S + Dv | SettingsDialog markup/CSS, screenshots | 45 | Sections Working time / Scheduling defaults / Barred slots / Data; one-line barred rows with focus on a new slot's label; every accessible name tests use kept; both themes ≥ 4.5:1 at 1440/1024/900 px; settings screenshots refreshed |
 
+### Round 2 overhaul (WI-47–59)
+
+Binding design: `extras/AUDIT_2.md` §7. Each WI depends on the previous one; update the behaviour/contracts/tests in the WI that implements them. The Round 2 full gate is typecheck, lint, coverage, DST, five 10,000-case properties, build, then Playwright with three repeats and two workers, on both the branch and main. UI WIs also capture and review both-theme screenshots at 1440, 1280 and 1024 px. WI-59's final comparison uses five browser repeats and the baseline recorded in the progress file.
+
+| WI | Phase | Title | Owner | Files | Depends | Done when |
+|---|---|---|---|---|---|---|
+| 47 | Round 2 | Docs restructure | S + Dv | Docs, references (D-18) | 46 | Files moved with `git mv`; a grep for the old paths finds nothing outside change logs; the gate is green |
+| 48 | Round 2 | Data model v3 and migration | S + Dv | Shared types/schemas, repositories, engine I/O/state, samples, mechanical UI/fixtures (D-17) | 47 | Dexie v2→v3 upgrade test; v1/v2 import tests; samples re-exported; all existing tests pass (fixtures updated mechanically) |
+| 49 | Round 2 | Categories | S + Dv | Category engine commands, Settings/dialogs, tags/filters (D-11) | 48 | New tests for CRUD, delete blocking, uniqueness, undo, filters |
+| 50 | Round 2 | Scheduling model and lock | S + Dv | Calendar gestures/lock, alternatives, scheduling controls (D-01–D-05) | 49 | T43 updated to the new wording; tests for the lock's gestures and grab-to-pan; D-02 search tests |
+| 51 | Round 2 | Suggestion pickers | S + Dv | Candidate algorithm, pickers, RTL/property/e2e (D-06) | 50 | Generator unit and property tests; picker RTL tests; e2e apply flows |
+| 52 | Round 2 | Past time | S + Dv | Conflicts/counts, calendar tokens, Replan diagnostics (D-08) | 51 | Panel grouping and counts; muted past styling; Replan wording |
+| 53 | Round 2 | Barred slots and working hours | S + Dv | Validation, overlaps/kept state, search frames/settings UI (D-09, D-10) | 52 | Overlap rejection; older-data banner; Keep here behaviour and its automatic clearing; the switch behaviour across all three searches |
+| 54 | Round 2 | Done tasks | S + Dv | Task commands, bulk preview/apply, task UI (D-07) | 53 | Atomic mark-done and unschedule; Reopen; bulk preview and apply; undo |
+| 55 | Round 2 | Replan strategies and dialog | S + Dv | Ranking strategies, Replan engine/dialog (D-15) | 54 | Strategy keys unit-tested; properties for each strategy; dialog RTL tests |
+| 56 | Round 2 | Layout | S + Dv | App regions/drawers, controls, e2e (D-14, D-05) | 55 | Five regions at 1440, 1280 and 1024 (drawers) in both themes; no duplicate controls; e2e updated |
+| 57 | Round 2 | Visual system | S + Dv | Appearance/preferences, tags/fills/tokens, screenshots (D-12, D-13) | 56 | `tokens.test.ts` covers fills, tags, accents and shading; screenshots refreshed and reviewed |
+| 58 | Round 2 | Dialog and format polish | S + Dv | Dialogs, formatting/List/Month, cancellation (D-16) | 57 | Field-order and format tests; U9/U19/U20/U23 checks |
+| 59 | Round 2 | Docs, smoke test and final gate | S + Dv | Main docs, smoke test/history, README (D-19) | 58 | Full gate against the baseline; smoke test written; human steps listed |
+
 **`docs/PROGRESS.md` format** (already created during repo setup):
 
 ```markdown
@@ -1876,3 +1896,4 @@ Production URL: https://…vercel.app
 | 2026-11-12 | v1.33 (WI-44, peer reports #10, #12, #13): §11.3 status line and List empty content follow the priority filter (`eventCountText`, `HiddenByFilterNotice`, store `showAllEventPriorities`); List CSS for the sticky header, row alignment and narrow wrapping. FR6 conflicts unchanged. |
 | 2026-11-12 | v1.34 (WI-45, peer reports #5, #7, #11): §7.2 frozen Engine interface gains read-only `explainWindow` (user decision: ER2/ER3 objects unchanged); §5 `WindowSplit` / `WindowStretches` / `WindowExplanation`, constant `MAX_LISTED_STRETCHES = 6`; §7.4.2/§7.4.3 shared request builders and `explainSearch`; §11.1 picker `order` and `explanation`; §11.2 the Modal × close button. Algorithms unchanged. |
 | 2026-11-12 | v1.35 (WI-46): §11.2 the Settings dialog markup (headed sections, compact barred rows, day chips, `.visually-hidden`); `global.css` Settings block; `playwright.screenshots.config.ts` gets its own Chrome project so captures use the screenshot server (fix found here); new settings screenshots. |
+| 2026-11-12 | v1.36: §14 plans Round 2 WI-47–59 from `extras/AUDIT_2.md` §7, in order, with the full branch/main gate and final baseline comparison. Behaviour and frozen contracts change in their implementing WIs. |
