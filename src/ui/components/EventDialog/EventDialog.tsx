@@ -28,7 +28,7 @@ function nextHourSlot(viewDate: number): Interval {
 // PRE:  rendered under StoreProvider; dialog is the open event dialog; existing is the event being
 //       edited (undefined when creating); reads settings, categories, lastCategoryId and view.date;
 //       uses event actions; + additional props from: Modal, PriorityRadioGroup, CategorySelect
-// POST: shows the event form (title, categoryId, priority, start, end, flexible, flex window when
+// POST: shows the event form (title, categoryId, priority, start, end, Fixed/Flexible radios, flex window when
 //       flexible, description); Save validates with eventResolver and only then calls the engine,
 //       closing on success; Delete asks for confirmation first
 function EventForm({
@@ -129,13 +129,38 @@ function EventForm({
         />
         <ErrorText id={errorId('end')} error={errors.end} />
 
-        <div className="form-group">
-          <label>
-            <input type="checkbox" disabled={isTaskEvent} {...register('flexible')} /> Flexible (the
-            planner may move it)
-          </label>
+        <fieldset className="form-group">
+          <legend>Scheduling</legend>
+          <Controller
+            control={control}
+            name="flexible"
+            render={({ field }) => (
+              <div className="choice-options">
+                <label>
+                  <input
+                    type="radio"
+                    name={field.name}
+                    checked={!field.value}
+                    disabled={isTaskEvent}
+                    onChange={() => field.onChange(false)}
+                  />{' '}
+                  Fixed — the planner leaves it alone
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name={field.name}
+                    checked={field.value}
+                    disabled={isTaskEvent}
+                    onChange={() => field.onChange(true)}
+                  />{' '}
+                  Flexible — the planner may move it within its window
+                </label>
+              </div>
+            )}
+          />
           {isTaskEvent && <p className="hint">Events of scheduled tasks always stay flexible.</p>}
-        </div>
+        </fieldset>
 
         {flexible && (
           <fieldset className="form-group flex-window">

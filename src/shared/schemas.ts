@@ -223,6 +223,23 @@ export const slotSchema = z.object({ slot: interval });
 
 // The optional per-search override of the settings buffer (findSlots, suggestAlternatives, planReplan).
 export const searchOptionsSchema = z.object({ bufferMin: bufferMinSchema.optional() });
+export const alternativesOptionsSchema = searchOptionsSchema.extend({
+  allowMoving: z.boolean().optional(),
+  useWorkingHours: z.boolean().optional(),
+});
+const alternativeRangeSchema = z.object({ range: interval }).superRefine((value, ctx) => {
+  if (value.range.end <= value.range.start)
+    addTimeIssue(ctx, ['range', 'end'], 'Range end must be after its start.');
+});
+
+// PRE:  input is an untrusted temporary range for an opted-in fixed event
+// POST: returns its valid interval, otherwise InvalidTime with range-prefixed field issues (D-02)
+export function parseAlternativeRange(input: unknown): Result<Interval> {
+  const parsed = alternativeRangeSchema.safeParse({ range: input });
+  return parsed.success
+    ? ok(parsed.data.range)
+    : err({ code: 'InvalidTime', issues: toFieldIssues(parsed.error) });
+}
 
 // PRE:  slot has integer startMin / endMin and weekday days
 // POST: returns a key equal for two slots exactly when they bar the same days (in any order)

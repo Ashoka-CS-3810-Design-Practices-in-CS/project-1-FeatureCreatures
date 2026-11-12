@@ -24,6 +24,9 @@ A browser-based week planner that detects every scheduling conflict, finds free 
   - Each conflict shows which events overlap, the exact overlap (e.g. 11:00–11:30) and its length in minutes.
   - Back-to-back events do not count as conflicts.
 - **Conflict resolution.** _Suggest alternatives_ proposes free slots for the event that is better to move, closest to its original time first.
+  - Fixed events require **Allow moving this event** and a temporary date range; applying an option keeps the event Fixed.
+- **Calendar lock.** Lock the timeline to browse and drag the time grid to pan without changing events. **K** toggles it; event dialogs, + Event and deliberate Apply actions remain available. Existing calendars start locked on reload. Unlocked fixed moves/resizes ask for the proposed destination or duration.
+- **Calendar / List.** List always shows a week; return to Calendar to restore its last Day, Week or Month view. **L** toggles the two.
 - **Best-time finder.** Tasks have a duration, a priority and a window, such as "90 minutes, sometime this week".
   - The app lists free slots that fit, ranked by the criterion you choose: earliest, tightest fit, or priority-aware.
   - Every slot says which gap it came from and what bounds it. When nothing fits, the app says why and shows the largest gap it found.

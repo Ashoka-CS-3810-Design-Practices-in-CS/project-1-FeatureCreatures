@@ -75,7 +75,7 @@ describe('EventDialog', () => {
     const { engine } = await makeEngine();
     const store = renderDialogs(engine);
     openCreate(store);
-    const flexible = screen.getByRole('checkbox', { name: /Flexible/ });
+    const flexible = screen.getByRole('radio', { name: /Flexible/ });
 
     await userEvent.selectOptions(screen.getByLabelText('Category'), 'assignment');
     expect(flexible).not.toBeChecked();
@@ -177,7 +177,7 @@ describe('EventDialog', () => {
     const store = renderDialogs(engine);
     act(() => store.getState().actions.openDialog({ kind: 'event', mode: 'edit', id: 'E' }));
 
-    expect(screen.getByRole('checkbox', { name: /Flexible/ })).toBeDisabled();
+    expect(screen.getByRole('radio', { name: /Flexible/ })).toBeDisabled();
     expect(screen.getByText('Events of scheduled tasks always stay flexible.')).toBeInTheDocument();
   });
 

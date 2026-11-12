@@ -12,6 +12,7 @@ import {
 } from './helpers';
 
 const EXPECTED_REPORT_SLOT = 'Mon 2 Nov 09:00–10:30';
+const RESIZE_SCROLL_MARGIN_ROWS = 2;
 
 // PRE:  target locates the event or resize handle to drag; deltaY is a pixel distance
 // POST: waits for its visible geometry and completes a real pointer drag by deltaY
@@ -59,7 +60,9 @@ test('E2: dragging and resizing resolves the conflict and persists after reload'
   const grabAtY = (await rowTop(page, '11:00:00')) + rowHeight / 2 + GRAB_OFFSET_PX;
   await dragVertically(page, event, moveDistance, grabAtY);
   // B is a meeting, so it is fixed: a manual drag asks first (WI-42).
-  const askB = page.getByRole('dialog', { name: 'B is fixed. Move it anyway?' });
+  const askB = page.getByRole('dialog', {
+    name: '"B" is fixed. Move it to Mon 2 Nov 13:00–14:00?',
+  });
   await askB.getByRole('button', { name: 'Move', exact: true }).click();
   await expect(page.getByRole('button', { name: /^B, Mon 2 Nov 13:00–14:00/ })).toBeVisible();
   await expect(page.getByText('No conflicts', { exact: true })).toBeVisible();
@@ -67,8 +70,16 @@ test('E2: dragging and resizing resolves the conflict and persists after reload'
   const resizeDistance = (await rowTop(page, '14:30:00')) - (await rowTop(page, '14:00:00'));
   // The confirmation took the pointer away; the resize handle only shows while B is hovered.
   await event.hover();
+  // The additional calendar controls can leave the resize destination below the visible grid.
+  const beforeResizeScroll = await rowTop(page, '14:00:00');
+  await page.mouse.wheel(0, resizeDistance * RESIZE_SCROLL_MARGIN_ROWS);
+  await expect.poll(() => rowTop(page, '14:00:00')).toBeLessThan(beforeResizeScroll);
+  await event.hover();
   await dragVertically(page, event.locator('.fc-event-resizer-end'), resizeDistance);
-  await askB.getByRole('button', { name: 'Move', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: '"B" is fixed. Change it to 1 h 30 min (13:00–14:30)?' })
+    .getByRole('button', { name: 'Change', exact: true })
+    .click();
   await expect(page.getByRole('button', { name: /^B, Mon 2 Nov 13:00–14:30/ })).toBeVisible();
   await page.reload();
   await expect(page.getByRole('button', { name: /^B, Mon 2 Nov 13:00–14:30/ })).toBeVisible();
@@ -160,13 +171,16 @@ test('T43: dragging a fixed event asks first; Keep it leaves it, Move moves it',
   await expect(atTen).toBeVisible();
 
   await dragEventBetweenRows(page, 'Seminar', '10:00:00', '12:00:00');
-  const ask = page.getByRole('dialog', { name: 'Seminar is fixed. Move it anyway?' });
+  const ask = page.getByRole('dialog', {
+    name: '"Seminar" is fixed. Move it to Mon 2 Nov 12:00–13:00?',
+  });
   await expect(ask).toBeVisible();
   await ask.getByRole('button', { name: 'Keep it', exact: true }).click();
   await expect(ask).toHaveCount(0);
   await expect(atTen).toBeVisible();
   await page.reload();
   await expect(atTen).toBeVisible();
+  await page.getByRole('button', { name: 'Calendar lock' }).click();
 
   await dragEventBetweenRows(page, 'Seminar', '10:00:00', '12:00:00');
   await expect(ask).toBeVisible();

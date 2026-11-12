@@ -77,7 +77,7 @@ for (const theme of THEMES) {
       await page.getByRole('button', { name: '+ Event', exact: true }).click();
       const dialog = page.getByRole('dialog', { name: 'New event' });
       await dialog.getByLabel('Title', { exact: true }).fill('Study session');
-      await dialog.getByRole('checkbox', { name: /Flexible/ }).check();
+      await dialog.getByRole('radio', { name: /Flexible/ }).check();
       await capture(page, `event-dialog-${theme}-${width}`);
     });
 

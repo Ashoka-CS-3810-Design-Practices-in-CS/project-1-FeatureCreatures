@@ -3,8 +3,7 @@
 
 import type { EngineError } from '@/shared/errors';
 import { err, ok, type Result } from '@/shared/result';
-import { parseInput, searchOptionsSchema } from '@/shared/schemas';
-import { addLocalDays, startOfLocalDay } from '@/shared/time';
+import { alternativesOptionsSchema, parseAlternativeRange, parseInput } from '@/shared/schemas';
 import type {
   CalendarEvent,
   Interval,
@@ -26,10 +25,6 @@ import type { EngineState, PipelineContext, PipelineOutcome } from '../state';
 // calls the other's functions at run time, never while the modules load.
 import { moveEvent } from './eventCrud';
 
-// A fixed event is searched from the day before its day to the day after it.
-const FIXED_SEARCH_DAYS_BEFORE = 1;
-const FIXED_SEARCH_DAYS_AFTER = 2;
-
 export interface ApplyAlternativeRequest {
   eventId: string;
   slot: Interval;
@@ -41,32 +36,35 @@ export interface AlternativesRequest {
   otherEventId?: string;
   bufferMin?: number;
   useWorkingHours?: boolean; // WI-41: false searches any time; omitted means true (as before)
+  allowMoving?: boolean;
+  range?: Interval;
 }
 
-// PRE:  event is an event
-// POST: returns where alternatives are searched: the flex window of a flexible event, otherwise the
-//       local day before the event's day through the local day after it (three whole days)
-function alternativesWindow(event: CalendarEvent): Interval {
+interface PreparedAlternatives extends SearchRequest {
+  enabled: boolean;
+}
+
+// PRE:  event is validated; request options have been validated, but its temporary range is untrusted
+// POST: returns the flexible window or opted-in fixed range; an opted-out fixed event's interval
+//       only identifies the empty result and is never searched; invalid fixed ranges give InvalidTime
+function alternativesWindow(event: CalendarEvent, request: AlternativesRequest): Result<Interval> {
   if (event.flexible && event.flexWindow !== null) {
-    return event.flexWindow;
+    return ok(event.flexWindow);
   }
-  const day = startOfLocalDay(event.start);
-  return {
-    start: addLocalDays(day, -FIXED_SEARCH_DAYS_BEFORE),
-    end: addLocalDays(day, FIXED_SEARCH_DAYS_AFTER),
-  };
+  return request.allowMoving === true
+    ? parseAlternativeRange(request.range)
+    : ok({ start: event.start, end: event.end });
 }
 
 // PRE:  state.events is sorted; request comes from outside (bufferMin unchecked)
-// POST: returns the search an alternatives request runs: the event's duration over
-//       alternativesWindow, working hours unless request.useWorkingHours is false, the event
-//       excluded, nearest to its start, buffer request.bufferMin ?? settings.bufferMin; err
-//       InvalidInput for a bad bufferMin or NotFound for an unknown event
+// POST: returns a prepared search with enabled=false for fixed events without consent; otherwise
+//       uses the flexible window or validated temporary range, nearest to the event's start with
+//       itself excluded; validates hours/consent/buffer and returns InvalidTime for an invalid range
 function alternativesSearch(
   state: EngineState,
   request: AlternativesRequest,
-): Result<SearchRequest, EngineError> {
-  const options = parseInput(searchOptionsSchema, { bufferMin: request.bufferMin });
+): Result<PreparedAlternatives, EngineError> {
+  const options = parseInput(alternativesOptionsSchema, request);
   if (!options.ok) {
     return options;
   }
@@ -74,11 +72,14 @@ function alternativesSearch(
   if (event === undefined) {
     return err({ code: 'NotFound', entity: 'event', id: request.eventId });
   }
+  const window = alternativesWindow(event, { ...request, ...options.value });
+  if (!window.ok) return window;
   return ok({
+    enabled: event.flexible || options.value.allowMoving === true,
     durationMin: event.end - event.start,
     priority: event.priority,
-    window: alternativesWindow(event),
-    useWorkingHours: request.useWorkingHours ?? true,
+    window: window.value,
+    useWorkingHours: options.value.useWorkingHours ?? true,
     excludeIds: [event.id],
     originalStart: event.start,
     criterion: 'nearest',
@@ -94,7 +95,8 @@ function alternativesSearch(
 
 // PRE:  state.events is sorted; request comes from outside (bufferMin unchecked); notBefore is now
 //       rounded up to SNAP_MIN
-// POST: returns the nearest-first alternative slots for the event (working hours only unless
+// POST: fixed events without opt-in get no options and no search; otherwise returns nearest-first slots
+//       (working hours only unless
 //       request.useWorkingHours is false; barred slots always apply; the event itself excluded;
 //       buffer = request.bufferMin ?? settings.bufferMin); err InvalidInput for a bad bufferMin,
 //       NotFound for an unknown event, or the search's ER2 / ER3 errors, where an ER2 with no
@@ -107,6 +109,21 @@ export function suggestAlternatives(
   const prepared = alternativesSearch(state, request);
   if (!prepared.ok) {
     return prepared;
+  }
+  if (!prepared.value.enabled) {
+    return ok({
+      baseVersion: state.version,
+      subject: prepared.value.subject,
+      durationMin: prepared.value.durationMin,
+      priority: prepared.value.priority,
+      criterion: prepared.value.criterion,
+      bufferMin: prepared.value.bufferMin,
+      searchWindow: prepared.value.window,
+      segmentCount: 0,
+      freeGaps: [],
+      fittingCount: 0,
+      options: [],
+    });
   }
   const { window, useWorkingHours } = prepared.value;
   const found = search(state, prepared.value, notBefore);
@@ -132,7 +149,10 @@ export function explainAlternativesWindow(
   notBefore: Minute,
 ): Result<WindowExplanation, EngineError> {
   const prepared = alternativesSearch(state, request);
-  return prepared.ok ? ok(explainSearch(state, prepared.value, notBefore)) : prepared;
+  if (!prepared.ok) return prepared;
+  return prepared.value.enabled
+    ? ok(explainSearch(state, prepared.value, notBefore))
+    : ok({ allowed: { stretches: [], splits: [] }, free: { stretches: [], splits: [] } });
 }
 
 // PRE:  request comes from the UI, normally an option of suggestAlternatives

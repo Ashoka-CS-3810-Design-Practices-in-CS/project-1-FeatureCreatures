@@ -209,6 +209,7 @@ describe('SlotPicker — alternatives mode (T20 data)', () => {
     ]);
 
     await userEvent.click(screen.getByRole('radio', { name: 'Lecture' }));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Allow moving this event' }));
     expect(
       screen.getByRole('dialog', { name: 'Alternatives for "Lecture" (2 h)' }),
     ).toBeInTheDocument();

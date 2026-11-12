@@ -123,12 +123,14 @@ export function eventCountText(visible: number, hidden: number): string {
   return hidden === 0 ? shown : `${shown} (${hidden} hidden by filter)`;
 }
 export const FIXED_TAG_HINT =
-  'Fixed: the planner never moves it. Dragging asks first; you can also edit its times or tick Flexible.';
+  'Fixed: the planner leaves it alone. You can edit its times, unlock the calendar to drag it with confirmation, or allow moving it in the suggestion picker.';
 
-// PRE:  title is a fixed event's title
-// POST: returns the question a manual drag or resize of it asks first (WI-42, report #1)
-export function fixedMoveQuestion(title: string): string {
-  return `${title} is fixed. Move it anyway?`;
+// PRE:  title is a fixed event's title; to is the proposed interval; resizing distinguishes the gesture
+// POST: describes the proposed destination or duration with D-03's action-specific question
+export function fixedMoveQuestion(title: string, to: Interval, resizing: boolean): string {
+  return resizing
+    ? `"${title}" is fixed. Change it to ${fmtDuration(to.end - to.start)} (${fmtTime(to.start)}–${fmtTime(to.end)})?`
+    : `"${title}" is fixed. Move it to ${fmtRange(to)}?`;
 }
 
 // PRE:  eventCount, taskCount ≥ 0 are what an import brought in

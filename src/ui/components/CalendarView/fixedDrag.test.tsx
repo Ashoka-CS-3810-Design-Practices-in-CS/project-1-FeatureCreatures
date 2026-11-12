@@ -33,14 +33,16 @@ async function setUp() {
 }
 
 describe('T43: a fixed event asks before a manual drag or resize', () => {
-  it('a drop of a fixed event asks "<title> is fixed. Move it anyway?" and moves nothing yet', async () => {
+  it('D-03: a fixed drop asks for its proposed destination and moves nothing yet', async () => {
     const { engine, repo, handlers } = await setUp();
     const before = await capture(engine, repo);
     const info = change('Lecture', 'Mon 15:00', 'Mon 16:00');
 
     await handlers.onDrop(info);
 
-    const dialog = screen.getByRole('dialog', { name: 'Lecture is fixed. Move it anyway?' });
+    const dialog = screen.getByRole('dialog', {
+      name: '"Lecture" is fixed. Move it to Mon 2 Nov 15:00–16:00?',
+    });
     expect(dialog).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Move' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Keep it' })).toBeInTheDocument();
@@ -67,7 +69,11 @@ describe('T43: a fixed event asks before a manual drag or resize', () => {
     const before = await capture(engine, repo);
     const info = change('Lecture', 'Mon 10:00', 'Mon 11:30');
     await handlers.onResize(info);
-    expect(screen.getByRole('dialog', { name: 'Lecture is fixed. Move it anyway?' })).toBeVisible();
+    expect(
+      screen.getByRole('dialog', {
+        name: '"Lecture" is fixed. Change it to 1 h 30 min (10:00–11:30)?',
+      }),
+    ).toBeVisible();
 
     // Esc on a modal <dialog> fires 'cancel', then closes it, which queues 'close' (as in Modal.test).
     const dialog = screen.getByRole<HTMLDialogElement>('dialog');

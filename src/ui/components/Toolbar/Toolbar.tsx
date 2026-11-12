@@ -10,7 +10,6 @@ const VIEWS: { type: ViewType; label: string }[] = [
   { type: 'timeGridDay', label: 'Day' },
   { type: 'timeGridWeek', label: 'Week' },
   { type: 'dayGridMonth', label: 'Month' },
-  { type: 'listWeek', label: 'List' },
 ];
 // The chips show the [H]/[M]/[L] tags of BR-13; the tooltip spells the priority out.
 const PRIORITY_CHIPS: { priority: Priority; tag: string; title: string }[] = [
@@ -26,14 +25,14 @@ function historyTooltip(verb: 'Undo' | 'Redo', label: string | null): string {
   return label === null ? `Nothing to ${verb.toLowerCase()}` : `${verb}: ${label}`;
 }
 
-// PRE:  rendered under StoreProvider; reads view, eventPriorityFilter, hiddenCategoryIds, categories and snapshot's undo / redo
+// PRE:  rendered under StoreProvider; reads view, lastCalendarView, calendarLocked, filters, categories and snapshot's undo / redo
 //       state; uses openDialog, toggleEventPriority, undo and redo; calendarRef points at the
 //       FullCalendar that CalendarView renders; theme is the current theme choice and onCycleTheme
 //       moves to the next one
 //       onOpenPanels, when supplied, opens the narrow-screen drawer; panelsOpen is its state
 //       + additional props from: CategoryTag
 // POST: shows the toolbar of Figure 1: previous / Today / next, the period title, the view switch,
-//       the priority filter chips, + Event, + Task, Replan, Undo / Redo (disabled when there is
+//       separate Calendar/List and Calendar lock controls, filters, + Event, + Task, Replan, Undo / Redo (disabled when there is
 //       nothing to do, tooltip = the change), theme, Keyboard shortcuts and Settings
 export function Toolbar({
   calendarRef,
@@ -49,6 +48,8 @@ export function Toolbar({
   panelsOpen?: boolean;
 }) {
   const view = useAppStore((state) => state.view);
+  const lastCalendarView = useAppStore((state) => state.lastCalendarView);
+  const locked = useAppStore((state) => state.calendarLocked);
   const filter = useAppStore((state) => state.eventPriorityFilter);
   const categories = useAppStore((state) => state.snapshot.categories);
   const hiddenCategories = useAppStore((state) => state.hiddenCategoryIds);
@@ -86,6 +87,22 @@ export function Toolbar({
         <h2 className="toolbar-title">{fmtViewTitle(view.type, view.date)}</h2>
       </div>
       <div className="toolbar-controls">
+        <div role="group" aria-label="Presentation">
+          <button
+            type="button"
+            aria-pressed={view.type !== 'listWeek'}
+            onClick={() => calendar()?.changeView(lastCalendarView)}
+          >
+            Calendar
+          </button>
+          <button
+            type="button"
+            aria-pressed={view.type === 'listWeek'}
+            onClick={() => calendar()?.changeView('listWeek')}
+          >
+            List
+          </button>
+        </div>
         <div role="group" aria-label="View">
           {VIEWS.map((option) => (
             <button
@@ -126,6 +143,14 @@ export function Toolbar({
         </div>
         <button type="button" onClick={actions.showAllEventPriorities}>
           Reset filters
+        </button>
+        <button
+          type="button"
+          aria-label="Calendar lock"
+          aria-pressed={locked}
+          onClick={actions.toggleCalendarLock}
+        >
+          <span aria-hidden="true">{locked ? '🔒' : '🔓'}</span> {locked ? 'Locked' : 'Unlocked'}
         </button>
         <button
           type="button"

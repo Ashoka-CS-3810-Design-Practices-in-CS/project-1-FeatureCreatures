@@ -742,7 +742,7 @@ export interface Engine {
   deleteEvent(id: string): Promise<Result<MutationResult>>;
 
   // ── Conflict Resolution pipeline (FR4 is automatic inside commit; FR7) ──
-  suggestAlternatives(req: { eventId: string; otherEventId?: string; bufferMin?: number; useWorkingHours?: boolean }): Result<SlotSearchResult>; // useWorkingHours: WI-41, omitted = true
+  suggestAlternatives(req: { eventId: string; otherEventId?: string; bufferMin?: number; useWorkingHours?: boolean; allowMoving?: boolean; range?: Interval }): Result<SlotSearchResult>;
   applyAlternative(req: { eventId: string; slot: Interval; baseVersion: number }): Promise<Result<MutationResult>>;
 
   // ── Task Scheduler pipeline (FR5, FR8, FR9) ──
@@ -755,7 +755,7 @@ export interface Engine {
   scheduleTask(req: { taskId: string; slot: Interval; baseVersion: number }): Promise<Result<MutationResult>>;
 
   // ── Replan pipeline (FR10) ──
-  explainWindow(req: { taskId: string; bufferMin?: number } | { eventId: string; useWorkingHours?: boolean; bufferMin?: number }): Result<WindowExplanation>; // WI-45, read-only
+  explainWindow(req: { taskId: string; bufferMin?: number } | { eventId: string; useWorkingHours?: boolean; bufferMin?: number; allowMoving?: boolean; range?: Interval }): Result<WindowExplanation>;
   planReplan(req: { range: Interval; bufferMin?: number }): Result<ReplanResult>;
   applyReplan(req: { baseVersion: number; planId: ReplanPlan['id'] }): Promise<Result<MutationResult>>;
 
@@ -825,12 +825,13 @@ Every mutation pipeline follows the same skeleton: validate → look up → buil
 
 **Detection (FR4)** is not a command. It runs inside every `commit` (§8.4), and `Conflict.targetId` is filled by `chooseTarget` (§8.11).
 
-**`suggestAlternatives({eventId, otherEventId, bufferMin, useWorkingHours})`**
+**`suggestAlternatives({eventId, otherEventId, bufferMin, useWorkingHours, allowMoving, range})`**
 
 1. Look up the event, or return `NotFound`.
 2. Choose the search window:
    - flexible event: `searchWindow = event.flexWindow`
-   - fixed event: `searchWindow = [addLocalDays(startOfLocalDay(event.start), −1), addLocalDays(startOfLocalDay(event.start), 2))`
+   - fixed event with `allowMoving !== true`: return an empty success (zero segments/fitting count, no free gaps/options), without running a search. Its `searchWindow` identifies the event's original interval only; it is not a stored window. `explainWindow` returns empty allowed/free stretches.
+   - fixed event with `allowMoving = true`: `searchWindow = range`; `parseAlternativeRange(range)` returns InvalidTime with range-prefixed issues for missing, malformed or reversed ranges. No hidden three-day fallback exists. Flexible searches retain their own window.
 3. Return `search({durationMin: event.end − event.start, priority: event.priority, window: searchWindow, useWorkingHours: useWorkingHours ?? true, excludeIds: [eventId], originalStart: event.start, criterion: 'nearest', bufferMin: bufferMin ?? settings.bufferMin, subject: {kind: 'event', eventId, title, otherEventId: otherEventId ?? null}})` (§7.5). Omitting `useWorkingHours` gives exactly the pre-WI-41 results; barred slots apply either way.
 4. When that search fails with `TaskLongerThanWindow` and `longestStretchMin = 0`, add `emptyCause = emptyWindowCause(state, searchWindow, useWorkingHours, notBefore)` (`search.ts`): `'past'` when `searchWindow.end ≤ notBefore`; else `'barred'` when the same segments built with no barred slots are non-empty; else `'noWorkingHours'`. `findSlots` does not add it, so task errors are unchanged.
 
@@ -1472,6 +1473,8 @@ interface AppState {
           activeRange: Interval | null };      // activeRange from FullCalendar datesSet
   eventPriorityFilter: Priority[];             // calendar filter (FR6), default all
   hiddenCategoryIds: string[];                // calendar only; default [] shows new categories too
+  calendarLocked: boolean;                   // initial events.length > 0; session only
+  lastCalendarView: 'timeGridDay' | 'timeGridWeek' | 'dayGridMonth';
   lastCategoryId: string | null;             // session choice; missing id falls back to first
   taskPanel: { sort: 'priority' | 'windowEnd'; priorities: Priority[]; status: 'unscheduled' | 'scheduled' | 'all';
                selectedIds: string[] };
@@ -1493,6 +1496,7 @@ type PickerState =
   | { mode: 'task'; queue: string[]; index: number; criterion: UserCriterion; bufferMin: number;
       result: Result<SlotSearchResult>; selected: number; scheduled: number; skipped: number }
   | { mode: 'alternatives'; eventId: string; otherEventId: string | null; bufferMin: number;
+      allowMoving: boolean; range: Interval;
       useWorkingHours: boolean;   // WI-41 Search hours; default overlapsWorkingHours(target, settings)
       order: readonly [string, string] | null;   // WI-45: Move radio order, the conflict's [aId, bId]
       result: Result<SlotSearchResult>; explanation: WindowExplanation | null; selected: number };
@@ -1549,6 +1553,12 @@ WI-38: Replan plan cards also show **Not moved by Replan** with the derived per-
 
 ### 11.3 FullCalendar integration (`CalendarView/`)
 
+WI-50 / D-01–D-05: EventDialog's flexible boolean is a controlled Fixed/Flexible native radio pair (task-linked events keep Flexible and both controls disabled). Calendar/List is a separate Presentation group, with Day/Week/Month in View. `lastCalendarView` updates only for non-List views. `fc-view` remembers the active side/view, and `fc-calendar-view` remembers its return Calendar view; `storedCalendarView()` supplies `initialCalendarView`. L toggles the two sides, D/W/M switch to Calendar, K calls `toggleCalendarLock()`.
+
+`calendarLocked` initialises from the loaded snapshot's event count and never changes automatically later in the session. CalendarView sets editable/selectable to !locked. `createCalendarHandlers(actions, isLocked = () => false)` also checks the latest lock before mutations/selection (reverting a blocked mutation), retaining event clicks. A DOM container keeps calendar sizing and hosts `useCalendarPan(rootRef, locked)`: primary-pointer time-grid dragging over `CALENDAR_PAN_THRESHOLD_PX = 5` captures the pointer, scrolls from its initial coordinates and suppresses the resulting click; an ordinary event click remains intact. Cleanup releases capture and removes listeners/classes. Fixed confirmations describe destination or new duration, with Move/Change versus Keep it; all remain ordinary undoable moveEvent commands.
+
+The alternatives picker stores `allowMoving = false` and a temporary `range`; `FIXED_ALTERNATIVE_RANGE_DAYS = 2` prepopulates the event day through the following day, clipped to now. Date To is inclusive and maps to next midnight. A target change resets consent and range, preserving Search hours; reopening starts off. `alternativesOptionsSchema` validates consent/hours/buffer. `parseAlternativeRange` is the shared range validator; no consent/range is persisted or exported. ER4's automatic suggestion for fixed events is now null; View conflict still opens the opt-in flow.
+
 WI-49: shared CategoryEditor/CategorySelect/CategoryTag components serve Settings and both item dialogs. The editor is an inline fieldset with type=button actions so it never submits the enclosing item form. Unavailable swatches stay visible but disabled; free-picker/name errors use shared validators and field descriptions. New item forms resolve `lastCategoryId` when it exists, otherwise the first current id or empty; item save requires a category. Selection remembers the id for this store session only. `eventFormValues` defaults flexible=false; there is no `flexibleByDefault`.
 
 `toFullCalendar(snapshot, priorityFilter, activeRange, emphasisIds, hiddenCategoryIds = [])` resolves current Category records by id for tags and appends the name to the accessible label/tooltip. Category chips sit beside H/M/L. Both filters apply to calendar rendering and status counts; ConflictPanel's hidden note uses both, while detection/searches/tasks remain independent. Show all and Reset filters clear both. With categories hidden, empty List says "All events in this range are hidden by the calendar filters"; the priority-only wording remains for priority-only filtering. Categories created later are visible automatically.
@@ -1594,7 +1604,7 @@ FullCalendar is a **controlled, render-only view**. Its `events` prop is always 
 
 **`calendarHandlers.ts`** contains plain functions (not hooks), so tests can call them with fake `info` objects (T14):
 
-- **`onDrop(info)` / `onResize(info)`:** when FullCalendar reports no start or end, call `info.revert()`. Otherwise call `actions.dragEvent(info.event.id, {start, end}, info.revert)` (WI-42). For a fixed event the store opens the confirm dialog "<title> is fixed. Move it anyway?" (body "The planner never moves it on its own.", buttons Move / Keep it) whose `onConfirm` runs `moveEvent` and `onCancel` is `info.revert`; for any other event it runs `moveEvent` at once. Either way an error result calls `info.revert()`. Only drags go through `dragEvent`, so no other path asks. The block's Fixed tag (`components/FixedTag`) has `FIXED_TAG_HINT` as its `title` and, through a hidden element, as the `aria-describedby` of the event button.
+- **`onDrop(info)` / `onResize(info)`:** a locked gesture or missing endpoints call `info.revert()` and do nothing else. Otherwise call `actions.dragEvent(info.event.id, {start, end}, info.revert)`. The store's fixed confirmation names destination (Move) or new duration/times (Change), with Keep it; confirmation calls `moveEvent`, cancellation calls `revert`. Flexible changes run immediately. Engine errors revert. Other mutation paths never ask. The Fixed tag's tooltip and hidden accessible description explain the lock and opt-in alternatives.
 - **`onSelect(info)`:** open the create dialog with `defaults.start/end` from the selection, then call `info.view.calendar.unselect()`. A plain click selects one `SNAP_MIN` step; a selection that short gets `end = start + CLICK_EVENT_MIN` instead (WI-35).
 - **`onClick(info)`:** do nothing for background events. Otherwise open the edit dialog.
 - **`onDatesSet(info)`:** store `activeRange = {start: toMinute(info.start), end: toMinute(info.end)}`.
@@ -1942,3 +1952,4 @@ Production URL: https://…vercel.app
 | 2026-11-12 | v1.37 (WI-47, D-18): §0/§2/§14 and references use `docs/progress/PROGRESS.md` and `docs/extras/`; main specs, samples and screenshots stay in place. All local links and references checked, full Round 2 gate required before and after merge. |
 | 2026-11-12 | v1.38 (WI-48, D-17): frozen §5 types/constants gain Category, `categoryId`, kept ids, done/doneAt, global working-time switch and export v2. §6 legacy/stored/category schemas and category-reference validation; §7 state/snapshot/import/export carry categories; §9 repositories load/replace categories atomically and Dexie v3 migrates without editing v1/v2 or changing the revision. T48 retains v1 compatibility and six samples are v2. |
 | 2026-11-12 | v1.39 (WI-49, D-11): CategoryInput and queued category CRUD; CategoryInUse/NotFound category; optional category before/after images and repository puts/deletes share the revision-checked transaction and history. Shared OKLab/contrast validators, twelve swatches, CategoryEditor/Select/Tag, Settings section, session default and calendar filters. New events Fixed (C-01); removed flexibleByDefault. |
+| 2026-11-12 | v1.40 (WI-50, D-01–D-05): alternatives request/explanation gain allowMoving/range with shared validation, opted-out empty results and no fixed fallback window. Store/picker gain lock, last Calendar view and dialog-only consent/range; persisted presentation/return view, scheduling radios, action-specific fixed questions and pointer-based grid panning. Frozen engine signatures updated with implementation. |

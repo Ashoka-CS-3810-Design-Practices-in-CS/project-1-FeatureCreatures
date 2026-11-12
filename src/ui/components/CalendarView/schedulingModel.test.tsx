@@ -2,7 +2,7 @@
 import { act, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { CalendarEvent } from '@/shared/types';
-import { ev, iv } from '../../../../tests/helpers/builders';
+import { ev, flexEv, iv } from '../../../../tests/helpers/builders';
 import { capture, makeEngine } from '../../../../tests/helpers/engine';
 import { renderWithStore, storeFor } from '../../../../tests/helpers/render';
 import { App } from '../../App';
@@ -20,6 +20,10 @@ async function renderCalendar(events: CalendarEvent[] = []) {
 }
 
 describe('T50: scheduling model and calendar lock (D-01–D-05)', () => {
+  it('labels flexible calendar events with the same Flexible name as the scheduling radios', async () => {
+    await renderCalendar([flexEv('Study', 'Mon 10:00', 'Mon 11:00', ['Mon 09:00', 'Mon 18:00'])]);
+    expect(screen.getByText('Flexible', { exact: true })).toBeInTheDocument();
+  });
   it.each([
     { state: 'empty', events: [], locked: false, text: 'Unlocked' },
     { state: 'populated', events: [LECTURE], locked: true, text: 'Locked' },

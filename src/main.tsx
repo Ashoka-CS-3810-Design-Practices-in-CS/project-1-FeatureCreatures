@@ -9,7 +9,7 @@ import { toMinute } from '@/shared/time';
 import { App } from '@/ui/App';
 import { ErrorBoundary } from '@/ui/components/ErrorBoundary/ErrorBoundary';
 import { downloadJson } from '@/ui/hooks/download';
-import { rememberView, storedView } from '@/ui/hooks/preferences';
+import { rememberView, storedCalendarView, storedView } from '@/ui/hooks/preferences';
 import { announceStoredChange, openTabChannel, reloadOnOtherTabChanges } from '@/ui/hooks/tabSync';
 import { createAppStore, StoreProvider, type AppStore } from '@/ui/store/appStore';
 import '@/ui/styles/tokens.css';
@@ -78,6 +78,7 @@ async function bootstrap(): Promise<void> {
     now,
     resetStorage: () => emptyRepository(repo),
     initialView: storedView(),
+    initialCalendarView: storedCalendarView(),
   });
   rememberView(store);
   if (channel !== null) {

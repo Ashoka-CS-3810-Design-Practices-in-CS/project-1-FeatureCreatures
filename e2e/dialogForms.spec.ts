@@ -31,7 +31,7 @@ for (const theme of THEMES) {
       await openCalendar(page);
       await page.getByRole('button', { name: '+ Event', exact: true }).click();
       const dialog = page.getByRole('dialog', { name: 'New event' });
-      await dialog.getByRole('checkbox', { name: /Flexible/ }).check();
+      await dialog.getByRole('radio', { name: /Flexible/ }).check();
       const end = await dialog.getByLabel('End', { exact: true }).boundingBox();
       const bounds = await dialog.boundingBox();
       expect(end).not.toBeNull();
