@@ -254,6 +254,9 @@ Each requirement lists its acceptance criteria. The tests that prove it are in `
 - **Acceptance:**
   - Sorting and filtering never change stored data.
   - Conflicts are still computed on all events. A hidden event still appears in the conflict panel, tagged "(hidden by filter)".
+  - The status line above the calendar counts the events the filter shows, plus "(N hidden by filter)" when it hides any, e.g. "5 events (3 hidden by filter) · 4 tasks · 1 conflict"; the conflict count still covers every event (WI-44, report #10).
+  - When the filter hides every event of List's range, List says "All events in this range are hidden by the priority filter" with a **Show all** button that shows every priority again. A range with no events keeps "No events to display".
+  - List layout (WI-44, reports #12, #13): the sticky day header stays above conflict and tag outlines with an opaque background in both themes; each row's time, dot, title and tags share one centre line; rows and day headers wrap rather than overflow on a narrow screen (phone layout stays best effort).
 
 **FR7 — Conflict resolution (alternatives).**
 - **Input:** a conflict (from the panel or a flagged event).
@@ -703,3 +706,4 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 | 2026-11-12 | v1.8 (WI-41, peer reports #3, #4, #9): FR7 adds the Search hours choice with its default, the fixed-target note and named empty-window causes; BR-5 alternatives no longer always respect working hours; §3.2 the default flex window is the whole local day outside working hours or on a non-working day. |
 | 2026-11-12 | v1.9 (WI-42, peer report #1): glossary *Fixed event*, FR2 and W2 — a manual drag or resize of a fixed event asks "<title> is fixed. Move it anyway?" (Move / Keep it); other paths never ask; the Fixed tag gets a tooltip and accessible description. |
 | 2026-11-12 | v1.10 (WI-43, peer report #6): §3.2 Settings and FR11 — two barred slots with the same days, start and end are rejected ("Duplicate of barred slot N."), in the dialog and on import. |
+| 2026-11-12 | v1.11 (WI-44, peer reports #10, #12, #13): FR6 — the status line counts shown events plus those hidden by the filter; List explains an all-hidden range with Show all; List header, alignment and narrow wrapping. Conflicts still on all events. |
