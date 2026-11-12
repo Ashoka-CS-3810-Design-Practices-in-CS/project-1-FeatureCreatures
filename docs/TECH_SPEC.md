@@ -521,6 +521,7 @@ export type EngineError =
 ```ts
 export const MAX_EVENT_MIN = 1440;   // BR-4
 export const MAX_OPTIONS = 5;        // BR-7
+export const SUGGESTION_STEP_MIN = 30; // D-06 picker candidate grid
 export const HISTORY_LIMIT = 50;     // B1
 export const SNAP_MIN = 5;           // BR-5 notBefore rounding + UI snap
 export const MAX_REPLAN_DAYS = 14;   // BR-12
@@ -1196,6 +1197,8 @@ export interface RankContext {
 export function effectiveCriterion(c: Criterion, p: Priority): EffectiveCriterion;
 //   priorityAware → high: 'earliest', medium: 'bestFit', low: 'leastLoaded'; others unchanged
 export function rankOptions(fitting: readonly FreeGap[], ctx: RankContext): SlotOption[];
+export function optionAt(gap: FreeGap, start: Minute, ctx: RankContext): Omit<SlotOption, 'rank'>;
+export function rankCandidates(options: readonly Omit<SlotOption, 'rank'>[]): SlotOption[];
 ```
 
 ```text
@@ -1214,6 +1217,16 @@ return first MAX_OPTIONS, with rank = 1..k
 ```
 
 This costs O(m log m) time and O(m) space. When `eff = nearest` with no original start, it falls back to `earliest`; this never happens in practice.
+
+WI-51 shares `optionAt`'s explanation construction and `rankCandidates`' criterion ordering with the picker generator. `optionAt` requires `gap.start ≤ start ≤ gap.end − durationMin`, positive integer duration, and frames covering the gap. `rankCandidates` returns all supplied options ranked 1…k, without a limit; they share one effective criterion, and ties retain input order after the existing start tie-break. `rankOptions` still constructs one candidate per gap and takes `MAX_OPTIONS`; its Replan behaviour and T10/T34 contracts are unchanged.
+
+### 8.10a `suggestions.ts` — picker candidate generation (WI-51, D-06)
+
+```ts
+export function generateCandidates(gap: FreeGap, context: RankContext): Omit<SlotOption, 'rank'>[];
+```
+
+The caller supplies one fitting gap and a context with positive integer duration and frames covering it. The pure generator returns candidates in time order, each carrying the complete BR-8 explanation. Starts are `gap.start`, `gap.end − durationMin`, the clamped `originalStart` when present, and all multiples of `SUGGESTION_STEP_MIN = 30` within those bounds. A Set removes duplicates. If C candidates are produced, time is O(C log C + C log D) and space O(C), including shared option construction's frame lookup. No date, UI or storage dependency is introduced. At the WI-51 generator checkpoint this helper is implemented and tested; wiring the picker searches and updating their result contract/BR-7 follow in the same WI.
 
 ### 8.11 `target.ts` (BR-10)
 
@@ -1954,3 +1967,4 @@ Production URL: https://…vercel.app
 | 2026-11-12 | v1.38 (WI-48, D-17): frozen §5 types/constants gain Category, `categoryId`, kept ids, done/doneAt, global working-time switch and export v2. §6 legacy/stored/category schemas and category-reference validation; §7 state/snapshot/import/export carry categories; §9 repositories load/replace categories atomically and Dexie v3 migrates without editing v1/v2 or changing the revision. T48 retains v1 compatibility and six samples are v2. |
 | 2026-11-12 | v1.39 (WI-49, D-11): CategoryInput and queued category CRUD; CategoryInUse/NotFound category; optional category before/after images and repository puts/deletes share the revision-checked transaction and history. Shared OKLab/contrast validators, twelve swatches, CategoryEditor/Select/Tag, Settings section, session default and calendar filters. New events Fixed (C-01); removed flexibleByDefault. |
 | 2026-11-12 | v1.40 (WI-50, D-01–D-05): alternatives request/explanation gain allowMoving/range with shared validation, opted-out empty results and no fixed fallback window. Store/picker gain lock, last Calendar view and dialog-only consent/range; persisted presentation/return view, scheduling radios, action-specific fixed questions and pointer-based grid panning. Frozen engine signatures updated with implementation. |
+| 2026-11-13 | v1.41 (WI-51 generator checkpoint): §8.10 shares optionAt/rankCandidates, retaining rankOptions' one-per-gap/MAX_OPTIONS Replan contract; §8.10a freezes pure generateCandidates over one fitting gap with SUGGESTION_STEP_MIN = 30. Five unit cases and an independent minute-oracle property cover D-06 generation. Picker integration and final BR-7/result/UI documentation remain in progress. |

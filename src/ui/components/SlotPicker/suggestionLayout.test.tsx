@@ -26,14 +26,14 @@ describe('T51: shared suggestion layout (D-06)', () => {
     expect(screen.queryByText(/free gaps in window/)).not.toBeInTheDocument();
     await userEvent.click(within(days).getByRole('button', { name: 'Show 8 more' }));
     expect(within(days).getAllByRole('radio')).toHaveLength(16);
-    await userEvent.click(within(days).getByRole('radio', { name: '17:00–18:00', exact: true }));
+    await userEvent.click(within(days).getByRole('radio', { name: '17:00–18:00' }));
     expect(
       within(screen.getByRole('group', { name: 'Available slots' })).getAllByRole('radio', {
         checked: true,
       }),
     ).toHaveLength(1);
     expect(within(picks).getByRole('radio')).not.toBeChecked();
-    await userEvent.click(screen.getByRole('button', { name: 'Details', exact: true }));
+    await userEvent.click(screen.getByRole('button', { name: 'Details' }));
     expect(screen.getByLabelText('Buffer (min)')).toHaveValue(0);
     expect(screen.getByText(/^Window:/)).toBeInTheDocument();
     expect(screen.getByText(/1 free gap in window/)).toBeInTheDocument();
@@ -70,7 +70,7 @@ describe('T51: shared suggestion layout (D-06)', () => {
       '15:10–16:40',
     ]);
     expect(within(picks).getByRole('radio', { name: /Earliest/ })).toBeChecked();
-    await userEvent.click(screen.getByRole('radio', { name: 'Best fit', exact: true }));
+    await userEvent.click(screen.getByRole('radio', { name: 'Best fit' }));
     expect(within(picks).getByRole('radio', { name: /Tightest fit.*15:00–16:30/ })).toBeChecked();
     expect(
       within(days)
@@ -100,9 +100,9 @@ describe('T51: shared suggestion layout (D-06)', () => {
     expect(within(picks).getByText('1 h 30 min earlier')).toBeInTheDocument();
     expect(within(picks).getByText('Tue has 0 min booked')).toBeInTheDocument();
     expect(screen.queryByText(/Closest to the original time/)).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Details', exact: true }));
+    await userEvent.click(screen.getByRole('button', { name: 'Details' }));
     expect(screen.getByLabelText('Buffer (min)')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Cancel', exact: true }));
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     act(() => store.getState().actions.openEventAlternatives('Study'));
     expect(screen.queryByLabelText('Buffer (min)')).not.toBeInTheDocument();
   });
@@ -117,7 +117,7 @@ describe('T51: shared suggestion layout (D-06)', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(
       'This needs 10 h, but the longest stretch available in its window is 9 h.',
     );
-    expect(screen.getByRole('button', { name: 'Details', exact: true })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Details' })).toHaveAttribute(
       'aria-expanded',
       'false',
     );
