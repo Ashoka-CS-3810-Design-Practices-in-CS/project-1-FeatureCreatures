@@ -30,7 +30,7 @@ test('T54: completion frees scheduled time, undoes atomically, persists, reopens
   await page.getByRole('button', { name: 'Redo', exact: true }).click();
   await expect(event).toHaveCount(0);
   await page.reload();
-  await page.getByLabel('Show', { exact: true }).selectOption('done');
+  await page.getByRole('combobox', { name: 'Show', exact: true }).selectOption('done');
   const row = page.getByRole('listitem').filter({ has: page.getByText('Report', { exact: true }) });
   await expect(row).toContainText('✓ Done');
   await expect(row.locator('strong')).toHaveCSS('text-decoration-line', 'line-through');
@@ -40,7 +40,7 @@ test('T54: completion frees scheduled time, undoes atomically, persists, reopens
   await form.getByRole('button', { name: 'Reopen', exact: true }).click();
   await expect(form).toHaveCount(0);
   await expect(event).toHaveCount(0);
-  await page.getByLabel('Show', { exact: true }).selectOption('unscheduled');
+  await page.getByRole('combobox', { name: 'Show', exact: true }).selectOption('unscheduled');
   await row.getByRole('button', { name: 'Find time', exact: true }).click();
   const picker = page.getByRole('dialog', { name: /^Find time/ });
   await picker.getByRole('button', { name: 'Apply selected', exact: true }).click();
@@ -82,14 +82,14 @@ test('T54: Tasks menu previews inclusive bulk membership, cancels safely and app
   await dialog.getByRole('button', { name: 'Apply', exact: true }).click();
   await expect(dialog).toHaveCount(0);
   await expect(event).toHaveCount(0);
-  await page.getByLabel('Show', { exact: true }).selectOption('done');
+  await page.getByRole('combobox', { name: 'Show', exact: true }).selectOption('done');
   await expect(
     page.getByRole('list', { name: 'Task list', exact: true }).getByRole('listitem'),
   ).toHaveCount(2);
   await page.getByRole('button', { name: 'Undo', exact: true }).click();
   await expect(event).toBeVisible();
   await expect(page.getByText('No tasks to show.', { exact: true })).toBeVisible();
-  await page.getByLabel('Show', { exact: true }).selectOption('open');
+  await page.getByRole('combobox', { name: 'Show', exact: true }).selectOption('open');
   await expect(
     page.getByRole('list', { name: 'Task list', exact: true }).getByRole('listitem'),
   ).toHaveCount(3);
