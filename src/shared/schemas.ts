@@ -59,6 +59,10 @@ const priority = z.enum(['high', 'medium', 'low']);
 const legacyCategory = z.enum(['meeting', 'class', 'appointment', 'assignment', 'personal']);
 const weekday = z.literal([0, 1, 2, 3, 4, 5, 6]);
 const entityId = z.string().min(1);
+export const doneBeforeSchema = z.object({ before: minute });
+export const doneBeforeApplySchema = doneBeforeSchema.extend({
+  baseVersion: z.number().int().min(0),
+});
 const description = z
   .string()
   .max(MAX_DESCRIPTION_LENGTH, `Description can be at most ${MAX_DESCRIPTION_LENGTH} characters.`);

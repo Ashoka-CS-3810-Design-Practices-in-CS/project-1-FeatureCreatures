@@ -121,7 +121,7 @@ These optional features from the project description are also covered by the cor
 | **Flex window** | An Interval within which a flexible event may be placed. |
 | **Task** | A to-do with name, duration, priority and an **allowable window**. It has no time until scheduled, and is shown only in the task panel. |
 | **Category** | A stored name and colour referenced by an event/task's required `categoryId`. Five defaults are seeded. |
-| **Done task** | A completed task with `doneAt`, no linked event and no occupied calendar time. Commands and UI arrive in WI-54. |
+| **Done task** | A completed task with `doneAt`, no linked event and no occupied calendar time. Mark done frees its scheduled time; Reopen returns it to unscheduled (BR-18). |
 | **Scheduled task** | A task linked to exactly one event (created when the user applies a slot). The event is flexible and its flex window equals the task window. |
 | **Local day** | A calendar day in the browser's time zone, from local midnight to the next local midnight. It can be 23 or 25 hours long around daylight-saving changes. |
 | **Working hours / working days** | From settings, e.g. Mon–Fri 09:00–18:00 local time. |
@@ -467,6 +467,7 @@ Every search result also carries:
 - **Deletion and unscheduling:**
   - Deleting a scheduled task's event (or unscheduling the task) sets the task back to `unscheduled` with `scheduledEventId = null`.
   - Deleting a scheduled task deletes its event.
+  - Marking a scheduled task done deletes its event before completing the task, in that same atomic change (BR-18).
   - Each of these is one atomic change and one undo step.
 
 **BR-10 Alternatives target rule.**
@@ -530,6 +531,8 @@ Every search result also carries:
 - **Slot overlap validation:** new/edited barred content rejects any positive time overlap on a shared weekday, at the later slot's Days field, naming the first earlier overlap: `Overlaps barred slot 1 (Lunch) on Mon, Tue.` Touching and disjoint weekdays are allowed; exact duplicates follow the same rule. Stored data/Dexie upgrades and v1 imports preserve older overlaps. Unrelated settings saves may keep those rows; every barred edit must resolve them. The Barred slots region explains old overlaps and offers editing; labels stack on the calendar. Current-format imports use current validation.
 
 ---
+
+**BR-18 Done tasks (D-07).** Mark done deletes a scheduled task's linked event and sets status done with doneAt equal to completion time. Unscheduled tasks have no event to remove. This is one atomic change and one undo step. Repeated completion is a no-op. Reopen clears doneAt, sets unscheduled and creates no event, one undo step. Done tasks must be reopened before finding or scheduling time. Done rows have a ✓ Done tag, struck title, muted text and Reopen/Edit/Delete actions; the default Open filter excludes done. The Tasks menu offers Mark done before…: choose date/time T, preview and count scheduled tasks with event.end ≤ T and unscheduled tasks with window.end ≤ T, excluding done; Apply completes that set in one atomic change/undo step. A changed snapshot requires a fresh preview. Preview never writes.
 
 **BR-16 Categories (D-11).** Every event/task has one existing category id. Settings → Categories supports create, rename, recolour and delete, one atomic undo step each. Name is trimmed, 1–40 characters and unique ignoring case. Renaming/recolouring updates all referring tags immediately without rewriting items. Deleting is blocked while any event or task refers to the category, including done tasks; the last unused category may be deleted. Both item dialogs end the category select with New category… and a small inline name/colour editor, preserving the item draft. With no categories they require creating one before saving. New items use the last category chosen in this session if it still exists, otherwise the first listed category. No category controls whether an event is flexible.
 
@@ -744,10 +747,10 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 | 2026-11-12 | v1.17 (WI-50, D-01–D-05): fixed/flexible scheduling radios; explicit fixed-search consent and temporary range; action-specific move/resize confirmations; session Calendar lock and grab-to-pan; separate persisted Calendar/List toggle and last Calendar view. FR2/FR7, glossary, BR-17, workflows and shortcuts updated; prior default three-day search removed. |
 | 2026-11-13 | WI-50 verification: releasing a locked-grid pan outside the calendar ends it, including before pointer capture; returning to the grid after release must not scroll it. T50 covers the regression. |
 | 2026-11-13 | v1.18 (WI-51, D-06/C-03/C-04): FR5/FR7, BR-7/BR-8 presentation and Figure 2 use complete half-hour/boundary/original candidates, distinct named picks, chronological day chips with eight-slot expansion, one selection and initially hidden Details. Replan's one-per-gap/MAX_OPTIONS contract is unchanged. |
-
 | 2026-11-13 | v1.19 (WI-52 engine checkpoint, D-08): BR-12 diagnostics omit entirely past problem overlaps and reserve Already started for currently running events, using raw now independently of rounded placement notBefore. Placement, metrics, detection and storage are unchanged. Remaining UI past-time behavior is still in progress. |
 | 2026-11-13 | v1.20 (WI-52, D-08): BR-19/FR4 and BR-15 define raw-now Upcoming/Past grouping, upcoming-only counts/actions/barred feedback, muted accessible past days/events and cross-day now guides; presentation time refreshes without domain writes. |
 | 2026-11-13 | v1.21 (WI-53 D-10 engine checkpoint): BR-5, day loads and default flex windows obey the global working-time switch. Off means whole local days with barred slots retained, including cross-midnight placement; task/working-time preferences stay stored. UI and D-09 remain in progress. |
 | 2026-11-13 | v1.22 (WI-53 D-10 UI checkpoint): FR11/UX expose Use working hours, disabled retained preferences, hidden effective task/search-hour choices and shading removal. D-09 and stronger enabled-hours shading remain in progress. |
 | 2026-11-13 | v1.23 (WI-53 D-09 engine checkpoint): BR-15 defines identified slot warnings, undoable Keep here, automatic event/settings/history clearing, shared-day overlap rejection and legacy preservation. UI region/editor/grouping and remaining shading are still in progress. |
 | 2026-11-13 | v1.24 (WI-53 D-09/D-10): barred editing moves into its region, Settings retains four sections, Kept groups suppress current tags/warnings and restore through Stop keeping/history; legacy banners/stacked labels and contrasted enabled non-working dots are specified. |
+| 2026-11-13 | v1.25 (WI-54 D-07 engine checkpoint): BR-18 completion/unschedule atomicity, Reopen, inclusive bulk cutoff/preview, stale guard and default-hidden done tasks. |

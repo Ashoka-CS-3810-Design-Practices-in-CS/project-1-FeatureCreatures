@@ -74,13 +74,15 @@ function comparatorFor(sort: TaskPanelState['sort']): (first: Task, second: Task
 
 // PRE:  tasks are the snapshot's tasks; panel is the task panel's state
 // POST: returns a new array of the tasks the panel shows: priority in panel.priorities, status
-//       matching panel.status ('all' matches both), in panel.sort order; tasks is not changed
+//       matching panel.status ('open' excludes done, 'all' includes every status), in panel.sort order;
+//       tasks is not changed
 export function visibleTasks(tasks: readonly Task[], panel: TaskPanelState): Task[] {
   return tasks
     .filter(
       (task) =>
         panel.priorities.includes(task.priority) &&
-        (panel.status === 'all' || task.status === panel.status),
+        (panel.status === 'all' ||
+          (panel.status === 'open' ? task.status !== 'done' : task.status === panel.status)),
     )
     .toSorted(comparatorFor(panel.sort));
 }

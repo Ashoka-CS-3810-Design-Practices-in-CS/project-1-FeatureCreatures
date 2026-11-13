@@ -18,7 +18,7 @@ type PanelState = AppState['taskPanel'];
 //       actions are the store's actions; reads snapshot.categories under StoreProvider
 //       + additional props from: CategoryTag
 // POST: renders one task row: a selection box (unscheduled tasks only), name, priority tag,
-//       category tag, duration, deadline, status, and the Find time / Edit buttons
+//       category tag, duration, deadline, status and applicable scheduling/completion/edit/delete actions
 function TaskRow({
   task,
   event,
@@ -34,8 +34,9 @@ function TaskRow({
     state.snapshot.categories.find((candidate) => candidate.id === task.categoryId),
   );
   const isUnscheduled = task.status === 'unscheduled';
+  const isDone = task.status === 'done';
   return (
-    <li className={`task-row prio-${task.priority}`}>
+    <li className={`task-row prio-${task.priority}${isDone ? ' task-done' : ''}`}>
       <label className="task-selection">
         <input
           type="checkbox"
@@ -54,11 +55,28 @@ function TaskRow({
         <span>
           due {fmtDay(task.window.end)} {fmtTime(task.window.end)}
         </span>{' '}
-        <span className="task-status">
-          {event === undefined ? 'Unscheduled' : `Scheduled ${fmtRange(event)}`}
+        <span className={`task-status${isDone ? ' tag' : ''}`}>
+          {isDone ? '✓ Done' : event === undefined ? 'Unscheduled' : `Scheduled ${fmtRange(event)}`}
         </span>
       </span>{' '}
       <span className="task-actions">
+        {isDone ? (
+          <button
+            type="button"
+            aria-label={`Reopen ${task.name}`}
+            onClick={() => void actions.reopenTask(task.id)}
+          >
+            Reopen
+          </button>
+        ) : (
+          <button
+            type="button"
+            aria-label={`Mark ${task.name} done`}
+            onClick={() => void actions.markTaskDone(task.id)}
+          >
+            <span aria-hidden="true">✓</span> Mark done
+          </button>
+        )}
         {isUnscheduled && (
           <button type="button" onClick={() => actions.openTaskPicker([task.id])}>
             Find time
@@ -71,6 +89,15 @@ function TaskRow({
         >
           Edit
         </button>
+        {isDone && (
+          <button
+            type="button"
+            aria-label={`Delete ${task.name}`}
+            onClick={() => actions.confirmDeleteTask(task.id)}
+          >
+            Delete
+          </button>
+        )}
       </span>
     </li>
   );
@@ -107,6 +134,32 @@ export function TaskPanel() {
     <section aria-labelledby="task-panel-title" className="task-panel">
       <div className="panel-heading">
         <h2 id="task-panel-title">Tasks</h2>
+        <details
+          className="task-menu"
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') {
+              event.preventDefault();
+              event.currentTarget.removeAttribute('open');
+              event.currentTarget.querySelector('summary')?.focus();
+            }
+          }}
+        >
+          <summary role="button" aria-label="Tasks menu">
+            ⋯
+          </summary>
+          <div role="menu" aria-label="Tasks">
+            <button
+              type="button"
+              role="menuitem"
+              onClick={(event) => {
+                event.currentTarget.closest('details')?.removeAttribute('open');
+                actions.openDialog({ kind: 'doneBefore' });
+              }}
+            >
+              Mark done before…
+            </button>
+          </div>
+        </details>
         <button type="button" onClick={() => actions.openDialog({ kind: 'task', mode: 'create' })}>
           New task
         </button>
@@ -148,8 +201,10 @@ export function TaskPanel() {
               actions.setTaskPanel({ status: event.target.value as PanelState['status'] })
             }
           >
+            <option value="open">Open</option>
             <option value="unscheduled">Unscheduled</option>
             <option value="scheduled">Scheduled</option>
+            <option value="done">Done</option>
             <option value="all">All</option>
           </select>
         </label>

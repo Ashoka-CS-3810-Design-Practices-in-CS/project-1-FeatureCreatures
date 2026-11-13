@@ -580,9 +580,14 @@ label.task-selection {
   content: '· ';
 }
 
+.task-meta > .tag::before {
+  content: none;
+}
+
 .task-actions {
   grid-area: actions;
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-2);
   margin-top: var(--space-1);
 }
@@ -593,6 +598,35 @@ label.task-selection {
 
 .task-status {
   color: var(--muted);
+}
+
+.task-done .task-heading strong {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.task-menu {
+  position: relative;
+}
+
+.task-menu summary {
+  cursor: pointer;
+  padding: var(--space-2) var(--space-3);
+  min-height: var(--target-min);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  list-style: none;
+}
+
+.task-menu [role='menu'] {
+  position: absolute;
+  right: 0;
+  z-index: 3;
+  padding: var(--space-2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
 }
 
 .task-panel > button {
