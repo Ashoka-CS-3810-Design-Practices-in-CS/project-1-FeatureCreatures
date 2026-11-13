@@ -417,7 +417,7 @@ export interface SlotSearchResult {
   readonly segmentCount: number;
   readonly freeGaps: readonly FreeGap[];   // ALL gaps, including too-short ones
   readonly fittingCount: number;
-  readonly options: readonly SlotOption[]; // ≤ MAX_OPTIONS, ranked
+  readonly options: readonly SlotOption[]; // all D-06 picker candidates, ranked; no MAX_OPTIONS limit
 }
 
 export type MoveReason =
@@ -521,6 +521,8 @@ export type EngineError =
 ```ts
 export const MAX_EVENT_MIN = 1440;   // BR-4
 export const MAX_OPTIONS = 5;        // BR-7
+export const SUGGESTION_STEP_MIN = 30; // D-06 picker candidate grid
+export const SUGGESTION_CHIPS_PER_DAY = 8;
 export const HISTORY_LIMIT = 50;     // B1
 export const SNAP_MIN = 5;           // BR-5 notBefore rounding + UI snap
 export const MAX_REPLAN_DAYS = 14;   // BR-12
@@ -955,8 +957,9 @@ function search(state: EngineState, req: SearchRequest, notBefore: Minute): Resu
   // must still see that day's 09:00–17:00 events); gaps above still use the narrow `near` slice.
   const loads = computeDayLoads(eventsIntersecting(state.events, {start: frames[0].dayStart, end: frames.at(-1).dayEnd})
                                   .filter(e ⇒ !req.excludeIds.includes(e.id)), frames);
-  const options = rankOptions(fitting, { durationMin: req.durationMin, criterion: req.criterion,
-                     priority: req.priority, originalStart: req.originalStart, dayLoads: loads, frames });
+  const rankContext = { durationMin: req.durationMin, criterion: req.criterion,
+                     priority: req.priority, originalStart: req.originalStart, dayLoads: loads, frames };
+  const options = rankCandidates(fitting.flatMap(gap => generateCandidates(gap, rankContext)));
   return ok({ baseVersion: state.version, subject: req.subject, durationMin: req.durationMin,
               priority: req.priority, criterion: req.criterion, bufferMin: req.bufferMin,
               searchWindow: req.window, segmentCount: segments.length, freeGaps: gaps,
@@ -1196,6 +1199,8 @@ export interface RankContext {
 export function effectiveCriterion(c: Criterion, p: Priority): EffectiveCriterion;
 //   priorityAware → high: 'earliest', medium: 'bestFit', low: 'leastLoaded'; others unchanged
 export function rankOptions(fitting: readonly FreeGap[], ctx: RankContext): SlotOption[];
+export function optionAt(gap: FreeGap, start: Minute, ctx: RankContext): Omit<SlotOption, 'rank'>;
+export function rankCandidates(options: readonly Omit<SlotOption, 'rank'>[]): SlotOption[];
 ```
 
 ```text
@@ -1214,6 +1219,16 @@ return first MAX_OPTIONS, with rank = 1..k
 ```
 
 This costs O(m log m) time and O(m) space. When `eff = nearest` with no original start, it falls back to `earliest`; this never happens in practice.
+
+WI-51 shares `optionAt`'s explanation construction and `rankCandidates`' criterion ordering with the picker generator. `optionAt` requires `gap.start ≤ start ≤ gap.end − durationMin`, positive integer duration, and frames covering the gap. `rankCandidates` returns all supplied options ranked 1…k, without a limit; they share one effective criterion, and ties retain input order after the existing start tie-break. `rankOptions` still constructs one candidate per gap and takes `MAX_OPTIONS`; its Replan behaviour and T10/T34 contracts are unchanged.
+
+### 8.10a `suggestions.ts` — picker candidate generation (WI-51, D-06)
+
+```ts
+export function generateCandidates(gap: FreeGap, context: RankContext): Omit<SlotOption, 'rank'>[];
+```
+
+The caller supplies one fitting gap and a context with positive integer duration and frames covering it. The pure generator returns candidates in time order, each carrying the complete BR-8 explanation. Starts are `gap.start`, `gap.end − durationMin`, the clamped `originalStart` when present, and all multiples of `SUGGESTION_STEP_MIN = 30` within those bounds. A Set removes duplicates. If C candidates are produced, time is O(C log C + C log D) and space O(C), including shared option construction's frame lookup. No date, UI or storage dependency is introduced. Both picker pipelines use this generator through `search`, followed by `rankCandidates`; Replan calls `rankOptions` directly and keeps its prior contract.
 
 ### 8.11 `target.ts` (BR-10)
 
@@ -1425,6 +1440,7 @@ Each sample uses `atLocal` relative to `weekMonday`. The UI passes `startOfLocal
 | m | free gaps |
 | k | conflicting pairs |
 | c | movable events in a replan |
+| C | generated picker candidates across all fitting gaps |
 | T | tasks |
 | D | days in a window |
 | B | barred slots |
@@ -1443,7 +1459,7 @@ Each sample uses `atLocal` relative to `weekMonday`. The UI passes `startOfLocal
 | Merge into busy blocks | O(n) | O(n) |
 | Free gaps | O(n + s) | O(m) |
 | Rank | O(m log m) | O(m) |
-| **findSlots / suggestAlternatives (end to end)** | **O(log N + n + D·B + m log m)** | O(n + s + m) |
+| **findSlots / suggestAlternatives (end to end)** | **O(log N + n + D·B + C log(C+1) + C log(D+1))** | O(n + s + m + C) |
 | orderForScheduling | O(T log T) | O(T) |
 | **planReplan** | **O(c·(n + c + s + m log m))** per pass; ≤ c + 1 passes (A01), so O(c²·(…)) worst case; plus per-plan diagnostics below | O(n + c + s + m) plus diagnostics below |
 | Replan diagnostics, each plan (WI-38) | O(N log N + k log k + N log(D+1) + N·D·B + q), reusing §8.4/§8.4a | O(N + k + q) |
@@ -1550,6 +1566,8 @@ All sample loads and imports with more than `IMPORT_SPINNER_THRESHOLD` events pl
 | `ConfirmDialog`, `ShortcutHelp`, `Toasts`, `Modal`, `EmptyState` | as named; `Toasts` is the ARIA live region; `Modal` wraps native `<dialog>` + `showModal()` and, when `dismissible`, renders a last-in-DOM `.dialog-close` × button (`aria-label="Close"`, calls `onClose` like Cancel/Esc; CSS puts it top-right; WI-45). `ShortcutHelp` relies on it instead of its own Close button | | |
 
 WI-38: Replan plan cards also show **Not moved by Replan** with the derived per-plan reasons, problem names and per-event alternatives. Zero-move cards count remaining entries instead of saying only "No changes needed"; diagnostic cards appear even with zero movable events. Barred-overlap rows carry Fixed/Flexible tags. The alternatives action uses `openEventAlternatives(eventId)` for any diagnostic event; this is the existing flow, with no target toggle.
+
+WI-51 / D-06: `SlotPicker` uses a wide scrollable native Modal. `SuggestionOptions` renders one Available slots fieldset and native radio name spanning Top picks and All options by day. `picks.ts` derives named picks from complete options, omits duplicate slots in pick order, and groups remaining slots by local start day/time. Rank by refreshes the criterion-ranked result and selects index 0, without changing chip order. Pick radios/chips select `option.rank - 1`, so `pickerApply` still applies the correct result option. `DayOptions` initially shows `SUGGESTION_CHIPS_PER_DAY`, then expands the rest. Cross-midnight chip names include both days. Local Details state starts false and is never persisted; it conditionally renders the summary, search window, buffer, task window and selected gap/boundary/leftover/load. ER2/ER3 explanations remain outside Details. Task header/Rank by, alternatives Move/consent/range/Search hours, and all apply/queue/version/history behaviour remain in their existing store paths. Picks/chips reuse tested text/surface/muted and accent/focus tokens; no dependency is added.
 
 ### 11.3 FullCalendar integration (`CalendarView/`)
 
@@ -1954,3 +1972,5 @@ Production URL: https://…vercel.app
 | 2026-11-12 | v1.38 (WI-48, D-17): frozen §5 types/constants gain Category, `categoryId`, kept ids, done/doneAt, global working-time switch and export v2. §6 legacy/stored/category schemas and category-reference validation; §7 state/snapshot/import/export carry categories; §9 repositories load/replace categories atomically and Dexie v3 migrates without editing v1/v2 or changing the revision. T48 retains v1 compatibility and six samples are v2. |
 | 2026-11-12 | v1.39 (WI-49, D-11): CategoryInput and queued category CRUD; CategoryInUse/NotFound category; optional category before/after images and repository puts/deletes share the revision-checked transaction and history. Shared OKLab/contrast validators, twelve swatches, CategoryEditor/Select/Tag, Settings section, session default and calendar filters. New events Fixed (C-01); removed flexibleByDefault. |
 | 2026-11-12 | v1.40 (WI-50, D-01–D-05): alternatives request/explanation gain allowMoving/range with shared validation, opted-out empty results and no fixed fallback window. Store/picker gain lock, last Calendar view and dialog-only consent/range; persisted presentation/return view, scheduling radios, action-specific fixed questions and pointer-based grid panning. Frozen engine signatures updated with implementation. |
+| 2026-11-13 | v1.41 (WI-51 generator checkpoint): §8.10 shares optionAt/rankCandidates, retaining rankOptions' one-per-gap/MAX_OPTIONS Replan contract; §8.10a freezes pure generateCandidates over one fitting gap with SUGGESTION_STEP_MIN = 30. Five unit cases and an independent minute-oracle property cover D-06 generation. Picker integration and final BR-7/result/UI documentation remain in progress. |
+| 2026-11-13 | v1.42 (WI-51, D-06): SlotSearchResult.options contains every ranked picker candidate; §7.5 wires generation, §8.10a/§10 document contracts/cost, and §11.2 documents shared named picks/day chips/native radio selection and hidden Details. Replan's rankOptions/MAX_OPTIONS and assertions remain unchanged. |

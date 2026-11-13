@@ -2,6 +2,7 @@
 
 import { ev, flexEv, iv, settings } from '../helpers/builders';
 import { makeEngine } from '../helpers/engine';
+import { halfHourSlots, nearestSlots } from '../helpers/slots';
 
 const gig = ev('Gig', 'Mon 21:00', 'Mon 22:00');
 const show = ev('Show', 'Mon 21:30', 'Mon 22:30');
@@ -19,10 +20,15 @@ describe('T42: suggestAlternatives with useWorkingHours', () => {
 
     expect(found.ok).toBe(true);
     if (!found.ok) return;
-    expect(found.value.options.map((option) => option.slot)).toEqual([
-      iv('Mon 20:30', 'Mon 21:30'),
-      iv('Mon 22:30', 'Mon 23:30'),
-    ]);
+    expect(found.value.options.map((option) => option.slot)).toEqual(
+      nearestSlots(
+        [
+          ...halfHourSlots('Mon 00:00', 'Mon 20:30', 60),
+          ...halfHourSlots('Mon 22:30', 'Tue 23:00', 60),
+        ],
+        'Mon 21:00',
+      ),
+    );
   });
 
   it('Working hours only (and the default) give exactly today’s working-hours results', async () => {
@@ -36,10 +42,15 @@ describe('T42: suggestAlternatives with useWorkingHours', () => {
     });
 
     expect(explicit).toEqual(omitted);
-    expect(omitted.ok && omitted.value.options.map((option) => option.slot)).toEqual([
-      iv('Mon 17:00', 'Mon 18:00'),
-      iv('Tue 09:00', 'Tue 10:00'),
-    ]);
+    expect(omitted.ok && omitted.value.options.map((option) => option.slot)).toEqual(
+      nearestSlots(
+        [
+          ...halfHourSlots('Mon 09:00', 'Mon 17:00', 60),
+          ...halfHourSlots('Tue 09:00', 'Tue 17:00', 60),
+        ],
+        'Mon 21:00',
+      ),
+    );
   });
 
   it('barred slots still apply when searching any time', async () => {
@@ -57,10 +68,15 @@ describe('T42: suggestAlternatives with useWorkingHours', () => {
     });
 
     // 20:30–21:30 is gone (Dinner); the 21:00–21:30 stretch is too short.
-    expect(found.ok && found.value.options.map((option) => option.slot)).toEqual([
-      iv('Mon 22:30', 'Mon 23:30'),
-      iv('Mon 18:00', 'Mon 19:00'),
-    ]);
+    expect(found.ok && found.value.options.map((option) => option.slot)).toEqual(
+      nearestSlots(
+        [
+          ...halfHourSlots('Mon 00:00', 'Mon 18:00', 60),
+          ...halfHourSlots('Mon 22:30', 'Tue 23:00', 60),
+        ],
+        'Mon 21:00',
+      ),
+    );
   });
 
   it('an empty search names its cause: no working hours, entirely past, or fully barred', async () => {

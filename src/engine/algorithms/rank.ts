@@ -60,13 +60,14 @@ function sortKey(option: Omit<SlotOption, 'rank'>, effective: EffectiveCriterion
   }
 }
 
-// PRE:  gap.length ≥ context.durationMin; context.frames cover gap
-// POST: returns the one option gap yields: the slot starts at clamp(originalStart, gap.start,
-//       gap.end − durationMin) when an original start exists, else at gap.start (BR-7)
-function optionFor(gap: FreeGap, context: RankContext): Omit<SlotOption, 'rank'> {
+// PRE:  gap.start ≤ start ≤ gap.end − context.durationMin; context.frames cover gap
+// POST: returns the unranked option at start with its gap, leftover, load, criterion and distance
+export function optionAt(
+  gap: FreeGap,
+  start: Minute,
+  context: RankContext,
+): Omit<SlotOption, 'rank'> {
   const { durationMin, originalStart } = context;
-  const start =
-    originalStart === null ? gap.start : clamp(originalStart, gap.start, gap.end - durationMin);
   const frame = frameOf(context.frames, start);
   const gapMin = length(gap);
   return {
@@ -79,6 +80,16 @@ function optionFor(gap: FreeGap, context: RankContext): Omit<SlotOption, 'rank'>
     effectiveCriterion: effectiveCriterion(context.criterion, context.priority),
     distanceMin: originalStart === null ? null : Math.abs(start - originalStart),
   };
+}
+
+// PRE:  gap.length ≥ context.durationMin; context.frames cover gap
+// POST: returns Replan's one option for gap, clamped nearest to the original start when present
+function optionFor(gap: FreeGap, context: RankContext): Omit<SlotOption, 'rank'> {
+  const start =
+    context.originalStart === null
+      ? gap.start
+      : clamp(context.originalStart, gap.start, gap.end - context.durationMin);
+  return optionAt(gap, start, context);
 }
 
 // PRE:  first and second are candidates whose keys have the same length
@@ -101,13 +112,18 @@ function compareCandidates(first: Candidate, second: Candidate): number {
 // POST: returns at most MAX_OPTIONS options, one per gap, in BR-7 order for the effective criterion
 //       (ties: earlier slot start, then earlier gap in fitting), with rank = 1 … k; O(m log m)
 export function rankOptions(fitting: readonly FreeGap[], context: RankContext): SlotOption[] {
-  const effective = effectiveCriterion(context.criterion, context.priority);
-  const candidates: Candidate[] = fitting.map((gap, gapIndex) => {
-    const option = optionFor(gap, context);
-    return { option, key: sortKey(option, effective), gapIndex };
-  });
+  return rankCandidates(fitting.map((gap) => optionFor(gap, context))).slice(0, MAX_OPTIONS);
+}
+
+// PRE:  options share an effective criterion and carry valid slot/explanation data
+// POST: returns all options in criterion order, ties by start then input order, ranked 1…k
+export function rankCandidates(options: readonly Omit<SlotOption, 'rank'>[]): SlotOption[] {
+  const candidates: Candidate[] = options.map((option, gapIndex) => ({
+    option,
+    key: sortKey(option, option.effectiveCriterion),
+    gapIndex,
+  }));
   return candidates
     .toSorted(compareCandidates)
-    .slice(0, MAX_OPTIONS)
     .map((candidate, index) => ({ rank: index + 1, ...candidate.option }));
 }

@@ -57,6 +57,10 @@ describe('T50: fixed alternatives require explicit temporary consent (D-02)', ()
     expect(found.value.searchWindow).toEqual(iv('Mon 09:00', 'Mon 12:00'));
     expect(found.value.options.map((option) => option.slot)).toEqual([
       iv('Mon 10:00', 'Mon 11:00'),
+      iv('Mon 09:30', 'Mon 10:30'),
+      iv('Mon 10:30', 'Mon 11:30'),
+      iv('Mon 09:00', 'Mon 10:00'),
+      iv('Mon 11:00', 'Mon 12:00'),
     ]);
   });
 

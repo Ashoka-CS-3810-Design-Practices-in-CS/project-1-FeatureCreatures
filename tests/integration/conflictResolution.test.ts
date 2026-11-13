@@ -1,6 +1,7 @@
 import { ev, flexEv, iv } from '../helpers/builders';
 import { capture, makeEngine } from '../helpers/engine';
 import { t } from '../helpers/time';
+import { halfHourSlots, nearestSlots } from '../helpers/slots';
 
 const lecture = ev('Lecture', 'Mon 10:00', 'Mon 12:00', { priority: 'high' });
 const meeting = flexEv('Meeting', 'Mon 11:00', 'Mon 12:00', ['Mon 09:00', 'Mon 18:00']);
@@ -21,10 +22,13 @@ describe('Conflict Resolution (T20, FR7, BR-10)', () => {
       title: 'Meeting',
       otherEventId: 'Lecture',
     });
-    expect(found.value.options.map(({ slot, distanceMin }) => ({ slot, distanceMin }))).toEqual([
-      { slot: iv('Mon 12:00', 'Mon 13:00'), distanceMin: 60 },
-      { slot: iv('Mon 09:00', 'Mon 10:00'), distanceMin: 120 },
-    ]);
+    const expected = nearestSlots(
+      [iv('Mon 09:00', 'Mon 10:00'), ...halfHourSlots('Mon 12:00', 'Mon 17:00', 60)],
+      'Mon 11:00',
+    );
+    expect(found.value.options.map(({ slot, distanceMin }) => ({ slot, distanceMin }))).toEqual(
+      expected.map((slot) => ({ slot, distanceMin: Math.abs(slot.start - meeting.start) })),
+    );
   });
 
   it('applying the top option resolves the conflict', async () => {
@@ -66,11 +70,17 @@ describe('Conflict Resolution (T20, FR7, BR-10)', () => {
       start: t('2026-11-01 00:00'),
       end: t('Wed 00:00'),
     });
-    expect(found.value.options.map(({ slot, distanceMin }) => ({ slot, distanceMin }))).toEqual([
-      { slot: iv('Mon 09:00', 'Mon 11:00'), distanceMin: 60 },
-      { slot: iv('Mon 12:00', 'Mon 14:00'), distanceMin: 120 },
-      { slot: iv('Tue 09:00', 'Tue 11:00'), distanceMin: 1380 },
-    ]);
+    const expected = nearestSlots(
+      [
+        iv('Mon 09:00', 'Mon 11:00'),
+        ...halfHourSlots('Mon 12:00', 'Mon 16:00', 120),
+        ...halfHourSlots('Tue 09:00', 'Tue 16:00', 120),
+      ],
+      'Mon 10:00',
+    );
+    expect(found.value.options.map(({ slot, distanceMin }) => ({ slot, distanceMin }))).toEqual(
+      expected.map((slot) => ({ slot, distanceMin: Math.abs(slot.start - lecture.start) })),
+    );
   });
 
   it('applyAlternative rejects a stale result, a wrong-length slot and an unknown event', async () => {

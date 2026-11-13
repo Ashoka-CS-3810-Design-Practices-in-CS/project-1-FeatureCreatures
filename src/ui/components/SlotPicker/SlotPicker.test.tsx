@@ -35,21 +35,22 @@ describe('SlotPicker — task mode', () => {
         name: /Find time — "Write report" \(1 h 30 min, Medium\) — Task 1 of 1/,
       }),
     ).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Details' }));
     expect(
       screen.getByText('3 free gaps in window (30 min, 1 h, 4 h) — 1 fits 1 h 30 min'),
     ).toBeInTheDocument();
     const radios = within(screen.getByRole('group', { name: 'Available slots' })).getAllByRole(
       'radio',
     );
-    expect(radios).toHaveLength(1);
+    expect(radios).toHaveLength(6);
     expect(radios[0]).toBeChecked();
-    expect(slotLabels()[0]).toContain('1. Mon 2 Nov 14:00–15:30 — Earliest slot that fits.');
+    expect(slotLabels()[0]).toBe('Earliest Mon 2 Nov 14:00–15:30');
     expect(
       screen.getByText('Gap 14:00–18:00 (4 h): after "E3" ends 14:00 → working hours end.'),
     ).toBeInTheDocument();
   });
 
-  it('switching the criterion re-orders the options (T10 data)', async () => {
+  it('switching the criterion preselects its pick and keeps chips in time order (T10, D-06)', async () => {
     const { engine } = await makeEngine({
       events: [ev('X', 'Mon 14:00', 'Mon 15:00')],
       tasks: [task('T', 90, ['Mon 10:00', 'Mon 16:40'])],
@@ -58,15 +59,21 @@ describe('SlotPicker — task mode', () => {
     renderWithStore(<SlotPicker />, store);
     act(() => store.getState().actions.openTaskPicker(['T']));
 
-    expect(slotLabels().map((label) => label.slice(0, 26))).toEqual([
-      '1. Mon 2 Nov 10:00–11:30 —',
-      '2. Mon 2 Nov 15:00–16:30 —',
-    ]);
+    const expected = [
+      'Earliest Mon 2 Nov 10:00–11:30',
+      'Tightest fit Mon 2 Nov 15:00–16:30',
+      '10:30–12:00',
+      '11:00–12:30',
+      '11:30–13:00',
+      '12:00–13:30',
+      '12:30–14:00',
+      '15:10–16:40',
+    ];
+    expect(slotLabels()).toEqual(expected);
+    expect(screen.getByRole('radio', { name: /Earliest Mon/ })).toBeChecked();
     await userEvent.click(screen.getByRole('radio', { name: 'Best fit' }));
-    expect(slotLabels().map((label) => label.slice(0, 26))).toEqual([
-      '1. Mon 2 Nov 15:00–16:30 —',
-      '2. Mon 2 Nov 10:00–11:30 —',
-    ]);
+    expect(slotLabels()).toEqual(expected);
+    expect(screen.getByRole('radio', { name: /Tightest fit Mon/ })).toBeChecked();
   });
 
   it('T17 (UI): the header counts through the queue, and the toast sums it up', async () => {
@@ -149,6 +156,7 @@ describe('SlotPicker — task mode', () => {
     renderWithStore(<SlotPicker />, store);
     act(() => store.getState().actions.openTaskPicker(['T']));
 
+    await userEvent.click(screen.getByRole('button', { name: 'Details' }));
     const buffer = screen.getByLabelText('Buffer (min)');
     await userEvent.clear(buffer);
     await userEvent.type(buffer, '15');
@@ -204,18 +212,25 @@ describe('SlotPicker — alternatives mode (T20 data)', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: 'Meeting' })).toBeChecked();
     expect(slotLabels()).toEqual([
-      '1. Mon 2 Nov 12:00–13:00 — Closest to the original time (1 h later).',
-      '2. Mon 2 Nov 09:00–10:00 — Closest to the original time (2 h earlier).',
+      'Closest Mon 2 Nov 12:00–13:00',
+      '09:00–10:00',
+      '12:30–13:30',
+      '13:00–14:00',
+      '13:30–14:30',
+      '14:00–15:00',
+      '14:30–15:30',
+      '15:00–16:00',
+      '15:30–16:30',
     ]);
+    expect(screen.getByText('1 h later')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('radio', { name: 'Lecture' }));
     await userEvent.click(screen.getByRole('checkbox', { name: 'Allow moving this event' }));
     expect(
       screen.getByRole('dialog', { name: 'Alternatives for "Lecture" (2 h)' }),
     ).toBeInTheDocument();
-    expect(slotLabels()[0]).toBe(
-      '1. Mon 2 Nov 09:00–11:00 — Closest to the original time (1 h earlier).',
-    );
+    expect(slotLabels()[0]).toBe('Closest Mon 2 Nov 09:00–11:00');
+    expect(screen.getByText('1 h earlier')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('radio', { name: 'Meeting' }));
     await userEvent.click(screen.getByRole('button', { name: 'Apply' }));

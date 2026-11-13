@@ -30,12 +30,12 @@ describe('SlotPicker — alternatives search hours (T42)', () => {
 
     const hours = screen.getByRole('group', { name: 'Search hours' });
     expect(within(hours).getByRole('radio', { name: 'Any time' })).toBeChecked();
-    expect(firstSlotLabel()).toMatch(/^1\. Mon 2 Nov 20:30–21:30/);
+    expect(firstSlotLabel()).toBe('Closest Mon 2 Nov 20:30–21:30');
 
     await userEvent.click(within(hours).getByRole('radio', { name: 'Working hours only' }));
 
     expect(within(hours).getByRole('radio', { name: 'Working hours only' })).toBeChecked();
-    expect(firstSlotLabel()).toMatch(/^1\. Mon 2 Nov 17:00–18:00/);
+    expect(firstSlotLabel()).toBe('Closest Mon 2 Nov 17:00–18:00');
   });
 
   it('defaults to Working hours only inside working hours, with no fixed note for a flexible event', async () => {
@@ -54,7 +54,7 @@ describe('SlotPicker — alternatives search hours (T42)', () => {
 
     expect(screen.getByRole('radio', { name: 'Working hours only' })).toBeChecked();
     expect(screen.queryByText(/is fixed, so no suggestions are made/)).not.toBeInTheDocument();
-    expect(firstSlotLabel()).toMatch(/^1\. Mon 2 Nov 12:00–13:00/);
+    expect(firstSlotLabel()).toBe('Closest Mon 2 Nov 12:00–13:00');
   });
 
   it('names why a working-hours search is empty and points to Any time', async () => {
@@ -66,7 +66,7 @@ describe('SlotPicker — alternatives search hours (T42)', () => {
 
     act(() => store.getState().actions.openEventAlternatives('Hike'));
     expect(screen.getByRole('radio', { name: 'Any time' })).toBeChecked();
-    expect(firstSlotLabel()).toMatch(/^1\. Sat 7 Nov /);
+    expect(firstSlotLabel()).toBe('Closest Sat 7 Nov 10:00–11:00');
 
     await userEvent.click(screen.getByRole('radio', { name: 'Working hours only' }));
 

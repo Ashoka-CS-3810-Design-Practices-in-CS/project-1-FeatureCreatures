@@ -11,6 +11,7 @@ import type {
 import { ev, flexEv, iv, settings, task } from '../helpers/builders';
 import { capture, makeEngine } from '../helpers/engine';
 import { t } from '../helpers/time';
+import { halfHourSlots } from '../helpers/slots';
 
 const MONDAY_HOURS: [string, string] = ['Mon 09:00', 'Mon 18:00'];
 const WEEK: [string, string] = ['Mon 09:00', 'Fri 18:00'];
@@ -80,7 +81,7 @@ describe('findSlots (FR5)', () => {
       iv('Mon 14:00', 'Mon 18:00'),
     ]);
     expect(found.fittingCount).toBe(1);
-    expect(found.options).toHaveLength(1);
+    expect(found.options).toHaveLength(6);
     expect(found.options[0]).toMatchObject({
       slot: iv('Mon 14:00', 'Mon 15:30'),
       gapMin: 240,
@@ -151,11 +152,13 @@ describe('findSlots (FR5)', () => {
     const bestFit = expectOk(engine.findSlots({ taskId: 'T', criterion: 'bestFit' }));
 
     expect(earliest.freeGaps.map((gap) => gap.end - gap.start)).toEqual([240, 100]);
+    const morning = halfHourSlots('Mon 10:00', 'Mon 12:30', 90);
+    const afternoon = [iv('Mon 15:00', 'Mon 16:30'), iv('Mon 15:10', 'Mon 16:40')];
     expect(earliest.options.map(({ slot, leftoverMin }) => ({ slot, leftoverMin }))).toEqual([
-      { slot: iv('Mon 10:00', 'Mon 11:30'), leftoverMin: 150 },
-      { slot: iv('Mon 15:00', 'Mon 16:30'), leftoverMin: 10 },
+      ...morning.map((slot) => ({ slot, leftoverMin: 150 })),
+      ...afternoon.map((slot) => ({ slot, leftoverMin: 10 })),
     ]);
-    expect(slotsOf(bestFit)).toEqual([iv('Mon 15:00', 'Mon 16:30'), iv('Mon 10:00', 'Mon 11:30')]);
+    expect(slotsOf(bestFit)).toEqual([...afternoon, ...morning]);
     expect(earliest.freeGaps[0]?.before).toMatchObject({ kind: 'edge', reason: 'windowStart' });
     expect(earliest.freeGaps[1]?.after).toMatchObject({ kind: 'edge', reason: 'windowEnd' });
   });
@@ -208,15 +211,23 @@ describe('findSlots (FR5)', () => {
           dayLoadMin,
         }),
       );
-    const mon = { start: t('Mon 13:00'), dayLoadMin: 240 };
-    const tue = { start: t('Tue 10:00'), dayLoadMin: 480 };
-    const wed = { start: t('Wed 10:00'), dayLoadMin: 60 };
-    const as = (effectiveCriterion: string, ...slots: (typeof mon)[]) =>
+    const mon = halfHourSlots('Mon 13:00', 'Mon 17:00', 60).map((slot) => ({
+      start: slot.start,
+      dayLoadMin: 240,
+    }));
+    const tue = [{ start: t('Tue 10:00'), dayLoadMin: 480 }];
+    const wed = halfHourSlots('Wed 10:00', 'Wed 17:00', 60).map((slot) => ({
+      start: slot.start,
+      dayLoadMin: 60,
+    }));
+    // PRE:  slots are expected starts/loads; effectiveCriterion is the expected mapped strategy
+    // POST: returns the exact expected option metadata in slots' order
+    const as = (effectiveCriterion: string, slots: typeof mon) =>
       slots.map((slot) => ({ ...slot, effectiveCriterion }));
 
-    expect(starts('H')).toEqual(as('earliest', mon, tue, wed));
-    expect(starts('M')).toEqual(as('bestFit', tue, mon, wed));
-    expect(starts('L')).toEqual(as('leastLoaded', wed, mon, tue));
+    expect(starts('H')).toEqual(as('earliest', [...mon, ...tue, ...wed]));
+    expect(starts('M')).toEqual(as('bestFit', [...tue, ...mon, ...wed]));
+    expect(starts('L')).toEqual(as('leastLoaded', [...wed, ...mon, ...tue]));
   });
 
   // AUDIT A05: day loads used only the events inside the search window, so a window starting at
