@@ -580,6 +580,10 @@ label.task-selection {
   content: '· ';
 }
 
+.task-meta > .tag::before {
+  content: none;
+}
+
 .task-actions {
   grid-area: actions;
   display: flex;

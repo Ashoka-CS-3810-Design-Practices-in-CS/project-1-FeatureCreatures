@@ -467,6 +467,7 @@ Every search result also carries:
 - **Deletion and unscheduling:**
   - Deleting a scheduled task's event (or unscheduling the task) sets the task back to `unscheduled` with `scheduledEventId = null`.
   - Deleting a scheduled task deletes its event.
+  - Marking a scheduled task done deletes its event before completing the task, in that same atomic change (BR-18).
   - Each of these is one atomic change and one undo step.
 
 **BR-10 Alternatives target rule.**

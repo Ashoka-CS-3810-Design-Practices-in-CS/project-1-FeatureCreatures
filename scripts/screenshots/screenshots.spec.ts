@@ -62,8 +62,13 @@ for (const theme of THEMES) {
       await createTask(page, 'Later', '2026-11-02T09:00', '2026-11-02T10:01');
       await page.getByRole('button', { name: 'Mark Report done', exact: true }).click();
       await page.getByRole('combobox', { name: 'Show', exact: true }).selectOption('all');
+      await page.setViewportSize({ width, height: TALL_HEIGHT });
+      await page.locator('#side-panels').evaluate((panel) => {
+        panel.scrollTop = 0;
+      });
       await expect(page.locator('.toast')).toHaveCount(0, { timeout: TOAST_WAIT_MS });
       await capture(page, `done-tasks-${theme}-${width}`);
+      await page.setViewportSize({ width, height: VIEWPORT_HEIGHT });
       await page.getByRole('button', { name: 'Tasks menu', exact: true }).click();
       await page.getByRole('menuitem', { name: 'Mark done before…', exact: true }).click();
       const dialog = page.getByRole('dialog', { name: 'Mark done before…', exact: true });
