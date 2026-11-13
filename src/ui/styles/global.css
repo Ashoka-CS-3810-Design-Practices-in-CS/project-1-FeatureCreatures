@@ -771,6 +771,24 @@ dialog.settings-dialog {
   border-top: 0;
 }
 
+/* Retained working-time preferences stay readable while visually disabled (D-10). */
+.settings-form fieldset:disabled,
+.settings-form fieldset:disabled input[type='time'] {
+  color: var(--muted);
+}
+
+.settings-form fieldset:disabled input[type='time'],
+.settings-form fieldset:disabled .day-chips > label:has(> input[type='checkbox']) {
+  background: var(--surface);
+  border-color: var(--muted);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.settings-form fieldset:disabled .day-chips > label > input {
+  cursor: not-allowed;
+}
+
 /* Two related fields side by side, wrapping onto two lines when narrow. */
 .field-pair {
   display: flex;
@@ -905,6 +923,45 @@ dialog .barred-row > .barred-remove:hover {
 
 .barred-row-errors:empty {
   display: none;
+}
+
+.barred-editor .barred-row {
+  grid-template-columns: minmax(0, 1fr) var(--target-min);
+}
+
+.barred-editor .barred-label-input {
+  width: 100%;
+  min-width: 0;
+}
+
+.barred-editor .barred-remove {
+  grid-column: 2;
+  grid-row: 1;
+  padding: 0;
+}
+
+.barred-editor .barred-times,
+.barred-editor .day-chips {
+  grid-column: 1 / -1;
+}
+
+.barred-editor .barred-times {
+  flex-wrap: wrap;
+}
+
+.barred-editor input[type='time'] {
+  width: var(--barred-time-width);
+  flex: none;
+}
+
+.barred-editor-actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.barred-slots-panel {
+  margin-top: var(--space-5);
 }
 
 /* Too narrow for one line: label and × first, then the times, then the day chips. */

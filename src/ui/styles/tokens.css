@@ -23,6 +23,7 @@
   --prio-low-bg: #e6edf6;
   --barred: #ece7dd;
   --nonwork: #f1ede5;
+  --nonwork-pattern: #817a70;
   --past-bg: #f0eeea;
   --past-text: #65615b;
   --past-edge: #817a70;
@@ -75,6 +76,7 @@
   --control-height: 36px; /* buttons and fields: roomier than the minimum target */
   --check-size: 18px; /* checkboxes and radios */
   --slot-height: 32px; /* one half-hour row of the time grid */
+  --barred-time-width: 8.5rem;
   --side-width: 384px;
 }
 
@@ -99,6 +101,7 @@
   --prio-low-bg: #1f2a3b;
   --barred: #262924;
   --nonwork: #1c1e1b;
+  --nonwork-pattern: #7c8476;
   --past-bg: #20221e;
   --past-text: #a6aba3;
   --past-edge: #7c8476;
@@ -132,6 +135,7 @@
     --prio-low-bg: #1f2a3b;
     --barred: #262924;
     --nonwork: #1c1e1b;
+    --nonwork-pattern: #7c8476;
     --past-bg: #20221e;
     --past-text: #a6aba3;
     --past-edge: #7c8476;

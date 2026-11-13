@@ -126,6 +126,7 @@ These optional features from the project description are also covered by the cor
 | **Local day** | A calendar day in the browser's time zone, from local midnight to the next local midnight. It can be 23 or 25 hours long around daylight-saving changes. |
 | **Working hours / working days** | From settings, e.g. Mon–Fri 09:00–18:00 local time. |
 | **Barred slot** | A recurring daily period where nothing may be *placed* by the app, e.g. "Lunch" 13:00–14:00 Mon–Fri. Existing events inside it are still allowed. |
+| **Kept in a barred slot** | An explicit event/slot exception, undoable and cleared by time/day changes, that suppresses that barred warning and Replan reason (BR-15). |
 | **Buffer** | A number of minutes kept free on both sides of every existing event when the app searches for slots. |
 | **Search window** | The Interval the app searches for a given request (the task window, the flex window, or the replan range). |
 | **Allowed segments** | The search window intersected with working days and hours, minus barred slots, and clipped to start no earlier than now (rounded up to 5 minutes). They are sorted and disjoint. |
@@ -134,7 +135,7 @@ These optional features from the project description are also covered by the cor
 | **Candidate / option** | A concrete slot `[s, s + duration)` inside one free gap, with an explanation. |
 | **Criterion** | The rule used to rank options: `earliest`, `bestFit`, `priorityAware`, `nearest`, `leastLoaded`. |
 | **Conflict** | An unordered pair of events whose intervals overlap, plus the overlap interval and its length in minutes. |
-| **Day load** | The total minutes of events on a working day, clipped to that day's working hours. Overlapping events are summed, not unioned. |
+| **Day load** | Event minutes clipped to the day's working hours, or the whole local day when working hours are globally off. Overlapping events are summed, not unioned. |
 | **Plan** | A proposed set of moves produced by Replan, with metrics. |
 | **Snapshot** | The read-only state the engine hands to the UI after every command. |
 | **Version** | An integer that increases by one on every successful data change. Used to detect stale options and plans. |
@@ -161,7 +162,7 @@ The TypeScript definitions live in `TECH_SPEC.md` §5. This table lists the fiel
 
 New events start Fixed for every category (D-11, C-01). Selecting or creating a category never changes the user's scheduling choice.
 
-The default flex window is the event's local day, from working start to working end. When the event does not overlap its day's working hours (for example at night) or falls on a non-working day, the default is that whole local day, 00:00–24:00, so the window is never empty by default (WI-41, reports #4 and #9). This only fills the form of a new event or one without a window; stored events are never changed.
+The default flex window is the event's local day, from working start to working end. When global working hours are off, or the event does not overlap its day's working hours (for example at night) or falls on a non-working day, the default is that whole local day, 00:00–24:00, so the window is never empty by default (D-10; WI-41, reports #4 and #9). This only fills the form of a new event or one without a window; stored events are never changed.
 
 #### Task
 
@@ -189,7 +190,7 @@ The default flex window is the event's local day, from working start to working 
 | `workStartMin` | minutes after local midnight | `540` (09:00) | 0–1439 |
 | `workEndMin` | minutes after local midnight | `1080` (18:00) | `> workStartMin`, ≤ 1440 |
 | `bufferMin` | integer | `0` | 0–120 |
-| `barredSlots` | `{id, label, startMin, endMin, days}[]` | `[]` | `endMin > startMin`; label 1–40 characters; no two slots with the same days (in any order), `startMin` and `endMin` — the label does not count (WI-43, report #6) |
+| `barredSlots` | `{id, label, startMin, endMin, days}[]` | `[]` | `endMin > startMin`; label 1–40 characters; no positive time overlap on shared weekdays; touching is allowed (D-09) |
 | `defaultCriterion` | `earliest \| bestFit \| priorityAware` | `earliest` | — |
 
 UI-only preferences (theme and last view) are stored in `localStorage`, not in Settings.
@@ -324,9 +325,9 @@ Each requirement lists its acceptance criteria. The tests that prove it are in `
   - Remaining problems are shown even with no movable events. A plan with zero moves and remaining problems says "No moves in this plan — N events still need attention." (singular as appropriate), never a bare "No changes needed". Problems resolved by that plan are omitted.
 
 **FR11 — Settings.**
-- **Editable:** working days and hours, default buffer, barred slots (add, edit, remove), default criterion, Categories (BR-16).
-- **Behaviour:** changes apply immediately to every later search. Barred slots are shown on the calendar as shaded background blocks with their label, and non-working hours are shaded.
-- **Acceptance:** invalid settings (end ≤ start, buffer out of range, a duplicate barred slot) are rejected inline. A barred slot that repeats an earlier slot's days, start and end shows "Duplicate of barred slot N." under its Days, where N is the earlier slot's number; an import with such settings is rejected (ER6) with the same message.
+- **Editable:** Use working hours, working days and hours, default buffer, barred slots (add, edit, remove), default criterion, Categories (BR-16).
+- **Behaviour:** changes apply immediately to every later search. Barred slots are shown as labelled background blocks. Use working hours is on by default; while off, its retained days/hours are disabled, task/search-hour choices are hidden and non-working shading disappears. Switching back on restores the saved rules (D-10).
+- **Acceptance:** invalid times/buffer and overlapping barred edits are rejected inline. Each later overlapping slot names its first earlier overlap and common weekdays (BR-15). Current-format invalid imports are ER6; older stored data and v1 imports retain legacy overlaps.
 
 ### 4.2 Error handling (cross-cutting)
 
@@ -410,8 +411,8 @@ These rules are normative. The algorithms in TECH_SPEC §8 implement them exactl
   2. Intersect it with the search window.
   3. Subtract that day's barred slots.
   4. Clip everything to start no earlier than `notBefore`, which is now rounded up to the next multiple of 5 minutes.
-- **When working hours don't apply** (`useWorkingHours = false`): the segments are the search window minus barred slots, clipped at `notBefore`.
-- **Usage:** task searches use `task.useWorkingHours`. Alternatives use the picker's *Search hours* choice (FR7; working hours by default unless the target lies outside them, WI-41). Replan always respects working hours.
+- **When working hours don't apply** (global `settings.useWorkingHours = false`, or the request opts out): segments are the search window minus barred slots, clipped at `notBefore`. Adjacent local days do not split those free stretches, so candidates may cross midnight. Barred slots still apply on their own weekdays.
+- **Usage:** when the global switch is on, task searches use `task.useWorkingHours`, alternatives use the picker's *Search hours* choice, and Replan respects working hours. When globally off, all three act as Any time; day loads cover whole local days and default flex windows cover the whole local day. Stored working days/hours and task preferences are retained for switching back on (D-10).
 - **Edge labels:** each segment edge records why it is there (window start/end, working start/end, barred slot "Lunch", now). These labels are used in explanations.
 
 **BR-6 Busy blocks and free gaps.**
@@ -492,14 +493,14 @@ Every search result also carries:
 - **Static events:** every other event that intersects the range. These are never moved.
 - **UX diagnostics (no change to placement rules):** after projecting each plan, list unchanged events with conflicts/barred overlaps whose overlap intersects the range and ends after raw now, plus its unplaced events. Entirely past problem overlaps (end ≤ now) are omitted even when an involved event is still running. Classify in order: fixed → "Fixed event"; flexible with `start ≤ now < end` → "Already started"; unplaced with move reason `outsideFlexWindow` → "Outside its flex window"; otherwise → "No free slot". Unplaced events have no fitting allowed free gap within `flexWindow ∩ range` with the buffer. Reasons describe the current request and can differ after changing the range/settings. Every entry offers the existing per-event Suggest alternatives action; applying alternatives still needs consent (BR-14).
 - **Order:** movable events are processed one at a time, by priority (High first), then duration (longest first), then start, then ID. Each placed event becomes busy for the events after it. If an event cannot be placed, it stays where it is and is listed as unplaced, and it remains busy for every other movable event, including those processed before it (no placed event may land on it).
-- **Allowed region:** for each movable event, the allowed segments of `flexWindow ∩ range`, respecting working hours (BR-5).
+- **Allowed region:** for each movable event, the allowed segments of `flexWindow ∩ range`, respecting working hours only when globally enabled (BR-5).
 - **Minimal change:**
   - An event *stays* if its current interval lies entirely inside one free gap (with the buffer applied against everything already busy).
   - Otherwise it moves to the `nearest` candidate.
   - Its move reason is the first that applies, in this order:
     1. outside flex window
-    2. outside working hours
-    3. in a barred slot
+    2. outside working hours when globally enabled
+    3. in an unkept barred slot
     4. conflicts with an event
     5. inside the buffer of an event
 - **Balanced week:**
@@ -520,11 +521,13 @@ Every search result also carries:
 
 **BR-15 Barred-slot overlap warnings (WI-32).**
 - An event overlaps a barred slot on each local day it touches iff their absolute, half-open intervals overlap. Touching boundaries produce no warning. A slot applies on its own configured weekdays even when that day is not a working day.
-- Every overlap is a derived `{eventId, label, overlap, minutes}` record, with `overlap = [max(starts), min(ends))` and `minutes = overlap.end − overlap.start`. Existing events remain allowed inside barred slots.
+- Every overlap is a derived `{eventId, slotId, label, overlap, minutes}` record, with `overlap = [max(starts), min(ends))` and `minutes = overlap.end − overlap.start`. Slot IDs distinguish equal labels. Existing events remain allowed inside barred slots.
 - These warnings are separate from BR-3 event-pair conflicts: the sweep, conflict counts and replan metrics do not include them. They are recomputed after data changes and settings changes, and are never persisted or exported.
 - Event blocks show a text tag `In <label>` for each distinct ongoing/future overlapping label. A second panel section, **Barred-slot overlaps (N)**, lists those records with event title, label, range, minutes and **Suggest alternatives** for that event (no other-event toggle). Entirely past overlaps are neither tagged nor listed (BR-19); derived snapshot records retain history.
 - Each barred-overlap row also shows **Fixed** or **Flexible**. Flexible events can be replanned only when not already started and a free placement exists within the range and flex window (BR-12).
 - When saving settings introduces ongoing/future overlap records, an info toast counts distinct events among those new records: `2 events overlap barred slots` (singular: `1 event overlaps barred slots`). Entirely past records do not count. **View** opens the panels drawer when needed and focuses/scrolls the barred-overlap section. An unchanged save or a save only removing overlaps produces no overlap toast.
+- **Keep here / Stop keeping:** one undoable metadata change stores/removes that slot ID in `event.keptInBarred`. Kept rows/tags are suppressed and shown in a collapsed Kept group. A kept slot does not cause a barred Replan move or diagnostic; other reasons still apply. Time-changing data commands clear keeps; Undo restores their before-images. Slot deletion or changed times/days clears affected keeps atomically with settings, including stale history images; renaming or reordering weekdays preserves them. Settings changes remain non-undoable.
+- **Slot overlap validation:** new/edited barred content rejects any positive time overlap on a shared weekday, at the later slot's Days field, naming the first earlier overlap: `Overlaps barred slot 1 (Lunch) on Mon, Tue.` Touching and disjoint weekdays are allowed; exact duplicates follow the same rule. Stored data/Dexie upgrades and v1 imports preserve older overlaps. Unrelated settings saves may keep those rows; every barred edit must resolve them. The Barred slots region explains old overlaps and offers editing; labels stack on the calendar. Current-format imports use current validation.
 
 ---
 
@@ -546,16 +549,17 @@ Twelve curated colours include the five seeds. Free colours are normalised six-d
    - On the right, the task panel above the conflict panel.
    - Below 1024 px, the right column collapses into a drawer opened from the toolbar.
 2. **Event dialog** (create and edit): title, category, priority, start, end, Fixed/Flexible scheduling radios, flex window (shown when flexible), description. Priority uses a fieldset with a legend and native High / Medium / Low radios, each with its [H]/[M]/[L] tag and priority colour; arrow keys change the selected option. The flex window is its own full-width group below End, without overlap or clipping at desktop and drawer widths in either theme. It has Save and Cancel buttons, plus Delete when editing.
-3. **Task dialog** (create and edit): name, duration (h and min), the same priority radio group, category, window from/to, Scheduling hours radios ("Working hours only", the default, and "Any time"), description. These radios still map to `useWorkingHours` true / false; barred slots apply to both. It has Save and Cancel buttons, plus Delete, Unschedule and Find time when editing.
+3. **Task dialog** (create and edit): name, duration (h and min), the same priority radio group, category, window from/to, Scheduling hours radios ("Working hours only", the default, and "Any time"), description. These radios map to the task preference true / false and are hidden while global working hours are off, without overwriting that preference; barred slots apply either way. It has Save and Cancel buttons, plus Delete, Unschedule and Find time when editing.
 4. **Slot picker:**
    - **Task mode:** the header shows the task name, duration, priority and "Task i of N", then Rank by. Named top picks precede all other options as time chips by day. Details reveals the task window, search summary/window/buffer and the selected slot's explanation. Apply selected, Skip and Stop retain queue behaviour.
    - **Alternatives mode:** the header shows the target/length, Move radios, fixed opt-in/temporary range and Search hours. The same picks/day chips/Details layout uses the alternatives picks in BR-7. Apply and Cancel retain their behaviour.
 5. **Replan dialog:** range from/to (default the visible week; from Month, whose grid exceeds 14 days, the first full week of the month, AUDIT A10), a buffer override, and a *Compute plans* button. Below them are two plan cards side by side (stacked when narrow). Each card shows its metrics and list of moves, with an *Apply this plan* button. Changing the range or buffer removes the cards until *Compute plans* runs again, so a plan is only applied for the inputs shown (AUDIT A08). Cancel closes the dialog.
 6. **Settings dialog:**
-   - Five headed sections (WI-49): **Working time** (working days as day chips, working hours from / to), **Scheduling defaults** (default buffer, default ranking), **Barred slots** (one compact row per slot: label, from–to, day chips and a remove ×; *Add barred slot* puts a new row at the end and focuses its label), **Categories** (BR-16) and **Data**. Settings Save / Cancel stay in their sticky footer; category changes save independently as undo steps. The dialog has the × of §7.7.
+   - Four headed sections (D-09): **Working time** (Use working hours switch, retained working days/hours disabled while off), **Scheduling defaults** (default buffer, default ranking), **Categories** (BR-16) and **Data**. Settings Save / Cancel stay in their sticky footer; category changes save independently as undo steps. The dialog has the × of §7.7.
    - A **Data** section: Export JSON, Import JSON, Load sample calendar (menu), Clear all data (with confirmation).
 7. **Confirm dialog:** used for delete, import and clear.
 8. **Shortcut help overlay:** lists the shortcuts in §7.6.
+9. **Barred slots region (D-09):** inline label/from–to/day-chip/remove rows, Add barred slot (focuses its label), and Save/Cancel while edits are pending. Fixed-width time inputs remain readable in 12-hour locales. Saving touches only barred content; errors stay on their rows and Cancel restores saved slots. Older overlaps show an actionable banner; positively overlapping calendar backgrounds group their labels in a vertical stack. Upcoming unkept overlaps retain Suggest alternatives and add Keep here; kept records live under a collapsed Kept (N) group with Stop keeping. Past overlaps stay out of both groups.
 
 ```text
 [◀] [Today] [▶]  Week of 2 Nov 2026   [Day|Week|Month|List]  Priority: [H][M][L]   [+ Event] [+ Task] [Replan] [↶][↷] [◐] [?] [⚙]
@@ -614,7 +618,7 @@ Twelve curated colours include the five seeds. Free colours are normalised six-d
 | W4 | Schedule one task | + Task → Save → *Find time* → review the options → Apply. The task is marked Scheduled and the event appears on the timeline. |
 | W5 | Schedule several tasks | Tick the tasks → *Find time for N selected* → the picker shows Task 1 of N → Apply or Skip → it moves on to the next task automatically → a summary toast: "Scheduled 2 of 3 tasks (1 skipped)". |
 | W6 | Replan a week | Replan → (adjust the range and buffer) → Compute plans → compare the two cards → *Apply this plan*. The moved events are briefly emphasised and the toast reads "Plan applied: 2 events moved". |
-| W7 | Configure | ⚙ → edit working hours, buffer, barred slots → Save. The shading updates, and later searches use the new rules. |
+| W7 | Configure | ⚙ → edit working hours/buffer → Save; Barred slots region → edit rows → Save. The shading updates, and later searches use the new rules. |
 | W8 | Undo a mistake | ↶ or Ctrl+Z → the toast reads "Undid: Delete "Gym"" → ↷ redoes it. |
 | W9 | Back up or restore | ⚙ → Data → Export (file downloads), or Import → confirm → everything is replaced. |
 | W10 | First visit (grader) | Empty calendar → *Load sample week* → a populated week with conflicts and tasks ready to demo. |
@@ -642,7 +646,7 @@ All toasts are announced through an ARIA live region. Errors use `assertive`; ev
 - **Priority colours:** High = red family, Medium = amber, Low = slate blue. Each always comes with an [H]/[M]/[L] tag.
 - **Conflict:** a 2 px dashed outline in the danger colour, a ⚠ icon and the text "Conflict N min".
 - **Fixed events** show a small "Fixed" tag. **Scheduled-task events** show a "Task" tag.
-- **Barred slots** are hatched background blocks with their label. Non-working hours are lightly shaded.
+- **Barred slots** are hatched background blocks with their label. Non-working hours/days have a distinct dotted shading while the global switch is on. Pattern contrast is ≥ 3:1 in both themes; normal text/background contrast remains ≥ 4.5:1.
 - Events overlapping barred slots carry `In Lunch` (or the configured label) text tags; these warnings have their own panel section and do not change conflict counts.
 
 ### 7.6 Keyboard shortcuts (B4)
@@ -743,3 +747,7 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 
 | 2026-11-13 | v1.19 (WI-52 engine checkpoint, D-08): BR-12 diagnostics omit entirely past problem overlaps and reserve Already started for currently running events, using raw now independently of rounded placement notBefore. Placement, metrics, detection and storage are unchanged. Remaining UI past-time behavior is still in progress. |
 | 2026-11-13 | v1.20 (WI-52, D-08): BR-19/FR4 and BR-15 define raw-now Upcoming/Past grouping, upcoming-only counts/actions/barred feedback, muted accessible past days/events and cross-day now guides; presentation time refreshes without domain writes. |
+| 2026-11-13 | v1.21 (WI-53 D-10 engine checkpoint): BR-5, day loads and default flex windows obey the global working-time switch. Off means whole local days with barred slots retained, including cross-midnight placement; task/working-time preferences stay stored. UI and D-09 remain in progress. |
+| 2026-11-13 | v1.22 (WI-53 D-10 UI checkpoint): FR11/UX expose Use working hours, disabled retained preferences, hidden effective task/search-hour choices and shading removal. D-09 and stronger enabled-hours shading remain in progress. |
+| 2026-11-13 | v1.23 (WI-53 D-09 engine checkpoint): BR-15 defines identified slot warnings, undoable Keep here, automatic event/settings/history clearing, shared-day overlap rejection and legacy preservation. UI region/editor/grouping and remaining shading are still in progress. |
+| 2026-11-13 | v1.24 (WI-53 D-09/D-10): barred editing moves into its region, Settings retains four sections, Kept groups suppress current tags/warnings and restore through Stop keeping/history; legacy banners/stacked labels and contrasted enabled non-working dots are specified. |

@@ -14,7 +14,6 @@ import {
   linkIssues,
   parseExportFile,
   parseInput,
-  settingsSchema,
   storedDataSchema,
   storedRevisionSchema,
 } from '@/shared/schemas';
@@ -57,9 +56,10 @@ import {
 } from './pipelines/taskScheduler';
 import { notBeforeFor } from './search';
 import { createCategory, updateCategory, deleteCategory } from './pipelines/categories';
+import { setBarredKept, type BarredKeepRequest } from './pipelines/barred';
+import { updateSettings } from './pipelines/settings';
 import {
   createState,
-  barredOverlapsFor,
   replay,
   repositoryError,
   type EngineState,
@@ -100,6 +100,7 @@ export interface Engine {
   updateEvent(id: string, input: EventInput): Promise<Result<MutationResult>>;
   moveEvent(id: string, to: Interval): Promise<Result<MutationResult>>; // drag / resize
   deleteEvent(id: string): Promise<Result<MutationResult>>;
+  setBarredKept(request: BarredKeepRequest): Promise<Result<MutationResult>>;
 
   // ── Conflict Resolution pipeline (FR4 is automatic inside commit; FR7) ──
   suggestAlternatives(req: {
@@ -481,25 +482,18 @@ class CalendarEngine implements Engine {
   //       first, leaving the state unchanged
   updateSettings(settings: Settings): Promise<Result<Snapshot>> {
     return this.run(async () => {
-      const parsed = parseInput(settingsSchema, settings);
-      if (!parsed.ok) {
-        return parsed;
-      }
-      try {
-        await this.deps.repo.saveSettings(parsed.value, this.state.revision);
-      } catch (error) {
-        return storageError(error);
-      }
-      this.state = {
-        ...this.state,
-        settings: parsed.value,
-        barredOverlaps: barredOverlapsFor(this.state.events, parsed.value),
-        version: this.state.version + 1,
-        revision: this.state.revision + 1,
-      };
+      const result = await updateSettings(this.context(), settings);
+      if (!result.ok) return result;
+      this.state = result.value;
       this.deps.onCommit?.();
       return ok(this.snapshot());
     });
+  }
+
+  // PRE:  request comes from outside
+  // POST: queued, validated, undoable Keep here/Stop keeping change through the barred pipeline
+  setBarredKept(request: BarredKeepRequest): Promise<Result<MutationResult>> {
+    return this.mutate((context) => setBarredKept(context, request));
   }
 
   // PRE:  none

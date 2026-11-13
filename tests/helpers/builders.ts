@@ -114,6 +114,7 @@ export function dayFrame(
     weekday: WEEKDAY_OF[day],
     work: work === null ? null : { start: at(work[0]), end: at(work[1]) },
     barred: barred.map(([label, from, to]) => ({
+      slotId: label,
       label,
       interval: { start: at(from), end: at(to) },
     })),

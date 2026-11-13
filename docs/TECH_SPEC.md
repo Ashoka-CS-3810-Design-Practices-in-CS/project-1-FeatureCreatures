@@ -362,6 +362,7 @@ export interface Conflict {
 export type UserCriterion = 'earliest' | 'bestFit' | 'priorityAware';
 export interface BarredOverlap {
   readonly eventId: string;
+  readonly slotId: string;
   readonly label: string;
   readonly overlap: Interval;
   readonly minutes: number;
@@ -379,8 +380,8 @@ export type Boundary =
 export interface DayFrame {
   readonly dayStart: Minute; readonly dayEnd: Minute;     // local midnight → next local midnight (23–25 h)
   readonly weekday: Weekday;
-  readonly work: Interval | null;                          // null if not a working day
-  readonly barred: readonly { readonly label: string; readonly interval: Interval }[];
+  readonly work: Interval | null;                          // whole local day when globally off
+  readonly barred: readonly { readonly slotId: string; readonly label: string; readonly interval: Interval }[];
 }
 
 export interface Segment extends Interval { readonly startEdge: Boundary; readonly endEdge: Boundary }
@@ -634,7 +635,7 @@ WI-49: `categoryInputSchema` picks name/colour from `categorySchema`; `parseCate
 - Zod 4 cannot `.extend()` a refined object, so each schema is a plain object shape plus a named refine function (`refineEventTiming`, `refineTaskWindow`), and the stored schemas extend the shape and re-apply the same refinements.
 - `storedTaskSchema` also checks `(status = 'scheduled') ⟺ (scheduledEventId ≠ null)` as a shape issue at `scheduledEventId`: "A task has an event id exactly when it is scheduled."
 - A non-integer duration gives "Duration must be a whole number of minutes." (T31's 2.5 case).
-- `settingsSchema` messages: "Pick at least one working day." · "Working hours must end after they start." (time, `workEndMin`) · "Buffer must be between 0 and 120 minutes." · barred label "Label is required." / "Labels can be at most 40 characters." · "A barred slot must end after it starts." (time, `barredSlots.N.endMin`) · "Duplicate of barred slot N." (shape, at `barredSlots.i.days` of every later slot whose `[startMin, endMin, sorted days]` repeats slot N's; label and id ignored; `refineDistinctBarredSlots`, WI-43). `workStartMin` and barred `startMin` are 0–1439; `workEndMin` and barred `endMin` are 0–1440. A buffer that is not a number (a blank form field becomes `NaN`) also gets the buffer message.
+- `settingsSchema` messages: "Pick at least one working day." · "Working hours must end after they start." (time, `workEndMin`) · "Buffer must be between 0 and 120 minutes." · barred label "Label is required." / "Labels can be at most 40 characters." · "A barred slot must end after it starts." (time, `barredSlots.N.endMin`) · "Overlaps barred slot N (Lunch) on Mon, Tue." (shape, at each later overlapping slot's Days; first earlier shared-day positive overlap, D-09). `workStartMin` and barred `startMin` are 0–1439; `workEndMin` and barred `endMin` are 0–1440. A buffer that is not a number (a blank form field becomes `NaN`) also gets the buffer message.
 
 **Shared validator helpers** (also in `schemas.ts`):
 
@@ -742,6 +743,7 @@ export interface Engine {
   updateEvent(id: string, input: EventInput): Promise<Result<MutationResult>>;
   moveEvent(id: string, to: Interval): Promise<Result<MutationResult>>;      // drag / resize
   deleteEvent(id: string): Promise<Result<MutationResult>>;
+  setBarredKept(request: { eventId: string; slotId: string; kept: boolean }): Promise<Result<MutationResult>>;
 
   // ── Conflict Resolution pipeline (FR4 is automatic inside commit; FR7) ──
   suggestAlternatives(req: { eventId: string; otherEventId?: string; bufferMin?: number; useWorkingHours?: boolean; allowMoving?: boolean; range?: Interval }): Result<SlotSearchResult>;
@@ -895,11 +897,13 @@ WI-32: after a successful settings save, recompute `barredOverlapsFor(events, se
 
 `updateSettings(s)`:
 
-1. Validate with `settingsSchema`.
-2. `await repo.saveSettings(s)`. A failure gives `StorageError`.
-3. Set `state.settings = s` and `version + 1`.
+1. `parseSettingsChange(input, previous)` always validates shape/time with `storedSettingsSchema`; edited barred content also passes overlap-rejecting `settingsSchema`. Unchanged legacy overlaps do not block unrelated saves.
+2. Find deleted or timing/day-changed slot IDs with `invalidatedBarredIds`; label changes and day-array reordering do not invalidate keeps. Clear those IDs on live events and pass the changed rows to `repo.saveSettings(s, revision, clearedEvents)` in one transaction. A failure leaves state/history/storage unchanged.
+3. Adopt settings/events and recomputed raw overlaps, increment version/revision once, and clear invalid IDs from undo/redo before/after images without discarding other history.
 
 There is no history entry, and the conflicts are unchanged.
+
+**D-09 Keep here.** `setBarredKept({eventId, slotId, kept})` validates with `barredKeepSchema`, requires an existing event/slot and an actual overlap for keeping, then records one metadata-only event change through commit. Repeated values are no-ops. Raw overlaps retain the slot ID and stay in snapshots. Replan ignores only kept barred reasons/diagnostics; conflicts and other reasons still apply. For every new data command, commit clears keeps in the after-image when start or end changes (including task mirroring, alternatives and Replan); Undo restores the before-image. Settings-triggered clearing also sanitizes history so old keeps cannot return for a changed slot.
 
 #### 7.4.6 Import / export
 
@@ -1112,7 +1116,8 @@ export function startOfLocalWeek(m: Minute): Minute;                    // Monda
    { dayStart: d,
      dayEnd: addLocalDays(d, 1),
      weekday,
-     work: workDays.includes(weekday) ? [set(d, workStart), set(d, workEnd)] : null,
+     work: !settings.useWorkingHours ? [d, addLocalDays(d, 1)] :
+           workDays.includes(weekday) ? [set(d, workStart), set(d, workEnd)] : null,
      barred: for each slot whose days include weekday, sorted by start → {label, [set(d, s), set(d, e)]} }
    ```
 
@@ -1263,7 +1268,8 @@ export interface ReplanInput {
   conflicts: readonly Conflict[];          // current, for conflictsBefore
   frames: readonly DayFrame[];             // for the range
   range: Interval; bufferMin: number; notBefore: Minute;
-  segmentsFor: (window: Interval) => Segment[];   // injected allowedSegments(…, useWorkingHours: true)
+  useWorkingHours: boolean;                   // global working-time switch
+  segmentsFor: (window: Interval) => Segment[]; // injected allowedSegments with the global switch
 }
 export function planReplan(input: ReplanInput): { movableCount: number; plans: [ReplanPlan, ReplanPlan] };
 ```
@@ -1313,7 +1319,7 @@ pass(kind, pinned):
 
 invalidReason(e, win, segs, occupied, b, frames):   // first failing check, in this order
   win null or ¬contains(win, e)                          → outsideFlexWindow
-  no frame f with f.work and contains(f.work, e)         → outsideWorkingHours
+  useWorkingHours and no frame f with f.work containing e → outsideWorkingHours
   e overlaps some barred interval of its frame(s)        → barred{label}
   e overlaps some o ∈ occupied (raw)                     → conflict{o}
   e overlaps some o ∈ occupied expanded by b             → buffer{o}
@@ -1347,7 +1353,7 @@ export interface ChangeSet {
 export interface Repository {
   load(): Promise<StoredData>;
   apply(changes: ChangeSet, expectedRevision: number): Promise<void>;          // MUST be atomic (all or nothing)
-  saveSettings(settings: Settings, expectedRevision: number): Promise<void>;
+  saveSettings(settings: Settings, expectedRevision: number, clearedEvents?: readonly CalendarEvent[]): Promise<void>;
   replaceAll(data: { categories: Category[]; events: CalendarEvent[]; tasks: Task[]; settings: Settings }, expectedRevision: number): Promise<void>; // atomic
 }
 export class ConcurrentModificationError extends Error { … }
@@ -1550,6 +1556,8 @@ All sample loads and imports with more than `IMPORT_SPINNER_THRESHOLD` events pl
 
 ### 11.2 Components
 
+WI-53 / D-10: Settings registers the native `Use working hours` switch. `useWatch` disables the retained Working days and hours fieldset while off; RHF keeps its values for Save and re-enabling. TaskForm omits Scheduling hours while globally off, preserving the stored task preference. Alternatives omits Search hours; its initial UI choice is false while globally off. Task-picker Details describes the effective rule as any time. CalendarView sets FullCalendar `businessHours` to false while off, removing non-working shading without changing barred backgrounds or now guides. D-09 uses the separate BarredSlotsPanel editor described below; enabled-hours shading uses a tested nonwork-pattern dot texture.
+
 **Presentation clock (WI-52, D-08).** `currentMinute` starts at `AppStoreOptions.now()`. `actions.refreshCurrentMinute()` changes only that UI field when needed. StoreProvider refreshes immediately, once per `MS_PER_MINUTE`, and on window focus/document visibilitychange; cleanup removes the timer/listeners, including StrictMode remounts. Shared `upcomingOverlaps(records, now)` preserves ordered records with `overlap.end > now`; App status, both panels and event barred tags use it. Settings feedback also excludes entirely past newly introduced tuples. ConflictList keeps the upcoming accessible name `Conflict list`; expanded history is `Past conflict list` with no actions. Limits/remainder counts apply separately to each group. Snapshot detection, history, version and metrics remain unchanged.
 
 | Component | Responsibility | Reads | Calls |
@@ -1565,12 +1573,15 @@ All sample loads and imports with more than `IMPORT_SPINNER_THRESHOLD` events pl
 | `PriorityRadioGroup` | Native radios in a Priority fieldset; [H]/[M]/[L] tags use existing priority tokens; browser provides arrow-key navigation | RHF registration | registration callbacks |
 | `SlotPicker` | Both picker modes (Figure 2), summary line, options as a radio group, ER2/ER3 blocks with suggestions + "Edit task" | `picker` | picker actions |
 | `ReplanDialog` | Range (date inputs, default `view.activeRange` when it is at most 14 days, else the first full Monday–Sunday week from `view.date` (Month, AUDIT A10), or the week of `view.date` before the first `datesSet`), inputs that drop computed plans when edited (A08), buffer override, Compute, two plan cards (metrics + moves + unplaced), Apply | engine via action | `planReplan`, `applyReplan` |
-| `SettingsDialog` | Settings form in headed `section`s (Working time, Scheduling defaults, Barred slots) + Data section (export, import, samples, clear); barred slots are `fieldset.barred-row` grid rows (visually hidden legend "Barred slot N" and Label / From / To labels, `.day-chips` checkboxes, × "Remove barred slot N"); Add appends with `focusName` on the new label (WI-46) | `snapshot.settings` | `updateSettings`, `importData` |
+| `SettingsDialog` | Four sections: Working time, Scheduling defaults, Categories and Data; barred editing lives in BarredSlotsPanel | `snapshot.settings` | `updateSettings`, `importData` |
 | `ConfirmDialog`, `ShortcutHelp`, `Toasts`, `Modal`, `EmptyState` | as named; `Toasts` is the ARIA live region; `Modal` wraps native `<dialog>` + `showModal()` and, when `dismissible`, renders a last-in-DOM `.dialog-close` × button (`aria-label="Close"`, calls `onClose` like Cancel/Esc; CSS puts it top-right; WI-45). `ShortcutHelp` relies on it instead of its own Close button | | |
 
 WI-38: Replan plan cards also show **Not moved by Replan** with the derived per-plan reasons, problem names and per-event alternatives. Zero-move cards count remaining entries instead of saying only "No changes needed"; diagnostic cards appear even with zero movable events. Barred-overlap rows carry Fixed/Flexible tags. The alternatives action uses `openEventAlternatives(eventId)` for any diagnostic event; this is the existing flow, with no target toggle.
 
 WI-51 / D-06: `SlotPicker` uses a wide scrollable native Modal. `SuggestionOptions` renders one Available slots fieldset and native radio name spanning Top picks and All options by day. `picks.ts` derives named picks from complete options, omits duplicate slots in pick order, and groups remaining slots by local start day/time. Rank by refreshes the criterion-ranked result and selects index 0, without changing chip order. Pick radios/chips select `option.rank - 1`, so `pickerApply` still applies the correct result option. `DayOptions` initially shows `SUGGESTION_CHIPS_PER_DAY`, then expands the rest. Cross-midnight chip names include both days. Local Details state starts false and is never persisted; it conditionally renders the summary, search window, buffer, task window and selected gap/boundary/leftover/load. ER2/ER3 explanations remain outside Details. Task header/Rank by, alternatives Move/consent/range/Search hours, and all apply/queue/version/history behaviour remain in their existing store paths. Picks/chips reuse tested text/surface/muted and accent/focus tokens; no dependency is added.
+
+
+**WI-53 / D-09 UI.** BarredSlotsPanel is a separate named region containing the editor and BarredOverlapPanel; it is currently mounted beside the conflict groups pending WI-56 layout. BarredSlotRow and WeekdayCheckboxes are extracted from Settings, retaining all labels/controls. The editor uses the existing SettingsFormValues/settingsResolver for nested errors, with saved settings as defaults; pending edits expose Save barred slots and Cancel barred slot changes, and Add focuses Label. Save passes only edited barred rows on the current settings. Settings keeps four sections and uses settingsDefaultsResolver (shape/time without editing legacy bars). Shared unkeptBarredOverlaps filters tags, warnings and settings-toast counts; raw snapshots retain every overlap. BarredRows offers Keep here/Stop keeping through actions.setBarredKept and the engine command; Kept starts collapsed, with past records excluded. Legacy clash banners use compact Monday-first day ranges. Calendar backgrounds merge only positive overlaps, retaining all titles in stackedLabels rendered as vertical labelled spans; touching slots remain separate. This grouping is presentation-only and never changes stored slots or search intervals. Token nonwork-pattern has ≥ 3:1 contrast against working/past/non-working backgrounds in both themes; CSS dots make enabled non-working time distinct, with whole shading removed when off. Every time input in the region has a fixed 8.5rem width for 12-hour locales.
 
 ### 11.3 FullCalendar integration (`CalendarView/`)
 
@@ -1602,7 +1613,7 @@ FullCalendar is a **controlled, render-only view**. Its `events` prop is always 
   businessHours={{ daysOfWeek: settings.workDays, startTime: hhmm(workStartMin), endTime: hhmm(workEndMin) }}
   events={fcEvents}                                // toFullCalendar(snapshot, filter) — memoised
   eventContent={(arg) => renderEventContent(arg, (id) => actions.openDialog({ kind: 'event', mode: 'edit', id }))}
-  // renderEventContent: background → barred label; no block props (the select mirror) → time only; else <EventContent/>
+  // renderEventContent: background → stacked barred labels (or no text for a decorative guide); no block props (the select mirror) → time only; else <EventContent/>
   eventDrop={handlers.onDrop} eventResize={handlers.onResize}
   select={handlers.onSelect} eventClick={handlers.onClick} datesSet={handlers.onDatesSet}
 />
@@ -1880,7 +1891,7 @@ Phases match A3 §7. Owners follow A3: **S** = Samar, **Dv** = Divyam. Each WI i
 
 ### Round 2 overhaul (WI-47–59)
 
-Binding design: `extras/AUDIT_2.md` §7. Each WI depends on the previous one; update the behaviour/contracts/tests in the WI that implements them. The Round 2 full gate is typecheck, lint, coverage, DST, five 10,000-case properties, build, then Playwright with three repeats and two workers, on both the branch and main. UI WIs also capture and review both-theme screenshots at 1440, 1280 and 1024 px. WI-59's final comparison uses five browser repeats and the baseline recorded in the progress file.
+Binding design: `extras/AUDIT_2.md` §7. Each WI depends on the previous one; update the behaviour/contracts/tests in the WI that implements them. The Round 2 full gate is typecheck, lint, coverage, DST, all six 10,000-case properties, build, then Playwright with three repeats and two workers, on both the branch and main. UI WIs also capture and review both-theme screenshots at 1440, 1280 and 1024 px. WI-59's final comparison uses five browser repeats and the baseline recorded in the progress file.
 
 | WI | Phase | Title | Owner | Files | Depends | Done when |
 |---|---|---|---|---|---|---|
@@ -1981,3 +1992,7 @@ Production URL: https://…vercel.app
 | 2026-11-13 | v1.42 (WI-51, D-06): SlotSearchResult.options contains every ranked picker candidate; §7.5 wires generation, §8.10a/§10 document contracts/cost, and §11.2 documents shared named picks/day chips/native radio selection and hidden Details. Replan's rankOptions/MAX_OPTIONS and assertions remain unchanged. |
 | 2026-11-13 | v1.43 (WI-52 engine checkpoint, D-08): Replan pipeline receives raw now and computes the unchanged rounded placement cutoff internally. diagnoseReplan's fourth Minute argument means raw now; past problem overlaps are excluded and started means currently running. T52 raw-clock boundary regressions pass; UI grouping/clock/styling remains in progress. |
 | 2026-11-13 | v1.44 (WI-52, D-08): currentMinute/refreshCurrentMinute and provider timer/focus/visibility lifecycle; upcomingOverlaps shared by panels/status/tags/toast; toFullCalendar takes raw now and marks ended events; local-day nowGuideEntries and tested past/guide tokens. Snapshot/repository/metric contracts remain unchanged. |
+| 2026-11-13 | v1.45 (WI-53 D-10 engine checkpoint): DayFrame.work is the whole local day when globally off. Shared search/empty-cause/Replan segments use effective global/request working-time rules. ReplanInput gains required useWorkingHours; false skips the working-day containment check, while reused detectBarredOverlaps checks every touched day. Unit/property fixtures explicitly pass true without assertion changes. UI and D-09 remain in progress. |
+| 2026-11-13 | v1.46 (WI-53 D-10 UI checkpoint): Settings switch/useWatch disables a retained fieldset; TaskForm and alternatives hide their hours choices while off, task Details uses effective any-time wording, picker defaults to any time, and FullCalendar businessHours=false removes shading. Three RTL regressions and a browser persistence flow fail first. |
+| 2026-11-13 | v1.47 (WI-53 D-09 engine checkpoint): BarredOverlap/DayFrame bars carry slotId; shared clash/day formatting and settings-change validation preserve legacy data but reject edited overlaps. Engine.setBarredKept validates/idempotently records metadata, commit clears on time changes, Replan skips kept barred reasons, and settings sanitizes affected history. Repository.saveSettings gains optional cleared event rows in one revision-checked transaction; Memory/Dexie/failing adapter updated. |
+| 2026-11-13 | v1.48 (WI-53 D-09/D-10): extracted shared form controls, region editor and legacy-readable Settings resolver, unkept warning/tag/toast filtering and store action, collapsed Kept groups, grouped background stackedLabels, fixed 12-hour field width and tested non-working pattern token. T53 browser flows cover persistence and legacy label geometry. |

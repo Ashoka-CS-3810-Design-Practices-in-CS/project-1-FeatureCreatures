@@ -97,6 +97,15 @@ const light = tokensOf(':root');
 const dark = tokensOf(":root[data-theme='dark']");
 
 describe('tokens.css', () => {
+  it('T53: non-working time has a distinct pattern reaching 3:1 on working, past and non-working backgrounds', () => {
+    [light, dark].forEach((tokens) => {
+      ['bg', 'past-bg', 'nonwork'].forEach((background) => {
+        expect(
+          contrast(tokens.get('nonwork-pattern') ?? '', tokens.get(background) ?? ''),
+        ).toBeGreaterThanOrEqual(3);
+      });
+    });
+  });
   it('T52: past styling is distinct and its edge and faint now guide reach 3:1 in both themes', () => {
     [light, dark].forEach((tokens) => {
       expect(tokens.get('past-bg')).not.toBe(tokens.get('bg'));

@@ -14,6 +14,7 @@ it('T37 expands barred Sunday wall-clock times on the 25-hour fallback day', asy
   expect(engine.snapshot().barredOverlaps).toEqual([
     {
       eventId: 'Fall',
+      slotId: 'rest',
       label: 'Rest',
       overlap: { start: atLocal('2026-11-01', '09:30'), end: atLocal('2026-11-01', '10:00') },
       minutes: 30,

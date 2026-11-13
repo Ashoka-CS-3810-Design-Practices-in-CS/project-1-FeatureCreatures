@@ -146,14 +146,19 @@ export class DexieRepository implements Repository {
     });
   }
 
-  // PRE:  the database is open; settings satisfies settingsSchema
-  // POST: when expectedRevision is the stored revision, settings is stored as the single settings
-  //       row and the revision grows by 1; otherwise nothing is and the promise rejects
-  async saveSettings(settings: Settings, expectedRevision: number): Promise<void> {
+  // PRE:  the database is open; settings and clearedEvents are structurally valid
+  // POST: atomically stores settings, passed event rows and one revision increment;
+  //       any failing write or stale revision rolls back the entire transaction
+  async saveSettings(
+    settings: Settings,
+    expectedRevision: number,
+    clearedEvents: readonly CalendarEvent[] = [],
+  ): Promise<void> {
     const { meta } = this.db;
-    await this.db.transaction('rw', this.db.settings, meta, async () => {
+    await this.db.transaction('rw', this.db.settings, this.db.events, meta, async () => {
       await this.claimRevision(expectedRevision);
       await this.db.settings.put({ key: SETTINGS_KEY, value: settings });
+      await this.db.events.bulkPut([...clearedEvents]);
     });
   }
 

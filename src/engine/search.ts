@@ -66,7 +66,7 @@ function allowedFor(
 ): { frames: DayFrame[]; segments: Segment[] } {
   const frames = buildDayFrames(request.window, state.settings);
   const segments = allowedSegments(request.window, frames, {
-    useWorkingHours: request.useWorkingHours,
+    useWorkingHours: state.settings.useWorkingHours && request.useWorkingHours,
     notBefore,
   });
   return { frames, segments };
@@ -220,7 +220,7 @@ export function emptyWindowCause(
   }
   const withoutBarred = { ...state.settings, barredSlots: [] };
   const segments = allowedSegments(window, buildDayFrames(window, withoutBarred), {
-    useWorkingHours,
+    useWorkingHours: state.settings.useWorkingHours && useWorkingHours,
     notBefore,
   });
   return segments.length > 0 ? 'barred' : 'noWorkingHours';
@@ -233,14 +233,14 @@ export function notBeforeFor(now: Minute): Minute {
 }
 
 // PRE:  state.settings is valid; notBefore is now rounded up to SNAP_MIN
-// POST: returns the segmentsFor closure Replan needs: window ↦ its working-hours allowed segments
+// POST: returns Replan's segmentsFor closure, respecting working hours only when globally enabled
 export function segmentsFor(
   state: EngineState,
   notBefore: Minute,
 ): (window: Interval) => Segment[] {
   return (window) =>
     allowedSegments(window, buildDayFrames(window, state.settings), {
-      useWorkingHours: true,
+      useWorkingHours: state.settings.useWorkingHours,
       notBefore,
     });
 }

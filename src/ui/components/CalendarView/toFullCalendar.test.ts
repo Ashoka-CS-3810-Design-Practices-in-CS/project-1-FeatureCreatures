@@ -21,6 +21,30 @@ function snapshotOf(events: CalendarEvent[], withSettings: Settings = settings()
 const ALL: ('high' | 'medium' | 'low')[] = ['high', 'medium', 'low'];
 
 describe('toFullCalendar', () => {
+  it('T53: merges legacy overlapping backgrounds and stacks all labels without changing settings', () => {
+    const rules = settings({
+      barredSlots: [
+        { id: 'lunch', label: 'Lunch', startMin: 780, endMin: 840, days: [1] },
+        { id: 'tt', label: 'TT', startMin: 810, endMin: 870, days: [1] },
+      ],
+    });
+    const before = structuredClone(rules);
+    const entries = toFullCalendar(
+      snapshotOf([], rules),
+      ALL,
+      iv('Mon 00:00', 'Tue 00:00'),
+      [],
+      t('Mon 08:00'),
+    );
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({
+      title: 'Lunch · TT',
+      start: fromMinute(t('Mon 13:00')),
+      end: fromMinute(t('Mon 14:30')),
+      extendedProps: { stackedLabels: ['Lunch', 'TT'] },
+    });
+    expect(rules).toEqual(before);
+  });
   it('maps events with priority, conflict and emphasis classes and the EventContent props', () => {
     const snapshot = snapshotOf([
       ev('A', 'Mon 10:00', 'Mon 11:30', { priority: 'high' }),

@@ -88,6 +88,7 @@ export interface Conflict {
 export type UserCriterion = 'earliest' | 'bestFit' | 'priorityAware';
 export interface BarredOverlap {
   readonly eventId: string;
+  readonly slotId: string;
   readonly label: string;
   readonly overlap: Interval;
   readonly minutes: number;
@@ -112,8 +113,12 @@ export interface DayFrame {
   readonly dayStart: Minute; // local midnight → next local midnight (23–25 h)
   readonly dayEnd: Minute;
   readonly weekday: Weekday;
-  readonly work: Interval | null; // null if not a working day
-  readonly barred: readonly { readonly label: string; readonly interval: Interval }[];
+  readonly work: Interval | null; // whole day when globally off; otherwise null on a non-working day
+  readonly barred: readonly {
+    readonly slotId: string;
+    readonly label: string;
+    readonly interval: Interval;
+  }[];
 }
 
 export interface Segment extends Interval {

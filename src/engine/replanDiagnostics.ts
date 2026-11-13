@@ -32,7 +32,7 @@ function exclusionReason(
 // PRE:  events are valid and sorted; frames cover range's whole local days;
 //       plan is a BR-12 plan over events/range at ceil(now, SNAP_MIN)
 // POST: returns one entry per unchanged in-range event left unplaced or still in a conflict/barred
-//       overlap AFTER this plan whose end > now, in original event order, with deduplicated problem names;
+//       unkept overlap AFTER this plan whose end > now, in original event order, with deduplicated problem names;
 //       no inputs, placements or plan metrics are changed
 export function diagnoseReplan(
   events: readonly CalendarEvent[],
@@ -50,13 +50,17 @@ export function diagnoseReplan(
     events.map((event) => [event.id, { barredLabels: new Set(), conflictTitles: new Set() }]),
   );
 
-  // INVARIANT: every visited non-past warning intersecting range is recorded once by label for its event
+  // INVARIANT: every visited non-past, unkept warning intersecting range is recorded once by label
   for (const warning of detectBarredOverlaps(projected, frames)) {
-    if (warning.overlap.end > now && overlaps(warning.overlap, range)) {
+    if (
+      warning.overlap.end > now &&
+      overlaps(warning.overlap, range) &&
+      !byId.get(warning.eventId)?.keptInBarred.includes(warning.slotId)
+    ) {
       (problems.get(warning.eventId) as RemainingProblems).barredLabels.add(warning.label);
     }
   }
-  // POST: each event's non-past barred labels are recorded only for the selected range
+  // POST: each event's non-past, unkept barred labels are recorded only for the selected range
 
   // INVARIANT: both participants of each visited non-past in-range conflict record the other's title
   for (const conflict of detectConflicts(projected)) {

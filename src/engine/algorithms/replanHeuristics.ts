@@ -23,6 +23,7 @@ import { mergeBusy } from './merge';
 import { rankOptions } from './rank';
 import { compareEvents, compareIds, eventsIntersecting, insertSorted } from './sortedArray';
 import { detectConflicts } from './sweep';
+import { detectBarredOverlaps } from './barred';
 
 export interface ReplanInput {
   events: readonly CalendarEvent[]; // all, sorted
@@ -31,7 +32,8 @@ export interface ReplanInput {
   range: Interval;
   bufferMin: number;
   notBefore: Minute;
-  segmentsFor: (window: Interval) => Segment[]; // injected allowedSegments(…, useWorkingHours: true)
+  useWorkingHours: boolean;
+  segmentsFor: (window: Interval) => Segment[];
 }
 
 type PlanKind = ReplanPlan['id'];
@@ -72,26 +74,32 @@ function reasonWith(kind: 'conflict' | 'buffer', other: CalendarEvent): MoveReas
 }
 
 // PRE:  window is flexWindow ∩ range, or null when they do not meet; occupied is sorted and does
-//       not contain event; frames are contiguous DayFrames covering the range; bufferMin ≥ 0
+//       not contain event; frames cover the range; bufferMin ≥ 0; useWorkingHours is the global rule
 // POST: returns null when event's current interval is a valid place (BR-12 Minimal change), else the
 //       first failing check, in this order: outside the flex window, outside one day's working
-//       hours, in a barred slot, overlapping an occupied event, inside an occupied event's buffer
+//       hours when enabled, in any touched day's unkept barred slot, overlapping an event, inside its buffer
 function invalidReason(
   event: CalendarEvent,
   window: Interval | null,
   occupied: readonly CalendarEvent[],
   bufferMin: number,
   frames: readonly DayFrame[],
+  useWorkingHours: boolean,
 ): MoveReason | null {
   if (window === null || !contains(window, event)) {
     return { kind: 'outsideFlexWindow' };
   }
   // A working interval lies inside its own day, so only the frame holding event.start can contain it.
   const frame = frameOf(frames, event.start);
-  if (frame === undefined || frame.work === null || !contains(frame.work, event)) {
+  if (
+    useWorkingHours &&
+    (frame === undefined || frame.work === null || !contains(frame.work, event))
+  ) {
     return { kind: 'outsideWorkingHours' };
   }
-  const barred = frame.barred.find((slot) => overlaps(slot.interval, event));
+  const barred = detectBarredOverlaps([event], frames).find(
+    (warning) => !event.keptInBarred.includes(warning.slotId),
+  );
   if (barred !== undefined) {
     return { kind: 'barred', label: barred.label };
   }
@@ -130,7 +138,14 @@ function placeEvent(
   input: ReplanInput,
 ): Placement {
   const window = event.flexWindow === null ? null : intersect(event.flexWindow, input.range);
-  const reason = invalidReason(event, window, occupied, input.bufferMin, input.frames);
+  const reason = invalidReason(
+    event,
+    window,
+    occupied,
+    input.bufferMin,
+    input.frames,
+    input.useWorkingHours,
+  );
   if (kind === 'minimalChange' && reason === null) {
     return { placed: event, move: null, unplaced: null };
   }

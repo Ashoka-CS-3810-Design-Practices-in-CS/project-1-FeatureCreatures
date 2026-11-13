@@ -6,6 +6,7 @@ import { settings } from '../../../../tests/helpers/builders';
 import { makeEngine } from '../../../../tests/helpers/engine';
 import { renderWithStore, storeFor } from '../../../../tests/helpers/render';
 import { SettingsDialog } from './SettingsDialog';
+import { BarredSlotsPanel } from '../BarredSlotsPanel/BarredSlotsPanel';
 
 const TWO_SLOTS = settings({
   barredSlots: [
@@ -14,29 +15,29 @@ const TWO_SLOTS = settings({
   ],
 });
 
-// PRE:  none
-// POST: renders the open Settings dialog over an engine with TWO_SLOTS
-async function renderSettings() {
+// PRE:  showDialog says whether Settings is opened
+// POST: renders Settings and the separate barred region over TWO_SLOTS, preserving the requested modal state
+async function renderSettings(showDialog = true) {
   const store = storeFor((await makeEngine({ settings: TWO_SLOTS })).engine);
-  renderWithStore(<SettingsDialog />, store);
-  act(() => store.getState().actions.openDialog({ kind: 'settings' }));
+  renderWithStore(
+    <>
+      <SettingsDialog />
+      <BarredSlotsPanel />
+    </>,
+    store,
+  );
+  if (showDialog) act(() => store.getState().actions.openDialog({ kind: 'settings' }));
   return store;
 }
 
 describe('T47: Settings layout', () => {
-  it('T49 D-11: groups the settings into five headed sections, in order', async () => {
+  it('T53 D-09: keeps four Settings sections and edits barred slots in its separate region', async () => {
     await renderSettings();
 
-    const headings = screen
+    const headings = within(screen.getByRole('dialog', { name: 'Settings' }))
       .getAllByRole('heading', { level: 3 })
       .map((heading) => heading.textContent);
-    expect(headings).toEqual([
-      'Working time',
-      'Scheduling defaults',
-      'Barred slots',
-      'Categories',
-      'Data',
-    ]);
+    expect(headings).toEqual(['Working time', 'Scheduling defaults', 'Categories', 'Data']);
 
     const workingTime = screen.getByRole('region', { name: 'Working time' });
     expect(within(workingTime).getByRole('group', { name: 'Working days' })).toBeInTheDocument();
@@ -52,7 +53,7 @@ describe('T47: Settings layout', () => {
   });
 
   it('shows each barred slot as one compact row: label, from–to, day chips and a remove ×', async () => {
-    await renderSettings();
+    await renderSettings(false);
 
     const gym = screen.getByRole('group', { name: 'Barred slot 2' });
     expect(gym).toHaveClass('barred-row');
@@ -66,7 +67,7 @@ describe('T47: Settings layout', () => {
   });
 
   it('adds a new slot at the end and moves focus to its label', async () => {
-    await renderSettings();
+    await renderSettings(false);
 
     await userEvent.click(screen.getByRole('button', { name: 'Add barred slot' }));
 

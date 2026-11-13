@@ -3,7 +3,7 @@
 
 import type { FieldError, FieldErrors, Resolver } from 'react-hook-form';
 import { MINUTES_PER_DAY, MINUTES_PER_HOUR } from '@/shared/constants';
-import { settingsSchema, toFieldIssues } from '@/shared/schemas';
+import { settingsSchema, storedSettingsSchema, toFieldIssues } from '@/shared/schemas';
 import type { BarredSlot, Settings, UserCriterion, Weekday } from '@/shared/types';
 import { toClockTime } from '../format/time';
 import { wholeNumber } from './taskForm';
@@ -154,12 +154,16 @@ function timePairErrors<Field extends string>(
   return errors;
 }
 
-// PRE:  form holds the dialog's values (untrusted)
-// POST: returns RHF's resolver result: the values when settingsSchema accepts toSettings(form),
+// PRE:  form holds untrusted values; validateOverlaps says whether barred content is editable
+// POST: returns RHF's resolver result using current overlap rules or legacy-readable settings,
 //       else the first message per field, nested as RHF expects (barred-slot issues under
 //       barredSlots[row].field); unreadable times say "Enter a time."
-export const settingsResolver: Resolver<SettingsFormValues> = (form) => {
-  const parsed = settingsSchema.safeParse(toSettings(form));
+function resolveSettingsForm(
+  form: SettingsFormValues,
+  validateOverlaps: boolean,
+): ReturnType<Resolver<SettingsFormValues>> {
+  const schema = validateOverlaps ? settingsSchema : storedSettingsSchema;
+  const parsed = schema.safeParse(toSettings(form));
   if (parsed.success) {
     return { values: form, errors: {} };
   }
@@ -184,4 +188,14 @@ export const settingsResolver: Resolver<SettingsFormValues> = (form) => {
   const barredSlots = slots.map((row) => (Object.keys(row).length > 0 ? row : undefined));
   const errors: FieldErrors<SettingsFormValues> = hasSlotErrors ? { ...top, barredSlots } : top;
   return { values: {}, errors };
-};
+}
+
+// PRE:  form is untrusted barred-editor input
+// POST: rejects overlapping barred edits with the existing nested field error mapping
+export const settingsResolver: Resolver<SettingsFormValues> = (form) =>
+  resolveSettingsForm(form, true);
+
+// PRE:  form is untrusted Settings input; barred rows are not editable here
+// POST: validates working-time/default fields while retaining readable legacy barred rows
+export const settingsDefaultsResolver: Resolver<SettingsFormValues> = (form) =>
+  resolveSettingsForm(form, false);

@@ -65,12 +65,18 @@ export class MemoryRepository implements Repository {
     this.revision += 1;
   }
 
-  // PRE:  settings satisfies settingsSchema
-  // POST: when expectedRevision is the stored revision, a deep copy of settings is stored and the
-  //       revision grows by 1; otherwise rejects with ConcurrentModificationError, storing nothing
-  async saveSettings(settings: Settings, expectedRevision: number): Promise<void> {
+  // PRE:  settings and clearedEvents are structurally valid records
+  // POST: atomically stores deep copies of settings and passed event rows with one revision increment;
+  //       a stale revision rejects without changing anything
+  async saveSettings(
+    settings: Settings,
+    expectedRevision: number,
+    clearedEvents: readonly CalendarEvent[] = [],
+  ): Promise<void> {
     requireRevision(this.revision, expectedRevision);
-    this.settings = structuredClone(settings);
+    const copy = structuredClone({ settings, clearedEvents });
+    this.settings = copy.settings;
+    applyToMap(this.events, [], copy.clearedEvents);
     this.revision += 1;
   }
 

@@ -80,6 +80,7 @@ export function planReplan(
     range: request.range,
     bufferMin,
     notBefore,
+    useWorkingHours: state.settings.useWorkingHours,
     segmentsFor: segmentsFor(state, notBefore),
   });
   return ok({

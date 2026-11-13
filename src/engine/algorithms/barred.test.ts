@@ -15,7 +15,15 @@ describe('T37 barred-slot intersections', () => {
     expect(detectBarredOverlaps(events, [monday])).toEqual(
       minutes === 0
         ? []
-        : [{ eventId: 'A', label: 'Lunch', overlap: iv('Mon 13:00', `Mon ${end}`), minutes }],
+        : [
+            {
+              eventId: 'A',
+              slotId: 'Lunch',
+              label: 'Lunch',
+              overlap: iv('Mon 13:00', `Mon ${end}`),
+              minutes,
+            },
+          ],
     );
     expect({ events, frames: [monday] }).toEqual(before);
   });
@@ -29,9 +37,27 @@ describe('T37 barred-slot intersections', () => {
       ]),
     ];
     expect(detectBarredOverlaps([ev('Night', 'Sat 23:00', 'Sun 00:30')], frames)).toEqual([
-      { eventId: 'Night', label: 'Rest', overlap: iv('Sat 23:30', 'Sun 00:00'), minutes: 30 },
-      { eventId: 'Night', label: 'Rest', overlap: iv('Sun 00:00', 'Sun 00:30'), minutes: 30 },
-      { eventId: 'Night', label: 'Quiet', overlap: iv('Sun 00:15', 'Sun 00:30'), minutes: 15 },
+      {
+        eventId: 'Night',
+        slotId: 'Rest',
+        label: 'Rest',
+        overlap: iv('Sat 23:30', 'Sun 00:00'),
+        minutes: 30,
+      },
+      {
+        eventId: 'Night',
+        slotId: 'Rest',
+        label: 'Rest',
+        overlap: iv('Sun 00:00', 'Sun 00:30'),
+        minutes: 30,
+      },
+      {
+        eventId: 'Night',
+        slotId: 'Quiet',
+        label: 'Quiet',
+        overlap: iv('Sun 00:15', 'Sun 00:30'),
+        minutes: 15,
+      },
     ]);
     expect(detectBarredOverlaps([], frames)).toEqual([]);
     expect(

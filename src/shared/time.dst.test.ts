@@ -17,6 +17,14 @@ const HOUR = 60;
 const DST_END_DAY_MIN = 25 * HOUR;
 const everyDay: Settings = { ...DEFAULT_SETTINGS, workDays: [0, 1, 2, 3, 4, 5, 6] };
 
+it('T53: globally disabled working hours makes the fall-back load frame a whole 25-hour day', () => {
+  const start = atLocal('2026-11-01', '00:00');
+  const end = atLocal('2026-11-02', '00:00');
+  const frames = buildDayFrames({ start, end }, { ...DEFAULT_SETTINGS, useWorkingHours: false });
+  expect(frames[0]?.work).toEqual({ start, end });
+  expect(end - start).toBe(DST_END_DAY_MIN);
+});
+
 describe('time across the end of DST (T29)', () => {
   const dayStart = atLocal('2026-11-01', '00:00');
   const nextDayStart = atLocal('2026-11-02', '00:00');

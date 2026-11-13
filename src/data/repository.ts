@@ -27,7 +27,11 @@ export interface ChangeSet {
 export interface Repository {
   load(): Promise<StoredData>;
   apply(changes: ChangeSet, expectedRevision: number): Promise<void>; // MUST be atomic (all or nothing)
-  saveSettings(settings: Settings, expectedRevision: number): Promise<void>;
+  saveSettings(
+    settings: Settings,
+    expectedRevision: number,
+    clearedEvents?: readonly CalendarEvent[],
+  ): Promise<void>;
   replaceAll(
     data: { events: CalendarEvent[]; tasks: Task[]; settings: Settings; categories: Category[] },
     expectedRevision: number,

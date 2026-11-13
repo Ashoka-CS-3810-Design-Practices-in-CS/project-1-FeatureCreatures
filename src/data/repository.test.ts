@@ -93,6 +93,21 @@ describe.each(adapters)('%s (Repository contract)', (_name, openRepository) => {
     barredSlots: [{ id: 'l', label: 'Lunch', startMin: 780, endMin: 840, days: [1] }],
   };
 
+  it('T53: settings and automatically cleared event metadata share one revision-checked write', async () => {
+    const repository = await openRepository();
+    const kept = { ...lectureA, keptInBarred: ['l'] };
+    await repository.apply(changeSet({ putEvents: [kept, meetingB] }), 0);
+    await repository.saveSettings(lunch, 1, [{ ...kept, keptInBarred: [] }]);
+    const stored = await repository.load();
+    expect(stored.revision).toBe(2);
+    expect(stored.settings).toEqual(lunch);
+    expect(stored.events).toEqual(
+      expect.arrayContaining([{ ...kept, keptInBarred: [] }, meetingB]),
+    );
+    await expect(repository.saveSettings(DEFAULT_SETTINGS, 1, [kept])).rejects.toThrow();
+    expect(await repository.load()).toEqual(stored);
+  });
+
   it('starts empty, with no settings', async () => {
     const repository = await openRepository();
 
@@ -203,6 +218,16 @@ describe.each(adapters)('%s (Repository contract)', (_name, openRepository) => {
 describe('DexieRepository (IndexedDB specifics)', () => {
   // A row without its primary key makes bulkPut throw inside the transaction.
   const keyless = { ...event('x', 0, 1), id: undefined } as unknown as CalendarEvent;
+
+  it('T53: a failing automatic keep-clear rolls back settings and the claimed revision', async () => {
+    const repository = await openFreshDexie();
+    await repository.saveSettings(DEFAULT_SETTINGS, 0);
+    const before = await repository.load();
+    await expect(
+      repository.saveSettings({ ...DEFAULT_SETTINGS, bufferMin: 10 }, 1, [keyless]),
+    ).rejects.toThrow();
+    expect(await repository.load()).toEqual(before);
+  });
 
   it('apply is atomic: a failing put rolls back the deletes before it', async () => {
     const repository = await openFreshDexie();

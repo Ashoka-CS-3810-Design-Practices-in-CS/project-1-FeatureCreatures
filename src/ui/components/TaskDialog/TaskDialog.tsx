@@ -15,16 +15,18 @@ import { CategorySelect } from '../Categories/CategorySelect';
 import { defaultCategoryId } from '../../store/selectors';
 
 // PRE:  rendered under StoreProvider; existing is the task being edited (undefined when creating);
-//       reads view.date, categories and lastCategoryId; uses the task actions, openTaskPicker,
+//       reads view.date, categories, lastCategoryId and settings.useWorkingHours; uses the task actions, openTaskPicker,
 //       openDialog and closeDialog; + additional props from: Modal, ErrorText, PriorityRadioGroup, CategorySelect
 // POST: shows the task form (name, duration in hours + minutes, priority, categoryId, window,
-//       scheduling-hours radios, description); Save validates with taskResolver before calling the
+//       scheduling-hours radios when globally enabled, description); hidden preferences stay stored;
+//       Save validates with taskResolver before calling the
 //       engine; in edit mode it also offers Find time (unscheduled), Unschedule (scheduled) and
 //       Delete (after confirmation)
 function TaskForm({ existing }: { existing: Task | undefined }) {
   const viewDate = useAppStore((state) => state.view.date);
   const categoryId = useAppStore(defaultCategoryId);
   const actions = useAppStore((state) => state.actions);
+  const useWorkingHours = useAppStore((state) => state.snapshot.settings.useWorkingHours);
   const idPrefix = useId();
   const {
     register,
@@ -135,38 +137,40 @@ function TaskForm({ existing }: { existing: Task | undefined }) {
         />
         <ErrorText id={errorId('windowEnd')} error={errors.windowEnd} />
 
-        <Controller
-          control={control}
-          name="useWorkingHours"
-          render={({ field }) => (
-            <fieldset className="form-group">
-              <legend>Scheduling hours</legend>
-              <div className="choice-options">
-                <label>
-                  <input
-                    type="radio"
-                    name={field.name}
-                    ref={field.ref}
-                    checked={field.value}
-                    onBlur={field.onBlur}
-                    onChange={() => field.onChange(true)}
-                  />{' '}
-                  Working hours only
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    name={field.name}
-                    checked={!field.value}
-                    onBlur={field.onBlur}
-                    onChange={() => field.onChange(false)}
-                  />{' '}
-                  Any time
-                </label>
-              </div>
-            </fieldset>
-          )}
-        />
+        {useWorkingHours && (
+          <Controller
+            control={control}
+            name="useWorkingHours"
+            render={({ field }) => (
+              <fieldset className="form-group">
+                <legend>Scheduling hours</legend>
+                <div className="choice-options">
+                  <label>
+                    <input
+                      type="radio"
+                      name={field.name}
+                      ref={field.ref}
+                      checked={field.value}
+                      onBlur={field.onBlur}
+                      onChange={() => field.onChange(true)}
+                    />{' '}
+                    Working hours only
+                  </label>
+                  <label>
+                    <input
+                      type="radio"
+                      name={field.name}
+                      checked={!field.value}
+                      onBlur={field.onBlur}
+                      onChange={() => field.onChange(false)}
+                    />{' '}
+                    Any time
+                  </label>
+                </div>
+              </fieldset>
+            )}
+          />
+        )}
 
         <label htmlFor={fieldId('description')}>Description</label>
         <textarea

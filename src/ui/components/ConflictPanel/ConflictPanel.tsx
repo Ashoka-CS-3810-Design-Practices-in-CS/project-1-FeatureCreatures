@@ -4,7 +4,7 @@ import { useId, useState } from 'react';
 import { fmtDuration, fmtRange } from '../../format/time';
 import { useAppStore } from '../../store/appStore';
 import { eventIsVisible, upcomingOverlaps } from '../../store/selectors';
-import { BarredOverlapPanel } from './BarredOverlapPanel';
+import { BarredSlotsPanel } from '../BarredSlotsPanel/BarredSlotsPanel';
 
 // PRE:  conflicts is one time group's ordered list; past determines its name and actions;
 //       reads snapshot.events, eventPriorityFilter, hiddenCategoryIds; uses openAlternatives
@@ -56,7 +56,7 @@ function ConflictList({ conflicts, past }: { conflicts: readonly Conflict[]; pas
 }
 
 // PRE:  rendered under StoreProvider; reads snapshot.conflicts and currentMinute
-//       + additional props from: ConflictList, BarredOverlapPanel
+//       + additional props from: ConflictList, BarredSlotsPanel
 // POST: counts/lists upcoming conflicts independently of filters; Past starts collapsed and
 //       reveals read-only history, classified by overlap.end ≤ now (D-08)
 export function ConflictPanel() {
@@ -87,7 +87,7 @@ export function ConflictPanel() {
         {pastOpen &&
           (past.length === 0 ? <p>No past conflicts</p> : <ConflictList conflicts={past} past />)}
       </div>
-      <BarredOverlapPanel />
+      <BarredSlotsPanel />
     </section>
   );
 }
