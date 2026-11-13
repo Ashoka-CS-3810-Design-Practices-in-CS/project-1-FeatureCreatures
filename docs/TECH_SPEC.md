@@ -754,6 +754,10 @@ export interface Engine {
   updateTask(id: string, input: TaskInput): Promise<Result<MutationResult>>;
   deleteTask(id: string): Promise<Result<MutationResult>>;
   unscheduleTask(id: string): Promise<Result<MutationResult>>;
+  markTaskDone(id: string): Promise<Result<MutationResult>>;
+  reopenTask(id: string): Promise<Result<MutationResult>>;
+  previewDoneBefore(before: Minute): Result<DoneTasksPreview>;
+  applyDoneBefore(request: {before: Minute; baseVersion: number}): Promise<Result<MutationResult>>;
   orderForScheduling(taskIds: readonly string[]): string[];                 // BR-11; drops non-unscheduled/unknown
   findSlots(req: { taskId: string; criterion?: UserCriterion; bufferMin?: number }): Result<SlotSearchResult>;
   scheduleTask(req: { taskId: string; slot: Interval; baseVersion: number }): Promise<Result<MutationResult>>;
@@ -868,6 +872,10 @@ Every mutation pipeline follows the same skeleton: validate → look up → buil
   2. Build `event = {id: newId(), title: name, description, categoryId, priority, keptInBarred: [], start, end, flexible: true, flexWindow: task.window, taskId, createdAt, updatedAt}`.
   3. Update the task with `{status: 'scheduled', scheduledEventId: event.id}`.
   4. Put both in one `Change` with the label `Schedule "<name>"`.
+
+**Done task commands (WI-54, D-07).** `markTaskDone(id)` deletes any linked event and sets `status: done, scheduledEventId: null, doneAt: now, updatedAt: now` in one revision-checked Change (`Mark done "<name>"`), one undo step. Already done is a no-op. `reopenTask(id)` changes only a done task to unscheduled, clears doneAt, creates no event, and is one undo step; open tasks are no-ops. Missing ids give NotFound. `unscheduleTask` leaves done tasks unchanged. Search/explain/schedule reject done tasks with InvalidInput at status: "Reopen this task before finding time." Queue ordering excludes them.
+
+**Bulk completion.** Derived `DoneTasksPreview = {readonly before: Minute; readonly baseVersion: number; readonly tasks: readonly Task[]}` is never stored/exported. `doneBeforeSchema` validates supported integer cutoff Minutes; `doneBeforeApplySchema` also requires a nonnegative integer baseVersion. `previewDoneBefore(before)` returns detached eligible rows in stored task order, without writes: scheduled event.end ≤ before, unscheduled window.end ≤ before, excluding done. `applyDoneBefore({before, baseVersion})` validates and checks the current version inside the mutation queue (ER7), derives membership again, and atomically completes all with the same apply-time now (`Mark N tasks done`). Empty sets are no-ops. Repository failures/ER8 preserve every row and history; undo restores tasks and linked events together.
 
 #### 7.4.4 Replan (`pipelines/replan.ts`)
 
@@ -1996,3 +2004,4 @@ Production URL: https://…vercel.app
 | 2026-11-13 | v1.46 (WI-53 D-10 UI checkpoint): Settings switch/useWatch disables a retained fieldset; TaskForm and alternatives hide their hours choices while off, task Details uses effective any-time wording, picker defaults to any time, and FullCalendar businessHours=false removes shading. Three RTL regressions and a browser persistence flow fail first. |
 | 2026-11-13 | v1.47 (WI-53 D-09 engine checkpoint): BarredOverlap/DayFrame bars carry slotId; shared clash/day formatting and settings-change validation preserve legacy data but reject edited overlaps. Engine.setBarredKept validates/idempotently records metadata, commit clears on time changes, Replan skips kept barred reasons, and settings sanitizes affected history. Repository.saveSettings gains optional cleared event rows in one revision-checked transaction; Memory/Dexie/failing adapter updated. |
 | 2026-11-13 | v1.48 (WI-53 D-09/D-10): extracted shared form controls, region editor and legacy-readable Settings resolver, unkept warning/tag/toast filtering and store action, collapsed Kept groups, grouped background stackedLabels, fixed 12-hour field width and tested non-working pattern token. T53 browser flows cover persistence and legacy label geometry. |
+| 2026-11-13 | v1.49 (WI-54 D-07 engine checkpoint): frozen DoneTasksPreview, cutoff/apply schemas and four completion commands; scheduled completion/bulk use one atomic revision-checked Change; Reopen, idempotence and done-search guards. Twelve T54 cases first red then green. |

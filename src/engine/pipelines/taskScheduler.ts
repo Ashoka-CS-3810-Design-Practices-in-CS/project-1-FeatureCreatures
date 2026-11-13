@@ -9,9 +9,12 @@ import {
   parseCategorisedInput,
   searchOptionsSchema,
   taskInputSchema,
+  doneBeforeSchema,
+  doneBeforeApplySchema,
 } from '@/shared/schemas';
 import type {
   CalendarEvent,
+  DoneTasksPreview,
   Interval,
   Minute,
   SlotSearchResult,
@@ -56,6 +59,11 @@ export interface ScheduleRequest {
 const ALREADY_SCHEDULED: EngineError = {
   code: 'InvalidInput',
   issues: [{ path: 'status', message: 'Task is already scheduled.' }],
+};
+
+const TASK_DONE: EngineError = {
+  code: 'InvalidInput',
+  issues: [{ path: 'status', message: 'Reopen this task before finding time.' }],
 };
 
 // PRE:  state is an EngineState; id is any string
@@ -194,14 +202,14 @@ export async function deleteTask(context: PipelineContext, id: string): Pipeline
 // PRE:  id is any string
 // POST: for a scheduled task, persists deleting its event and setting it unscheduled in one change
 //       labelled 'Unschedule "<name>"'; for an unscheduled task, returns ok with the state
-//       unchanged, no history entry and the label ''; err NotFound otherwise
+//       unchanged, no history entry and the label ''; done tasks also stay unchanged; err NotFound otherwise
 export async function unscheduleTask(context: PipelineContext, id: string): PipelineResult {
   const found = findTask(context.state, id);
   if (!found.ok) {
     return found;
   }
   const task = found.value;
-  if (task.status === 'unscheduled') {
+  if (task.status !== 'scheduled') {
     return ok(unchangedOutcome(context.state));
   }
   return commitPlain(context, {
@@ -215,6 +223,104 @@ export async function unscheduleTask(context: PipelineContext, id: string): Pipe
       },
     ],
   });
+}
+
+// PRE: tasks are distinct open tasks from context.state
+// POST: atomically deletes their linked events and completes them at context.now in one undo step;
+//       empty tasks is a no-op; repository failure preserves state/storage/history
+async function completeTasks(
+  context: PipelineContext,
+  tasks: readonly Task[],
+  label: string,
+): PipelineResult {
+  if (tasks.length === 0) return ok(unchangedOutcome(context.state));
+  return commitPlain(context, {
+    label,
+    events: tasks.flatMap((task) => eventDeletion(context, task)),
+    tasks: tasks.map((task) => ({
+      id: task.id,
+      before: task,
+      after: {
+        ...task,
+        status: 'done',
+        doneAt: context.now,
+        scheduledEventId: null,
+        updatedAt: context.now,
+      },
+    })),
+  });
+}
+
+// PRE: id is any string
+// POST: completes the task atomically with deleting its event; already done is a no-op; err NotFound
+export async function markTaskDone(context: PipelineContext, id: string): PipelineResult {
+  const found = findTask(context.state, id);
+  if (!found.ok) return found;
+  const task = found.value;
+  return completeTasks(context, task.status === 'done' ? [] : [task], `Mark done "${task.name}"`);
+}
+
+// PRE: id is any string
+// POST: reopens a done task to unscheduled, clears doneAt and creates no event in one undo step;
+//       open tasks are unchanged; err NotFound
+export async function reopenTask(context: PipelineContext, id: string): PipelineResult {
+  const found = findTask(context.state, id);
+  if (!found.ok) return found;
+  const task = found.value;
+  if (task.status !== 'done') return ok(unchangedOutcome(context.state));
+  return commitPlain(context, {
+    label: `Reopen "${task.name}"`,
+    events: [],
+    tasks: [
+      {
+        id,
+        before: task,
+        after: { ...task, status: 'unscheduled', doneAt: null, updatedAt: context.now },
+      },
+    ],
+  });
+}
+
+// PRE: state has valid task links; before is a validated Minute
+// POST: returns open tasks with event end (scheduled) or window end (unscheduled) <= before,
+//       in stored task order, with no writes
+function tasksDoneBefore(state: EngineState, before: Minute): Task[] {
+  const eventsById = new Map(state.events.map((event) => [event.id, event]));
+  return state.tasks.filter((task) => {
+    if (task.status === 'done') return false;
+    const end =
+      task.status === 'scheduled'
+        ? (eventsById.get(task.scheduledEventId as string) as CalendarEvent).end
+        : task.window.end;
+    return end <= before;
+  });
+}
+
+// PRE: before comes from outside
+// POST: validates cutoff and returns a detached, read-only preview/version without writing
+export function previewDoneBefore(state: EngineState, before: Minute): Result<DoneTasksPreview> {
+  const parsed = parseInput(doneBeforeSchema, { before });
+  if (!parsed.ok) return parsed;
+  return ok({
+    before: parsed.value.before,
+    baseVersion: state.version,
+    tasks: structuredClone(tasksDoneBefore(state, parsed.value.before)),
+  });
+}
+
+// PRE: request comes from outside
+// POST: validates cutoff/version and completes the eligible set in one atomic undo step;
+//       stale previews return StaleResult without writing; task ids are derived, never trusted from UI
+export async function applyDoneBefore(
+  context: PipelineContext,
+  request: { before: Minute; baseVersion: number },
+): PipelineResult {
+  const parsed = parseInput(doneBeforeApplySchema, request);
+  if (!parsed.ok) return parsed;
+  const current = requireCurrentVersion(context.state, parsed.value.baseVersion);
+  if (!current.ok) return current;
+  const tasks = tasksDoneBefore(context.state, parsed.value.before);
+  return completeTasks(context, tasks, `Mark ${tasks.length} tasks done`);
 }
 
 // PRE:  taskIds is any list of strings
@@ -248,6 +354,7 @@ function taskSearch(
   if (task.status === 'scheduled') {
     return err(ALREADY_SCHEDULED);
   }
+  if (task.status === 'done') return err(TASK_DONE);
   return ok({
     durationMin: task.durationMin,
     priority: task.priority,
@@ -308,6 +415,7 @@ export async function scheduleTask(
   if (task.status === 'scheduled') {
     return err(ALREADY_SCHEDULED);
   }
+  if (task.status === 'done') return err(TASK_DONE);
   const fits = requireValidSlot(request.slot, task.durationMin);
   if (!fits.ok) {
     return fits;

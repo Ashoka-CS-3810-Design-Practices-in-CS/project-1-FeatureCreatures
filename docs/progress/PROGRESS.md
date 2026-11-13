@@ -287,6 +287,7 @@ Binding design: `docs/extras/AUDIT_2.md` (D-01–D-19, C-01–C-08). Work in ord
   - Done when: Atomic mark-done and unschedule; Reopen; bulk preview and apply; undo.
   - 2026-11-13 · Codex · branch `feat/wi-54-done-tasks` · done: WI-53 full main gate verified and WI-54 claimed · next: atomic completion/reopen and stale-safe bulk tests first, engine/UI/docs, browser/screenshots and full branch/main gates · note: D-07 is binding; default Open filter and Tasks menu follow D-14, broader layout stays WI-56.
   - 2026-11-13 · Codex · branch `feat/wi-54-done-tasks` · done: twelve T54 engine cases written and confirmed red for missing completion commands · next: validated atomic mark/reopen and read-only versioned bulk preview/apply, docs, then UI tests · note: temporary DoneCommands cast keeps the test-first contract explicit until Engine gains it.
+  - 2026-11-13 · Codex · branch `feat/wi-54-done-tasks` · done: twelve T54 cases green plus all 29 existing scheduler tests; implemented atomic completion/reopen and detached validated versioned bulk preview/apply, done search guard and no-op safety, frozen contracts/specs updated · next: UI tests first, row/dialog completion and bulk menu/dialog; full gates and captures · note: temporary command interface/cast removed now that Engine implements it.
 - [ ] **WI-55** Replan strategies and dialog — owner S + Dv — depends on 54
   - Done when: Strategy keys unit-tested; properties for each strategy; dialog RTL tests.
 - [ ] **WI-56** Layout — owner S + Dv — depends on 55

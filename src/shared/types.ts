@@ -76,6 +76,12 @@ export type TaskInput = Pick<
 >;
 
 // ---- derived (never stored) ----
+export interface DoneTasksPreview {
+  readonly before: Minute;
+  readonly baseVersion: number;
+  readonly tasks: readonly Task[];
+}
+
 export interface Conflict {
   readonly key: string; // `${smallerId}|${largerId}`
   readonly aId: string; // aId < bId (string compare)

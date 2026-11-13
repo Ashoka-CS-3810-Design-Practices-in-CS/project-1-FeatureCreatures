@@ -20,6 +20,7 @@ import {
 import { fromMinute } from '@/shared/time';
 import type {
   CalendarEvent,
+  DoneTasksPreview,
   Category,
   CategoryInput,
   EventInput,
@@ -53,6 +54,10 @@ import {
   scheduleTask,
   unscheduleTask,
   updateTask,
+  markTaskDone,
+  reopenTask,
+  previewDoneBefore,
+  applyDoneBefore,
 } from './pipelines/taskScheduler';
 import { notBeforeFor } from './search';
 import { createCategory, updateCategory, deleteCategory } from './pipelines/categories';
@@ -122,6 +127,13 @@ export interface Engine {
   updateTask(id: string, input: TaskInput): Promise<Result<MutationResult>>;
   deleteTask(id: string): Promise<Result<MutationResult>>;
   unscheduleTask(id: string): Promise<Result<MutationResult>>;
+  markTaskDone(id: string): Promise<Result<MutationResult>>;
+  reopenTask(id: string): Promise<Result<MutationResult>>;
+  previewDoneBefore(before: Minute): Result<DoneTasksPreview>;
+  applyDoneBefore(request: {
+    before: Minute;
+    baseVersion: number;
+  }): Promise<Result<MutationResult>>;
   orderForScheduling(taskIds: readonly string[]): string[]; // BR-11; drops non-unscheduled/unknown
   findSlots(req: {
     taskId: string;
@@ -416,6 +428,33 @@ class CalendarEngine implements Engine {
   // POST: as taskScheduler.unscheduleTask, queued
   unscheduleTask(id: string): Promise<Result<MutationResult>> {
     return this.mutate((context) => unscheduleTask(context, id));
+  }
+
+  // PRE: id comes from outside
+  // POST: queued atomic task completion and linked-event deletion, or typed error
+  markTaskDone(id: string): Promise<Result<MutationResult>> {
+    return this.mutate((context) => markTaskDone(context, id));
+  }
+
+  // PRE: id comes from outside
+  // POST: queued reopening of a done task without restoring an event, or typed error
+  reopenTask(id: string): Promise<Result<MutationResult>> {
+    return this.mutate((context) => reopenTask(context, id));
+  }
+
+  // PRE: before comes from outside
+  // POST: validated, detached eligible-task preview at current version; no writes
+  previewDoneBefore(before: Minute): Result<DoneTasksPreview> {
+    return previewDoneBefore(this.state, before);
+  }
+
+  // PRE: request comes from outside
+  // POST: queued, validated version-guarded completion of eligible tasks in one undo step
+  applyDoneBefore(request: {
+    before: Minute;
+    baseVersion: number;
+  }): Promise<Result<MutationResult>> {
+    return this.mutate((context) => applyDoneBefore(context, request));
   }
 
   // PRE:  none

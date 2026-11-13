@@ -121,7 +121,7 @@ These optional features from the project description are also covered by the cor
 | **Flex window** | An Interval within which a flexible event may be placed. |
 | **Task** | A to-do with name, duration, priority and an **allowable window**. It has no time until scheduled, and is shown only in the task panel. |
 | **Category** | A stored name and colour referenced by an event/task's required `categoryId`. Five defaults are seeded. |
-| **Done task** | A completed task with `doneAt`, no linked event and no occupied calendar time. Commands and UI arrive in WI-54. |
+| **Done task** | A completed task with `doneAt`, no linked event and no occupied calendar time. Mark done frees its scheduled time; Reopen returns it to unscheduled (BR-18). |
 | **Scheduled task** | A task linked to exactly one event (created when the user applies a slot). The event is flexible and its flex window equals the task window. |
 | **Local day** | A calendar day in the browser's time zone, from local midnight to the next local midnight. It can be 23 or 25 hours long around daylight-saving changes. |
 | **Working hours / working days** | From settings, e.g. Mon–Fri 09:00–18:00 local time. |
@@ -531,6 +531,8 @@ Every search result also carries:
 
 ---
 
+**BR-18 Done tasks (D-07).** Mark done deletes a scheduled task's linked event and sets status done with doneAt equal to completion time. Unscheduled tasks have no event to remove. This is one atomic change and one undo step. Repeated completion is a no-op. Reopen clears doneAt, sets unscheduled and creates no event, one undo step. Done tasks must be reopened before finding or scheduling time. Done rows have a ✓ Done tag, struck title, muted text and Reopen/Edit/Delete actions; the default Open filter excludes done. The Tasks menu offers Mark done before…: choose date/time T, preview and count scheduled tasks with event.end ≤ T and unscheduled tasks with window.end ≤ T, excluding done; Apply completes that set in one atomic change/undo step. A changed snapshot requires a fresh preview. Preview never writes.
+
 **BR-16 Categories (D-11).** Every event/task has one existing category id. Settings → Categories supports create, rename, recolour and delete, one atomic undo step each. Name is trimmed, 1–40 characters and unique ignoring case. Renaming/recolouring updates all referring tags immediately without rewriting items. Deleting is blocked while any event or task refers to the category, including done tasks; the last unused category may be deleted. Both item dialogs end the category select with New category… and a small inline name/colour editor, preserving the item draft. With no categories they require creating one before saving. New items use the last category chosen in this session if it still exists, otherwise the first listed category. No category controls whether an event is flexible.
 
 Twelve curated colours include the five seeds. Free colours are normalised six-digit hex, at least `MIN_CATEGORY_COLOUR_DISTANCE = 0.04` apart in OKLab from other categories and reserved fills, conflict/priority colours. A dot has at least 3:1 contrast on its tag in both themes; its name uses normal text at least 4.5:1. Deleting/recolouring frees a swatch. Imports and stored-data validation enforce the same colour safety. Calendar blocks, accessible names/tooltips and task rows resolve the category by id. Multi-category and category-less items remain out of scope.
@@ -751,3 +753,5 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 | 2026-11-13 | v1.22 (WI-53 D-10 UI checkpoint): FR11/UX expose Use working hours, disabled retained preferences, hidden effective task/search-hour choices and shading removal. D-09 and stronger enabled-hours shading remain in progress. |
 | 2026-11-13 | v1.23 (WI-53 D-09 engine checkpoint): BR-15 defines identified slot warnings, undoable Keep here, automatic event/settings/history clearing, shared-day overlap rejection and legacy preservation. UI region/editor/grouping and remaining shading are still in progress. |
 | 2026-11-13 | v1.24 (WI-53 D-09/D-10): barred editing moves into its region, Settings retains four sections, Kept groups suppress current tags/warnings and restore through Stop keeping/history; legacy banners/stacked labels and contrasted enabled non-working dots are specified. |
+
+| 2026-11-13 | v1.27 (WI-54 D-07 engine checkpoint): BR-18 completion/unschedule atomicity, Reopen, inclusive bulk cutoff/preview, stale guard and default-hidden done tasks. |

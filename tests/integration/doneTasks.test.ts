@@ -1,24 +1,8 @@
-import type { Engine } from '@/engine';
 import type { Result } from '@/shared/result';
-import type { Minute, MutationResult, Task } from '@/shared/types';
 import { flexEv, iv, task } from '../helpers/builders';
 import { capture, makeEngine } from '../helpers/engine';
 import { FailingRepository } from '../helpers/failingRepository';
 import { t } from '../helpers/time';
-
-interface DoneCommands {
-  markTaskDone(id: string): Promise<Result<MutationResult>>;
-  reopenTask(id: string): Promise<Result<MutationResult>>;
-  previewDoneBefore(before: Minute): Result<{
-    before: Minute;
-    baseVersion: number;
-    tasks: readonly Task[];
-  }>;
-  applyDoneBefore(request: {
-    before: Minute;
-    baseVersion: number;
-  }): Promise<Result<MutationResult>>;
-}
 
 const WINDOW: [string, string] = ['Mon 09:00', 'Fri 18:00'];
 
@@ -27,12 +11,6 @@ const WINDOW: [string, string] = ['Mon 09:00', 'Fri 18:00'];
 function expectOk<Value>(result: Result<Value>): Value {
   if (!result.ok) throw new Error(JSON.stringify(result.error));
   return result.value;
-}
-
-// PRE: engine is initialised
-// POST: exposes the test-first command contract until Engine implements it
-function completion(engine: Engine): Engine & DoneCommands {
-  return engine as Engine & DoneCommands;
 }
 
 // PRE: none
@@ -64,8 +42,7 @@ function seed() {
 
 describe('T54: done task lifecycle (D-07)', () => {
   it('atomically frees scheduled time, timestamps completion, persists, and undoes/redoes once', async () => {
-    const { engine: base, repo } = await makeEngine(seed());
-    const engine = completion(base);
+    const { engine, repo } = await makeEngine(seed());
     const before = engine.snapshot();
     const result = expectOk(await engine.markTaskDone('scheduled-boundary'));
     expect(result.snapshot.version).toBe(before.version + 1);
@@ -89,8 +66,7 @@ describe('T54: done task lifecycle (D-07)', () => {
   });
 
   it('marks an unscheduled task done without time, and repeated completion is a no-op', async () => {
-    const { engine: base, repo } = await makeEngine(seed());
-    const engine = completion(base);
+    const { engine, repo } = await makeEngine(seed());
     expectOk(await engine.markTaskDone('window-boundary'));
     const before = await capture(engine, repo);
     expectOk(await engine.markTaskDone('window-boundary'));
@@ -99,8 +75,7 @@ describe('T54: done task lifecycle (D-07)', () => {
   });
 
   it('reopens to unscheduled without restoring an event, can freshly schedule, and undoes both steps', async () => {
-    const { engine: base } = await makeEngine(seed());
-    const engine = completion(base);
+    const { engine } = await makeEngine(seed());
     expectOk(await engine.markTaskDone('scheduled-boundary'));
     expectOk(await engine.reopenTask('scheduled-boundary'));
     expect(engine.snapshot().tasks[0]).toMatchObject({
@@ -129,8 +104,7 @@ describe('T54: done task lifecycle (D-07)', () => {
   });
 
   it('requires Reopen before searching/scheduling done tasks, and unschedule/reopen cannot corrupt other statuses', async () => {
-    const { engine: base, repo } = await makeEngine(seed());
-    const engine = completion(base);
+    const { engine, repo } = await makeEngine(seed());
     const before = await capture(engine, repo);
     expect(engine.findSlots({ taskId: 'already-done' })).toMatchObject({
       ok: false,
@@ -157,8 +131,7 @@ describe('T54: done task lifecycle (D-07)', () => {
   });
 
   it('previews inclusive event/window end boundaries in stored order without writing', async () => {
-    const { engine: base, repo } = await makeEngine(seed());
-    const engine = completion(base);
+    const { engine, repo } = await makeEngine(seed());
     const before = await capture(engine, repo);
     const preview = expectOk(engine.previewDoneBefore(t('Mon 11:00')));
     expect(preview).toMatchObject({
@@ -170,8 +143,7 @@ describe('T54: done task lifecycle (D-07)', () => {
   });
 
   it('applies all previewed tasks at one completion time in one atomic undo step', async () => {
-    const { engine: base, repo, setNow } = await makeEngine(seed());
-    const engine = completion(base);
+    const { engine, repo, setNow } = await makeEngine(seed());
     const before = engine.snapshot();
     const preview = expectOk(engine.previewDoneBefore(t('Mon 11:00')));
     setNow('Mon 08:05');
@@ -193,8 +165,7 @@ describe('T54: done task lifecycle (D-07)', () => {
   });
 
   it('rejects stale previews without writes, even if the eligible set is unchanged', async () => {
-    const { engine: base, repo } = await makeEngine(seed());
-    const engine = completion(base);
+    const { engine, repo } = await makeEngine(seed());
     const preview = expectOk(engine.previewDoneBefore(t('Mon 11:00')));
     expectOk(await engine.markTaskDone('window-later'));
     const before = await capture(engine, repo);
@@ -206,8 +177,7 @@ describe('T54: done task lifecycle (D-07)', () => {
   });
 
   it('empty bulk apply and missing task ids preserve storage/history', async () => {
-    const { engine: base, repo } = await makeEngine(seed());
-    const engine = completion(base);
+    const { engine, repo } = await makeEngine(seed());
     const before = await capture(engine, repo);
     expectOk(await engine.applyDoneBefore(expectOk(engine.previewDoneBefore(t('Mon 00:00')))));
     expect(await engine.markTaskDone('missing')).toEqual({
@@ -222,8 +192,7 @@ describe('T54: done task lifecycle (D-07)', () => {
   });
 
   it('validates cutoff and version before changing state', async () => {
-    const { engine: base, repo } = await makeEngine(seed());
-    const engine = completion(base);
+    const { engine, repo } = await makeEngine(seed());
     const before = await capture(engine, repo);
     expect(engine.previewDoneBefore(Number.NaN)).toMatchObject({
       ok: false,
@@ -243,8 +212,7 @@ describe('T54: done task lifecycle (D-07)', () => {
     'rolls back a failed %s apply without losing event/task/history state',
     async (operation) => {
       const repo = new FailingRepository();
-      const { engine: base } = await makeEngine({ ...seed(), repo });
-      const engine = completion(base);
+      const { engine } = await makeEngine({ ...seed(), repo });
       const before = await capture(engine, repo);
       repo.failNextApply();
       const result =
