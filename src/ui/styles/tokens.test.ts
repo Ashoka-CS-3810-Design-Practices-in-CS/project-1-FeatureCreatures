@@ -4,7 +4,13 @@
 
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { CATEGORY_PALETTE, CATEGORY_TAG_BACKGROUNDS } from '@/shared/constants';
+import {
+  CATEGORY_PALETTE,
+  CATEGORY_TAG_BACKGROUNDS,
+  MIN_CATEGORY_COLOUR_DISTANCE,
+  RESERVED_COLOURS,
+} from '@/shared/constants';
+import { colourDistance } from '@/shared/colours';
 
 const TOKENS_CSS = readFileSync(fileURLToPath(new URL('./tokens.css', import.meta.url)), 'utf8');
 const MIN_TEXT_CONTRAST = 4.5; // WCAG AA, body text
@@ -97,6 +103,53 @@ const light = tokensOf(':root');
 const dark = tokensOf(":root[data-theme='dark']");
 
 describe('tokens.css', () => {
+  it('T57: neutral event fills contrast with every grid background and keep event/tag text readable', () => {
+    [light, dark].forEach((tokens, index) => {
+      const fill = tokens.get('event-fill') ?? '';
+      expect(fill).toBe(['#363631', '#ebe6d9'][index]);
+      ['bg', 'surface', 'past-bg', 'nonwork'].forEach((background) => {
+        expect(contrast(fill, tokens.get(background) ?? '')).toBeGreaterThanOrEqual(3);
+      });
+      ['event-text', 'event-muted'].forEach((foreground) => {
+        expect(contrast(tokens.get(foreground) ?? '', fill)).toBeGreaterThanOrEqual(
+          MIN_TEXT_CONTRAST,
+        );
+      });
+      ['tag-text', 'tag-muted'].forEach((foreground) => {
+        expect(
+          contrast(tokens.get(foreground) ?? '', tokens.get('tag-bg') ?? ''),
+        ).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+      });
+      expect(tokens.get('accent')).toBe(fill);
+      expect(tokens.get('focus')).toBe(fill);
+      expect(tokens.get('accent-neutral')).toBe(fill);
+      expect(tokens.get('tag-bg')).toBe(CATEGORY_TAG_BACKGROUNDS[index]);
+    });
+  });
+
+  it('T57: all seven curated accents pass text/focus contrast and exclude reserved colours in both themes', () => {
+    [light, dark].forEach((tokens) => {
+      ['fern', 'teal', 'cyan', 'indigo', 'violet', 'rose', 'olive'].forEach((accent) => {
+        const colour = tokens.get(`accent-${accent}`) ?? '';
+        expect(colour).toMatch(HEX_COLOUR);
+        expect(contrast(tokens.get('on-accent') ?? '', colour)).toBeGreaterThanOrEqual(
+          MIN_TEXT_CONTRAST,
+        );
+        ['bg', 'surface', 'past-bg'].forEach((background) => {
+          expect(contrast(colour, tokens.get(background) ?? '')).toBeGreaterThanOrEqual(
+            MIN_TEXT_CONTRAST,
+          );
+        });
+        RESERVED_COLOURS.forEach((reserved) => {
+          expect(
+            colourDistance(colour, reserved),
+            `${accent} / ${reserved}`,
+          ).toBeGreaterThanOrEqual(MIN_CATEGORY_COLOUR_DISTANCE);
+        });
+      });
+    });
+  });
+
   it('T53: non-working time has a distinct pattern reaching 3:1 on working, past and non-working backgrounds', () => {
     [light, dark].forEach((tokens) => {
       ['bg', 'past-bg', 'nonwork'].forEach((background) => {
