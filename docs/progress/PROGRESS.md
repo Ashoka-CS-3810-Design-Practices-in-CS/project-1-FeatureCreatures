@@ -6,9 +6,9 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-54 complete on `feat/wi-54-done-tasks`; merge/main gate next, then WI-55 Replan strategies and dialog.
-- **Last session:** 2026-11-13 · Codex · WI-54 final branch gate green: 804 + 1 existing skipped, overall 98.52/94.19/98.13/98.76, algorithms 99.71/96.50/100/99.69, DST 9, six properties × 10,000, typecheck/lint/build and 114/114 browsers (38 × 3, zero retries). All 88 capture scenarios verified across runs; final twelve done/bulk views reviewed at 1440/1280/1024 in both themes, 144 PNGs total. Next: merge, main gate, WI-55.
-- **Gate status:** 2026-11-13 on `main` at `2b7cce1`: full gate green, 785 + 1 existing skipped, overall 98.67/94.32/98.14/98.87, algorithms 99.71/96.50/100/99.69, DST 9, six properties × 10,000, build, 108/108 browsers, zero retries.
+- **Active WI:** WI-55 Replan strategies and dialog, claimed; branch `feat/wi-55-replan-strategies`.
+- **Last session:** 2026-11-13 · Codex · WI-54 merged as `d3bf189`; full main gate green with 804 + 1 skipped and 114/114 browsers. WI-55 next: test-first strategy ranking and safety, then validated pipeline/selector and compact Replan dialog, docs, screenshots and full gates.
+- **Gate status:** 2026-11-13 on `main` at `d3bf189`: full gate green, 804 + 1 existing skipped, overall 98.52/94.19/98.13/98.76, algorithms 99.71/96.50/100/99.69, DST 9, six properties × 10,000, build, 114/114 browsers, zero retries.
 
 ## Work items
 
@@ -293,8 +293,9 @@ Binding design: `docs/extras/AUDIT_2.md` (D-01–D-19, C-01–C-08). Work in ord
   - 2026-11-13 · Codex · branch `feat/wi-54-done-tasks` · done: final unit gate 804 + 1 skipped, coverage 98.52/94.19/98.13/98.76; targeted browsers 6/6 green after using the existing Show combobox accessible-role selector · next: full 114-run browser gate and all 88 capture scenarios running, visual review, finish/merge/main gate · note: first browser/capture attempts timed out only on the new getByLabel Show locator; all completion/undo/reload steps up to that lookup passed. Corrected test locator, assertions/timeouts unchanged. Capture output directories are separated from browser traces.
   - 2026-11-13 · Codex · branch `feat/wi-54-done-tasks` · done: complete browser gate 114/114 green, zero retries; reviewed bulk preview in both themes across widths, fixed inherited separator inside Done tag and made done-row captures tall/reset side-panel scroll so controls remain visible · next: finish all 88 captures, recapture six new scenes after the visual correction, complete current final-CSS browser gate, review/commit captures and merge/main gate · note: no engine behavior or assertion changed; new captures and README links cover done rows and bulk preview.
   - 2026-11-13 · Codex · branch `feat/wi-54-done-tasks` · done: D-07 complete; final branch gate green with 804 + 1 skipped, overall 98.52/94.19/98.13/98.76, algorithms 99.71/96.50/100/99.69, DST 9, six × 10,000 properties, build and 114/114 browsers (zero retries). All 88 capture scenarios verified: 87 first pass, one startup rerun plus six final recaptures green; twelve done/bulk captures reviewed both themes/three widths, 144 PNGs total · next: merge retaining branch, full main gate, WI-55 · note: the one capture trace showed GET / → 404 while a concurrent verification build replaced dist; no app defect or weakened checks. Keep rebuilds sequential with browser/capture navigation. Tests +165 vs baseline, every coverage difference <0.5 points; no remaining WI-54 work.
-- [ ] **WI-55** Replan strategies and dialog — owner S + Dv — depends on 54
+- [~] **WI-55** Replan strategies and dialog — owner S + Dv — depends on 54
   - Done when: Strategy keys unit-tested; properties for each strategy; dialog RTL tests.
+  - 2026-11-13 · Codex · branch `feat/wi-55-replan-strategies` · done: WI-54 main gate verified, WI-55 claimed and D-15/engine/dialog reconstructed · next: strategy-key/tie-break and safety tests before implementation; extend validated requests/results while retaining existing plan ids and defaults, then UI/docs/full gates · note: category minutes use the existing day-load definition (sum per-event minutes inside each effective working day); five-region layout stays WI-56.
 - [ ] **WI-56** Layout — owner S + Dv — depends on 55
   - Done when: Five regions at 1440, 1280 and 1024 (drawers) in both themes; no duplicate controls; e2e updated.
 - [ ] **WI-57** Visual system — owner S + Dv — depends on 56
