@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openCalendar } from './helpers';
+import { openCalendar, openNewTask } from './helpers';
 
 const WIDTHS = [1440, 1024, 900];
 const VIEWPORT_HEIGHT = 900;
@@ -58,7 +58,7 @@ for (const theme of THEMES) {
       await page.keyboard.press('ArrowRight');
       await expect(dialog.getByRole('radio', { name: '[L] Low' })).toBeChecked();
       await page.keyboard.press('Escape');
-      await page.getByRole('button', { name: '+ Task', exact: true }).click();
+      await openNewTask(page);
       const task = page.getByRole('dialog', { name: 'New task' });
       await expect(task.getByRole('radio', { name: 'Working hours only' })).toBeChecked();
       await task.getByRole('radio', { name: 'Working hours only' }).focus();

@@ -551,16 +551,16 @@ Twelve curated colours include the five seeds. Free colours are normalised six-d
 ### 7.1 Screens and views
 
 1. **Main screen** (Figure 1):
-   - A toolbar on top.
+   - A slim app bar with utility actions; calendar navigation and controls stay in its own region.
    - The calendar in the centre, with Day, Week (the default), Month and List views.
-   - On the right, the task panel above the conflict panel.
-   - Below 1024 px, the right column collapses into a drawer opened from the toolbar.
+   - Tasks on the left; sibling Conflicts, Replan and Barred slots on the right. Each column scrolls independently.
+   - Below 1280 px, Tasks and the right column become separate drawers opened by counted app-bar buttons.
 2. **Event dialog** (create and edit): title, category, priority, start, end, Fixed/Flexible scheduling radios, flex window (shown when flexible), description. Priority uses a fieldset with a legend and native High / Medium / Low radios, each with its [H]/[M]/[L] tag and priority colour; arrow keys change the selected option. The flex window is its own full-width group below End, without overlap or clipping at desktop and drawer widths in either theme. It has Save and Cancel buttons, plus Delete when editing.
 3. **Task dialog** (create and edit): name, duration (h and min), the same priority radio group, category, window from/to, Scheduling hours radios ("Working hours only", the default, and "Any time"), description. These radios map to the task preference true / false and are hidden while global working hours are off, without overwriting that preference; barred slots apply either way. It has Save and Cancel buttons, plus Delete, Unschedule and Find time when editing.
 4. **Slot picker:**
    - **Task mode:** the header shows the task name, duration, priority and "Task i of N", then Rank by. Named top picks precede all other options as time chips by day. Details reveals the task window, search summary/window/buffer and the selected slot's explanation. Apply selected, Skip and Stop retain queue behaviour.
    - **Alternatives mode:** the header shows the target/length, Move radios, fixed opt-in/temporary range and Search hours. The same picks/day chips/Details layout uses the alternatives picks in BR-7. Apply and Cancel retain their behaviour.
-5. **Replan dialog:** range from/to (default the visible week; from Month, whose grid exceeds 14 days, the first full week of the month, AUDIT A10), a buffer override, and a *Compute plans* button. Below them are two plan cards side by side (stacked when narrow). Each card shows its metrics and list of moves, with an *Apply this plan* button. Changing the range or buffer removes the cards until *Compute plans* runs again, so a plan is only applied for the inputs shown (AUDIT A08). Cancel closes the dialog.
+5. **Replan dialog:** range from/to (default the visible week; from Month, whose grid exceeds 14 days, the first full week of the month, AUDIT A10), Strategy and a *Compute plans* button on one row. Details reveals Buffer and full metrics/explanations. Compact cards group moves by day, with one collapsed Not moved list below them. Changing the range, strategy or buffer removes the cards until *Compute plans* runs again, so a plan is only applied for the inputs shown (AUDIT A08). Cancel closes the dialog.
 6. **Settings dialog:**
    - Four headed sections (D-09): **Working time** (Use working hours switch, retained working days/hours disabled while off), **Scheduling defaults** (default buffer, default ranking), **Categories** (BR-16) and **Data**. Settings Save / Cancel stay in their sticky footer; category changes save independently as undo steps. The dialog has the × of §7.7.
    - A **Data** section: Export JSON, Import JSON, Load sample calendar (menu), Clear all data (with confirmation).
@@ -569,36 +569,38 @@ Twelve curated colours include the five seeds. Free colours are normalised six-d
 9. **Barred slots region (D-09):** inline label/from–to/day-chip/remove rows, Add barred slot (focuses its label), and Save/Cancel while edits are pending. Fixed-width time inputs remain readable in 12-hour locales. Saving touches only barred content; errors stay on their rows and Cancel restores saved slots. Older overlaps show an actionable banner; positively overlapping calendar backgrounds group their labels in a vertical stack. Upcoming unkept overlaps retain Suggest alternatives and add Keep here; kept records live under a collapsed Kept (N) group with Stop keeping. Past overlaps stay out of both groups.
 
 ```text
-[◀] [Today] [▶]  Week of 2 Nov 2026   [Day|Week|Month|List]  Priority: [H][M][L]   [+ Event] [+ Task] [Replan] [↶][↷] [◐] [?] [⚙]
-
-┌───────┬──────────────────┬──────────────────┬──────────────────┐   ┌──────────────────────────────────┐
-│       │ Mon 2            │ Tue 3            │ Wed 4            │   │ Tasks   Sort: Priority ▼  [H M L] │
-├───────┼──────────────────┼──────────────────┼──────────────────┤   │ ☐ Write report · 1 h 30 · [H]    │
-│ 09:00 │ Class [M] Fixed  │                  │                  │   │ ☐ Read ch. 4 · 45 min · [M]      │
-│       │ 09:00–10:00      │                  │                  │   │ ☑ Gym · 1 h · [L] · Scheduled     │
-├───────┼──────────────────┼──────────────────┼──────────────────┤   │    [Find time for 1 selected]    │
-│ 10:00 │                  │ Lecture [H] Fixed│ Lab [L]          │   └──────────────────────────────────┘
-│ 11:00 │                  │ Meeting [M]      │                  │   ┌──────────────────────────────────┐
-│       │                  │ ⚠ Conflict 30 min│                  │   │ Conflicts (1)                    │
-├───────┼──────────────────┼──────────────────┼──────────────────┤   │ ⚠ Lecture ↔ Meeting              │
-│ 13:00 │░░ Lunch ░░░░░░░░░│░░ Lunch ░░░░░░░░░│░░ Lunch ░░░░░░░░░│   │   Tue 11:00–11:30 (30 min)       │
-│       │                  │                  │                  │   │   [Suggest alternatives]         │
-└───────┴──────────────────┴──────────────────┴──────────────────┘   └──────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────────────────────┐
+│ Interactive Calendar                                          Undo  Redo  Theme  ?  Settings │
+├──────────────────────┬──────────────────────────────────────────────┬────────────────────────┤
+│ Tasks (4)    [+ Task]│ < Today >  Week of 9 Nov  [Day|Week|Month]   │ Conflicts (1)          │
+│ [Show v][Sort v][...]│ [Calendar|List]  [H][M][L]  (o)Class ...     │ ! Lecture <> Meeting   │
+│                      │ [Lock: on]                        [+ Event]  │   Tue 11:00 - 30 min   │
+│ [ ] Write report     │ +----------------------------------------+   │   [Suggest]            │
+│     [H] (o)Assignment│ |                                        |   │ > Past (2)             │
+│     1 h 30 - Mon-Fri │ |               week grid                |   ├────────────────────────┤
+│ [ ] Read ch. 4       │ |                                        |   │ Replan                 │
+│     [M] (o)Study     │ |                                        |   │ This week  [Plan...]   │
+│ ...                  │ |                                        |   ├────────────────────────┤
+│ [Find time (2)]      │ +----------------------------------------+   │ Barred slots (2)       │
+│                      │ 8 events - 1 conflict (2 past)               │ Lunch 13-14 Mon-Fri    │
+│                      │                                              │ Overlaps (1) - Kept (0)│
+└──────────────────────┴──────────────────────────────────────────────┴────────────────────────┘
 ```
 
 *Figure 1. ░ marks a barred slot, drawn as a shaded background event with its label. Conflicts show the ⚠ icon, the word "Conflict" and a danger outline. Priority shows as an [H]/[M]/[L] tag plus a colour.*
 
 ```text
-┌ Find time — "Write report" (1 h 30 min, High) — Task 1 of 2 ───────────────────────────────┐
-│ Rank by: (●) Earliest fit  ( ) Best fit  ( ) Priority-aware                                │
-│ Top picks: (●) Earliest — Wed 4 Nov 14:00–15:30                                           │
-│            ( ) Tightest fit — Thu 5 Nov 09:00–10:30                                      │
-│ All options by day                                                                      │
-│ Wed 4 Nov: ( )14:30–16:00 ( )15:00–16:30 ( )15:30–17:00 …                                │
-│ Thu 5 Nov: ( )09:15–10:45                                                                │
-│ [Details ▸] summary, window, buffer and selected gap explanation when expanded            │
-│                                   [Apply selected]  [Skip]  [Stop]                         │
-└────────────────────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│ Find time: "Write report" (1 h 30 min, High) - Task 1 of 2               │
+│ Rank by: (o) Earliest fit  ( ) Best fit  ( ) Priority-aware              │
+│ Top picks: (o) Earliest - Wed 4 Nov 14:00-15:30                          │
+│            ( ) Tightest fit - Thu 5 Nov 09:00-10:30                      │
+│ All options by day                                                       │
+│ Wed 4 Nov: ( )14:30-16:00 ( )15:00-16:30 ( )15:30-17:00 ...              │
+│ Thu 5 Nov: ( )09:15-10:45                                                │
+│ [Details >] summary, window, buffer and selected gap when expanded       │
+│ [Apply selected]  [Skip]  [Stop]                                         │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
 
 *Figure 2. Shared picker layout. Alternatives uses Closest / Same day / Lightest day, Move radios and optional fixed-event consent/range; short reasons describe shift or day load. There is no Skip or Stop.*
@@ -623,8 +625,8 @@ Twelve curated colours include the five seeds. Free colours are normalised six-d
 | W2 | Move or resize | Unlock the calendar, then drag/resize. Fixed events ask the BR-17 destination/duration question; Move/Change commits, Keep it/Esc/close reverts. Engine rejection also reverts. Flexible events commit without a confirmation. |
 | W3 | Resolve a conflict | Conflict panel → *Suggest alternatives* → picker (alternatives mode) → choose → Apply. The conflict disappears and a success toast appears. |
 | W4 | Schedule one task | + Task → Save → *Find time* → review the options → Apply. The task is marked Scheduled and the event appears on the timeline. |
-| W5 | Schedule several tasks | Tick the tasks → *Find time for N selected* → the picker shows Task 1 of N → Apply or Skip → it moves on to the next task automatically → a summary toast: "Scheduled 2 of 3 tasks (1 skipped)". |
-| W6 | Replan a week | Replan → (adjust the range and buffer) → Compute plans → compare the two cards → *Apply this plan*. The moved events are briefly emphasised and the toast reads "Plan applied: 2 events moved". |
+| W5 | Schedule several tasks | Tick the tasks → *Find time (N)* → the picker shows Task 1 of N → Apply or Skip → it moves on to the next task automatically → a summary toast: "Scheduled 2 of 3 tasks (1 skipped)". |
+| W6 | Replan a week | Replan region → Plan… → (adjust the range, strategy and optional Details buffer) → Compute plans → compare the two cards → *Apply this plan*. The moved events are briefly emphasised and the toast reads "Plan applied: 2 events moved". |
 | W7 | Configure | ⚙ → edit working hours/buffer → Save; Barred slots region → edit rows → Save. The shading updates, and later searches use the new rules. |
 | W8 | Undo a mistake | ↶ or Ctrl+Z → the toast reads "Undid: Delete "Gym"" → ↷ redoes it. |
 | W9 | Back up or restore | ⚙ → Data → Export (file downloads), or Import → confirm → everything is replaced. |
@@ -762,3 +764,4 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 | 2026-11-13 | v1.27 (WI-55 D-15 UI): FR10 compact inputs/cards/day groups, named strategy, Details, and one collapsed diagnostics union. Issues unresolved in only one plan name that plan; full problem labels remain behind Details. |
 | 2026-11-13 | v1.28 (WI-56 D-20): Settings/BR-15 named duplicate and overlap errors include the first earlier slot label and 24-hour times instead of a number. Schema/import/editor errors share the same text; legacy banner unchanged. |
 | 2026-11-13 | v1.29 (WI-56 D-14 checkpoint): app-bar/calendar/task control ownership, three independently scrolling columns, separate counted drawers below 1280 and sibling Conflicts/Replan/Barred regions. |
+| 2026-11-13 | v1.30 (WI-56 D-21): Figure 1 now uses the planner-approved D-14 layout; Figure 2 uses ASCII and aligned box lines. Updated old main-screen/drawer/Replan/queue descriptions to match D-14/D-15. |

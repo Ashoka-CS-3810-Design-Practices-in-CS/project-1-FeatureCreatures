@@ -1,7 +1,42 @@
-import { useEffect, useId, useRef, type ReactNode } from 'react';
+import { useEffect, useId, useRef, type ReactNode, type KeyboardEvent } from 'react';
 
 // Confirmation replaces its source dialog; its original page trigger must survive that handoff.
 let pageTrigger: HTMLElement | null = null;
+
+// PRE: element is a possible focus target inside the current dialog
+// POST: true only for enabled, visible controls outside a closed details body
+function isDialogFocusTarget(element: HTMLElement): boolean {
+  const closedDetails = element.closest('details:not([open])');
+  return (
+    !element.matches(':disabled, [hidden], [tabindex="-1"]') &&
+    (closedDetails === null || closedDetails.querySelector('summary') === element) &&
+    (element.checkVisibility?.() ?? !element.hidden)
+  );
+}
+
+// PRE: event comes from this dialog's keyboard handler
+// POST: Tab/Shift+Tab at a dialog boundary wraps within its enabled visible controls;
+//       other keys and movement within the dialog retain native behavior
+function wrapDialogTab(event: KeyboardEvent<HTMLDialogElement>): void {
+  if (event.key !== 'Tab') return;
+  const targets = [
+    ...event.currentTarget.querySelectorAll<HTMLElement>(
+      'button, a[href], input, select, textarea, summary, [tabindex]',
+    ),
+  ].filter(isDialogFocusTarget);
+  const first = targets[0];
+  const last = targets.at(-1);
+  const target =
+    event.shiftKey && document.activeElement === first
+      ? last
+      : !event.shiftKey && document.activeElement === last
+        ? first
+        : undefined;
+  if (target !== undefined) {
+    event.preventDefault();
+    target.focus();
+  }
+}
 
 // PRE:  open says whether the dialog is shown; title names it; onClose is called when the dialog
 //       closes itself (Esc or form method="dialog"); children are its content
@@ -62,6 +97,7 @@ export function Modal({
       id={id}
       className={className}
       aria-labelledby={titleId}
+      onKeyDown={wrapDialogTab}
       onCancel={(event) => {
         if (!dismissible) event.preventDefault();
       }}

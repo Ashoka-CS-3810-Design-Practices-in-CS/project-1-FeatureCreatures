@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { collectPageErrors, createEvent, openCalendar } from './helpers';
+import { collectPageErrors, createEvent, openCalendar, openReplan } from './helpers';
 
 // PRE: calendar is open in the base week with no modal
 // POST: creates a valid Tuesday flexible event whose window includes Monday
@@ -16,7 +16,7 @@ test('T55: all Replan strategies compute, Front-load applies atomically, persist
   const errors = collectPageErrors(page);
   await openCalendar(page);
   await createMovable(page);
-  await page.getByRole('button', { name: 'Replan', exact: true }).click();
+  await openReplan(page);
   const dialog = page.getByRole('dialog', { name: 'Replan', exact: true });
   // INVARIANT: every visited strategy computes alongside the unchanged zero-move Minimal plan
   for (const strategy of [
@@ -64,7 +64,7 @@ for (const theme of ['light', 'dark'] as const) {
       await page.setViewportSize({ width, height: 900 });
       await page.emulateMedia({ colorScheme: theme });
       await openCalendar(page);
-      await page.getByRole('button', { name: 'Replan', exact: true }).click();
+      await openReplan(page);
       const dialog = page.getByRole('dialog', { name: 'Replan', exact: true });
       const controls = [
         dialog.getByLabel('From', { exact: true }),

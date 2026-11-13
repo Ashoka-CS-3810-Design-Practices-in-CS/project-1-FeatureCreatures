@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import {
   DEFAULT_REPLAN_STRATEGY,
+  SNAP_MIN,
   REPLAN_STRATEGIES,
   REPLAN_STRATEGY_LABELS,
 } from '@/shared/constants';
-import { addLocalDays } from '@/shared/time';
+import { addLocalDays, ceilTo } from '@/shared/time';
 import type { ReplanStrategy } from '@/shared/types';
 import { fromDateInput } from '../../forms/eventForm';
 import { fmtDay } from '../../format/time';
@@ -23,7 +24,11 @@ export function ReplanPanel() {
   const start = fromDateInput(days.from);
   const end = addLocalDays(fromDateInput(days.to), 1);
   const movable = events.filter(
-    (event) => event.flexible && event.start >= now && event.start < end && event.end > start,
+    (event) =>
+      event.flexible &&
+      event.start >= ceilTo(now, SNAP_MIN) &&
+      event.start < end &&
+      event.end > start,
   ).length;
   return (
     <section aria-label="Replan" className="replan-panel">

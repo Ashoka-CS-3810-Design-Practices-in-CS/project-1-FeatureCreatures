@@ -1,12 +1,18 @@
 import { expect, test } from '@playwright/test';
-import { addLunchBarredSlot, collectPageErrors, createEvent, openCalendar } from './helpers';
+import {
+  addLunchBarredSlot,
+  collectPageErrors,
+  createEvent,
+  openCalendar,
+  openNewTask,
+} from './helpers';
 
 test('T51: task picks, expansion, keyboard chips and Details apply the chosen time and persist', async ({
   page,
 }) => {
   const errors = collectPageErrors(page);
   await openCalendar(page);
-  await page.getByRole('button', { name: '+ Task', exact: true }).click();
+  await openNewTask(page);
   const form = page.getByRole('dialog', { name: 'New task' });
   await form.getByLabel('Name', { exact: true }).fill('Report');
   await form.getByLabel('Hours', { exact: true }).fill('1');

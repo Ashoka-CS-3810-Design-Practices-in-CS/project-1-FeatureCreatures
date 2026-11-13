@@ -4,6 +4,48 @@ import { DEFAULT_SETTINGS, EXPORT_FORMAT, LEGACY_EXPORT_VERSION } from '../src/s
 const BASE_TIME = new Date('2026-11-02T08:00:00');
 const MONDAY_COLUMN = '.fc-timegrid-col[data-date="2026-11-02"]';
 
+// PRE: calendar is open without another modal, or the requested drawer is already open
+// POST: exposes the Tasks region by opening its drawer only when it is hidden
+export async function showTasks(page: Page): Promise<void> {
+  if (!(await page.getByRole('button', { name: '+ Task', exact: true }).isVisible())) {
+    await page.getByRole('button', { name: /^Tasks \(\d+\)$/ }).click();
+  }
+}
+
+// PRE: calendar is open without another modal, or the right drawer is already open
+// POST: exposes Replan and Barred slots by opening the right drawer only when hidden
+export async function showPlanning(page: Page): Promise<void> {
+  if (!(await page.getByRole('button', { name: 'Plan…', exact: true }).isVisible())) {
+    await page.getByRole('button', { name: /^Conflicts \(\d+\)$/ }).click();
+  }
+}
+
+// PRE: no nested item dialog is open
+// POST: closes any visible panel drawer through its accessible Close action
+export async function closeDrawers(page: Page): Promise<void> {
+  // INVARIANT: each visited drawer is closed; at most one drawer is visible
+  for (const name of ['Tasks', 'Conflicts']) {
+    const drawer = page.getByRole('dialog', { name, exact: true });
+    if (await drawer.isVisible())
+      await drawer.getByRole('button', { name: 'Close', exact: true }).click();
+  }
+  // POST: neither panel drawer is open
+}
+
+// PRE: calendar is open without a nested item dialog
+// POST: opens Replan from its sole region action, exposing its drawer when needed
+export async function openReplan(page: Page): Promise<void> {
+  await showPlanning(page);
+  await page.getByRole('button', { name: 'Plan…', exact: true }).click();
+}
+
+// PRE: calendar is open without a nested item dialog
+// POST: opens the new-task dialog from its sole Tasks region action
+export async function openNewTask(page: Page): Promise<void> {
+  await showTasks(page);
+  await page.getByRole('button', { name: '+ Task', exact: true }).click();
+}
+
 // PRE:  calendar is open with no modal
 // POST: imports a v1 calendar whose older Lunch/TT rows overlap on Mon–Fri, retaining both
 export async function importLegacyBarredSlots(page: Page): Promise<void> {
@@ -45,13 +87,16 @@ export async function createTask(
   from: string,
   to: string,
 ): Promise<void> {
-  await page.getByRole('button', { name: '+ Task', exact: true }).click();
+  await openNewTask(page);
   const form = page.getByRole('dialog', { name: 'New task', exact: true });
   await form.getByLabel('Name', { exact: true }).fill(name);
   await form.getByLabel('Window from', { exact: true }).fill(from);
   await form.getByLabel('Window to', { exact: true }).fill(to);
   await form.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(form).toHaveCount(0);
+  const drawer = page.getByRole('dialog', { name: 'Tasks', exact: true });
+  if (await drawer.isVisible())
+    await drawer.getByRole('button', { name: 'Close', exact: true }).click();
 }
 
 export const DRAG_STEPS = 12;
@@ -60,7 +105,7 @@ export const DRAG_STEPS = 12;
 export const TOOLBAR_DIALOGS = [
   { button: '+ Event', title: 'New event' },
   { button: '+ Task', title: 'New task' },
-  { button: 'Replan', title: 'Replan' },
+  { button: 'Plan…', title: 'Replan' },
   { button: 'Settings', title: 'Settings' },
   { button: 'Keyboard shortcuts', title: 'Keyboard shortcuts' },
 ];
@@ -101,10 +146,9 @@ export async function createEvent(
 // PRE:  the calendar is open with no modal dialog
 // POST: adds Lunch 13:00–14:00 through its region, temporarily opening the panels drawer if needed
 export async function addLunchBarredSlot(page: Page): Promise<void> {
-  const region = page.getByRole('region', { name: 'Barred slots', exact: true });
+  const region = page.getByRole('region', { name: /^Barred slots \(/ });
   const openedDrawer = !(await region.isVisible());
-  if (openedDrawer)
-    await page.getByRole('button', { name: 'Tasks and conflicts', exact: true }).click();
+  if (openedDrawer) await showPlanning(page);
   await region.getByRole('button', { name: 'Add barred slot', exact: true }).click();
   const slot = region.getByRole('group', { name: 'Barred slot 1', exact: true });
   await slot.getByLabel('Label', { exact: true }).fill('Lunch');
@@ -115,8 +159,8 @@ export async function addLunchBarredSlot(page: Page): Promise<void> {
     0,
   );
   if (openedDrawer) {
-    const drawer = page.getByRole('dialog', { name: 'Tasks and conflicts', exact: true });
-    await drawer.getByRole('button', { name: 'Close panels', exact: true }).click();
+    const drawer = page.getByRole('dialog', { name: 'Conflicts', exact: true });
+    await drawer.getByRole('button', { name: 'Close', exact: true }).click();
     await expect(drawer).toHaveCount(0);
   }
 }

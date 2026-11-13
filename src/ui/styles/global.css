@@ -584,7 +584,6 @@ dialog .category-editor input[type='color'] {
   padding: var(--space-3) 0 var(--space-3) var(--space-4);
 }
 
-.task-row::before,
 .conflict-panel li::before {
   content: '';
   position: absolute;

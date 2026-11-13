@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { createConflict, collectPageErrors } from './helpers';
+import { createConflict, collectPageErrors, openNewTask } from './helpers';
 
 test('T53: working-hours switch persists, hides task/search choices and removes non-working shading', async ({
   page,
@@ -21,7 +21,7 @@ test('T53: working-hours switch persists, hides task/search choices and removes 
   await expect(picker.getByRole('region', { name: 'Top picks' })).toBeVisible();
   await picker.getByRole('button', { name: 'Cancel', exact: true }).click();
   await expect(picker).toHaveCount(0);
-  await page.getByRole('button', { name: '+ Task', exact: true }).click();
+  await openNewTask(page);
   const task = page.getByRole('dialog', { name: 'New task', exact: true });
   await expect(task.getByRole('group', { name: 'Scheduling hours', exact: true })).toHaveCount(0);
   await task.getByRole('button', { name: 'Cancel', exact: true }).click();

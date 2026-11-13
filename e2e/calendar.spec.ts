@@ -9,6 +9,7 @@ import {
   GRAB_OFFSET_PX,
   openCalendar,
   rowTop,
+  openNewTask,
 } from './helpers';
 
 const EXPECTED_REPORT_SLOT = 'Mon 2 Nov 09:00–10:30';
@@ -91,7 +92,7 @@ test('E3: scheduling Report applies the offered slot and creates a linked Task e
 }) => {
   await openCalendar(page);
   await page.getByRole('combobox', { name: 'Show', exact: true }).selectOption('all');
-  await page.getByRole('button', { name: '+ Task', exact: true }).click();
+  await openNewTask(page);
   const dialog = page.getByRole('dialog', { name: 'New task' });
   await dialog.getByLabel('Name', { exact: true }).fill('Report');
   await dialog.getByLabel('Hours', { exact: true }).fill('1');

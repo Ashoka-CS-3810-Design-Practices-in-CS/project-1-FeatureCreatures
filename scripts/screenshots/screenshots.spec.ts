@@ -4,6 +4,11 @@ import {
   createEvent,
   createTask,
   importLegacyBarredSlots,
+  openReplan,
+  openNewTask,
+  showTasks,
+  showPlanning,
+  closeDrawers,
 } from '../../e2e/helpers';
 
 // Design-review screenshots (WI-34), linked from README.md. Not part of `npm run e2e`: run
@@ -55,6 +60,19 @@ async function capture(page: Page, name: string): Promise<void> {
 for (const theme of THEMES) {
   // INVARIANT: a week capture is registered for every width visited so far, in this theme
   for (const width of WEEK_WIDTHS) {
+    test(`five regions ${theme} ${width}`, async ({ page }) => {
+      await openApp(page, theme, width);
+      await loadSampleWeek(page);
+      await capture(page, `layout-${theme}-${width}`);
+      if (width < 1280) {
+        await showTasks(page);
+        await capture(page, `layout-tasks-drawer-${theme}-${width}`);
+        await closeDrawers(page);
+        await showPlanning(page);
+        await capture(page, `layout-planning-drawer-${theme}-${width}`);
+      }
+    });
+
     test(`replan strategies ${theme} ${width}`, async ({ page }) => {
       await openApp(page, theme, width, new Date('2026-11-02T08:00:00'));
       await createEvent(page, 'Lunch event', '2026-11-02T13:00', '2026-11-02T14:00');
@@ -63,7 +81,8 @@ for (const theme of THEMES) {
         end: '2026-11-04T18:00',
       });
       await addLunchBarredSlot(page);
-      await page.getByRole('button', { name: 'Replan', exact: true }).click();
+      await showPlanning(page);
+      await openReplan(page);
       const dialog = page.getByRole('dialog', { name: 'Replan', exact: true });
       await dialog
         .getByRole('combobox', { name: 'Strategy', exact: true })
@@ -85,10 +104,11 @@ for (const theme of THEMES) {
       await createTask(page, 'Report', '2026-11-02T09:00', '2026-11-02T11:00');
       await createTask(page, 'Read', '2026-11-02T09:00', '2026-11-02T10:00');
       await createTask(page, 'Later', '2026-11-02T09:00', '2026-11-02T10:01');
+      await showTasks(page);
       await page.getByRole('button', { name: 'Mark Report done', exact: true }).click();
       await page.getByRole('combobox', { name: 'Show', exact: true }).selectOption('all');
       await page.setViewportSize({ width, height: TALL_HEIGHT });
-      await page.locator('#side-panels').evaluate((panel) => {
+      await page.getByRole('region', { name: /^Tasks \(/ }).evaluate((panel) => {
         panel.scrollTop = 0;
       });
       await expect(page.locator('.toast')).toHaveCount(0, { timeout: TOAST_WAIT_MS });
@@ -106,7 +126,8 @@ for (const theme of THEMES) {
       await openApp(page, theme, width);
       await createEvent(page, 'Lunch event', '2026-11-02T13:00', '2026-11-02T14:00');
       await addLunchBarredSlot(page);
-      const region = page.getByRole('region', { name: 'Barred slots', exact: true });
+      await showPlanning(page);
+      const region = page.getByRole('region', { name: /^Barred slots \(/ });
       await expect(page.locator('.toast')).toHaveCount(0, { timeout: TOAST_WAIT_MS });
       await region.screenshot({
         path: `${OUTPUT_DIR}/barred-slots-${theme}-${width}.png`,
@@ -119,6 +140,7 @@ for (const theme of THEMES) {
         path: `${OUTPUT_DIR}/barred-kept-${theme}-${width}.png`,
         animations: 'disabled',
       });
+      await closeDrawers(page);
       await page.getByRole('button', { name: 'Settings', exact: true }).click();
       const settings = page.getByRole('dialog', { name: 'Settings', exact: true });
       await settings.getByRole('switch', { name: 'Use working hours' }).uncheck();
@@ -132,6 +154,7 @@ for (const theme of THEMES) {
     test(`legacy barred labels ${theme} ${width}`, async ({ page }) => {
       await openApp(page, theme, width);
       await importLegacyBarredSlots(page);
+      await showPlanning(page);
       await expect(
         page.getByText('Lunch and TT overlap on Mon–Fri. Edit one of them.', { exact: true }),
       ).toBeVisible();
@@ -146,6 +169,7 @@ for (const theme of THEMES) {
       await createEvent(page, 'Running seminar', '2026-11-04T13:00', '2026-11-04T14:00');
       await createEvent(page, 'Current review', '2026-11-04T13:15', '2026-11-04T14:30');
       await addLunchBarredSlot(page);
+      await showPlanning(page);
       await expect(
         page.getByText('4 events · 0 tasks · 1 conflict (1 past)', { exact: true }),
       ).toBeVisible();
@@ -165,6 +189,7 @@ for (const theme of THEMES) {
       await openApp(page, theme, width);
       await createEvent(page, 'Lecture', '2026-11-02T13:00', '2026-11-02T14:00');
       await addLunchBarredSlot(page);
+      await showPlanning(page);
       await page.getByRole('button', { name: 'Suggest alternatives for Lecture in Lunch' }).click();
       const picker = page.getByRole('dialog', { name: /^Alternatives for/ });
       await expect(picker.getByRole('button', { name: 'Apply', exact: true })).toBeDisabled();
@@ -236,7 +261,7 @@ for (const theme of THEMES) {
 
     test(`task dialog ${theme} ${width}`, async ({ page }) => {
       await openApp(page, theme, width);
-      await page.getByRole('button', { name: '+ Task', exact: true }).click();
+      await openNewTask(page);
       await page.getByRole('dialog', { name: 'New task' }).getByLabel('Name').fill('Write report');
       await capture(page, `task-dialog-${theme}-${width}`);
     });
@@ -262,7 +287,7 @@ for (const theme of THEMES) {
   test(`replan ${theme}`, async ({ page }) => {
     await openApp(page, theme, WIDE_WIDTH);
     await loadSampleWeek(page);
-    await page.getByRole('button', { name: 'Replan', exact: true }).click();
+    await openReplan(page);
     const dialog = page.getByRole('dialog', { name: 'Replan', exact: true });
     await dialog.getByRole('button', { name: 'Compute plans', exact: true }).click();
     await expect(dialog.getByRole('region', { name: 'Balanced week' })).toBeVisible();
@@ -276,7 +301,8 @@ for (const theme of THEMES) {
       await createEvent(page, 'Class', '2026-11-02T13:00', '2026-11-02T14:00');
       await createEvent(page, 'Meeting', '2026-11-03T13:00', '2026-11-03T14:00');
       await addLunchBarredSlot(page);
-      await page.getByRole('button', { name: 'Replan', exact: true }).click();
+      await showPlanning(page);
+      await openReplan(page);
       const dialog = page.getByRole('dialog', { name: 'Replan', exact: true });
       await dialog.getByRole('button', { name: 'Compute plans', exact: true }).click();
       await dialog.getByRole('button', { name: 'Details', exact: true }).click();
@@ -308,7 +334,7 @@ test('side panels light', async ({ page }) => {
   await openApp(page, 'light', WIDE_WIDTH);
   await page.setViewportSize({ width: WIDE_WIDTH, height: TALL_HEIGHT });
   await loadSampleWeek(page);
-  await page.getByRole('complementary', { name: 'Tasks and conflicts' }).screenshot({
+  await page.getByRole('complementary', { name: 'Planning column' }).screenshot({
     path: `${OUTPUT_DIR}/side-panels-light.png`,
     animations: 'disabled',
   });
@@ -317,7 +343,7 @@ test('side panels light', async ({ page }) => {
 test('drawer light', async ({ page }) => {
   await openApp(page, 'light', DRAWER_WIDTH);
   await loadSampleWeek(page);
-  await page.getByRole('button', { name: 'Tasks and conflicts', exact: true }).click();
-  await expect(page.getByRole('dialog', { name: 'Tasks and conflicts' })).toBeVisible();
+  await showPlanning(page);
+  await expect(page.getByRole('dialog', { name: 'Conflicts', exact: true })).toBeVisible();
   await capture(page, 'drawer-light-900');
 });
