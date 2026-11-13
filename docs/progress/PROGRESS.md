@@ -6,9 +6,9 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-56 complete on `feat/wi-56-layout`; merge/main gate next, then claim WI-57 Visual system.
-- **Last session:** 2026-11-14 · Codex · WI-56 full branch gate green: 848 + 1 existing skipped, overall 98.54/94.31/98.11/98.77, algorithms 99.72/96.80/100/99.71, DST 9, ten × 10,000 properties, build and 153/153 browsers, zero retries. All 100 capture scenes pass; final two drawer recaptures also pass title/scroll assertions. Reviewed both themes at 1440/1280/1024 and drawers; 166 PNGs ready to commit. Merge/main gate remains.
-- **Gate status:** 2026-11-13 on `main` at `2a8c311`: full gate green, 838 + 1 existing skipped, overall 98.56/94.27/98.17/98.79, algorithms 99.72/96.80/100/99.71, DST 9, ten properties × 10,000, build, 135/135 browsers, zero retries.
+- **Active WI:** WI-57 Visual system, claimed; branch `feat/wi-57-visual-system`.
+- **Last session:** 2026-11-14 · Codex · WI-56 merged at cbb3754 and full main gate green; WI-57 claimed. D-12/D-13 tests first: neutral event fills, independent readable tags, curated neutral-plus-seven accents and persisted Appearance preferences, resolved sun/moon toggle. Reviewed WI-56 captures committed (166 PNGs).
+- **Gate status:** 2026-11-14 on `main` at `cbb3754`: full gate green, 848 + 1 existing skipped, overall 98.54/94.31/98.11/98.77, algorithms 99.72/96.80/100/99.71, DST 9, ten properties × 10,000, build, 153/153 browsers, zero retries.
 
 ## Work items
 
@@ -318,8 +318,9 @@ Binding design: `docs/extras/AUDIT_2.md` (D-01–D-19, C-01–C-08). Work in ord
   - 2026-11-13 · Codex · branch `feat/wi-56-layout` · done: initial captures 98/100, remaining two 1024 task-suggestion captures now open the Tasks drawer via the existing helper. Final review adds both window dates and removes obsolete ribbon spacing; red RTL/real-browser regressions precede the fix (Edit previously 40 px lower); 17 focused cases pass · next: final core gate, full fresh 100 captures/review, full 153 browsers, finish/merge/main gate · note: prior red browser assertion verified in its trace; its completed-test teardown stalled and was interrupted after the failure artifact was saved. No test timeout/retry/assertion changed.
   - 2026-11-13 · Codex · branch `feat/wi-56-layout` · done: final core gate green at 979ca8f: 848 + 1 existing skipped, overall 98.54/94.31/98.11/98.77, algorithms 99.72/96.80/100/99.71, DST 9, ten properties × 10,000; fresh captures and full 153 browsers progressing green against the identical build. Light 1440/1280/1024 plus both drawers and previously failing task suggestions reviewed · next: finish captures and browsers, review refreshed dark set, finish/merge/main full gate · note: a hidden preview serves the current dist on 4173 so browsers reuse it without racing the capture build; no builds while either suite navigates.
   - 2026-11-14 · Codex · branch `feat/wi-56-layout` · done: full branch gate 848 + 1 skipped, overall 98.54/94.31/98.11/98.77, algorithms 99.72/96.80/100/99.71, DST 9, ten × 10,000 properties, build, 153/153 browsers with zero retries. All 100 captures pass; two final narrow recaptures additionally assert scrollTop 0/full title visibility. All six desktop/narrow scenes and both drawers reviewed, 166 PNGs · next: merge and full main gate, then WI-57 · note: sandboxed runners passed every check but stalled stopping their Vite child; repeated browser gate and final recaptures exit cleanly with normal process permissions. No assertion, timeout, retry, skip, threshold or property-count weakening.
-- [ ] **WI-57** Visual system — owner S + Dv — depends on 56
+- [~] **WI-57** Visual system — owner S + Dv — depends on 56
   - Done when: `tokens.test.ts` covers fills, tags, accents and shading; screenshots refreshed and reviewed.
+  - 2026-11-14 · Codex · branch `feat/wi-57-visual-system` · done: WI-56 full main gate verified at cbb3754, D-12/D-13 and current tokens/theme/tag/preference code read · next: write failing token/RTL/browser cases, then neutral fills and tags, Appearance accents/theme preferences and resolved icon toggle; docs, captures and full gates · note: D-16 dialog/format/U9 polish remains WI-58; neutral accent intentionally shares the reserved neutral event fill, while the seven non-neutral accents exclude all reserved colours.
 - [ ] **WI-58** Dialog and format polish — owner S + Dv — depends on 57
   - Done when: Field-order and format tests; U9/U19/U20/U23 checks.
 - [ ] **WI-59** Docs, smoke test and final gate — owner S + Dv — depends on 58
