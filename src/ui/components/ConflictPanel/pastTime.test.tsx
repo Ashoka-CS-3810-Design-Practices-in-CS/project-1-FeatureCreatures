@@ -7,6 +7,7 @@ import { renderWithStore, storeFor } from '../../../../tests/helpers/render';
 import { t } from '../../../../tests/helpers/time';
 import { App } from '../../App';
 import { ConflictPanel } from './ConflictPanel';
+import { MS_PER_MINUTE } from '@/shared/constants';
 
 const EVENTS = [
   ev('Past A', 'Mon 09:00', 'Mon 10:00'),
@@ -16,6 +17,44 @@ const EVENTS = [
 ];
 
 describe('T52: past-time panels and calendar (D-08)', () => {
+  it('updates groups, status and barred tags at the clock boundary without a data write, and cleans up on unmount', async () => {
+    vi.useFakeTimers();
+    try {
+      let now = t('Mon 13:29');
+      const { engine, repo } = await makeEngine({
+        now: 'Mon 13:29',
+        events: [ev('A', 'Mon 13:00', 'Mon 13:30'), ev('B', 'Mon 13:15', 'Mon 14:00')],
+        settings: settings({
+          barredSlots: [{ id: 'lunch', label: 'Lunch', startMin: 780, endMin: 810, days: [1] }],
+        }),
+      });
+      const before = await capture(engine, repo);
+      const store = storeFor(engine, { now: () => now });
+      store.setState({ view: { ...store.getState().view, type: 'listWeek' } });
+      const mounted = renderWithStore(<App />, store);
+      expect(screen.getByText('2 events · 0 tasks · 1 conflict')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Barred-slot overlaps (2)' })).toBeInTheDocument();
+      now = t('Mon 13:30');
+      act(() => vi.advanceTimersByTime(MS_PER_MINUTE));
+      expect(screen.getByText('2 events · 0 tasks · 0 conflicts (1 past)')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Barred-slot overlaps (0)' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^A, Mon 2 Nov/ }).closest('tr')).toHaveClass(
+        'is-past',
+      );
+      expect(screen.getByRole('button', { name: /^B, Mon 2 Nov/ })).not.toHaveAccessibleName(
+        /In Lunch/,
+      );
+      expect(await capture(engine, repo)).toEqual(before);
+      mounted.unmount();
+      now = t('Mon 14:00');
+      const stateAfterUnmount = store.getState();
+      act(() => vi.advanceTimersByTime(MS_PER_MINUTE));
+      expect(store.getState()).toBe(stateAfterUnmount);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('counts upcoming conflicts, starts Past collapsed, and offers no past Suggest action', async () => {
     const { engine, repo } = await makeEngine({ now: 'Mon 10:30', events: EVENTS });
     const before = await capture(engine, repo);

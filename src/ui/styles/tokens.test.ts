@@ -25,6 +25,9 @@ const HEX_RADIX = 16;
 
 // Foreground on background, as the stylesheets pair them.
 const TEXT_PAIRS: [string, string][] = [
+  ['past-text', 'past-bg'],
+  ['past-text', 'bg'],
+  ['past-text', 'surface'],
   ['text', 'bg'],
   ['text', 'surface'], // panels and toasts
   ['text', 'prio-high-bg'], // event text on each priority background
@@ -92,6 +95,20 @@ const light = tokensOf(':root');
 const dark = tokensOf(":root[data-theme='dark']");
 
 describe('tokens.css', () => {
+  it('T52: past styling is distinct and its edge and faint now guide reach 3:1 in both themes', () => {
+    [light, dark].forEach((tokens) => {
+      expect(tokens.get('past-bg')).not.toBe(tokens.get('bg'));
+      expect(tokens.get('past-text')).not.toBe(tokens.get('text'));
+      expect(
+        contrast(tokens.get('past-edge') ?? '', tokens.get('past-bg') ?? ''),
+      ).toBeGreaterThanOrEqual(3);
+      ['bg', 'past-bg', 'nonwork', 'barred'].forEach((background) => {
+        expect(
+          contrast(tokens.get('now-guide') ?? '', tokens.get(background) ?? ''),
+        ).toBeGreaterThanOrEqual(3);
+      });
+    });
+  });
   it('T51: selected picker outlines and radio focus contrast against both picker backgrounds', () => {
     [light, dark].forEach((tokens) => {
       ['accent', 'focus'].forEach((foreground) => {
