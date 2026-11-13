@@ -766,3 +766,4 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 | 2026-11-13 | v1.28 (WI-56 D-20): Settings/BR-15 named duplicate and overlap errors include the first earlier slot label and 24-hour times instead of a number. Schema/import/editor errors share the same text; legacy banner unchanged. |
 | 2026-11-13 | v1.29 (WI-56 D-14 checkpoint): app-bar/calendar/task control ownership, three independently scrolling columns, separate counted drawers below 1280 and sibling Conflicts/Replan/Barred regions. |
 | 2026-11-13 | v1.30 (WI-56 D-21): Figure 1 now uses the planner-approved D-14 layout; Figure 2 uses ASCII and aligned box lines. Updated old main-screen/drawer/Replan/queue descriptions to match D-14/D-15. |
+| 2026-11-13 | WI-56 final layout review: compact task rows show both window dates with a full-time tooltip and aligned actions. Keyboard order follows Show/Sort/menu, and drawers reopen at their titles. |
