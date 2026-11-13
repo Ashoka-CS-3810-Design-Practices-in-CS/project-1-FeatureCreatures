@@ -61,6 +61,7 @@ describe('T52: past-time panels and calendar (D-08)', () => {
       events: [ev('Ended', 'Mon 13:00', 'Mon 13:30'), ev('Running', 'Mon 13:30', 'Mon 14:00')],
     });
     const store = storeFor(engine, { now: () => t('Mon 13:30') });
+    store.setState({ view: { ...store.getState().view, type: 'listWeek' } });
     renderWithStore(<App />, store);
     await act(async () => {
       await store.getState().actions.updateSettings(
@@ -93,10 +94,14 @@ describe('T52: past-time panels and calendar (D-08)', () => {
 
   it('marks ended calendar events as past while keeping running events active', async () => {
     const { engine } = await makeEngine({ now: 'Mon 10:30', events: EVENTS });
-    renderWithStore(<App />, storeFor(engine, { now: () => t('Mon 10:30') }));
-    expect(screen.getByRole('button', { name: /^Past A, Mon 2 Nov/ })).toHaveClass('is-past');
-    expect(screen.getByRole('button', { name: /^Current A, Mon 2 Nov/ })).not.toHaveClass(
+    const store = storeFor(engine, { now: () => t('Mon 10:30') });
+    store.setState({ view: { ...store.getState().view, type: 'listWeek' } });
+    renderWithStore(<App />, store);
+    expect(screen.getByRole('button', { name: /^Past A, Mon 2 Nov/ }).closest('tr')).toHaveClass(
       'is-past',
     );
+    expect(
+      screen.getByRole('button', { name: /^Current A, Mon 2 Nov/ }).closest('tr'),
+    ).not.toHaveClass('is-past');
   });
 });

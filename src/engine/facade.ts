@@ -454,10 +454,11 @@ class CalendarEngine implements Engine {
   }
 
   // PRE:  req comes from the UI (checked by the pipeline)
-  // POST: as replan.planReplan on the current state, with notBefore from now; a successful result
+  // POST: as replan.planReplan on the current state, passing raw now for diagnostics while the
+  //       pipeline rounds placement's notBefore; a successful result
   //       becomes lastReplan, the only plan applyReplan accepts
   planReplan(req: { range: Interval; bufferMin?: number }): Result<ReplanResult> {
-    const result = planReplan(this.state, req, notBeforeFor(this.deps.now()));
+    const result = planReplan(this.state, req, this.deps.now());
     if (result.ok) {
       this.lastReplan = result.value;
     }

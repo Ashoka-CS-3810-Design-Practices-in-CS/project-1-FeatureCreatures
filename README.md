@@ -33,7 +33,7 @@ A browser-based week planner that detects every scheduling conflict, finds free 
 - **Several tasks at once.** Selected tasks are offered one at a time, highest priority first. Each search sees the slots you already accepted.
 - **Replan.** For a chosen week, the app proposes two rearrangements of your flexible events: _Minimal change_ and _Balanced week_.
   - Each plan lists every move with a reason, plus before/after metrics. Apply one or neither.
-  - Events Replan won't move (fixed or already started) are listed with the reason.
+  - Unresolved future or ongoing problems Replan won't move are listed with the reason. Entirely past problem overlaps are omitted; Already started describes a currently running event.
 - **Your rules.** Working days and hours, a buffer between events, and barred slots such as lunch. Events sitting inside a barred slot are flagged separately from conflicts.
 - **Comfort features.** Undo/redo, JSON export/import, six built-in sample calendars, light and dark themes, keyboard shortcuts (press **?**), and screen-reader and keyboard support.
 
