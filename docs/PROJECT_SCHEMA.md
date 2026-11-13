@@ -307,15 +307,15 @@ Each requirement lists its acceptance criteria. The tests that prove it are in `
   - A task with ER2 or ER3 shows its message, with a *Skip* option.
 
 **FR10 — Replan.**
-- **Input:** a date range (default: the visible week) and a buffer (default from settings).
+- **Input:** a date range (default: the visible week), the second plan's Strategy (default Balanced week), and an optional buffer override behind Details (default from settings).
 - **Behaviour:** the engine computes exactly two plans for the flexible events in the range (BR-12):
   - **Minimal change** — fix problems while moving as little as possible.
-  - **Balanced week** — spread load evenly across working days.
+  - The selected **Strategy** — Balanced week, Cluster by category, Vary categories, Front-load or Fewer fragments (BR-12).
 - Each plan lists:
   - its moves (from → to, with the reason)
   - the events it could not place
   - its metrics: moved count, total shift, conflicts before → after, day-load spread before → after
-  - **Not moved by Replan:** events with conflicts or barred-slot overlaps remaining after that plan, plus events left unplaced. Each appears once with its reason (Fixed event / Already started / Outside its flex window / No free slot), overlapping barred labels or conflicting titles, and **Suggest alternatives** using the existing per-event flow.
+- **Dialog:** From, To, Strategy and Compute plans share one row. Each card starts with its move count and conflicts before → after. Compact move rows group by destination day, with event name, priority/category tags, start → start and a short reason chip. Details starts off per dialog and reveals full metrics, long explanations and Buffer. **Not moved by Replan (N)** appears once below both cards, collapsed: the union of per-plan residual conflicts/barred overlaps/unplaced events, deduplicated by event id. Each row has its reason chip and **Suggest alternatives**; an issue present in only one plan names that plan. Details includes the combined barred labels and conflicting titles. The engine retains independent per-plan diagnostics.
 - The user can apply one plan as a single step, or cancel.
 - **Acceptance:**
   - Fixed events are never moved.
@@ -515,6 +515,8 @@ Every search result also carries:
   - `loadSpreadBeforeMin` and `loadSpreadAfterMin`, the maximum minus the minimum day load over the working days in the range
   - `unplaced`
 - **Applying a plan** moves all of its events in one atomic change and one undo step, after the version check (ER7).
+
+**BR-12 strategy extension (WI-55, D-15).** The first plan remains Minimal change. The second plan defaults to Balanced week (day load, distance, start), with Cluster by category (negative same-category minutes, distance, start), Vary categories (same-category minutes, day load, distance, start), Front-load (earliest start) and Fewer fragments (gap leftover, start). All use the same processing order, busy updates, safety checks and metrics. Category minutes follow the day-load definition and current occupied set; category identity, not name, is compared. Existing Minimal-change invalidity reasons take precedence, otherwise a move names the chosen strategy. Equal intervals are not moves. The selector does not affect the first plan; every applied plan is still one atomic undo step.
 
 **BR-13 Priorities.** The order is `high > medium > low`. The shorthand tags are `[H]`, `[M]` and `[L]`. Priority is always shown as both a text tag and a colour.
 
@@ -754,3 +756,5 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 | 2026-11-13 | v1.23 (WI-53 D-09 engine checkpoint): BR-15 defines identified slot warnings, undoable Keep here, automatic event/settings/history clearing, shared-day overlap rejection and legacy preservation. UI region/editor/grouping and remaining shading are still in progress. |
 | 2026-11-13 | v1.24 (WI-53 D-09/D-10): barred editing moves into its region, Settings retains four sections, Kept groups suppress current tags/warnings and restore through Stop keeping/history; legacy banners/stacked labels and contrasted enabled non-working dots are specified. |
 | 2026-11-13 | v1.25 (WI-54 D-07 engine checkpoint): BR-18 completion/unschedule atomicity, Reopen, inclusive bulk cutoff/preview, stale guard and default-hidden done tasks. |
+| 2026-11-13 | v1.26 (WI-55 D-15 engine checkpoint): BR-12 exact strategy sort keys, category-minute/busy updates, preserved Minimal change/default Balanced, reason precedence and unchanged safety/undo. UI remains in progress. |
+| 2026-11-13 | v1.27 (WI-55 D-15 UI): FR10 compact inputs/cards/day groups, named strategy, Details, and one collapsed diagnostics union. Issues unresolved in only one plan name that plan; full problem labels remain behind Details. |

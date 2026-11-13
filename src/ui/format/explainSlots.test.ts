@@ -1,4 +1,5 @@
 import type { SlotOption } from '@/shared/types';
+
 import { ev, iv, settings, task } from '../../../tests/helpers/builders';
 import { makeEngine } from '../../../tests/helpers/engine';
 import { t } from '../../../tests/helpers/time';
@@ -16,6 +17,15 @@ import {
   scheduledText,
   searchSummaryText,
 } from './explain';
+
+it.each([
+  ['clusterByCategory', 'Cluster by category'],
+  ['varyCategories', 'Vary categories'],
+  ['frontLoad', 'Front-load'],
+  ['fewerFragments', 'Fewer fragments'],
+] as const)('T55: names %s as the selected strategy move reason', (strategy, label) => {
+  expect(moveReasonText({ kind: 'strategy', strategy })).toBe(label);
+});
 
 // PRE:  options holds the engine setup of T6
 // POST: returns findSlots' result for the 90 min task of T6

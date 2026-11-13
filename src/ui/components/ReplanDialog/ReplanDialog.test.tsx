@@ -28,6 +28,14 @@ function renderOpen(engine: Engine, withRange = true): AppStore {
   return store;
 }
 
+// PRE: computed plans include unresolved events and Details is initially closed
+// POST: opens the shared diagnostics with their retained full problem text
+async function showDiagnostics(): Promise<HTMLElement> {
+  await userEvent.click(screen.getByRole('button', { name: 'Details' }));
+  await userEvent.click(screen.getByRole('button', { name: /^Not moved by Replan \(/ }));
+  return screen.getByRole('region', { name: 'Not moved by Replan' });
+}
+
 describe('ReplanDialog', () => {
   it('defaults to the visible week', async () => {
     renderOpen((await makeEngine()).engine);
@@ -74,6 +82,7 @@ describe('ReplanDialog', () => {
     renderOpen((await makeEngine({ events: t22Events })).engine);
 
     await userEvent.click(screen.getByRole('button', { name: 'Compute plans' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Details' }));
 
     const minimal = screen.getByRole('region', { name: 'Minimal change' });
     const balanced = screen.getByRole('region', { name: 'Balanced week' });
@@ -114,6 +123,8 @@ describe('ReplanDialog', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Compute plans' }));
     expect(screen.getByRole('button', { name: 'Apply Balanced week' })).toBeInTheDocument();
 
+    if (label === 'Buffer (min)')
+      await userEvent.click(screen.getByRole('button', { name: 'Details' }));
     const field = screen.getByLabelText(label);
     await userEvent.clear(field);
     await userEvent.type(field, value);
@@ -143,20 +154,21 @@ describe('ReplanDialog', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Compute plans' }));
 
     const minimal = screen.getByRole('region', { name: 'Minimal change' });
-    expect(minimal).toHaveTextContent('"X" — No free slot');
-    expect(minimal).toHaveTextContent('Conflicts with "S".');
+    const diagnostics = await showDiagnostics();
+    expect(diagnostics).toHaveTextContent('"X" — No free slot');
+    expect(diagnostics).toHaveTextContent('Conflicts with "S".');
     expect(minimal).toHaveTextContent('No moves in this plan — 2 events still need attention.');
     expect(
-      within(minimal).getByRole('heading', { name: 'Not moved by Replan' }),
+      within(diagnostics).getByRole('heading', { name: 'Not moved by Replan (2)' }),
     ).toBeInTheDocument();
-    expect(minimal).toHaveTextContent('Fixed event');
-    expect(minimal).toHaveTextContent('No free slot');
+    expect(diagnostics).toHaveTextContent('Fixed event');
+    expect(diagnostics).toHaveTextContent('No free slot');
     expect(screen.queryByText('No changes needed')).not.toBeInTheDocument();
     expect(
       within(minimal).queryByRole('button', { name: 'Apply Minimal change' }),
     ).not.toBeInTheDocument();
     await userEvent.click(
-      within(minimal).getByRole('button', { name: 'Suggest alternatives for S' }),
+      within(diagnostics).getByRole('button', { name: 'Suggest alternatives for S' }),
     );
     expect(store.getState().picker).toMatchObject({
       mode: 'alternatives',
@@ -180,13 +192,14 @@ describe('ReplanDialog', () => {
     renderOpen(engine);
     await userEvent.click(screen.getByRole('button', { name: 'Compute plans' }));
     const minimal = screen.getByRole('region', { name: 'Minimal change' });
-    expect(minimal).toHaveTextContent('Fixed event');
-    expect(minimal).toHaveTextContent('Already started');
-    expect(minimal).toHaveTextContent('Overlaps Lunch');
+    const diagnostics = await showDiagnostics();
+    expect(diagnostics).toHaveTextContent('Fixed event');
+    expect(diagnostics).toHaveTextContent('Already started');
+    expect(diagnostics).toHaveTextContent('Overlaps Lunch');
     expect(minimal).toHaveTextContent('No moves in this plan — 2 events still need attention.');
     expect(screen.queryByText('No changes needed')).not.toBeInTheDocument();
     expect(
-      within(minimal).getAllByRole('button', { name: /^Suggest alternatives for/ }),
+      within(diagnostics).getAllByRole('button', { name: /^Suggest alternatives for/ }),
     ).toHaveLength(2);
   });
 
@@ -215,10 +228,11 @@ describe('ReplanDialog', () => {
     renderOpen(engine);
     await userEvent.click(screen.getByRole('button', { name: 'Compute plans' }));
     const minimal = screen.getByRole('region', { name: 'Minimal change' });
-    expect(minimal).toHaveTextContent(reason);
+    const diagnostics = await showDiagnostics();
+    expect(diagnostics).toHaveTextContent(reason);
     expect(minimal).toHaveTextContent('No moves in this plan — 1 event still needs attention.');
     expect(
-      within(minimal).getByRole('button', { name: 'Suggest alternatives for Study' }),
+      within(diagnostics).getByRole('button', { name: 'Suggest alternatives for Study' }),
     ).toBeInTheDocument();
     expect(screen.queryByText('No changes needed')).not.toBeInTheDocument();
   });
@@ -235,6 +249,7 @@ describe('ReplanDialog', () => {
     );
 
     await userEvent.type(screen.getByLabelText('From'), '2026-11-02');
+    await userEvent.click(screen.getByRole('button', { name: 'Details' }));
     await userEvent.type(screen.getByLabelText('Buffer (min)'), '15');
     await userEvent.click(screen.getByRole('button', { name: 'Compute plans' }));
     expect(planReplan).toHaveBeenLastCalledWith(expect.objectContaining({ bufferMin: 15 }));

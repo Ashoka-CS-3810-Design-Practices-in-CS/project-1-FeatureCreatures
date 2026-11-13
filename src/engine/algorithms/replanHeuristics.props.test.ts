@@ -58,6 +58,7 @@ const eventSpecs = fc.array(
     windowShiftSteps: fc.integer({ min: -MAX_WINDOW_LEAD_STEPS, max: MAX_WINDOW_LAG_STEPS }),
     windowExtraSteps: fc.integer({ min: 0, max: MAX_WINDOW_EXTRA_STEPS }),
     priority: fc.constantFrom(...PRIORITIES),
+    categoryId: fc.constantFrom('meeting', 'assignment', 'personal'),
   }),
   { maxLength: MAX_EVENTS },
 );
@@ -81,6 +82,7 @@ const scenarios = fc
           start,
           end: start + length,
           priority: spec.priority,
+          categoryId: spec.categoryId,
           flexible: spec.flexible,
           flexWindow: spec.flexible
             ? {
@@ -117,12 +119,19 @@ function isMovable(event: CalendarEvent, input: ReplanInput): boolean {
 }
 
 describe('planReplan (property)', () => {
-  it(
-    'T35: plans move only movable events, into allowed segments, clear of everything else',
-    () => {
+  it.each([
+    'balanced',
+    'clusterByCategory',
+    'varyCategories',
+    'frontLoad',
+    'fewerFragments',
+  ] as const)(
+    'T35/T55: %s plans move only movable events, into allowed segments, clear of everything else',
+    (strategy) => {
       fc.assert(
         fc.property(scenarios, (input) => {
-          const { movableCount, plans } = planReplan(input);
+          const strategyInput = { ...input, strategy };
+          const { movableCount, plans } = planReplan(strategyInput);
           const movable = input.events.filter((event) => isMovable(event, input));
           const others = input.events.filter((event) => !isMovable(event, input));
           const byId = new Map(input.events.map((event) => [event.id, event]));

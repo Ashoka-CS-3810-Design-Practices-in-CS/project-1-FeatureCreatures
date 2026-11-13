@@ -2,7 +2,7 @@
 // plan. Each placed event becomes busy for the ones after it; nothing is ever backtracked, so every
 // move can be explained on its own.
 
-import { PRIORITY_RANK } from '@/shared/constants';
+import { DEFAULT_REPLAN_STRATEGY, PRIORITY_RANK } from '@/shared/constants';
 import type {
   CalendarEvent,
   Conflict,
@@ -13,6 +13,7 @@ import type {
   ReplanMetrics,
   ReplanMove,
   ReplanPlan,
+  ReplanStrategy,
   Segment,
   SlotOption,
 } from '@/shared/types';
@@ -20,7 +21,8 @@ import { computeDayLoads, frameOf, loadSpread } from './dayLoad';
 import { freeGaps } from './gaps';
 import { contains, expand, intersect, length, overlaps } from './interval';
 import { mergeBusy } from './merge';
-import { rankOptions } from './rank';
+import { rankOptions, type RankContext } from './rank';
+import { rankReplanOptions } from './replanStrategies';
 import { compareEvents, compareIds, eventsIntersecting, insertSorted } from './sortedArray';
 import { detectConflicts } from './sweep';
 import { detectBarredOverlaps } from './barred';
@@ -33,6 +35,7 @@ export interface ReplanInput {
   bufferMin: number;
   notBefore: Minute;
   useWorkingHours: boolean;
+  strategy?: ReplanStrategy;
   segmentsFor: (window: Interval) => Segment[];
 }
 
@@ -129,7 +132,7 @@ function dayLoadAt(
 // PRE:  event is movable (flexible, start ≥ input.notBefore); occupied is sorted, holds everything
 //       busy so far and not event itself
 // POST: returns where kind's rule puts event: Minimal change keeps a valid event; otherwise the best
-//       free slot in its allowed segments (nearest for Minimal change, leastLoaded for Balanced);
+//       free slot in its allowed segments (nearest for Minimal change, input.strategy for the second plan);
 //       with no slot that fits, event stays and is unplaced; a move is reported only when the start changes
 function placeEvent(
   kind: PlanKind,
@@ -164,14 +167,19 @@ function placeEvent(
   }
 
   const dayLoads = computeDayLoads(occupied, input.frames);
-  const ranked = rankOptions(fitting, {
+  const strategy = input.strategy ?? DEFAULT_REPLAN_STRATEGY;
+  const rankContext: RankContext = {
     durationMin,
     criterion: kind === 'balanced' ? 'leastLoaded' : 'nearest',
     priority: event.priority,
     originalStart: event.start,
     dayLoads,
     frames: input.frames,
-  });
+  };
+  const ranked =
+    kind === 'minimalChange'
+      ? rankOptions(fitting, rankContext)
+      : rankReplanOptions(fitting, rankContext, strategy, occupied, event.categoryId);
   // fitting is non-empty, so rankOptions returns at least one option.
   const best = ranked[0] as SlotOption;
   if (best.slot.start === event.start) {
@@ -186,11 +194,15 @@ function placeEvent(
       priority: event.priority,
       from: spanOf(event),
       to: best.slot,
-      reason: reason ?? {
-        kind: 'balance',
-        fromDayLoadMin: dayLoadAt(dayLoads, input.frames, event.start),
-        toDayLoadMin: best.dayLoadMin,
-      },
+      reason:
+        reason ??
+        (strategy === 'balanced'
+          ? {
+              kind: 'balance',
+              fromDayLoadMin: dayLoadAt(dayLoads, input.frames, event.start),
+              toDayLoadMin: best.dayLoadMin,
+            }
+          : { kind: 'strategy', strategy }),
     },
     unplaced: null,
   };
@@ -318,9 +330,10 @@ function runPlan(
 
 // PRE:  input.events is sorted by compareEvents with distinct ids; input.conflicts =
 //       detectConflicts(input.events); input.frames cover input.range; input.notBefore is now
-//       rounded up to SNAP_MIN; input.segmentsFor returns the working-hours allowed segments
+//       rounded up to SNAP_MIN; input.strategy is validated or omitted;
+//       input.segmentsFor returns the working-hours allowed segments
 // POST: returns the number of movable events (flexible, start ≥ notBefore, intersecting the range)
-//       and the two BR-12 plans, [Minimal change, Balanced week]; inputs are not mutated;
+//       and the two BR-12 plans, [Minimal change, selected strategy (default Balanced)]; inputs are not mutated;
 //       O(c·(n + c + s + m log m)) per greedy pass, at most c + 1 passes per plan
 export function planReplan(input: ReplanInput): {
   movableCount: number;

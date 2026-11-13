@@ -55,6 +55,31 @@ async function capture(page: Page, name: string): Promise<void> {
 for (const theme of THEMES) {
   // INVARIANT: a week capture is registered for every width visited so far, in this theme
   for (const width of WEEK_WIDTHS) {
+    test(`replan strategies ${theme} ${width}`, async ({ page }) => {
+      await openApp(page, theme, width, new Date('2026-11-02T08:00:00'));
+      await createEvent(page, 'Lunch event', '2026-11-02T13:00', '2026-11-02T14:00');
+      await createEvent(page, 'Move', '2026-11-03T14:00', '2026-11-03T15:00', {
+        start: '2026-11-02T09:00',
+        end: '2026-11-04T18:00',
+      });
+      await addLunchBarredSlot(page);
+      await page.getByRole('button', { name: 'Replan', exact: true }).click();
+      const dialog = page.getByRole('dialog', { name: 'Replan', exact: true });
+      await dialog
+        .getByRole('combobox', { name: 'Strategy', exact: true })
+        .selectOption('frontLoad');
+      await dialog.getByRole('button', { name: 'Compute plans', exact: true }).click();
+      await expect(page.locator('.toast')).toHaveCount(0, { timeout: TOAST_WAIT_MS });
+      await capture(page, `replan-strategies-${theme}-${width}`);
+      await dialog.getByRole('button', { name: 'Details', exact: true }).click();
+      await dialog.getByRole('button', { name: 'Not moved by Replan (1)', exact: true }).click();
+      await page.setViewportSize({ width, height: TALL_HEIGHT });
+      await dialog.evaluate((element) => {
+        element.scrollTop = 0;
+      });
+      await capture(page, `replan-strategies-details-${theme}-${width}`);
+    });
+
     test(`done tasks ${theme} ${width}`, async ({ page }) => {
       await openApp(page, theme, width);
       await createTask(page, 'Report', '2026-11-02T09:00', '2026-11-02T11:00');
@@ -254,7 +279,9 @@ for (const theme of THEMES) {
       await page.getByRole('button', { name: 'Replan', exact: true }).click();
       const dialog = page.getByRole('dialog', { name: 'Replan', exact: true });
       await dialog.getByRole('button', { name: 'Compute plans', exact: true }).click();
-      await expect(dialog.getByRole('heading', { name: 'Not moved by Replan' })).toHaveCount(2);
+      await dialog.getByRole('button', { name: 'Details', exact: true }).click();
+      await dialog.getByRole('button', { name: 'Not moved by Replan (2)', exact: true }).click();
+      await expect(dialog.getByRole('heading', { name: 'Not moved by Replan (2)' })).toHaveCount(1);
       await expect(page.locator('.toast')).toHaveCount(0, { timeout: TOAST_WAIT_MS });
       await capture(page, `replan-not-moved-${theme}-${width}`);
     });

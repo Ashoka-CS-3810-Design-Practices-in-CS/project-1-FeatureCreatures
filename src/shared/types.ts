@@ -195,13 +195,17 @@ export interface SlotSearchResult {
   readonly options: readonly SlotOption[]; // all D-06 picker candidates, ranked; Replan uses rankOptions
 }
 
+export type ReplanStrategy =
+  'balanced' | 'clusterByCategory' | 'varyCategories' | 'frontLoad' | 'fewerFragments';
+
 export type MoveReason =
   | { readonly kind: 'outsideFlexWindow' }
   | { readonly kind: 'outsideWorkingHours' }
   | { readonly kind: 'barred'; readonly label: string }
   | { readonly kind: 'conflict'; readonly withEventId: string; readonly withTitle: string }
   | { readonly kind: 'buffer'; readonly withEventId: string; readonly withTitle: string }
-  | { readonly kind: 'balance'; readonly fromDayLoadMin: number; readonly toDayLoadMin: number };
+  | { readonly kind: 'balance'; readonly fromDayLoadMin: number; readonly toDayLoadMin: number }
+  | { readonly kind: 'strategy'; readonly strategy: Exclude<ReplanStrategy, 'balanced'> };
 
 export interface ReplanMove {
   readonly eventId: string;
@@ -231,6 +235,7 @@ export interface ReplanPlan {
   readonly metrics: ReplanMetrics;
 }
 export interface ReplanResult {
+  readonly strategy: ReplanStrategy;
   readonly baseVersion: number;
   readonly range: Interval;
   readonly bufferMin: number;

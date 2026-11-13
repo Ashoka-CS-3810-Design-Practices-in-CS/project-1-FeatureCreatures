@@ -1,6 +1,27 @@
 // Named limits and defaults — frozen contract (TECH_SPEC §5). Add new magic numbers here.
 
-import type { Category, Priority, Settings } from './types';
+import type { Category, Priority, ReplanStrategy, Settings } from './types';
+
+export const REPLAN_STRATEGIES = [
+  'balanced',
+  'clusterByCategory',
+  'varyCategories',
+  'frontLoad',
+  'fewerFragments',
+] as const satisfies readonly ReplanStrategy[];
+export const DEFAULT_REPLAN_STRATEGY: ReplanStrategy = 'balanced';
+export const PRIORITY_TAGS: Readonly<Record<Priority, string>> = {
+  high: '[H]',
+  medium: '[M]',
+  low: '[L]',
+};
+export const REPLAN_STRATEGY_LABELS: Readonly<Record<ReplanStrategy, string>> = {
+  balanced: 'Balanced week',
+  clusterByCategory: 'Cluster by category',
+  varyCategories: 'Vary categories',
+  frontLoad: 'Front-load',
+  fewerFragments: 'Fewer fragments',
+};
 
 export const MAX_EVENT_MIN = 1440; // BR-4
 export const MAX_OPTIONS = 5; // BR-7
