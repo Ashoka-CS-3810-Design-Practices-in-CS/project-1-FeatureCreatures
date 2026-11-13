@@ -17,7 +17,7 @@ import { defaultCategoryId } from '../../store/selectors';
 // PRE:  rendered under StoreProvider; existing is the task being edited (undefined when creating);
 //       reads view.date, categories, lastCategoryId and settings.useWorkingHours; uses the task actions, openTaskPicker,
 //       openDialog and closeDialog; + additional props from: Modal, ErrorText, PriorityRadioGroup, CategorySelect
-// POST: shows the task form (name, duration in hours + minutes, priority, categoryId, window,
+// POST: shows the task form (name, paired hours/minutes, priority, categoryId, paired window dates,
 //       scheduling-hours radios when globally enabled, description); hidden preferences stay stored;
 //       Save validates with taskResolver before calling the
 //       engine; in edit mode it also offers Find time (unscheduled), Unschedule (scheduled) and
@@ -71,23 +71,29 @@ function TaskForm({ existing }: { existing: Task | undefined }) {
 
         <fieldset>
           <legend>Duration</legend>
-          <label htmlFor={fieldId('hours')}>Hours</label>
-          <input
-            id={fieldId('hours')}
-            type="number"
-            min={0}
-            inputMode="numeric"
-            {...register('hours')}
-            {...described('hours')}
-          />
-          <label htmlFor={fieldId('minutes')}>Minutes</label>
-          <input
-            id={fieldId('minutes')}
-            type="number"
-            min={0}
-            inputMode="numeric"
-            {...register('minutes')}
-          />
+          <div className="field-pair">
+            <span>
+              <label htmlFor={fieldId('hours')}>Hours</label>
+              <input
+                id={fieldId('hours')}
+                type="number"
+                min={0}
+                inputMode="numeric"
+                {...register('hours')}
+                {...described('hours')}
+              />
+            </span>
+            <span>
+              <label htmlFor={fieldId('minutes')}>Minutes</label>
+              <input
+                id={fieldId('minutes')}
+                type="number"
+                min={0}
+                inputMode="numeric"
+                {...register('minutes')}
+              />
+            </span>
+          </div>
           <ErrorText id={errorId('hours')} error={errors.hours} />
         </fieldset>
 
@@ -105,22 +111,28 @@ function TaskForm({ existing }: { existing: Task | undefined }) {
           )}
         />
 
-        <label htmlFor={fieldId('windowStart')}>Window from</label>
-        <input
-          id={fieldId('windowStart')}
-          type="datetime-local"
-          {...register('windowStart')}
-          {...described('windowStart')}
-        />
-        <ErrorText id={errorId('windowStart')} error={errors.windowStart} />
-        <label htmlFor={fieldId('windowEnd')}>Window to</label>
-        <input
-          id={fieldId('windowEnd')}
-          type="datetime-local"
-          {...register('windowEnd')}
-          {...described('windowEnd')}
-        />
-        <ErrorText id={errorId('windowEnd')} error={errors.windowEnd} />
+        <div className="field-pair">
+          <span>
+            <label htmlFor={fieldId('windowStart')}>Window from</label>
+            <input
+              id={fieldId('windowStart')}
+              type="datetime-local"
+              {...register('windowStart')}
+              {...described('windowStart')}
+            />
+            <ErrorText id={errorId('windowStart')} error={errors.windowStart} />
+          </span>
+          <span>
+            <label htmlFor={fieldId('windowEnd')}>Window to</label>
+            <input
+              id={fieldId('windowEnd')}
+              type="datetime-local"
+              {...register('windowEnd')}
+              {...described('windowEnd')}
+            />
+            <ErrorText id={errorId('windowEnd')} error={errors.windowEnd} />
+          </span>
+        </div>
 
         {useWorkingHours && (
           <Controller

@@ -147,7 +147,7 @@ describe('SlotPicker — task mode', () => {
     });
   });
 
-  it('re-searches with a new buffer, and Stop closes with the summary', async () => {
+  it('D-16: re-searches with a new buffer, and single-task Stop closes quietly', async () => {
     const { engine } = await makeEngine({
       events: [ev('E', 'Mon 10:00', 'Mon 11:00')],
       tasks: [task('T', 60, ['Mon 09:00', 'Mon 12:00'])],
@@ -164,7 +164,7 @@ describe('SlotPicker — task mode', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Stop' }));
 
     expect(store.getState().picker).toBeNull();
-    expect(texts(store).at(-1)).toBe('Scheduled 0 of 1 task');
+    expect(texts(store)).toEqual([]);
   });
 
   it('an apply after the calendar changed refreshes the options (ER7)', async () => {

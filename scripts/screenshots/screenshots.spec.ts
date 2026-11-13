@@ -121,6 +121,15 @@ for (const theme of THEMES) {
       await capture(page, `accent-fern-${theme}-${width}`);
     });
 
+    test(`polished Month and List ${theme} ${width}`, async ({ page }) => {
+      await openApp(page, theme, width);
+      await loadSampleWeek(page);
+      await page.getByRole('button', { name: 'Month', exact: true }).click();
+      await capture(page, `month-${theme}-${width}`);
+      await page.getByRole('button', { name: 'List', exact: true }).click();
+      await capture(page, `list-${theme}-${width}`);
+    });
+
     test(`done tasks ${theme} ${width}`, async ({ page }) => {
       await openApp(page, theme, width);
       await createTask(page, 'Report', '2026-11-02T09:00', '2026-11-02T11:00');
@@ -338,6 +347,21 @@ for (const theme of THEMES) {
   // POST: fixed-only barred overlaps have captures at desktop and drawer widths in both plans
 }
 // POST: every scene is registered in both themes
+
+test.describe('barred times in a 12-hour browser locale', () => {
+  test.use({ locale: 'en-US' });
+  // INVARIANT: the US native-time capture is registered for each visited theme
+  for (const theme of THEMES) {
+    test(`barred US locale ${theme}`, async ({ page }) => {
+      await openApp(page, theme, MEDIUM_DESKTOP_WIDTH);
+      await loadSampleWeek(page);
+      await page
+        .getByRole('region', { name: /^Barred slots \(/ })
+        .screenshot({ path: `${OUTPUT_DIR}/barred-us-${theme}-1280.png`, animations: 'disabled' });
+    });
+  }
+  // POST: both themes capture the right column's native US time inputs
+});
 
 test('month light', async ({ page }) => {
   await openApp(page, 'light', WIDE_WIDTH);

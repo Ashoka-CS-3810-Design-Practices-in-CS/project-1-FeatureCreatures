@@ -28,7 +28,7 @@ function nextHourSlot(viewDate: number): Interval {
 // PRE:  rendered under StoreProvider; dialog is the open event dialog; existing is the event being
 //       edited (undefined when creating); reads settings, categories, lastCategoryId and view.date;
 //       uses event actions; + additional props from: Modal, PriorityRadioGroup, CategorySelect
-// POST: shows the event form (title, categoryId, priority, start, end, Fixed/Flexible radios, flex window when
+// POST: shows the event form (title, priority, categoryId, paired start/end, Fixed/Flexible radios, flex window when
 //       flexible, description); Save validates with eventResolver and only then calls the engine,
 //       closing on success; Delete asks for confirmation first
 function EventForm({
@@ -97,6 +97,8 @@ function EventForm({
         <input id={fieldId('title')} type="text" {...register('title')} {...described('title')} />
         <ErrorText id={errorId('title')} error={errors.title} />
 
+        <PriorityRadioGroup registration={register('priority')} />
+
         <Controller
           control={control}
           name="categoryId"
@@ -109,25 +111,28 @@ function EventForm({
           )}
         />
 
-        <PriorityRadioGroup registration={register('priority')} />
-
-        <label htmlFor={fieldId('start')}>Start</label>
-        <input
-          id={fieldId('start')}
-          type="datetime-local"
-          {...register('start')}
-          {...described('start')}
-        />
-        <ErrorText id={errorId('start')} error={errors.start} />
-
-        <label htmlFor={fieldId('end')}>End</label>
-        <input
-          id={fieldId('end')}
-          type="datetime-local"
-          {...register('end')}
-          {...described('end')}
-        />
-        <ErrorText id={errorId('end')} error={errors.end} />
+        <div className="field-pair">
+          <span>
+            <label htmlFor={fieldId('start')}>Start</label>
+            <input
+              id={fieldId('start')}
+              type="datetime-local"
+              {...register('start')}
+              {...described('start')}
+            />
+            <ErrorText id={errorId('start')} error={errors.start} />
+          </span>
+          <span>
+            <label htmlFor={fieldId('end')}>End</label>
+            <input
+              id={fieldId('end')}
+              type="datetime-local"
+              {...register('end')}
+              {...described('end')}
+            />
+            <ErrorText id={errorId('end')} error={errors.end} />
+          </span>
+        </div>
 
         <fieldset className="form-group">
           <legend>Scheduling</legend>

@@ -38,6 +38,7 @@ A browser-based week planner that detects every scheduling conflict, finds free 
 - **Your rules.** Set working time/buffer in Settings and edit lunch or other slots in the **Barred slots** region. Ongoing/future barred overlaps are flagged separately from conflicts; past overlaps have no tag, row or settings warning. **Keep here** moves an overlap into the collapsed **Kept** group; **Stop keeping** restores its warning. Both are undoable. Time edits or slot time/day changes clear it. New overlapping barred slots are rejected.
 - **Comfort features.** Undo/redo, JSON export/import, six built-in sample calendars, light and dark themes, keyboard shortcuts (press **?**), and screen-reader and keyboard support.
 - **Appearance.** Neutral event blocks keep priority, category and scheduling tags readable on their own backgrounds. Settings → Appearance offers Neutral plus seven accent choices and System/Light/Dark; the app-bar sun/moon switches Light/Dark directly. These choices stay on your device and are not exported.
+- **Compact forms and dates.** Event and task forms share Priority/Category order and paired date fields. List uses compact dates and 24-hour ranges. Import JSON opens the file chooser from a button; cancelling a single-task search stays quiet. Native date/time inputs follow your browser locale.
 
 Nothing changes without your say-so: suggestions and plans are previews until you click **Apply**.
 

@@ -22,6 +22,14 @@ const TWENTY_FOUR_HOUR = { hour: '2-digit', minute: '2-digit', hour12: false } a
 const WEEKDAY = new Intl.DateTimeFormat('en', { weekday: 'short' });
 const MONDAY = 1;
 const NO_EVENTS_TEXT = 'No events to display'; // FullCalendar's own List text
+const CALENDAR_LOCALE = 'en-GB';
+const LIST_DAY_FORMAT = {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+  omitCommas: true,
+} as const;
 
 // PRE:  snapshot is the current snapshot; filter is the priority filter; hiddenCategoryIds lists hidden
 //       categories; range is the shown range (null before FullCalendar reports it)
@@ -104,6 +112,10 @@ export function CalendarView({ calendarRef }: { calendarRef: RefObject<FullCalen
         plugins={PLUGINS}
         initialView={view.type}
         initialDate={fromMinute(view.date)}
+        locale={CALENDAR_LOCALE}
+        listDayFormat={LIST_DAY_FORMAT}
+        listDaySideFormat={false}
+        defaultRangeSeparator="–"
         firstDay={MONDAY}
         headerToolbar={false}
         views={{

@@ -1581,7 +1581,7 @@ All sample loads and imports with more than `IMPORT_SPINNER_THRESHOLD` events pl
   - `openTaskPicker(ids)` calls `engine.orderForScheduling(ids)`. If any IDs were dropped, it shows an info toast. Then it runs `findSlots` for `queue[0]`.
   - `pickerApply()` calls `scheduleTask`. **On `ok`**, it increments `scheduled`, moves `index` forward, and runs `findSlots` for the next task. At the end of the queue it shows a summary toast and closes. **On `StaleResult`**, it re-runs `findSlots` for the same task and shows an info toast.
   - `pickerSkip()` increments `skipped` and moves to the next task.
-  - `pickerStop()` closes the picker and shows the summary.
+  - `pickerStop()` closes the picker; task queues of two or more show their summary, while single-task cancellation is quiet (D-16). Apply/Skip completion through `advance` retains its success summary.
   - Changing the criterion or buffer re-runs the current search.
 - **Alternatives.** `openAlternatives(conflict)` uses `eventId = conflict.targetId` and `otherEventId = the other id`. The "Move: (●) A ( ) B" toggle swaps the two and re-runs the search.
 - **Undo / redo.** The toast reads `Undid: <label>` or `Redid: <label>`.
@@ -1754,6 +1754,8 @@ No web font is loaded: the system stack needs no dependency, causes no font flas
 - Navigation keys call FullCalendar's API through a ref exposed by `CalendarView` (`calendarRef.current.getApi().prev()` and so on).
 
 ### 11.6 Formatting (`format/`)
+
+WI-58 / D-16: EventForm uses Title/Priority/Category, a shared `.field-pair` for Start/End, Scheduling/window and Description. TaskForm pairs duration hours/minutes and window dates with the same existing flex layout. Fields wrap only on narrow phone widths; native labels, validation and data stay unchanged. DataSection's Import JSON button clicks a hidden named file input, so exactly one accessible Import button is exposed while existing file-selection/import validation remains. FullCalendar uses locale en-GB, `listDayFormat={weekday:'short',day:'numeric',month:'short',year:'numeric',omitCommas:true}`, `listDaySideFormat=false`, and an en-dash defaultRangeSeparator; native input locale is unaffected. List's full natural-date accessible heading is retained alongside its compact visible text. Month restores opacity on the out-of-month day-top ancestor with tested muted ink. Narrow event content uses unit line height/no row gap so priority and state/conflict icons fit inside the existing block bounds without extending into a later slot.
 
 - **`format/time.ts`:**
   - `fmtTime(m)` gives `HH:mm`.
@@ -2058,3 +2060,4 @@ Production URL: https://…vercel.app
 | 2026-11-13 | v1.56 (WI-56 layout review): TaskPanel DOM follows the visible Show, Sort by, menu order for keyboard and reading order. Native dialogs reset their scroll offset on opening so the title stays visible after browser initial focus. Both regressions fail first and then pass. |
 | 2026-11-13 | WI-56 compact-row review: TaskRow uses both window dates with fmtRange as its tooltip; its action row spans both grid columns and removes obsolete ribbon indentation. T56 first fails for the missing window start and a wrapped Edit button, then checks all three actions align. |
 | 2026-11-14 | v1.57 (WI-57 D-12/D-13): neutral event/tag and curated accent tokens, AppState UI preferences/setters, shared live media-query subscription, resolved theme SVG and Appearance controls. CSS container compaction keeps full button names/tooltips. Old T32 cycle and T47 heading expectations follow D-13; T14 keeps both exact warning texts after icon/text wrapping. |
+| 2026-11-14 | v1.58 (WI-58 D-16): form order/shared pairs, hidden native file control behind styled Import, quiet single-task pickerStop, configured compact List dates/ranges, restored Month ancestor opacity and tight narrow icon rows. Existing buffer/error/closed-picker assertions remain with the changed quiet Stop expectation. |

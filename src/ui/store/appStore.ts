@@ -1129,11 +1129,11 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
       },
 
       // PRE:  none
-      // POST: closes the picker; a task picker first shows its summary toast
+      // POST: closes the picker; multi-task queues retain their summary, single-task cancellation is quiet
       pickerStop() {
         const { picker } = get();
         set({ picker: null });
-        if (picker?.mode === 'task') {
+        if (picker?.mode === 'task' && picker.queue.length > 1) {
           pushToast({
             tone: 'success',
             text: queueSummaryText(picker.scheduled, picker.queue.length, picker.skipped),
