@@ -69,6 +69,11 @@ for (const theme of THEMES) {
         await capture(page, `layout-tasks-drawer-${theme}-${width}`);
         await closeDrawers(page);
         await showPlanning(page);
+        const drawer = page.getByRole('dialog', { name: 'Conflicts', exact: true });
+        await expect.poll(() => drawer.evaluate((dialog) => dialog.scrollTop)).toBe(0);
+        await expect(
+          drawer.getByRole('heading', { name: 'Conflicts', exact: true }),
+        ).toBeInViewport({ ratio: 1 });
         await capture(page, `layout-planning-drawer-${theme}-${width}`);
       }
     });
