@@ -1,4 +1,4 @@
-import { useId, useState, type ChangeEvent } from 'react';
+import { useId, useRef, useState, type ChangeEvent } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { SAMPLES, type SampleId } from '@/data/samples';
 import type { Settings } from '@/shared/types';
@@ -144,6 +144,7 @@ function SettingsForm({ settings }: { settings: Settings }) {
 //       the chosen sample (after confirmation unless the calendar is empty); Clear all data empties
 //       the calendar after confirmation
 function DataSection() {
+  const importInput = useRef<HTMLInputElement>(null);
   const isEmpty = useAppStore(
     (state) => state.snapshot.events.length === 0 && state.snapshot.tasks.length === 0,
   );
@@ -217,8 +218,13 @@ function DataSection() {
       <button type="button" onClick={exportData}>
         Export JSON
       </button>
-      <label htmlFor={`${idPrefix}-import`}>Import JSON</label>
+      <button type="button" onClick={() => importInput.current?.click()}>
+        Import JSON
+      </button>
       <input
+        ref={importInput}
+        aria-label="Import JSON"
+        hidden
         id={`${idPrefix}-import`}
         type="file"
         accept={EXPORT_MIME_TYPE}

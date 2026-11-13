@@ -91,9 +91,10 @@ for (const theme of ['light', 'dark'] as const) {
       expect(timeWidth.content).toBeLessThanOrEqual(timeWidth.available);
       await closeDrawers(page);
       await page.getByRole('button', { name: 'List', exact: true }).click();
-      await expect(
-        page.getByRole('columnheader', { name: 'Mon 2 Nov 2026', exact: true }),
-      ).toBeVisible();
+      const listHeading = page.getByRole('columnheader', { name: '2 November 2026', exact: true });
+      await expect(listHeading).toBeVisible();
+      await expect(listHeading).toHaveText('Mon 2 Nov 2026');
+      await expect(page.getByRole('cell', { name: '09:00–10:30', exact: true })).toBeVisible();
       await page.getByRole('button', { name: 'Month', exact: true }).click();
       // FullCalendar has no semantic role for an out-of-month cell's opacity and painted backgrounds.
       const colours = await page
@@ -121,6 +122,9 @@ for (const theme of ['light', 'dark'] as const) {
       ).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
       await page.getByRole('button', { name: 'Settings', exact: true }).click();
       await expect(page.getByRole('button', { name: 'Import JSON', exact: true })).toBeVisible();
+      const choosingFile = page.waitForEvent('filechooser');
+      await page.getByRole('button', { name: 'Import JSON', exact: true }).click();
+      await (await choosingFile).setFiles([]);
       expect(errors).toEqual([]);
     });
   }
@@ -133,12 +137,13 @@ test('T58: Escape cancels a single-task picker without a zero-scheduled toast or
 }) => {
   await openCalendar(page);
   await page.getByRole('button', { name: 'Load sample week', exact: true }).click();
+  await page.clock.pauseAt(new Date('2026-11-02T09:00:00'));
   await showTasks(page);
   const row = page
     .getByRole('listitem')
     .filter({ has: page.getByText('Write report', { exact: true }) });
   await row.getByRole('button', { name: 'Find time', exact: true }).click();
-  const picker = page.getByRole('dialog', { name: /^Find time/ });
+  const picker = page.getByRole('dialog', { name: /^Find time/, includeHidden: true });
   await picker.press('Escape');
   await expect(picker).toHaveCount(0);
   await expect(page.getByText('Scheduled 0 of 1 task', { exact: true })).toHaveCount(0);

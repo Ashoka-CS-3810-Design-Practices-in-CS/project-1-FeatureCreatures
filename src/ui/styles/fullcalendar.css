@@ -285,6 +285,12 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* FullCalendar dims the whole day-top ancestor; restore it so out-of-month text stays readable. */
+.fc .fc-day-other .fc-daygrid-day-top {
+  opacity: 1;
+  color: var(--muted);
+}
+
 .fc .fc-day-today .fc-daygrid-day-number {
   color: var(--accent);
   font-weight: var(--weight-bold);
@@ -365,6 +371,10 @@
 
 /* A narrow block keeps its title/priority and compact icons; the full label remains on its button. */
 @container event-block (max-width: 7rem) {
+  .event-content {
+    row-gap: 0;
+    line-height: 1;
+  }
   .fc .fc-timegrid-event .fc-event-main {
     padding: calc(var(--space-1) / 2);
   }
@@ -383,6 +393,7 @@
   .event-content .tag {
     padding-inline: calc(var(--space-1) / 2);
     font-size: var(--text-xs);
+    line-height: 1;
   }
 
   .fc-timegrid-event .event-content .event-time ~ .tag {

@@ -10,12 +10,15 @@ import { App } from './App';
 // PRE: controls are mounted in one document; their sequence names the expected order
 // POST: asserts every consecutive pair follows that source/keyboard order
 function expectControlOrder(controls: HTMLElement[]): void {
-  // INVARIANT: every pair ending before index is in the required document order
-  for (let index = 1; index < controls.length; index += 1) {
-    expect(
-      (controls[index - 1]?.compareDocumentPosition(controls[index]!) ?? 0) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).not.toBe(0);
+  let previous: HTMLElement | undefined;
+  // INVARIANT: previous is the last visited control; all visited pairs follow the expected order
+  for (const control of controls) {
+    if (previous !== undefined) {
+      expect(previous.compareDocumentPosition(control) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(
+        0,
+      );
+    }
+    previous = control;
   }
   // POST: all consecutive controls follow the required source/keyboard order
 }
@@ -62,6 +65,7 @@ describe('T58: dialog and format polish (D-16)', () => {
     renderWithStore(<App />, store);
     expect(await screen.findByText('Mon 2 Nov 2026')).toBeInTheDocument();
     expect(screen.queryByText('November 2, 2026')).not.toBeInTheDocument();
+    expect(screen.getByText('15:00–16:00')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /Study, Mon 2 Nov 15:00–16:00/ }),
     ).toBeInTheDocument();
