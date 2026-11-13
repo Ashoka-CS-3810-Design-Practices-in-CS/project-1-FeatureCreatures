@@ -104,6 +104,23 @@ for (const theme of THEMES) {
       await capture(page, `replan-strategies-details-${theme}-${width}`);
     });
 
+    test(`appearance ${theme} ${width}`, async ({ page }) => {
+      await openApp(page, theme, width);
+      await loadSampleWeek(page);
+      await page.getByRole('button', { name: 'Settings', exact: true }).click();
+      const appearance = page.getByRole('region', { name: 'Appearance', exact: true });
+      await appearance.screenshot({
+        path: `${OUTPUT_DIR}/appearance-${theme}-${width}.png`,
+        animations: 'disabled',
+      });
+      await appearance.getByRole('radio', { name: 'Fern', exact: true }).check();
+      await page
+        .getByRole('dialog', { name: 'Settings', exact: true })
+        .getByRole('button', { name: 'Close', exact: true })
+        .click();
+      await capture(page, `accent-fern-${theme}-${width}`);
+    });
+
     test(`done tasks ${theme} ${width}`, async ({ page }) => {
       await openApp(page, theme, width);
       await createTask(page, 'Report', '2026-11-02T09:00', '2026-11-02T11:00');

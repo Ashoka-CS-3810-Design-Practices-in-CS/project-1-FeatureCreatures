@@ -121,7 +121,11 @@ describe('calendar handlers ↔ engine (T14, ER4, ER5)', () => {
         ))}
       </>,
     );
-    expect(screen.getAllByText('⚠ Conflict 30 min')).toHaveLength(2);
+    const warnings = screen.getAllByText('Conflict 30 min');
+    expect(warnings).toHaveLength(2);
+    warnings.forEach((warning) =>
+      expect(warning.parentElement).toHaveTextContent('⚠ Conflict 30 min'),
+    );
     expect(screen.getByText('[H]')).toBeInTheDocument();
     expect(screen.getByText('[M]')).toBeInTheDocument();
   });

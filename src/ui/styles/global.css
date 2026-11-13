@@ -362,7 +362,8 @@ th {
   padding: 0 calc(var(--space-1) * 1.5);
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
-  color: var(--muted);
+  background: var(--tag-bg);
+  color: var(--tag-muted);
   font-size: var(--text-xs);
   font-weight: var(--weight-bold);
   line-height: 1.5;
@@ -373,8 +374,14 @@ th {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-  background: var(--surface);
-  color: var(--text);
+  background: var(--tag-bg);
+  color: var(--tag-text);
+}
+
+.tag:has(> .ui-icon) {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
 }
 
 .category-dot {
@@ -382,6 +389,42 @@ th {
   width: var(--space-2);
   height: var(--space-2);
   flex-shrink: 0;
+  border-radius: var(--radius-pill);
+}
+
+.ui-icon {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
+  vertical-align: -0.125em;
+}
+
+.app-bar .ui-icon {
+  width: var(--space-5);
+  height: var(--space-5);
+}
+
+.accent-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.accent-options legend {
+  width: 100%;
+}
+
+.accent-options label {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.accent-swatch {
+  display: inline-block;
+  width: var(--space-4);
+  height: var(--space-4);
   border-radius: var(--radius-pill);
 }
 
@@ -466,8 +509,7 @@ dialog .category-editor input[type='color'] {
 
 .tag-barred {
   border-style: dashed;
-  border-color: var(--muted);
-  background: var(--barred);
+  border-color: var(--tag-muted);
 }
 
 /* ── Side panels ──────────────────────────────────────────────────────── */

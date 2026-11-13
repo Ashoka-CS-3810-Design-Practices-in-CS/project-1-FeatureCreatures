@@ -19,6 +19,7 @@ import { errorMessage } from './format/errors';
 import { eventCountText } from './format/explain';
 import { useShortcuts } from './hooks/useShortcuts';
 import { useTheme } from './hooks/useTheme';
+import { useAccent } from './hooks/useAccent';
 import { useNarrowLayout } from './hooks/useNarrowLayout';
 import { useAppStore } from './store/appStore';
 import { eventIsVisible, upcomingOverlaps } from './store/selectors';
@@ -57,7 +58,7 @@ function FatalScreen() {
 //       + additional props from: AppBar, Toolbar, EmptyState, CalendarView, SidePanel, BusyOverlay,
 //       EventDialog, TaskDialog, DoneBeforeDialog, ReplanDialog, SettingsDialog, ShortcutHelp, ConfirmDialog,
 //       SlotPicker, Toasts, FatalScreen
-// POST: applies the theme and listens for shortcuts (B3, B4); shows the loading line, the fatal
+// POST: applies theme/accent preferences and listens for shortcuts (B3, B4); shows the loading line, the fatal
 //       screen, or the app: the degraded-mode banner when storage is unavailable, the toolbar, the
 //       empty state on a blank calendar, the status line (events the priority filter shows, and
 //       how many it hides; upcoming conflicts count every event, with past counted separately, FR6/BR-19), the calendar, the task and conflict
@@ -67,7 +68,8 @@ export function App() {
   const narrow = useNarrowLayout();
   const drawerOpen = useAppStore((state) => state.panelsOpen);
   const setPanelsOpen = useAppStore((state) => state.actions.setPanelsOpen);
-  const { theme, cycleTheme } = useTheme();
+  const { theme, resolvedTheme, cycleTheme } = useTheme();
+  useAccent();
   useShortcuts(calendarRef);
   const status = useAppStore((state) => state.status);
   const storageWarning = useAppStore((state) => state.storageWarning);
@@ -96,7 +98,12 @@ export function App() {
           Storage unavailable: changes will be lost when you close this tab.
         </p>
       )}
-      <AppBar theme={theme} onCycleTheme={cycleTheme} narrow={narrow} />
+      <AppBar
+        theme={theme}
+        resolvedTheme={resolvedTheme}
+        onCycleTheme={cycleTheme}
+        narrow={narrow}
+      />
       <main>
         <section aria-label="Calendar" className="calendar-region">
           <Toolbar calendarRef={calendarRef} />

@@ -1526,6 +1526,8 @@ interface AppState {
   eventPriorityFilter: Priority[];             // calendar filter (FR6), default all
   hiddenCategoryIds: string[];                // calendar only; default [] shows new categories too
   calendarLocked: boolean;                   // initial events.length > 0; session only
+  theme: 'system' | 'light' | 'dark';         // UI preference, fc-theme
+  accent: AccentChoice;                     // curated id, fc-accent; default neutral
   lastCalendarView: 'timeGridDay' | 'timeGridWeek' | 'dayGridMonth';
   lastCategoryId: string | null;             // session choice; missing id falls back to first
   taskPanel: { sort: 'priority' | 'windowEnd'; priorities: Priority[]; status: 'open' | 'unscheduled' | 'scheduled' | 'done' | 'all';
@@ -1595,17 +1597,18 @@ WI-53 / D-10: Settings registers the native `Use working hours` switch. `useWatc
 | Component | Responsibility | Reads | Calls |
 |---|---|---|---|
 | `App` | Layout grid, empty state, banners, fatal screen, mounts dialogs/toasts, `useShortcuts`, `useTheme` | `status`, `dialog`, `picker` | — |
-| `Toolbar` | Navigation, view switch, priority filters, + Event/+ Task/Replan, labelled Undo/Redo, theme, `?` button labelled Keyboard shortcuts (opens the existing help), settings, drawer toggle (< 1024 px) | `view`, `snapshot.canUndo…`, dialog state | store actions |
+| `AppBar` | Brand, Undo/Redo, resolved theme icon, help, Settings, counted drawer triggers below 1280 | snapshot history/counts, theme/resolved theme, drawer state | history, theme toggle, dialogs/drawers |
+| `Toolbar` | Calendar navigation/title, Day/Week/Month, Calendar/List, priority/category filters/reset, lock and + Event | view, calendar lock/filters | view/filter/lock/dialog actions |
 | `CalendarView` | FullCalendar wrapper (§11.3) | `snapshot.events`, `conflicts`, `settings`, `eventPriorityFilter`, `emphasisIds` | `moveEvent`, open dialogs |
 | `EventContent` | Renders an event block: title, time, `[H]/[M]/[L]` tag, `Fixed`/`Task` tag, `⚠ Conflict N min` | props | — |
-| `TaskPanel` | Sort/filter controls, task rows with checkbox, status, *Find time*, context menu; "Find time for N selected" | `snapshot.tasks`, `taskPanel` | `openTaskPicker`, dialogs |
+| `TaskPanel` | Show/Sort/menu, + Task, compact priority/category/window/status rows and actions; conditional Find time (N) | `snapshot.tasks`, `taskPanel` | task/picker/dialog actions |
 | `ConflictPanel` | Upcoming and collapsed Past groups (first 50 + "and N more" in each), overlap/date/minutes and hidden-filter notes; only Upcoming offers Suggest alternatives; upcoming-empty text "No conflicts" | `snapshot.conflicts`, `events`, `currentMinute` | `openAlternatives` |
 | `EventDialog` | RHF form with `eventResolver`, shared priority radios and CategorySelect/inline creation; new events Fixed independent of category; full-width flex-window group below End, delete with confirm | `dialog`, event | `createEvent/updateEvent/deleteEvent` |
 | `TaskDialog` | RHF form with `taskResolver`; shared priority radios; Controller maps Working hours only / Any time to boolean useWorkingHours; Find time / Unschedule / Delete in edit mode | task | task actions |
 | `PriorityRadioGroup` | Native radios in a Priority fieldset; [H]/[M]/[L] tags use existing priority tokens; browser provides arrow-key navigation | RHF registration | registration callbacks |
 | `SlotPicker` | Both picker modes (Figure 2), summary line, options as a radio group, ER2/ER3 blocks with suggestions + "Edit task" | `picker` | picker actions |
 | `ReplanDialog` | Range (date inputs, default `view.activeRange` when it is at most 14 days, else the first full Monday–Sunday week from `view.date` (Month, AUDIT A10), or the week of `view.date` before the first `datesSet`), inputs that drop computed plans when edited (A08), buffer override, Compute, two plan cards (metrics + moves + unplaced), Apply | engine via action | `planReplan`, `applyReplan` |
-| `SettingsDialog` | Four sections: Working time, Scheduling defaults, Categories and Data; barred editing lives in BarredSlotsPanel | `snapshot.settings` | `updateSettings`, `importData` |
+| `SettingsDialog` | Working time, Scheduling defaults, Categories, Appearance and Data; barred editing lives in BarredSlotsPanel | `snapshot.settings`, theme/accent | `updateSettings`, `importData`, `setTheme`, `setAccent` |
 | `ConfirmDialog`, `ShortcutHelp`, `Toasts`, `Modal`, `EmptyState` | as named; `Toasts` is the ARIA live region; `Modal` wraps native `<dialog>` + `showModal()` and, wraps Tab/Shift+Tab at the first/last enabled visible control (skipping closed-menu controls), and when `dismissible`, renders a last-in-DOM `.dialog-close` × button (`aria-label="Close"`, calls `onClose` like Cancel/Esc; CSS puts it top-right; WI-45). `ShortcutHelp` relies on it instead of its own Close button | | |
 
 WI-55 / D-15: `computeReplan(range, bufferMin, strategy?)` forwards the validated strategy. ReplanForm keeps default Balanced and Details=false in per-dialog state; changing dates, strategy or Buffer invalidates plans. `.replan-inputs` puts From/To/Strategy/Compute on one row at all desktop widths. PlanCard shows the move/conflict headline; `ReplanMoves` groups destination-day rows with title, shared `PRIORITY_TAGS`, CategoryTag, compact start movement and reason chips. Details adds existing exact metrics and `moveText` explanations. `combinedNotMoved` unions diagnostics by event id, retains affected plan names and deduplicates barred/conflict labels. `NotMovedList` appears once below both cards, collapsed, with a reason chip and one alternatives action per event; an issue affecting just one plan names it. Details adds full problem text. Zero-move cards still count their own remaining entries, and diagnostics appear even with zero movable events. Existing `openEventAlternatives` and stale-result recomputation are retained. Shared priority tag labels replace the identical local mappings in EventContent and TaskPanel. Per-plan engine diagnostics and apply ids remain unchanged.
@@ -1681,12 +1684,14 @@ FullCalendar is a **controlled, render-only view**. Its `events` prop is always 
 
 ### 11.4 Theming (`styles/tokens.css`)
 
-Every colour lives in `tokens.css`; the two themes differ only there. Light is a warm "paper notebook", dark a "night desk"; Fern / Mint is the single accent (WI-34 design plan in `PROGRESS.md`). Washes and shadows are derived from these tokens with `color-mix`, inside `tokens.css`, so they follow the theme without repeating it.
+Every colour lives in `tokens.css`; the two themes differ only there. Light is a warm "paper notebook", dark a "night desk". Neutral is the default accent (D-13); seven alternatives each have a theme-specific token. Washes and shadows derive from these tokens with `color-mix`.
 
 ```css
 :root {
   --bg:#fcfbf8; --surface:#f4f1ea; --text:#22201c; --muted:#5f5a52; --border:#e4dfd5;
-  --accent:#1f6b52; --on-accent:#ffffff; --focus:#1f6b52;
+  --accent:#363631; --on-accent:#ffffff; --focus:#363631;
+  --event-fill:#363631; --event-text:#fcfbf8; --event-muted:#d9d6cf;
+  --tag-bg:#f4f1ea; --tag-text:#22201c; --tag-muted:#5f5a52;
   --danger:#b3302a; --warning:#9a5a06; --success:#2f7a4a;
   --prio-high:#b0281f; --prio-high-bg:#fbe9e4; --prio-medium:#8f5506; --prio-medium-bg:#fbefd6;
   --prio-low:#395883; --prio-low-bg:#e6edf6; --barred:#ece7dd; --nonwork:#f1ede5;
@@ -1696,7 +1701,9 @@ Every colour lives in `tokens.css`; the two themes differ only there. Light is a
 }
 :root[data-theme="dark"] {
   --bg:#151614; --surface:#1c1e1b; --text:#ebece8; --muted:#a6aba3; --border:#30332e;
-  --accent:#7fd3ab; --on-accent:#0f1411; --focus:#7fd3ab;
+  --accent:#ebe6d9; --on-accent:#22201c; --focus:#ebe6d9;
+  --event-fill:#ebe6d9; --event-text:#22201c; --event-muted:#5f5a52;
+  --tag-bg:#1c1e1b; --tag-text:#ebece8; --tag-muted:#a6aba3;
   --danger:#ff8076; --warning:#f0b356; --success:#74cf98;
   --prio-high:#ff978c; --prio-high-bg:#3b1f1c; --prio-medium:#f0b356; --prio-medium-bg:#372a14;
   --prio-low:#9cb9e8; --prio-low-bg:#1f2a3b; --barred:#262924; --nonwork:#1c1e1b;
@@ -1719,14 +1726,25 @@ No web font is loaded: the system stack needs no dependency, causes no font flas
 **Event and slot styles.**
 - `App.module.css` scopes the application layout (the header is a grid of the title and the toolbar's period / controls / utilities groups). `global.css` shares control, tag, panel, dialog and toast rules; `fullcalendar.css` overrides FullCalendar's injected styles. `main.tsx` imports the three global stylesheets in tokens → controls → calendar order.
 - The accent is used only for primary actions (`button.primary`, submit buttons: + Event, + Task, Save, Apply, Load sample week), the selected view, today's column and header, the now line and focus rings. `--on-accent` is the text over it.
-- An event block has `background: var(--prio-X-bg)`, a `var(--edge)` inset left edge in `var(--prio-X)` and `color: var(--text)`; in the time grid its title leads, then the time and tags, with the conflict and barred tags first.
+- Every event uses `--event-fill` and `--event-text`, independent of priority, in time grid, Month and List. Time uses `--event-muted`; past events use that muted ink and regular title weight without changing fill or tag colours. Priority/category/state tags have their own backgrounds, so their contrast is independent of the event surface. At a time-grid container width <=7rem, text details/category/time are hidden, title/priority precede compact state/warning icons, and the button's full accessible name/tooltip remains. Task rows reuse coloured priority/category tags without a ribbon.
 - `.is-conflict` adds `outline: 2px dashed var(--danger)` and `outline-offset: -2px`.
 - `.barred` uses a 45° repeating-linear-gradient hatch over `var(--barred)`.
 - The week header (the one bold element) is left-aligned: a small muted weekday over a `--text-xl` date numeral; today's numeral is the accent and sits on a 3 px accent bar. Side-column rows are hairline-separated with a short rounded state edge, not boxed cards; only dialogs and toasts float, each with its own radius and shadow.
 
-**Theme toggle.** `useTheme` cycles `system → light → dark`:
-- It sets `document.documentElement.dataset.theme`. For `system`, it deletes the attribute.
-- It persists the choice to `localStorage['fc-theme']`, inside `try/catch`.
+**Appearance preferences (D-13).** AppState holds `theme` and `accent`; `setTheme`/`setAccent` store UI choices through the guarded preference helper, without a domain mutation or history entry. `hooks/appearance.ts` reads only valid choices, defaulting to System/Neutral. `useTheme` applies `data-theme` (absent under System), resolves OS dark mode through shared `useMediaQuery`, and returns a toggle to the opposite resolved Light/Dark theme. AppBar uses a labelled sun/moon SVG; its existing Theme accessible name format remains. `useAccent` applies `data-accent`; CSS selects the theme's `--accent-ID` for accent/focus. System remains available in Settings → Appearance. Keys are `fc-theme` and `fc-accent`; neither preference enters Settings, IndexedDB or exports.
+
+| Accent id | Light | Dark |
+|---|---|---|
+| neutral | #363631 | #ebe6d9 |
+| fern | #1f6b52 | #7fd3ab |
+| teal | #17696e | #7acdd2 |
+| cyan | #006c87 | #74c5e1 |
+| indigo | #5852a1 | #b9aff7 |
+| violet | #7850a1 | #d0adf0 |
+| rose | #944a7b | #e5aad0 |
+| olive | #5b682b | #bfce7c |
+
+`ACCENT_OPTIONS` freezes the eight ids/labels. Every non-neutral variant stays at least `MIN_CATEGORY_COLOUR_DISTANCE` from `RESERVED_COLOURS`; on-accent text, accent text on page/panels and all tag/event pairs are contrast-tested in both themes. Neutral intentionally shares the reserved event fill. Existing non-working/past/now-guide shading checks remain.
 
 ### 11.5 Shortcuts (`hooks/useShortcuts.ts`)
 
@@ -2039,3 +2057,4 @@ Production URL: https://…vercel.app
 | 2026-11-13 | v1.55 (WI-56 browser/focus checkpoint): browser helpers expose the correct Tasks/Planning drawer before moved actions; existing D-14 selectors/counts retain assertions. Modal explicitly wraps boundary Tab within enabled visible controls (including closed-details exclusion), confirmed red then green; the prior browser focus-containment assertion is retained. D-21 Figure 1/2 use aligned allowed-character diagrams. |
 | 2026-11-13 | v1.56 (WI-56 layout review): TaskPanel DOM follows the visible Show, Sort by, menu order for keyboard and reading order. Native dialogs reset their scroll offset on opening so the title stays visible after browser initial focus. Both regressions fail first and then pass. |
 | 2026-11-13 | WI-56 compact-row review: TaskRow uses both window dates with fmtRange as its tooltip; its action row spans both grid columns and removes obsolete ribbon indentation. T56 first fails for the missing window start and a wrapped Edit button, then checks all three actions align. |
+| 2026-11-14 | v1.57 (WI-57 D-12/D-13): neutral event/tag and curated accent tokens, AppState UI preferences/setters, shared live media-query subscription, resolved theme SVG and Appearance controls. CSS container compaction keeps full button names/tooltips. Old T32 cycle and T47 heading expectations follow D-13; T14 keeps both exact warning texts after icon/text wrapping. |

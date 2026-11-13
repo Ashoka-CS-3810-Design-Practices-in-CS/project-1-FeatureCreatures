@@ -1,4 +1,5 @@
 import { FIXED_TAG_HINT } from '../../format/explain';
+import { Icon } from '../Icon/Icon';
 
 // PRE:  descriptionId is a document-unique id; whatever the tag sits in may point its
 //       aria-describedby at it
@@ -8,7 +9,8 @@ export function FixedTag({ descriptionId }: { descriptionId: string }) {
   return (
     <>
       <span className="tag" title={FIXED_TAG_HINT} aria-describedby={descriptionId}>
-        Fixed
+        <Icon name="fixed" />
+        <span className="tag-text">Fixed</span>
       </span>
       <span id={descriptionId} hidden>
         {FIXED_TAG_HINT}

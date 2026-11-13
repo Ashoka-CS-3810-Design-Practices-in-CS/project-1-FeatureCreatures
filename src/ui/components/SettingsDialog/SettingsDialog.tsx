@@ -15,6 +15,7 @@ import { ErrorText } from '../Modal/ErrorText';
 import { Modal } from '../Modal/Modal';
 import { CategoriesSection } from '../Categories/CategoriesSection';
 import { WeekdayCheckboxes } from '../WeekdayCheckboxes/WeekdayCheckboxes';
+import { AppearanceSection } from './AppearanceSection';
 
 const SAMPLE_IDS = Object.keys(SAMPLES) as SampleId[];
 const DEFAULT_SAMPLE: SampleId = 'sparseWeek';
@@ -246,7 +247,7 @@ function DataSection() {
 }
 
 // PRE:  rendered under StoreProvider; reads dialog and snapshot.settings; uses actions.closeDialog
-//       + additional props from: SettingsForm, CategoriesSection, DataSection
+//       + additional props from: SettingsForm, CategoriesSection, AppearanceSection, DataSection
 // POST: while the settings dialog is open, shows the settings form (fresh from the current
 //       settings each time it opens) and the Data section (FR11, B2)
 export function SettingsDialog() {
@@ -261,6 +262,7 @@ export function SettingsDialog() {
     <Modal open title="Settings" className="settings-dialog" onClose={closeDialog}>
       <SettingsForm settings={settings} />
       <CategoriesSection />
+      <AppearanceSection />
       <DataSection />
     </Modal>
   );

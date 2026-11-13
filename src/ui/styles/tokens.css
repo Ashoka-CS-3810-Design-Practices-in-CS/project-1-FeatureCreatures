@@ -1,6 +1,6 @@
 /* Design tokens (TECH_SPEC §11.4, PROJECT_SCHEMA §7.5). Every colour in the UI comes from here, so
    the two themes differ only in this file. tokens.test.ts checks the text pairs reach 4.5:1.
-   Light is a "paper notebook" (warm neutrals), dark a "night desk"; Fern / Mint is the one accent. */
+   Light is a "paper notebook" (warm neutrals), dark a "night desk"; neutral is the default accent. */
 
 :root {
   color-scheme: light;
@@ -9,12 +9,26 @@
   --text: #22201c;
   --muted: #5f5a52;
   --border: #e4dfd5;
-  --accent: #1f6b52;
+  --accent: #363631;
   --on-accent: #ffffff;
+  --accent-neutral: #363631;
+  --accent-fern: #1f6b52;
+  --accent-teal: #17696e;
+  --accent-cyan: #006c87;
+  --accent-indigo: #5852a1;
+  --accent-violet: #7850a1;
+  --accent-rose: #944a7b;
+  --accent-olive: #5b682b;
+  --event-fill: #363631;
+  --event-text: #fcfbf8;
+  --event-muted: #d9d6cf;
+  --tag-bg: #f4f1ea;
+  --tag-text: #22201c;
+  --tag-muted: #5f5a52;
   --danger: #b3302a;
   --warning: #9a5a06;
   --success: #2f7a4a;
-  --focus: #1f6b52;
+  --focus: #363631;
   --prio-high: #b0281f;
   --prio-high-bg: #fbe9e4;
   --prio-medium: #8f5506;
@@ -87,12 +101,26 @@
   --text: #ebece8;
   --muted: #a6aba3;
   --border: #30332e;
-  --accent: #7fd3ab;
-  --on-accent: #0f1411;
+  --accent: #ebe6d9;
+  --on-accent: #22201c;
+  --accent-neutral: #ebe6d9;
+  --accent-fern: #7fd3ab;
+  --accent-teal: #7acdd2;
+  --accent-cyan: #74c5e1;
+  --accent-indigo: #b9aff7;
+  --accent-violet: #d0adf0;
+  --accent-rose: #e5aad0;
+  --accent-olive: #bfce7c;
+  --event-fill: #ebe6d9;
+  --event-text: #22201c;
+  --event-muted: #5f5a52;
+  --tag-bg: #1c1e1b;
+  --tag-text: #ebece8;
+  --tag-muted: #a6aba3;
   --danger: #ff8076;
   --warning: #f0b356;
   --success: #74cf98;
-  --focus: #7fd3ab;
+  --focus: #ebe6d9;
   --prio-high: #ff978c;
   --prio-high-bg: #3b1f1c;
   --prio-medium: #f0b356;
@@ -121,12 +149,26 @@
     --text: #ebece8;
     --muted: #a6aba3;
     --border: #30332e;
-    --accent: #7fd3ab;
-    --on-accent: #0f1411;
+    --accent: #ebe6d9;
+    --on-accent: #22201c;
+    --accent-neutral: #ebe6d9;
+    --accent-fern: #7fd3ab;
+    --accent-teal: #7acdd2;
+    --accent-cyan: #74c5e1;
+    --accent-indigo: #b9aff7;
+    --accent-violet: #d0adf0;
+    --accent-rose: #e5aad0;
+    --accent-olive: #bfce7c;
+    --event-fill: #ebe6d9;
+    --event-text: #22201c;
+    --event-muted: #5f5a52;
+    --tag-bg: #1c1e1b;
+    --tag-text: #ebece8;
+    --tag-muted: #a6aba3;
     --danger: #ff8076;
     --warning: #f0b356;
     --success: #74cf98;
-    --focus: #7fd3ab;
+    --focus: #ebe6d9;
     --prio-high: #ff978c;
     --prio-high-bg: #3b1f1c;
     --prio-medium: #f0b356;
@@ -143,4 +185,39 @@
     --backdrop: rgb(0 0 0 / 55%);
     --shadow: rgb(0 0 0 / 50%);
   }
+}
+
+:root[data-accent='fern'] {
+  --accent: var(--accent-fern);
+  --focus: var(--accent-fern);
+}
+
+:root[data-accent='teal'] {
+  --accent: var(--accent-teal);
+  --focus: var(--accent-teal);
+}
+
+:root[data-accent='cyan'] {
+  --accent: var(--accent-cyan);
+  --focus: var(--accent-cyan);
+}
+
+:root[data-accent='indigo'] {
+  --accent: var(--accent-indigo);
+  --focus: var(--accent-indigo);
+}
+
+:root[data-accent='violet'] {
+  --accent: var(--accent-violet);
+  --focus: var(--accent-violet);
+}
+
+:root[data-accent='rose'] {
+  --accent: var(--accent-rose);
+  --focus: var(--accent-rose);
+}
+
+:root[data-accent='olive'] {
+  --accent: var(--accent-olive);
+  --focus: var(--accent-olive);
 }

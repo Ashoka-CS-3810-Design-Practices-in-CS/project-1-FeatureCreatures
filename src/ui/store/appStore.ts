@@ -80,6 +80,15 @@ import type { PickerState } from './pickerSlice';
 import { withoutToast, type Toast } from './toastSlice';
 import { upcomingOverlaps } from './selectors';
 import { unkeptBarredOverlaps } from '@/shared/barredSlots';
+import {
+  ACCENT_KEY,
+  THEME_KEY,
+  storedAccent,
+  storedTheme,
+  type AccentChoice,
+  type ThemeChoice,
+} from '../hooks/appearance';
+import { writePreference } from '../hooks/preferences';
 
 export type ViewType = 'timeGridDay' | 'timeGridWeek' | 'dayGridMonth' | 'listWeek';
 export type CalendarViewType = Exclude<ViewType, 'listWeek'>;
@@ -127,6 +136,8 @@ export interface AppActions {
   setActiveRange(range: Interval): void;
   setView(type: ViewType, date: Minute): void;
   toggleCalendarLock(): void;
+  setTheme(theme: ThemeChoice): void;
+  setAccent(accent: AccentChoice): void;
   toggleEventPriority(priority: Priority): void;
   toggleEventCategory(id: string): void;
   showAllEventPriorities(): void;
@@ -190,6 +201,8 @@ export interface AppState {
   view: { type: ViewType; date: Minute; activeRange: Interval | null };
   lastCalendarView: CalendarViewType;
   calendarLocked: boolean;
+  theme: ThemeChoice;
+  accent: AccentChoice;
   eventPriorityFilter: Priority[];
   hiddenCategoryIds: string[];
   lastCategoryId: string | null;
@@ -782,6 +795,20 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
         set({ calendarLocked: !get().calendarLocked });
       },
 
+      // PRE: theme is System, Light or Dark
+      // POST: remembers the UI choice when storage permits; domain/history unchanged
+      setTheme(theme) {
+        writePreference(THEME_KEY, theme);
+        set({ theme });
+      },
+
+      // PRE: accent is one of the curated accent ids
+      // POST: remembers the UI choice when storage permits; domain/history unchanged
+      setAccent(accent) {
+        writePreference(ACCENT_KEY, accent);
+        set({ accent });
+      },
+
       // PRE:  priority is a priority
       // POST: the calendar's priority filter (FR6) shows priority if it was hidden, and hides it if
       //       it was shown; the filter keeps the order high, medium, low
@@ -1276,6 +1303,8 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
           ? options.initialView
           : (options.initialCalendarView ?? 'timeGridWeek'),
       calendarLocked: (options.init.ok ? options.init.value : engine.snapshot()).events.length > 0,
+      theme: storedTheme(),
+      accent: storedAccent(),
       eventPriorityFilter: [...ALL_PRIORITIES],
       hiddenCategoryIds: [],
       lastCategoryId: null,
