@@ -31,7 +31,7 @@ describe('toFullCalendar', () => {
       }),
     ]);
 
-    const [first, second, third] = toFullCalendar(snapshot, ALL, null, ['C']);
+    const [first, second, third] = toFullCalendar(snapshot, ALL, null, ['C'], t('Mon 08:00'));
 
     expect(first).toMatchObject({
       id: 'A',
@@ -53,14 +53,16 @@ describe('toFullCalendar', () => {
       ev('M', 'Mon 12:00', 'Mon 13:00'),
     ]);
 
-    expect(toFullCalendar(snapshot, ['high'], null, []).map((entry) => entry.id)).toEqual(['H']);
+    expect(
+      toFullCalendar(snapshot, ['high'], null, [], t('Mon 08:00')).map((entry) => entry.id),
+    ).toEqual(['H']);
   });
 
   it('adds a labelled background block per barred slot per visible day', () => {
     const lunch: BarredSlot = { id: 'l', label: 'Lunch', startMin: 780, endMin: 840, days: [1, 2] };
     const snapshot = snapshotOf([], settings({ barredSlots: [lunch] }));
 
-    const entries = toFullCalendar(snapshot, ALL, iv('Mon 00:00', 'Wed 00:00'), []);
+    const entries = toFullCalendar(snapshot, ALL, iv('Mon 00:00', 'Wed 00:00'), [], t('Mon 08:00'));
 
     expect(
       entries.map(({ title, display, classNames }) => ({ title, display, classNames })),

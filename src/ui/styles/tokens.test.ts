@@ -28,6 +28,8 @@ const TEXT_PAIRS: [string, string][] = [
   ['past-text', 'past-bg'],
   ['past-text', 'bg'],
   ['past-text', 'surface'],
+  ['muted', 'past-bg'],
+  ['danger', 'past-bg'],
   ['text', 'bg'],
   ['text', 'surface'], // panels and toasts
   ['text', 'prio-high-bg'], // event text on each priority background

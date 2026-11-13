@@ -1,7 +1,7 @@
 // The UI's single store (TECH_SPEC §11.1, zustand). It holds the engine's latest Snapshot (the only
 // copy of domain data in the UI) plus view state, and turns engine results into toasts.
 
-import { createContext, createElement, useContext, type ReactNode } from 'react';
+import { createContext, createElement, useContext, useEffect, type ReactNode } from 'react';
 import { useStore } from 'zustand';
 import { createStore, type StoreApi } from 'zustand/vanilla';
 import { SAMPLES, type SampleId } from '@/data/samples';
@@ -14,6 +14,7 @@ import {
   DEFAULT_CATEGORIES,
   IMPORT_SPINNER_THRESHOLD,
   FIXED_ALTERNATIVE_RANGE_DAYS,
+  MS_PER_MINUTE,
 } from '@/shared/constants';
 import type { EngineError } from '@/shared/errors';
 import type { Result } from '@/shared/result';
@@ -75,6 +76,7 @@ import {
 } from '../format/explain';
 import type { PickerState } from './pickerSlice';
 import { withoutToast, type Toast } from './toastSlice';
+import { upcomingOverlaps } from './selectors';
 
 export type ViewType = 'timeGridDay' | 'timeGridWeek' | 'dayGridMonth' | 'listWeek';
 export type CalendarViewType = Exclude<ViewType, 'listWeek'>;
@@ -99,6 +101,7 @@ export type Dialog =
     };
 
 export interface AppActions {
+  refreshCurrentMinute(): void;
   dismissToast(id: string): void;
   pushToast(toast: Omit<Toast, 'id'>): string;
   openDialog(dialog: Exclude<Dialog, null>): void;
@@ -156,6 +159,7 @@ export interface AppActions {
 }
 
 export interface AppState {
+  currentMinute: Minute;
   status: 'loading' | 'ready' | 'fatal';
   fatalError: EngineError | null;
   storageWarning: boolean;
@@ -214,15 +218,16 @@ function barredOverlapKey(overlap: BarredOverlap): string {
   ]);
 }
 
-// PRE:  before/after are warning lists from successive settings snapshots
-// POST: returns the count of distinct event IDs in records introduced by the settings save
+// PRE:  before/after are warning lists from successive settings snapshots; now is raw current time
+// POST: counts distinct events with newly introduced future or ongoing warnings (D-08)
 function newlyWarnedEventCount(
   before: readonly BarredOverlap[],
   after: readonly BarredOverlap[],
+  now: Minute,
 ): number {
   const previous = new Set(before.map(barredOverlapKey));
   return new Set(
-    after
+    upcomingOverlaps(after, now)
       .filter((warning) => !previous.has(barredOverlapKey(warning)))
       .map((warning) => warning.eventId),
   ).size;
@@ -569,6 +574,12 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
     }
 
     const actions: AppActions = {
+      // PRE:  options.now returns the current integer Minute
+      // POST: refreshes presentation time only; domain data, storage and history are unchanged
+      refreshCurrentMinute() {
+        const currentMinute = options.now();
+        if (currentMinute !== get().currentMinute) set({ currentMinute });
+      },
       // PRE:  open is the desired drawer state
       // POST: the panels drawer state is open
       setPanelsOpen(open) {
@@ -1066,7 +1077,7 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
         }
         set({ snapshot: result.value });
         pushToast({ tone: 'success', text: SETTINGS_SAVED_TEXT });
-        const count = newlyWarnedEventCount(previous, result.value.barredOverlaps);
+        const count = newlyWarnedEventCount(previous, result.value.barredOverlaps, options.now());
         if (count > 0) {
           pushToast({
             tone: 'info',
@@ -1163,6 +1174,7 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
 
     const now = options.now();
     return {
+      currentMinute: now,
       status: options.init.ok ? 'ready' : 'fatal',
       fatalError: options.init.ok ? null : options.init.error,
       storageWarning: options.storageWarning,
@@ -1197,8 +1209,21 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
 const StoreContext = createContext<AppStore | null>(null);
 
 // PRE:  store comes from createAppStore; children are React nodes
-// POST: makes store available to useAppStore in children
+// POST: makes store available to children; refreshes presentation time each minute and on return
+//       to the page, removing timers/listeners on unmount (including StrictMode remounts)
 export function StoreProvider({ store, children }: { store: AppStore; children: ReactNode }) {
+  useEffect(() => {
+    const refresh = store.getState().actions.refreshCurrentMinute;
+    refresh();
+    const timer = setInterval(refresh, MS_PER_MINUTE);
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refresh);
+    };
+  }, [store]);
   return createElement(StoreContext.Provider, { value: store }, children);
 }
 

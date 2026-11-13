@@ -23,6 +23,7 @@ A browser-based week planner that detects every scheduling conflict, finds free 
 - **Conflict detection.** Every pair of overlapping events is found automatically after each change.
   - Each conflict shows which events overlap, the exact overlap (e.g. 11:00–11:30) and its length in minutes.
   - Back-to-back events do not count as conflicts.
+  - Upcoming conflicts drive the count; **Past** starts collapsed and keeps read-only overlap details. Ended events and past days are muted, while each day has a faint current-time guide. Counts and warnings refresh as time passes.
 - **Conflict resolution.** _Suggest alternatives_ proposes free slots for the event that is better to move, closest to its original time first.
   - Fixed events require **Allow moving this event** and a temporary date range; applying an option keeps the event Fixed.
 - **Calendar lock.** Lock the timeline to browse and drag the time grid to pan without changing events. **K** toggles it; event dialogs, + Event and deliberate Apply actions remain available. Existing calendars start locked on reload. Unlocked fixed moves/resizes ask for the proposed destination or duration.
@@ -34,7 +35,7 @@ A browser-based week planner that detects every scheduling conflict, finds free 
 - **Replan.** For a chosen week, the app proposes two rearrangements of your flexible events: _Minimal change_ and _Balanced week_.
   - Each plan lists every move with a reason, plus before/after metrics. Apply one or neither.
   - Unresolved future or ongoing problems Replan won't move are listed with the reason. Entirely past problem overlaps are omitted; Already started describes a currently running event.
-- **Your rules.** Working days and hours, a buffer between events, and barred slots such as lunch. Events sitting inside a barred slot are flagged separately from conflicts.
+- **Your rules.** Working days and hours, a buffer between events, and barred slots such as lunch. Ongoing/future barred overlaps are flagged separately from conflicts; past overlaps have no tag, row or settings warning.
 - **Comfort features.** Undo/redo, JSON export/import, six built-in sample calendars, light and dark themes, keyboard shortcuts (press **?**), and screen-reader and keyboard support.
 
 Nothing changes without your say-so: suggestions and plans are previews until you click **Apply**.

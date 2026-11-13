@@ -1480,6 +1480,7 @@ Compared with A1–A3:
 
 ```ts
 interface AppState {
+  currentMinute: Minute;                     // presentation clock; no domain/repository write
   status: 'loading' | 'ready' | 'fatal';
   fatalError: EngineError | null;
   storageWarning: boolean;
@@ -1549,6 +1550,8 @@ All sample loads and imports with more than `IMPORT_SPINNER_THRESHOLD` events pl
 
 ### 11.2 Components
 
+**Presentation clock (WI-52, D-08).** `currentMinute` starts at `AppStoreOptions.now()`. `actions.refreshCurrentMinute()` changes only that UI field when needed. StoreProvider refreshes immediately, once per `MS_PER_MINUTE`, and on window focus/document visibilitychange; cleanup removes the timer/listeners, including StrictMode remounts. Shared `upcomingOverlaps(records, now)` preserves ordered records with `overlap.end > now`; App status, both panels and event barred tags use it. Settings feedback also excludes entirely past newly introduced tuples. ConflictList keeps the upcoming accessible name `Conflict list`; expanded history is `Past conflict list` with no actions. Limits/remainder counts apply separately to each group. Snapshot detection, history, version and metrics remain unchanged.
+
 | Component | Responsibility | Reads | Calls |
 |---|---|---|---|
 | `App` | Layout grid, empty state, banners, fatal screen, mounts dialogs/toasts, `useShortcuts`, `useTheme` | `status`, `dialog`, `picker` | — |
@@ -1579,7 +1582,9 @@ The alternatives picker stores `allowMoving = false` and a temporary `range`; `F
 
 WI-49: shared CategoryEditor/CategorySelect/CategoryTag components serve Settings and both item dialogs. The editor is an inline fieldset with type=button actions so it never submits the enclosing item form. Unavailable swatches stay visible but disabled; free-picker/name errors use shared validators and field descriptions. New item forms resolve `lastCategoryId` when it exists, otherwise the first current id or empty; item save requires a category. Selection remembers the id for this store session only. `eventFormValues` defaults flexible=false; there is no `flexibleByDefault`.
 
-`toFullCalendar(snapshot, priorityFilter, activeRange, emphasisIds, hiddenCategoryIds = [])` resolves current Category records by id for tags and appends the name to the accessible label/tooltip. Category chips sit beside H/M/L. Both filters apply to calendar rendering and status counts; ConflictPanel's hidden note uses both, while detection/searches/tasks remain independent. Show all and Reset filters clear both. With categories hidden, empty List says "All events in this range are hidden by the calendar filters"; the priority-only wording remains for priority-only filtering. Categories created later are visible automatically.
+`toFullCalendar(snapshot, priorityFilter, activeRange, emphasisIds, now, hiddenCategoryIds = [])` resolves current Category records by id for tags and appends the name to the accessible label/tooltip. Category chips sit beside H/M/L. Both filters apply to calendar rendering and status counts; ConflictPanel's hidden note uses both, while detection/searches/tasks remain independent. Show all and Reset filters clear both. With categories hidden, empty List says "All events in this range are hidden by the calendar filters"; the priority-only wording remains for priority-only filtering. Categories created later are visible automatically.
+
+WI-52 adds `is-past` for events whose end ≤ raw now, and omits barred labels whose overlap ends ≤ now. Snapshot conflicts/barred overlaps retain history. CalendarView passes currentMinute as FullCalendar's `now` and appends decorative `nowGuideEntries(activeRange, now)`: one background event at that local wall-clock time in each visible day. Local-day conversions preserve DST semantics. The faint one-pixel dashed guides are hidden in Month; FullCalendar retains today's stronger two-pixel line. Past days/events use neutral `past-bg`, `past-text`, `past-edge` tokens, with text ≥ 4.5:1 and guide/edge ≥ 3:1 in both themes; opacity is not reduced.
 
 FullCalendar is a **controlled, render-only view**. Its `events` prop is always derived from `snapshot`, and it is never the source of truth.
 
@@ -1975,3 +1980,4 @@ Production URL: https://…vercel.app
 | 2026-11-13 | v1.41 (WI-51 generator checkpoint): §8.10 shares optionAt/rankCandidates, retaining rankOptions' one-per-gap/MAX_OPTIONS Replan contract; §8.10a freezes pure generateCandidates over one fitting gap with SUGGESTION_STEP_MIN = 30. Five unit cases and an independent minute-oracle property cover D-06 generation. Picker integration and final BR-7/result/UI documentation remain in progress. |
 | 2026-11-13 | v1.42 (WI-51, D-06): SlotSearchResult.options contains every ranked picker candidate; §7.5 wires generation, §8.10a/§10 document contracts/cost, and §11.2 documents shared named picks/day chips/native radio selection and hidden Details. Replan's rankOptions/MAX_OPTIONS and assertions remain unchanged. |
 | 2026-11-13 | v1.43 (WI-52 engine checkpoint, D-08): Replan pipeline receives raw now and computes the unchanged rounded placement cutoff internally. diagnoseReplan's fourth Minute argument means raw now; past problem overlaps are excluded and started means currently running. T52 raw-clock boundary regressions pass; UI grouping/clock/styling remains in progress. |
+| 2026-11-13 | v1.44 (WI-52, D-08): currentMinute/refreshCurrentMinute and provider timer/focus/visibility lifecycle; upcomingOverlaps shared by panels/status/tags/toast; toFullCalendar takes raw now and marks ended events; local-day nowGuideEntries and tested past/guide tokens. Snapshot/repository/metric contracts remain unchanged. |

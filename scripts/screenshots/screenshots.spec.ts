@@ -23,10 +23,10 @@ type Theme = (typeof THEMES)[number];
 // PRE:  page has a fresh browser context; theme is the OS colour scheme to emulate; width > 0
 // POST: opens the empty calendar in the base week at that width, with the "System" theme following
 //       theme and motion reduced so captures are stable
-async function openApp(page: Page, theme: Theme, width: number): Promise<void> {
+async function openApp(page: Page, theme: Theme, width: number, now = CLOCK_TIME): Promise<void> {
   await page.setViewportSize({ width, height: VIEWPORT_HEIGHT });
   await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
-  await page.clock.install({ time: CLOCK_TIME });
+  await page.clock.install({ time: now });
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Week of 2 Nov 2026' })).toBeVisible();
 }
@@ -50,6 +50,22 @@ async function capture(page: Page, name: string): Promise<void> {
 for (const theme of THEMES) {
   // INVARIANT: a week capture is registered for every width visited so far, in this theme
   for (const width of WEEK_WIDTHS) {
+    test(`past time ${theme} ${width}`, async ({ page }) => {
+      await openApp(page, theme, width, new Date('2026-11-04T13:30:00'));
+      await createEvent(page, 'Past lecture', '2026-11-02T09:00', '2026-11-02T10:00');
+      await createEvent(page, 'Past meeting', '2026-11-02T09:30', '2026-11-02T10:00');
+      await createEvent(page, 'Running seminar', '2026-11-04T13:00', '2026-11-04T14:00');
+      await createEvent(page, 'Current review', '2026-11-04T13:15', '2026-11-04T14:30');
+      await addLunchBarredSlot(page);
+      await expect(
+        page.getByText('4 events · 0 tasks · 1 conflict (1 past)', { exact: true }),
+      ).toBeVisible();
+      await expect(page.locator('.toast')).toHaveCount(0, { timeout: TOAST_WAIT_MS });
+      await capture(page, `past-time-${theme}-${width}`);
+      await page.getByRole('button', { name: 'Past (1)', exact: true }).click();
+      await capture(page, `past-time-expanded-${theme}-${width}`);
+    });
+
     test(`week ${theme} ${width}`, async ({ page }) => {
       await openApp(page, theme, width);
       await loadSampleWeek(page);

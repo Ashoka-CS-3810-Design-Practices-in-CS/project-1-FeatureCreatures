@@ -23,6 +23,10 @@
   --prio-low-bg: #e6edf6;
   --barred: #ece7dd;
   --nonwork: #f1ede5;
+  --past-bg: #f0eeea;
+  --past-text: #65615b;
+  --past-edge: #817a70;
+  --now-guide: #817a70;
   --backdrop: rgb(34 32 28 / 38%);
   --shadow: rgb(34 32 28 / 16%);
 
@@ -95,6 +99,10 @@
   --prio-low-bg: #1f2a3b;
   --barred: #262924;
   --nonwork: #1c1e1b;
+  --past-bg: #20221e;
+  --past-text: #a6aba3;
+  --past-edge: #7c8476;
+  --now-guide: #7c8476;
   --backdrop: rgb(0 0 0 / 55%);
   --shadow: rgb(0 0 0 / 50%);
 }
@@ -124,6 +132,10 @@
     --prio-low-bg: #1f2a3b;
     --barred: #262924;
     --nonwork: #1c1e1b;
+    --past-bg: #20221e;
+    --past-text: #a6aba3;
+    --past-edge: #7c8476;
+    --now-guide: #7c8476;
     --backdrop: rgb(0 0 0 / 55%);
     --shadow: rgb(0 0 0 / 50%);
   }

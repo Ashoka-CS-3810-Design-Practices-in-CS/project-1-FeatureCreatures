@@ -2,14 +2,17 @@ import { useEffect, useId, useRef } from 'react';
 import { fmtDuration, fmtRange } from '../../format/time';
 import { useAppStore } from '../../store/appStore';
 import { FixedTag } from '../FixedTag/FixedTag';
+import { upcomingOverlaps } from '../../store/selectors';
 
-// PRE:  rendered under StoreProvider; reads snapshot.barredOverlaps/events and barredViewRequest;
+// PRE:  rendered under StoreProvider; reads currentMinute, snapshot.barredOverlaps/events and barredViewRequest;
 //       uses openEventAlternatives for each warning's event
 //       + additional props from: FixedTag
-// POST: shows every barred overlap separately from event-pair conflicts, with a Fixed/Flexible tag and reused alternatives
+// POST: shows upcoming/ongoing barred overlaps separately from event-pair conflicts, with a Fixed/Flexible tag and reused alternatives
 //       action; a View request focuses and scrolls the heading after the drawer has opened
 export function BarredOverlapPanel() {
-  const warnings = useAppStore((state) => state.snapshot.barredOverlaps);
+  const records = useAppStore((state) => state.snapshot.barredOverlaps);
+  const now = useAppStore((state) => state.currentMinute);
+  const warnings = upcomingOverlaps(records, now);
   const events = useAppStore((state) => state.snapshot.events);
   const request = useAppStore((state) => state.barredViewRequest);
   const openAlternatives = useAppStore((state) => state.actions.openEventAlternatives);

@@ -45,10 +45,20 @@ describe('T52: past-time panels and calendar (D-08)', () => {
         /In Lunch/,
       );
       expect(await capture(engine, repo)).toEqual(before);
-      mounted.unmount();
       now = t('Mon 14:00');
+      act(() => window.dispatchEvent(new Event('focus')));
+      expect(screen.getByRole('button', { name: /^B, Mon 2 Nov/ }).closest('tr')).toHaveClass(
+        'is-past',
+      );
+      now = t('Mon 14:01');
+      act(() => document.dispatchEvent(new Event('visibilitychange')));
+      expect(store.getState().currentMinute).toBe(now);
+      mounted.unmount();
+      now = t('Mon 15:00');
       const stateAfterUnmount = store.getState();
       act(() => vi.advanceTimersByTime(MS_PER_MINUTE));
+      act(() => window.dispatchEvent(new Event('focus')));
+      act(() => document.dispatchEvent(new Event('visibilitychange')));
       expect(store.getState()).toBe(stateAfterUnmount);
     } finally {
       vi.useRealTimers();

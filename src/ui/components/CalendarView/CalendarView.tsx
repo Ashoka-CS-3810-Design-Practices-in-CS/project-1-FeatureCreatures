@@ -15,6 +15,7 @@ import { createCalendarHandlers } from './calendarHandlers';
 import { toClockTime } from '../../format/time';
 import { renderEventContent } from './renderEventContent';
 import { toFullCalendar } from './toFullCalendar';
+import { nowGuideEntries } from './nowGuides';
 
 const PLUGINS = [timeGridPlugin, dayGridPlugin, listPlugin, interactionPlugin];
 const TWENTY_FOUR_HOUR = { hour: '2-digit', minute: '2-digit', hour12: false } as const;
@@ -60,15 +61,17 @@ function HiddenByFilterNotice({
   );
 }
 
-// PRE:  rendered under StoreProvider; reads snapshot (events, conflicts, settings), view,
+// PRE:  rendered under StoreProvider; reads currentMinute, snapshot (events, conflicts, settings), view,
 //       eventPriorityFilter, hiddenCategoryIds and emphasisIds; uses actions.moveEvent / openDialog / setActiveRange / setView;
 //       calendarRef receives the FullCalendar instance (the toolbar and shortcuts drive it)
 //       + additional props from: EventContent (via renderEventContent), HiddenByFilterNotice
 // POST: shows the calendar as a controlled, render-only FullCalendar (TECH_SPEC §11.3): its events
 //       always come from the snapshot; drags, resizes, selections and clicks go to the store; an
-//       empty List explains when the priority filter hides the range's events
+//       empty List explains when filters hide its events; raw currentMinute drives past styling
+//       and a decorative wall-clock guide on every time-grid day
 export function CalendarView({ calendarRef }: { calendarRef: RefObject<FullCalendar | null> }) {
   const snapshot = useAppStore((state) => state.snapshot);
+  const now = useAppStore((state) => state.currentMinute);
   const view = useAppStore((state) => state.view);
   const filter = useAppStore((state) => state.eventPriorityFilter);
   const hiddenCategories = useAppStore((state) => state.hiddenCategoryIds);
@@ -85,8 +88,11 @@ export function CalendarView({ calendarRef }: { calendarRef: RefObject<FullCalen
   );
   // The snapshot is replaced on every change, so it is the right memo key for its events.
   const events = useMemo(
-    () => toFullCalendar(snapshot, filter, view.activeRange, emphasisIds, hiddenCategories),
-    [snapshot, filter, view.activeRange, emphasisIds, hiddenCategories],
+    () => [
+      ...toFullCalendar(snapshot, filter, view.activeRange, emphasisIds, now, hiddenCategories),
+      ...nowGuideEntries(view.activeRange, now),
+    ],
+    [snapshot, filter, view.activeRange, emphasisIds, hiddenCategories, now],
   );
   const { workDays, workStartMin, workEndMin } = snapshot.settings;
   const hiddenByFilter = filterHidesEventsIn(snapshot, filter, view.activeRange, hiddenCategories);
@@ -117,6 +123,7 @@ export function CalendarView({ calendarRef }: { calendarRef: RefObject<FullCalen
         snapDuration="00:05:00"
         scrollTime="08:00:00"
         nowIndicator
+        now={fromMinute(now)}
         slotLabelFormat={TWENTY_FOUR_HOUR}
         eventTimeFormat={TWENTY_FOUR_HOUR}
         editable={!locked}

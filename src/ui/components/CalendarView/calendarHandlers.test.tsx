@@ -108,7 +108,7 @@ describe('calendar handlers ↔ engine (T14, ER4, ER5)', () => {
     ).toEqual([{ key: 'A|B', overlap: iv('Mon 11:00', 'Mon 11:30'), minutes: 30 }]);
     expect(toasts.at(-1)?.text).toMatch(/^Saved with a conflict/);
 
-    const entries = toFullCalendar(snapshot, ['high', 'medium', 'low'], null, []);
+    const entries = toFullCalendar(snapshot, ['high', 'medium', 'low'], null, [], t('Mon 08:00'));
     render(
       <>
         {entries.map((entry) => (
