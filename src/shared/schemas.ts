@@ -26,6 +26,7 @@ import {
 import type { EngineError, FieldIssue } from './errors';
 import { err, ok, type Result } from './result';
 import { migrateLegacyData } from './legacy';
+import { barredSlotClashes, barredDaysText, sameBarredSlots } from './barredSlots';
 import type {
   BarredSlot,
   CalendarEvent,
@@ -241,39 +242,23 @@ export function parseAlternativeRange(input: unknown): Result<Interval> {
     : err({ code: 'InvalidTime', issues: toFieldIssues(parsed.error) });
 }
 
-// PRE:  slot has integer startMin / endMin and weekday days
-// POST: returns a key equal for two slots exactly when they bar the same days (in any order)
-//       from the same start to the same end; the label and id do not count (WI-43)
-function barredSlotKey(slot: Pick<BarredSlot, 'startMin' | 'endMin' | 'days'>): string {
-  return JSON.stringify([slot.startMin, slot.endMin, slot.days.toSorted()]);
-}
-
-// PRE:  slots are barred slots that each passed barredSlotSchema
-// POST: ctx holds one issue "Duplicate of barred slot N." at barredSlots.i.days for every slot i
-//       that repeats an earlier slot's days, start and end, where N is that first slot's number
-//       (peer report #6)
-function refineDistinctBarredSlots(
-  slots: readonly Pick<BarredSlot, 'startMin' | 'endMin' | 'days'>[],
-  ctx: z.RefinementCtx,
-): void {
-  const firstIndexByKey = new Map<string, number>();
-
-  // INVARIANT: firstIndexByKey maps the key of every visited slot to the first index with it ∧
-  //            ctx holds an issue for each visited slot whose key appeared at an earlier index
-  for (const [index, slot] of slots.entries()) {
-    const key = barredSlotKey(slot);
-    const firstIndex = firstIndexByKey.get(key);
-    if (firstIndex === undefined) {
-      firstIndexByKey.set(key, index);
-    } else {
+// PRE:  slots each passed barredSlotSchema
+// POST: adds the first earlier overlap's D-09 issue under every offending later slot's days
+function refineDistinctBarredSlots(slots: readonly BarredSlot[], ctx: z.RefinementCtx): void {
+  const reported = new Set<number>();
+  // INVARIANT: reported contains each later slot already given its first earlier overlap issue
+  for (const clash of barredSlotClashes(slots)) {
+    if (!reported.has(clash.secondIndex)) {
+      const first = slots[clash.firstIndex] as BarredSlot;
       ctx.addIssue({
         code: 'custom',
-        path: ['barredSlots', index, 'days'],
-        message: `Duplicate of barred slot ${firstIndex + 1}.`,
+        path: ['barredSlots', clash.secondIndex, 'days'],
+        message: `Overlaps barred slot ${clash.firstIndex + 1} (${first.label}) on ${barredDaysText(clash.days)}.`,
       });
+      reported.add(clash.secondIndex);
     }
   }
-  // POST: every repeated slot has its issue, naming the first slot it repeats
+  // POST: each overlapping later slot has one issue naming its first earlier overlap
 }
 
 const settingsShape = z.object({
@@ -302,6 +287,23 @@ export const storedSettingsSchema = settingsShape.superRefine(refineWorkingTime)
 export const settingsSchema = storedSettingsSchema.superRefine((settings, ctx) => {
   refineDistinctBarredSlots(settings.barredSlots, ctx);
 });
+
+export const barredKeepSchema = z.object({
+  eventId: entityId,
+  slotId: entityId,
+  kept: z.boolean(),
+});
+
+// PRE:  input is untrusted; previous is the current structurally valid settings
+// POST: validates shape/time always, and rejects overlapping slots when their content was edited;
+//       unrelated changes preserve readable legacy overlaps
+export function parseSettingsChange(input: unknown, previous: Settings): Result<Settings> {
+  const parsed = parseInput(storedSettingsSchema, input);
+  if (!parsed.ok) return parsed;
+  return sameBarredSlots(parsed.value.barredSlots, previous.barredSlots)
+    ? parsed
+    : parseInput(settingsSchema, parsed.value);
+}
 
 export const categorySchema = z.object({
   id: entityId,

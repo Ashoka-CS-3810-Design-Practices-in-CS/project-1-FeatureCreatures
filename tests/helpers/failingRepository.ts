@@ -39,12 +39,16 @@ export class FailingRepository implements Repository {
 
   // PRE:  as Repository.saveSettings
   // POST: rejects (storing nothing) if a failure was requested, otherwise behaves like MemoryRepository
-  async saveSettings(settings: Settings, expectedRevision: number): Promise<void> {
+  async saveSettings(
+    settings: Settings,
+    expectedRevision: number,
+    clearedEvents: readonly CalendarEvent[] = [],
+  ): Promise<void> {
     if (this.saveSettingsShouldFail) {
       this.saveSettingsShouldFail = false;
       throw new Error('Simulated storage failure (saveSettings)');
     }
-    await this.inner.saveSettings(settings, expectedRevision);
+    await this.inner.saveSettings(settings, expectedRevision, clearedEvents);
   }
 
   // PRE:  as Repository.replaceAll

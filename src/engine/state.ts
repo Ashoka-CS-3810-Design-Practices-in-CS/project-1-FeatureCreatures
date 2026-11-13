@@ -248,6 +248,23 @@ export function repositoryError(error: unknown): EngineError {
   return { code: 'StorageError', message: error instanceof Error ? error.message : String(error) };
 }
 
+// PRE:  change is a validated data command
+// POST: clears keeps in the recorded after-image of every moved/resized event; Undo can restore its before-image
+function clearMovedKeeps(change: Change): Change {
+  return {
+    ...change,
+    events: change.events.map((record) => {
+      if (
+        record.before === null ||
+        record.after === null ||
+        (record.before.start === record.after.start && record.before.end === record.after.end)
+      )
+        return record;
+      return { ...record, after: { ...record.after, keptInBarred: [] } };
+    }),
+  };
+}
+
 // PRE:  state.events is sorted; change touches each record at most once and has been validated by the
 //       caller; mode 'undo' / 'redo' ⟹ change is the last entry of state.undo / state.redo
 // POST: on success, the repository holds change's images for the direction (backward for 'undo',
@@ -262,9 +279,10 @@ export async function commit(
   repo: Repository,
 ): Promise<Result<CommitOutcome, EngineError>> {
   const direction: Direction = mode === 'undo' ? 'backward' : 'forward';
-  const next = applyChange(state, change, direction);
+  const effectiveChange = mode === 'do' ? clearMovedKeeps(change) : change;
+  const next = applyChange(state, effectiveChange, direction);
   try {
-    await repo.apply(changeSetFor(change, direction), state.revision);
+    await repo.apply(changeSetFor(effectiveChange, direction), state.revision);
   } catch (error) {
     // Nothing has been assigned yet, so the old state is still the current one (ER5, ER8).
     return err(repositoryError(error));
@@ -275,14 +293,14 @@ export async function commit(
     state: {
       ...state,
       ...next,
-      ...nextHistory(state, change, mode),
+      ...nextHistory(state, effectiveChange, mode),
       conflicts,
       barredOverlaps: barredOverlapsFor(next.events, state.settings),
       version: state.version + 1,
       revision: state.revision + 1,
     },
-    label: change.label,
-    changedEventIds: change.events
+    label: effectiveChange.label,
+    changedEventIds: effectiveChange.events
       .filter((record) => imageFor(record, direction) !== null)
       .map((record) => record.id),
     introducedConflicts: conflictsMissingFrom(conflicts, state.conflicts),

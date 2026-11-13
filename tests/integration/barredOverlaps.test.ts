@@ -19,6 +19,7 @@ describe('T37 snapshot warnings are independent of event-pair conflicts', () => 
     expect(engine.snapshot().barredOverlaps).toEqual([
       {
         eventId: lunchEvent?.id,
+        slotId: 'lunch',
         label: 'Lunch',
         overlap: iv('Mon 13:00', 'Mon 14:00'),
         minutes: 60,

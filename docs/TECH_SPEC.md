@@ -362,6 +362,7 @@ export interface Conflict {
 export type UserCriterion = 'earliest' | 'bestFit' | 'priorityAware';
 export interface BarredOverlap {
   readonly eventId: string;
+  readonly slotId: string;
   readonly label: string;
   readonly overlap: Interval;
   readonly minutes: number;
@@ -379,8 +380,8 @@ export type Boundary =
 export interface DayFrame {
   readonly dayStart: Minute; readonly dayEnd: Minute;     // local midnight → next local midnight (23–25 h)
   readonly weekday: Weekday;
-  readonly work: Interval | null;                          // null if not a working day
-  readonly barred: readonly { readonly label: string; readonly interval: Interval }[];
+  readonly work: Interval | null;                          // whole local day when globally off
+  readonly barred: readonly { readonly slotId: string; readonly label: string; readonly interval: Interval }[];
 }
 
 export interface Segment extends Interval { readonly startEdge: Boundary; readonly endEdge: Boundary }
@@ -634,7 +635,7 @@ WI-49: `categoryInputSchema` picks name/colour from `categorySchema`; `parseCate
 - Zod 4 cannot `.extend()` a refined object, so each schema is a plain object shape plus a named refine function (`refineEventTiming`, `refineTaskWindow`), and the stored schemas extend the shape and re-apply the same refinements.
 - `storedTaskSchema` also checks `(status = 'scheduled') ⟺ (scheduledEventId ≠ null)` as a shape issue at `scheduledEventId`: "A task has an event id exactly when it is scheduled."
 - A non-integer duration gives "Duration must be a whole number of minutes." (T31's 2.5 case).
-- `settingsSchema` messages: "Pick at least one working day." · "Working hours must end after they start." (time, `workEndMin`) · "Buffer must be between 0 and 120 minutes." · barred label "Label is required." / "Labels can be at most 40 characters." · "A barred slot must end after it starts." (time, `barredSlots.N.endMin`) · "Duplicate of barred slot N." (shape, at `barredSlots.i.days` of every later slot whose `[startMin, endMin, sorted days]` repeats slot N's; label and id ignored; `refineDistinctBarredSlots`, WI-43). `workStartMin` and barred `startMin` are 0–1439; `workEndMin` and barred `endMin` are 0–1440. A buffer that is not a number (a blank form field becomes `NaN`) also gets the buffer message.
+- `settingsSchema` messages: "Pick at least one working day." · "Working hours must end after they start." (time, `workEndMin`) · "Buffer must be between 0 and 120 minutes." · barred label "Label is required." / "Labels can be at most 40 characters." · "A barred slot must end after it starts." (time, `barredSlots.N.endMin`) · "Overlaps barred slot N (Lunch) on Mon, Tue." (shape, at each later overlapping slot's Days; first earlier shared-day positive overlap, D-09). `workStartMin` and barred `startMin` are 0–1439; `workEndMin` and barred `endMin` are 0–1440. A buffer that is not a number (a blank form field becomes `NaN`) also gets the buffer message.
 
 **Shared validator helpers** (also in `schemas.ts`):
 
@@ -742,6 +743,7 @@ export interface Engine {
   updateEvent(id: string, input: EventInput): Promise<Result<MutationResult>>;
   moveEvent(id: string, to: Interval): Promise<Result<MutationResult>>;      // drag / resize
   deleteEvent(id: string): Promise<Result<MutationResult>>;
+  setBarredKept(request: { eventId: string; slotId: string; kept: boolean }): Promise<Result<MutationResult>>;
 
   // ── Conflict Resolution pipeline (FR4 is automatic inside commit; FR7) ──
   suggestAlternatives(req: { eventId: string; otherEventId?: string; bufferMin?: number; useWorkingHours?: boolean; allowMoving?: boolean; range?: Interval }): Result<SlotSearchResult>;
@@ -895,11 +897,13 @@ WI-32: after a successful settings save, recompute `barredOverlapsFor(events, se
 
 `updateSettings(s)`:
 
-1. Validate with `settingsSchema`.
-2. `await repo.saveSettings(s)`. A failure gives `StorageError`.
-3. Set `state.settings = s` and `version + 1`.
+1. `parseSettingsChange(input, previous)` always validates shape/time with `storedSettingsSchema`; edited barred content also passes overlap-rejecting `settingsSchema`. Unchanged legacy overlaps do not block unrelated saves.
+2. Find deleted or timing/day-changed slot IDs with `invalidatedBarredIds`; label changes and day-array reordering do not invalidate keeps. Clear those IDs on live events and pass the changed rows to `repo.saveSettings(s, revision, clearedEvents)` in one transaction. A failure leaves state/history/storage unchanged.
+3. Adopt settings/events and recomputed raw overlaps, increment version/revision once, and clear invalid IDs from undo/redo before/after images without discarding other history.
 
 There is no history entry, and the conflicts are unchanged.
+
+**D-09 Keep here.** `setBarredKept({eventId, slotId, kept})` validates with `barredKeepSchema`, requires an existing event/slot and an actual overlap for keeping, then records one metadata-only event change through commit. Repeated values are no-ops. Raw overlaps retain the slot ID and stay in snapshots. Replan ignores only kept barred reasons/diagnostics; conflicts and other reasons still apply. For every new data command, commit clears keeps in the after-image when start or end changes (including task mirroring, alternatives and Replan); Undo restores the before-image. Settings-triggered clearing also sanitizes history so old keeps cannot return for a changed slot.
 
 #### 7.4.6 Import / export
 
@@ -1349,7 +1353,7 @@ export interface ChangeSet {
 export interface Repository {
   load(): Promise<StoredData>;
   apply(changes: ChangeSet, expectedRevision: number): Promise<void>;          // MUST be atomic (all or nothing)
-  saveSettings(settings: Settings, expectedRevision: number): Promise<void>;
+  saveSettings(settings: Settings, expectedRevision: number, clearedEvents?: readonly CalendarEvent[]): Promise<void>;
   replaceAll(data: { categories: Category[]; events: CalendarEvent[]; tasks: Task[]; settings: Settings }, expectedRevision: number): Promise<void>; // atomic
 }
 export class ConcurrentModificationError extends Error { … }
@@ -1987,3 +1991,4 @@ Production URL: https://…vercel.app
 | 2026-11-13 | v1.44 (WI-52, D-08): currentMinute/refreshCurrentMinute and provider timer/focus/visibility lifecycle; upcomingOverlaps shared by panels/status/tags/toast; toFullCalendar takes raw now and marks ended events; local-day nowGuideEntries and tested past/guide tokens. Snapshot/repository/metric contracts remain unchanged. |
 | 2026-11-13 | v1.45 (WI-53 D-10 engine checkpoint): DayFrame.work is the whole local day when globally off. Shared search/empty-cause/Replan segments use effective global/request working-time rules. ReplanInput gains required useWorkingHours; false skips the working-day containment check, while reused detectBarredOverlaps checks every touched day. Unit/property fixtures explicitly pass true without assertion changes. UI and D-09 remain in progress. |
 | 2026-11-13 | v1.46 (WI-53 D-10 UI checkpoint): Settings switch/useWatch disables a retained fieldset; TaskForm and alternatives hide their hours choices while off, task Details uses effective any-time wording, picker defaults to any time, and FullCalendar businessHours=false removes shading. Three RTL regressions and a browser persistence flow fail first. |
+| 2026-11-13 | v1.47 (WI-53 D-09 engine checkpoint): BarredOverlap/DayFrame bars carry slotId; shared clash/day formatting and settings-change validation preserve legacy data but reject edited overlaps. Engine.setBarredKept validates/idempotently records metadata, commit clears on time changes, Replan skips kept barred reasons, and settings sanitizes affected history. Repository.saveSettings gains optional cleared event rows in one revision-checked transaction; Memory/Dexie/failing adapter updated. |

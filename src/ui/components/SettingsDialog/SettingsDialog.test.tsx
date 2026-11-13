@@ -123,7 +123,9 @@ describe('SettingsDialog', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     const second = screen.getByRole('group', { name: 'Barred slot 2' });
-    expect(await within(second).findByText('Duplicate of barred slot 1.')).toBeInTheDocument();
+    expect(
+      await within(second).findByText('Overlaps barred slot 1 (Lunch) on Mon, Tue, Wed, Thu, Fri.'),
+    ).toBeInTheDocument();
     expect(
       within(screen.getByRole('group', { name: 'Barred slot 1' })).queryByText(/Duplicate/),
     ).not.toBeInTheDocument();

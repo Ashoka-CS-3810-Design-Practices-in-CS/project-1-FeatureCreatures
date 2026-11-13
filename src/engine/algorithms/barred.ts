@@ -24,6 +24,7 @@ export function detectBarredOverlaps(
         if (overlap !== null) {
           warnings.push({
             eventId: event.id,
+            slotId: slot.slotId,
             label: slot.label,
             overlap,
             minutes: length(overlap),

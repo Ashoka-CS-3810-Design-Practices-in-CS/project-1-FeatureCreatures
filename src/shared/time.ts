@@ -81,7 +81,7 @@ export function startOfLocalWeek(minute: Minute): Minute {
   return toMinute(startOfWeek(fromMinute(minute), { weekStartsOn: MONDAY }));
 }
 
-// PRE:  dayStart is a local midnight; settings satisfies settingsSchema
+// PRE:  dayStart is a local midnight; settings satisfies storedSettingsSchema
 // POST: returns the DayFrame of dayStart's local day: its end, weekday, effective work interval
 //       (whole day when globally off; otherwise null on non-working days) and sorted barred slots
 function buildDayFrame(dayStart: Minute, settings: Settings): DayFrame {
@@ -100,6 +100,7 @@ function buildDayFrame(dayStart: Minute, settings: Settings): DayFrame {
     .filter((slot) => slot.days.includes(weekday))
     .toSorted((first, second) => first.startMin - second.startMin)
     .map((slot) => ({
+      slotId: slot.id,
       label: slot.label,
       interval: {
         start: atMinuteOfDay(dayStart, dayEnd, slot.startMin),
@@ -109,7 +110,7 @@ function buildDayFrame(dayStart: Minute, settings: Settings): DayFrame {
   return { dayStart, dayEnd, weekday, work, barred };
 }
 
-// PRE:  interval.start ≤ interval.end; settings satisfies settingsSchema
+// PRE:  interval.start ≤ interval.end; settings satisfies storedSettingsSchema
 // POST: returns whether the local day of interval.start is a working day whose working hours
 //       interval overlaps (WI-41); an event entirely at night or on a non-working day does not
 export function overlapsWorkingHours(interval: Interval, settings: Settings): boolean {
@@ -120,7 +121,7 @@ export function overlapsWorkingHours(interval: Interval, settings: Settings): bo
 
 /** One DayFrame per local day intersecting `window`, in order. Work and barred times are built with
  *  date-fns `set(day, {hours, minutes})`, never by adding minutes to midnight — so DST days are correct. */
-// PRE:  window.end > window.start; settings satisfies settingsSchema
+// PRE:  window.end > window.start; settings satisfies storedSettingsSchema
 // POST: returns, in order, one DayFrame for every local day [dayStart, dayEnd) that intersects
 //       window; costs O(D·B) for D days and B barred slots
 export function buildDayFrames(window: Interval, settings: Settings): DayFrame[] {

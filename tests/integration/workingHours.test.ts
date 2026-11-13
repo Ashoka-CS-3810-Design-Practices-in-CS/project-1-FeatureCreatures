@@ -18,7 +18,9 @@ describe('T53: optional working hours (D-10)', () => {
     const frames = buildDayFrames(iv('Sat 00:00', 'Sun 00:00'), ANY_DAY_SETTINGS);
     expect(frames).toHaveLength(1);
     expect(frames[0]?.work).toEqual(iv('Sat 00:00', 'Sun 00:00'));
-    expect(frames[0]?.barred).toEqual([{ label: 'Lunch', interval: iv('Sat 13:00', 'Sat 14:00') }]);
+    expect(frames[0]?.barred).toEqual([
+      { slotId: 'lunch', label: 'Lunch', interval: iv('Sat 13:00', 'Sat 14:00') },
+    ]);
     expect(ANY_DAY_SETTINGS).toEqual(original);
   });
 

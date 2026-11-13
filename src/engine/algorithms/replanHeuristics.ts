@@ -77,7 +77,7 @@ function reasonWith(kind: 'conflict' | 'buffer', other: CalendarEvent): MoveReas
 //       not contain event; frames cover the range; bufferMin ≥ 0; useWorkingHours is the global rule
 // POST: returns null when event's current interval is a valid place (BR-12 Minimal change), else the
 //       first failing check, in this order: outside the flex window, outside one day's working
-//       hours when enabled, in any touched day's barred slot, overlapping an event, inside its buffer
+//       hours when enabled, in any touched day's unkept barred slot, overlapping an event, inside its buffer
 function invalidReason(
   event: CalendarEvent,
   window: Interval | null,
@@ -97,7 +97,9 @@ function invalidReason(
   ) {
     return { kind: 'outsideWorkingHours' };
   }
-  const barred = detectBarredOverlaps([event], frames)[0];
+  const barred = detectBarredOverlaps([event], frames).find(
+    (warning) => !event.keptInBarred.includes(warning.slotId),
+  );
   if (barred !== undefined) {
     return { kind: 'barred', label: barred.label };
   }

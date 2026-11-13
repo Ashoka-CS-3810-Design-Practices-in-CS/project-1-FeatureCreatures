@@ -106,11 +106,11 @@ describe('buildDayFrames', () => {
     const frames = buildDayFrames({ start: at(0, 0), end: at(7, 0) }, withBarred);
 
     expect(frames[0]?.barred).toEqual([
-      { label: 'Standup', interval: { start: at(0, 9), end: at(0, 9.25) } },
-      { label: 'Lunch', interval: { start: at(0, 13), end: at(0, 14) } },
+      { slotId: 'standup', label: 'Standup', interval: { start: at(0, 9), end: at(0, 9.25) } },
+      { slotId: 'lunch', label: 'Lunch', interval: { start: at(0, 13), end: at(0, 14) } },
     ]);
     expect(frames[1]?.barred).toEqual([
-      { label: 'Lunch', interval: { start: at(1, 13), end: at(1, 14) } },
+      { slotId: 'lunch', label: 'Lunch', interval: { start: at(1, 13), end: at(1, 14) } },
     ]);
     expect(frames[5]?.barred).toEqual([]);
   });

@@ -39,12 +39,17 @@ describe('T44: duplicate barred slots', () => {
       ok: false,
       error: {
         code: 'InvalidInput',
-        issues: [{ path: 'barredSlots.1.days', message: 'Duplicate of barred slot 1.' }],
+        issues: [
+          {
+            path: 'barredSlots.1.days',
+            message: 'Overlaps barred slot 1 (Lunch) on Mon, Tue, Wed.',
+          },
+        ],
       },
     });
   });
 
-  it('names the first copy for every later copy, and accepts slots that differ', () => {
+  it('names the first overlap for every later overlap, and accepts disjoint days or touching times', () => {
     const copies = parseInput(
       settingsSchema,
       withSlots([
@@ -59,14 +64,15 @@ describe('T44: duplicate barred slots', () => {
       withSlots([
         lunch('a', 'Lunch', [1]),
         lunch('b', 'Lunch', [2]),
-        { ...lunch('c', 'Lunch', [1]), startMin: 12 * HOUR },
+        { ...lunch('c', 'Lunch', [1]), startMin: 12 * HOUR, endMin: 13 * HOUR },
       ]),
     );
 
     expect(copies.ok ? [] : copies.error).toMatchObject({
       issues: [
-        { path: 'barredSlots.2.days', message: 'Duplicate of barred slot 1.' },
-        { path: 'barredSlots.3.days', message: 'Duplicate of barred slot 1.' },
+        { path: 'barredSlots.1.days', message: 'Overlaps barred slot 1 (Lunch) on Mon.' },
+        { path: 'barredSlots.2.days', message: 'Overlaps barred slot 1 (Lunch) on Mon.' },
+        { path: 'barredSlots.3.days', message: 'Overlaps barred slot 1 (Lunch) on Mon.' },
       ],
     });
     expect(differing.ok).toBe(true);
@@ -87,7 +93,12 @@ describe('T44: duplicate barred slots', () => {
       ok: false,
       error: {
         code: 'InvalidImport',
-        issues: [{ path: 'settings.barredSlots.1.days', message: 'Duplicate of barred slot 1.' }],
+        issues: [
+          {
+            path: 'settings.barredSlots.1.days',
+            message: 'Overlaps barred slot 1 (Lunch) on Mon.',
+          },
+        ],
       },
     });
   });

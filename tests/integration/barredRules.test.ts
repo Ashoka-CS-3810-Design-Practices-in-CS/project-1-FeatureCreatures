@@ -1,6 +1,6 @@
 import { parseInput, settingsSchema } from '@/shared/schemas';
 import type { EventInput } from '@/shared/types';
-import { ev, flexEv, iv, settings } from '../helpers/builders';
+import { ev, flexEv, iv, settings, task } from '../helpers/builders';
 import { capture, makeEngine } from '../helpers/engine';
 import { FailingRepository } from '../helpers/failingRepository';
 
@@ -109,6 +109,73 @@ describe('T53: barred-slot rules and Keep here (D-09)', () => {
       { eventId: 'A', reason: { kind: 'conflict' } },
     ]);
     expect(conflicted.value.plans[0].moves[0]?.to).toEqual(iv('Mon 12:00', 'Mon 13:00'));
+    expect(
+      (
+        await engine.applyReplan({
+          baseVersion: conflicted.value.baseVersion,
+          planId: 'minimalChange',
+        })
+      ).ok,
+    ).toBe(true);
+    expect(engine.snapshot().events.find((event) => event.id === 'A')?.keptInBarred).toEqual([]);
+    await engine.undo();
+    expect(engine.snapshot().events.find((event) => event.id === 'A')?.keptInBarred).toEqual([
+      'lunch',
+    ]);
+  });
+
+  it('identifies same-label slots separately and keeps the unkept slot as a Replan reason', async () => {
+    const { engine } = await makeEngine({
+      settings: settings({
+        barredSlots: [
+          { ...LUNCH, id: 'one', endMin: 810 },
+          { ...LUNCH, id: 'two', startMin: 810 },
+        ],
+      }),
+      events: [EVENT],
+    });
+    expect(engine.snapshot().barredOverlaps.map((warning) => warning.slotId)).toEqual([
+      'one',
+      'two',
+    ]);
+    await engine.setBarredKept({ eventId: 'A', slotId: 'one', kept: true });
+    expect(engine.snapshot().events[0]?.keptInBarred).toEqual(['one']);
+    const plan = engine.planReplan({ range: iv('Mon 00:00', 'Tue 00:00') });
+    expect(plan.ok && plan.value.plans[0].moves[0]?.reason).toEqual({
+      kind: 'barred',
+      label: 'Lunch',
+    });
+  });
+
+  it('clears keeps on mirrored task-duration edits and restores them together with the task on Undo', async () => {
+    const linked = task('T', 60, ['Mon 09:00', 'Tue 18:00'], {
+      name: 'A',
+      status: 'scheduled',
+      scheduledEventId: 'A',
+    });
+    const { engine } = await makeEngine({
+      settings: BARRED_SETTINGS,
+      events: [{ ...EVENT, taskId: 'T' }],
+      tasks: [linked],
+    });
+    await engine.setBarredKept({ eventId: 'A', slotId: 'lunch', kept: true });
+    expect((await engine.updateTask('T', { ...linked, durationMin: 30 })).ok).toBe(true);
+    expect(engine.snapshot().events[0]?.keptInBarred).toEqual([]);
+    await engine.undo();
+    expect(engine.snapshot().events[0]?.keptInBarred).toEqual(['lunch']);
+    expect(engine.snapshot().tasks[0]?.durationMin).toBe(60);
+  });
+
+  it('refuses a keep from a stale tab without changing its snapshot or overwriting stored data', async () => {
+    const { engine, repo } = await makeEngine({ settings: BARRED_SETTINGS, events: [EVENT] });
+    const snapshot = engine.snapshot();
+    await repo.saveSettings(settings(), (await repo.load()).revision);
+    const stored = await repo.load();
+    expect(await engine.setBarredKept({ eventId: 'A', slotId: 'lunch', kept: true })).toMatchObject(
+      { ok: false, error: { code: 'ConcurrentModification' } },
+    );
+    expect(engine.snapshot()).toEqual(snapshot);
+    expect(await repo.load()).toEqual(stored);
   });
 
   it.each(['move', 'resize', 'edit', 'alternative'] as const)(
