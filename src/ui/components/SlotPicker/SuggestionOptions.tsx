@@ -13,6 +13,7 @@ interface ChoiceProps {
 }
 
 // PRE:  option is a candidate; selected is its search's selected index; groupName spans all choices
+//       uses pickerSelect(index) to select the result option
 // POST: renders a native radio whose change selects this option in the shared picker
 function SlotRadio({ option, selected, groupName }: ChoiceProps) {
   const select = useAppStore((state) => state.actions.pickerSelect);

@@ -69,7 +69,9 @@ for (const theme of THEMES) {
       await expect(picker.getByRole('button', { name: 'Apply', exact: true })).toBeEnabled();
       await capture(page, `fixed-alternatives-on-${theme}-${width}`);
       await picker.getByRole('button', { name: 'Details', exact: true }).click();
-      await picker.getByLabel('Buffer (min)').scrollIntoViewIfNeeded();
+      await picker.evaluate((dialog) => {
+        dialog.scrollTop = dialog.scrollHeight;
+      });
       await capture(page, `fixed-alternatives-details-${theme}-${width}`);
     });
 
@@ -84,7 +86,9 @@ for (const theme of THEMES) {
       await expect(picker.getByRole('region', { name: 'Top picks' })).toBeVisible();
       await capture(page, `task-suggestions-${theme}-${width}`);
       await picker.getByRole('button', { name: 'Details', exact: true }).click();
-      await picker.getByLabel('Buffer (min)').scrollIntoViewIfNeeded();
+      await picker.evaluate((dialog) => {
+        dialog.scrollTop = dialog.scrollHeight;
+      });
       await capture(page, `task-suggestions-details-${theme}-${width}`);
     });
   }

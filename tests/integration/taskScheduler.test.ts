@@ -220,6 +220,8 @@ describe('findSlots (FR5)', () => {
       start: slot.start,
       dayLoadMin: 60,
     }));
+    // PRE:  slots are expected starts/loads; effectiveCriterion is the expected mapped strategy
+    // POST: returns the exact expected option metadata in slots' order
     const as = (effectiveCriterion: string, slots: typeof mon) =>
       slots.map((slot) => ({ ...slot, effectiveCriterion }));
 
