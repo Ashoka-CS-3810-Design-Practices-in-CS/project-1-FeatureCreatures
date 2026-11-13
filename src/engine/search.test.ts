@@ -36,7 +36,7 @@ function request(overrides: Partial<SearchRequest> = {}): SearchRequest {
 const MONDAY = t('Mon 00:00');
 
 describe('search', () => {
-  it('T6: gaps, fitting count, the one option and its boundaries', () => {
+  it('T6: gaps, fitting count, all candidates and their boundaries (D-06)', () => {
     const state = stateOf([
       ev('E1', 'Mon 09:00', 'Mon 10:00'),
       ev('E2', 'Mon 10:30', 'Mon 12:00'),
@@ -58,7 +58,7 @@ describe('search', () => {
       fittingCount: 1,
       searchWindow: iv('Mon 09:00', 'Mon 18:00'),
     });
-    expect(result.value.options).toHaveLength(1);
+    expect(result.value.options).toHaveLength(6);
     expect(result.value.options[0]).toMatchObject({
       rank: 1,
       slot: iv('Mon 14:00', 'Mon 15:30'),

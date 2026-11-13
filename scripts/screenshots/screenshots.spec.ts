@@ -68,6 +68,24 @@ for (const theme of THEMES) {
       await expect(picker.getByLabel('From', { exact: true })).toBeVisible();
       await expect(picker.getByRole('button', { name: 'Apply', exact: true })).toBeEnabled();
       await capture(page, `fixed-alternatives-on-${theme}-${width}`);
+      await picker.getByRole('button', { name: 'Details', exact: true }).click();
+      await picker.getByLabel('Buffer (min)').scrollIntoViewIfNeeded();
+      await capture(page, `fixed-alternatives-details-${theme}-${width}`);
+    });
+
+    test(`task suggestions ${theme} ${width}`, async ({ page }) => {
+      await openApp(page, theme, width);
+      await loadSampleWeek(page);
+      const row = page
+        .getByRole('listitem')
+        .filter({ has: page.getByText('Write report', { exact: true }) });
+      await row.getByRole('button', { name: 'Find time', exact: true }).click();
+      const picker = page.getByRole('dialog', { name: /^Find time/ });
+      await expect(picker.getByRole('region', { name: 'Top picks' })).toBeVisible();
+      await capture(page, `task-suggestions-${theme}-${width}`);
+      await picker.getByRole('button', { name: 'Details', exact: true }).click();
+      await picker.getByLabel('Buffer (min)').scrollIntoViewIfNeeded();
+      await capture(page, `task-suggestions-details-${theme}-${width}`);
     });
   }
   // POST: this theme's week is captured at every width

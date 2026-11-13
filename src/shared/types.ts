@@ -181,7 +181,7 @@ export interface SlotSearchResult {
   readonly segmentCount: number;
   readonly freeGaps: readonly FreeGap[]; // ALL gaps, including too-short ones
   readonly fittingCount: number;
-  readonly options: readonly SlotOption[]; // ≤ MAX_OPTIONS, ranked
+  readonly options: readonly SlotOption[]; // all D-06 picker candidates, ranked; Replan uses rankOptions
 }
 
 export type MoveReason =

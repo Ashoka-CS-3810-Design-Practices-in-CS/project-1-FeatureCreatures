@@ -5,6 +5,7 @@ import type { Category, Priority, Settings } from './types';
 export const MAX_EVENT_MIN = 1440; // BR-4
 export const MAX_OPTIONS = 5; // BR-7
 export const SUGGESTION_STEP_MIN = 30;
+export const SUGGESTION_CHIPS_PER_DAY = 8;
 export const HISTORY_LIMIT = 50; // B1
 export const SNAP_MIN = 5; // BR-5 notBefore rounding + UI snap
 export const MAX_REPLAN_DAYS = 14; // BR-12

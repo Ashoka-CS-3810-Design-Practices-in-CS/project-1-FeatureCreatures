@@ -92,6 +92,17 @@ const light = tokensOf(':root');
 const dark = tokensOf(":root[data-theme='dark']");
 
 describe('tokens.css', () => {
+  it('T51: selected picker outlines and radio focus contrast against both picker backgrounds', () => {
+    [light, dark].forEach((tokens) => {
+      ['accent', 'focus'].forEach((foreground) => {
+        ['bg', 'surface'].forEach((background) => {
+          expect(
+            contrast(tokens.get(foreground) ?? '', tokens.get(background) ?? ''),
+          ).toBeGreaterThanOrEqual(3);
+        });
+      });
+    });
+  });
   it('T49: every category swatch reaches 3:1 on its tag and every category name reaches 4.5:1 in both themes', () => {
     [light, dark].forEach((tokens, index) => {
       expect(tokens.get('surface')).toBe(CATEGORY_TAG_BACKGROUNDS[index]);

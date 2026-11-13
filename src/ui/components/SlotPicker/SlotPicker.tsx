@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useId, useState } from 'react';
 import { addLocalDays } from '@/shared/time';
 import { fromDateInput, toDateInput } from '../../forms/eventForm';
 import type { Result } from '@/shared/result';
@@ -8,7 +8,6 @@ import {
   CRITERIA,
   fitText,
   gapText,
-  optionReasonText,
   priorityAwareText,
   searchSummaryText,
   stretchesText,
@@ -17,6 +16,7 @@ import { fmtDay, fmtDuration, fmtRange, fmtTime } from '../../format/time';
 import type { PickerState } from '../../store/pickerSlice';
 import { useAppStore } from '../../store/appStore';
 import { Modal } from '../Modal/Modal';
+import { SuggestionOptions } from './SuggestionOptions';
 
 type TaskPickerState = Extract<PickerState, { mode: 'task' }>;
 type AlternativesPickerState = Extract<PickerState, { mode: 'alternatives' }>;
@@ -70,60 +70,75 @@ const PRIORITY_NAME: Record<Priority, string> = { high: 'High', medium: 'Medium'
 
 // PRE:  result is the picker's search; explanation is what is left of its window after ER2 / ER3
 //       (null otherwise); selected is the chosen option; originalStart is the moved event's start
-//       in alternatives mode, else null; uses actions.pickerSelect
-// POST: shows the summary line and the ranked options as a radio group with their explanations
-//       (BR-8), or, when the search failed, the ER2 / ER3 explanation instead of an empty list,
-//       followed by the available stretches and what splits them (WI-45, #7)
+//       in alternatives mode, else null; bufferMin is the override, windowNote the optional task window
+//       + additional props from: SuggestionOptions, BufferField
+// POST: shows picks/day chips or the always-visible empty-result explanation; Details reveals
+//       BR-8 summary, window, buffer and the selected slot's explanation, initially hidden
 function SearchResults({
   result,
   explanation,
   selected,
   originalStart,
+  bufferMin,
+  windowNote,
 }: {
   result: Result<SlotSearchResult>;
   explanation: WindowExplanation | null;
   selected: number;
   originalStart: Minute | null;
+  bufferMin: number;
+  windowNote?: string;
 }) {
-  const pickerSelect = useAppStore((state) => state.actions.pickerSelect);
-  const groupName = useId();
-  if (!result.ok) {
-    const stretches =
-      explanation === null
-        ? null
-        : stretchesText(
-            result.error.code === 'NoSlotFound' ? explanation.free : explanation.allowed,
-          );
-    return (
-      <>
-        <p role="alert" className="picker-problem">
-          {errorMessage(result.error)}
-        </p>
-        {stretches !== null && <p className="picker-note">{stretches}</p>}
-      </>
-    );
-  }
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const detailsId = useId();
+  const option = result.ok ? result.value.options[selected] : undefined;
+  const stretches =
+    result.ok || explanation === null
+      ? null
+      : stretchesText(result.error.code === 'NoSlotFound' ? explanation.free : explanation.allowed);
   return (
     <>
-      <p className="picker-summary">{searchSummaryText(result.value)}</p>
-      <fieldset>
-        <legend>Available slots</legend>
-        {result.value.options.map((option, index) => (
-          <div key={option.slot.start} className="picker-option">
-            <label>
-              <input
-                type="radio"
-                name={groupName}
-                checked={selected === index}
-                onChange={() => pickerSelect(index)}
-              />{' '}
-              {option.rank}. {fmtRange(option.slot)} — {optionReasonText(option, originalStart)}
-            </label>
-            <p>{gapText(option)}</p>
-            <p>{fitText(option)}</p>
-          </div>
-        ))}
-      </fieldset>
+      {result.ok ? (
+        <SuggestionOptions
+          options={result.value.options}
+          selected={selected}
+          originalStart={originalStart}
+        />
+      ) : (
+        <>
+          <p role="alert" className="picker-problem">
+            {errorMessage(result.error)}
+          </p>
+          {stretches !== null && <p className="picker-note">{stretches}</p>}
+        </>
+      )}
+      <button
+        type="button"
+        aria-expanded={detailsOpen}
+        aria-controls={detailsId}
+        onClick={() => setDetailsOpen(!detailsOpen)}
+      >
+        Details
+      </button>
+      {detailsOpen && (
+        <div id={detailsId} className="picker-details">
+          {result.ok && (
+            <>
+              <p className="picker-summary">{searchSummaryText(result.value)}</p>
+              <p>Search window: {fmtRange(result.value.searchWindow)}</p>
+            </>
+          )}
+          {windowNote !== undefined && <p>Window: {windowNote}</p>}
+          <BufferField bufferMin={bufferMin} />
+          {option !== undefined && (
+            <div className="picker-selected-details">
+              <p>Selected: {fmtRange(option.slot)}</p>
+              <p>{gapText(option)}</p>
+              <p>{fitText(option)}</p>
+            </div>
+          )}
+        </div>
+      )}
     </>
   );
 }
@@ -180,8 +195,8 @@ function SearchHoursField({ useWorkingHours }: { useWorkingHours: boolean }) {
 
 // PRE:  picker is a task picker; reads the queued task; uses the picker actions and openDialog
 //       + additional props from: SearchResults, BufferField
-// POST: shows "Find time — <task> — Task i of N" with the window, buffer, rank-by choice, the
-//       results, and Apply selected / Skip / Stop (plus Edit task when nothing can fit)
+// POST: shows "Find time — <task> — Task i of N", Rank by and the shared picker; task window
+//       and buffer are behind Details; Apply selected / Skip / Stop retain queue behaviour
 function TaskPicker({ picker }: { picker: TaskPickerState }) {
   const task = useAppStore((state) =>
     state.snapshot.tasks.find((candidate) => candidate.id === picker.queue[picker.index]),
@@ -196,12 +211,7 @@ function TaskPicker({ picker }: { picker: TaskPickerState }) {
     ? picker.result.value.options[0]?.effectiveCriterion
     : undefined;
   return (
-    <Modal open title={title} onClose={actions.pickerStop}>
-      <p>
-        Window: {fmtDay(task.window.start)} {fmtTime(task.window.start)} → {fmtDay(task.window.end)}{' '}
-        {fmtTime(task.window.end)} · {task.useWorkingHours ? 'working hours only' : 'any time'}
-      </p>
-      <BufferField bufferMin={picker.bufferMin} />
+    <Modal open title={title} onClose={actions.pickerStop} className="suggestion-dialog">
       <fieldset>
         <legend>Rank by</legend>
         {CRITERIA.map((option) => (
@@ -224,6 +234,8 @@ function TaskPicker({ picker }: { picker: TaskPickerState }) {
         explanation={picker.explanation}
         selected={picker.selected}
         originalStart={null}
+        bufferMin={picker.bufferMin}
+        windowNote={`${fmtDay(task.window.start)} ${fmtTime(task.window.start)} → ${fmtDay(task.window.end)} ${fmtTime(task.window.end)} · ${task.useWorkingHours ? 'working hours only' : 'any time'}`}
       />
       <div className="dialog-actions">
         <button
@@ -261,7 +273,7 @@ function TaskPicker({ picker }: { picker: TaskPickerState }) {
 //       + SearchHoursField, TemporaryRange
 // POST: shows "Alternatives for <event>" with the Move toggle between the two events, a note when
 //       the target is fixed (BR-10 may still pick it), opt-in/range controls, the search hours, the buffer, the
-//       nearest-first results with their distance from the original time, and Apply / Cancel
+//       shared picks/day chips, optional Details and Apply / Cancel
 function AlternativesPicker({ picker }: { picker: AlternativesPickerState }) {
   const events = useAppStore((state) => state.snapshot.events);
   const actions = useAppStore((state) => state.actions);
@@ -283,6 +295,7 @@ function AlternativesPicker({ picker }: { picker: AlternativesPickerState }) {
       open
       title={`Alternatives for "${target.title}" (${fmtDuration(target.end - target.start)})`}
       onClose={actions.pickerStop}
+      className="suggestion-dialog"
     >
       {choices.length > 1 && (
         <fieldset>
@@ -321,12 +334,12 @@ function AlternativesPicker({ picker }: { picker: AlternativesPickerState }) {
       {(target.flexible || picker.allowMoving) && (
         <>
           <SearchHoursField useWorkingHours={picker.useWorkingHours} />
-          <BufferField bufferMin={picker.bufferMin} />
           <SearchResults
             result={picker.result}
             explanation={picker.explanation}
             selected={picker.selected}
             originalStart={target.start}
+            bufferMin={picker.bufferMin}
           />
         </>
       )}

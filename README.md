@@ -28,7 +28,7 @@ A browser-based week planner that detects every scheduling conflict, finds free 
 - **Calendar lock.** Lock the timeline to browse and drag the time grid to pan without changing events. **K** toggles it; event dialogs, + Event and deliberate Apply actions remain available. Existing calendars start locked on reload. Unlocked fixed moves/resizes ask for the proposed destination or duration.
 - **Calendar / List.** List always shows a week; return to Calendar to restore its last Day, Week or Month view. **L** toggles the two.
 - **Best-time finder.** Tasks have a duration, a priority and a window, such as "90 minutes, sometime this week".
-  - The app lists free slots that fit, ranked by the criterion you choose: earliest, tightest fit, or priority-aware.
+  - Review named top picks and time chips grouped by day. Rank by (earliest, best fit or priority-aware) preselects a pick; chips stay in time order. Show N more expands a day, and Details reveals the window, buffer and selected slot's explanation.
   - Every slot says which gap it came from and what bounds it. When nothing fits, the app says why and shows the largest gap it found.
 - **Several tasks at once.** Selected tasks are offered one at a time, highest priority first. Each search sees the slots you already accepted.
 - **Replan.** For a chosen week, the app proposes two rearrangements of your flexible events: _Minimal change_ and _Balanced week_.
@@ -43,7 +43,7 @@ Nothing changes without your say-so: suggestions and plans are previews until yo
 
 1. Open the [live app](https://int-calendarfeature-creatures.vercel.app) and click **Load sample week**.
 2. **Conflicts.** Look at Tuesday: _Lecture_ and _Meeting_ are flagged _Conflict 30 min_, and the right panel lists the overlap. Click **Suggest alternatives**, pick a slot and **Apply**. The conflict disappears.
-3. **Finding time.** In **Tasks**, click **Find time** on _Write report_. Switch the ranking between _Earliest_, _Best fit_ and _Priority-aware_ to see the order change, read an explanation, then **Apply**.
+3. **Finding time.** In **Tasks**, click **Find time** on _Write report_. Switch Rank by between _Earliest fit_, _Best fit_ and _Priority-aware_ to change the selected pick. Choose a pick or a time chip, open **Details** for its explanation or buffer override, then **Apply selected**. Alternatives uses the same layout with Closest, Same day and Lightest day picks.
 4. **A task that can't fit.** Try **Find time** on _Thesis draft_, a 10-hour task. Lunch splits each day into four-hour stretches, so the app explains that the task can never fit, rather than just finding no slot.
 5. **Replan.** Click **Replan**, then **Compute plans**, and compare the two plans. Apply one and press **Undo** to revert it in a single step.
 6. **Your own events.** Drag across empty time to create an event, or drag an existing event onto another to create a conflict.
@@ -86,7 +86,7 @@ The app is a static React + TypeScript site with three layers. Each layer may on
   - What remains of the working hours, after removing barred slots and the busy blocks, is the free gaps.
   - This takes O(log N + n) once the store is sorted, with no re-sorting.
 - **Ranking: greedy choice over the gaps.**
-  - Each fitting gap gives one candidate slot, sorted by an explicit key: earliest start, smallest leftover (best fit), or lightest day. Priority-aware picks one of these by the task's priority.
+  - Picker candidates include both fitting gap boundaries, every fitting half-hour start and the clamped original start for alternatives. Each retains its gap/boundaries, leftover, day load and distance. The selected criterion preselects a named pick. Replan keeps one candidate per gap and its original ranking.
   - This costs O(m log m).
 - **Replan: a one-pass greedy.**
   - Flexible events are placed in priority order. Each one either keeps a valid spot or takes the best candidate for that plan.

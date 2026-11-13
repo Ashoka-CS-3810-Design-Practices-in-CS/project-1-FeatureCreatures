@@ -124,4 +124,68 @@ describe('T51: shared suggestion layout (D-06)', () => {
     expect(screen.queryByLabelText('Buffer (min)')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Apply selected' })).toBeDisabled();
   });
+
+  it('shows Same day separately when the closest alternative starts tomorrow', async () => {
+    const { engine } = await makeEngine({
+      events: [
+        flexEv('Night', 'Mon 23:00', 'Tue 00:00', ['Mon 09:00', 'Tue 03:00']),
+        ev('Busy', 'Mon 10:30', 'Tue 00:00'),
+      ],
+    });
+    const store = storeFor(engine);
+    renderWithStore(<SlotPicker />, store);
+    act(() => store.getState().actions.openEventAlternatives('Night'));
+    const picks = screen.getByRole('region', { name: 'Top picks' });
+    expect(
+      within(picks).getByRole('radio', { name: /Closest.*Tue 3 Nov 00:00–01:00/ }),
+    ).toBeChecked();
+    expect(
+      within(picks).getByRole('radio', { name: /Same day.*Mon 2 Nov 09:30–10:30/ }),
+    ).toBeInTheDocument();
+    expect(within(picks).getByText('13 h 30 min earlier, same day')).toBeInTheDocument();
+    expect(within(picks).queryByRole('radio', { name: /Lightest day/ })).not.toBeInTheDocument();
+  });
+
+  it.each(['high', 'medium', 'low'] as const)(
+    'Priority-aware preselects the %s priority pick',
+    async (priority) => {
+      const { engine } = await makeEngine({
+        events: [ev('Busy', 'Mon 10:00', 'Mon 18:00')],
+        tasks: [task('Report', 60, ['Mon 09:00', 'Tue 18:00'], { priority })],
+      });
+      const store = storeFor(engine);
+      renderWithStore(<SlotPicker />, store);
+      act(() => store.getState().actions.openTaskPicker(['Report']));
+      await userEvent.click(screen.getByRole('radio', { name: 'Priority-aware' }));
+      const picks = screen.getByRole('region', { name: 'Top picks' });
+      expect(
+        within(picks).getByRole('radio', {
+          name: priority === 'low' ? /Lightest day/ : /Earliest/,
+        }),
+      ).toBeChecked();
+      expect(
+        screen.getByText(
+          `Priority-aware: ${priority === 'high' ? 'High priority → earliest slot' : priority === 'medium' ? 'Medium priority → tightest fit' : 'Low priority → lightest day'}`,
+        ),
+      ).toBeInTheDocument();
+    },
+  );
+
+  it('labels chips crossing midnight with both days and reveals the selected gap and day load', async () => {
+    const { engine } = await makeEngine({
+      tasks: [task('Night', 120, ['Mon 23:00', 'Tue 03:00'], { useWorkingHours: false })],
+    });
+    const store = storeFor(engine);
+    renderWithStore(<SlotPicker />, store);
+    act(() => store.getState().actions.openTaskPicker(['Night']));
+    const days = screen.getByRole('region', { name: 'All options by day' });
+    const chip = within(days).getByRole('radio', { name: 'Mon 2 Nov 23:30 – Tue 3 Nov 01:30' });
+    await userEvent.click(chip);
+    await userEvent.click(screen.getByRole('button', { name: 'Details' }));
+    expect(screen.getByText('Selected: Mon 2 Nov 23:30 – Tue 3 Nov 01:30')).toBeInTheDocument();
+    expect(screen.getByText('Leaves 2 h unused. Day load 0 min.')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Details' }));
+    expect(screen.queryByLabelText('Buffer (min)')).not.toBeInTheDocument();
+    expect(chip).toBeChecked();
+  });
 });

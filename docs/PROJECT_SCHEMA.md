@@ -254,10 +254,10 @@ Each requirement lists its acceptance criteria. The tests that prove it are in `
   2. Run the pre-check for ER2.
   3. Compute the busy blocks and free gaps (BR-6).
   4. Keep the gaps of at least the task's duration.
-  5. Rank them (BR-7) and return the top 5 options, each with an explanation (BR-8).
+  5. Generate and rank all fitting D-06 candidates (BR-7), each retaining its explanation (BR-8). Show named picks and time chips by day.
 - **Acceptance:**
   - Every option is free, inside the window, inside working hours (when `useWorkingHours`), outside barred slots, and exactly the task's duration.
-  - The picker also shows how many gaps were considered and how many fit.
+  - Details shows how many gaps were considered and how many fit, the window/buffer and the selected slot's gap, boundaries, leftover and day load. It starts closed each time.
   - If nothing fits, the user gets ER3, including the largest gap found.
 
 **FR6 — Priority sort and category filter.**
@@ -278,7 +278,7 @@ Each requirement lists its acceptance criteria. The tests that prove it are in `
   1. Choose which event to move by the target rule (BR-10). The user can switch to the other event.
   2. A flexible target searches within its flex window. A fixed target initially shows no options. Allow moving this event enables a temporary From/To range (inclusive dates), prefilled from its day through the next day, never before now; the user may edit it, including outside the former three-day window. Consent/range are dialog state and are never stored on the event. Reopening or switching targets resets consent.
   3. **Search hours** (WI-41, reports #3, #4, #9): the picker offers *Working hours only* or *Any time*. It defaults to *Any time* when the target does not overlap its day's working hours or is on a non-working day, and to *Working hours only* otherwise; switching re-runs the search, and the choice is kept when the user switches the target. Barred slots apply either way.
-  4. Rank by `nearest` to the original start and return the top 5 with explanations.
+  4. Generate all D-06 candidates, ranked by `nearest` to the original start. Show distinct Closest, Same day and Lightest day picks, plus time chips by day (BR-7).
   5. Apply moves the target event (as FR2).
   6. The **Move** radios keep the conflict's order (its first event, then its second) whichever one is selected (WI-45, report #5).
   7. With a fixed target and consent off, the picker says "<title> is fixed, so no suggestions are made for it." Apply is disabled. Invalid opted-in ranges give InvalidTime. The fixed/flexible kind is preserved by Apply; BR-10's target order is unchanged.
@@ -421,9 +421,9 @@ These rules are normative. The algorithms in TECH_SPEC §8 implement them exactl
 - **Fit:** a gap fits a duration `d` iff `gap.length ≥ d`.
 - **Buffer scope:** the buffer is applied only around events, never at segment edges.
 
-**BR-7 Ranking criteria.**
-- **Candidates:** each fitting gap yields exactly one candidate. When the request has an original start (alternatives and Replan), the candidate start is `clamp(originalStart, gap.start, gap.end − d)`, i.e. as close to the original time as that gap allows. Otherwise (task searches) it is `gap.start`.
-- **Order:** at most 5 options are returned, in rank order. Ties are always broken by earlier slot start, then by earlier gap.
+**BR-7 Ranking criteria and picker candidates (D-06).**
+- **Picker candidates:** each fitting gap yields starts at `gap.start`, `gap.end − d`, every multiple of `SUGGESTION_STEP_MIN = 30` between them, and the clamped original start for alternatives. Deduplicate starts; each option retains all BR-8 metadata. Return every candidate in criterion order, without a five-option limit. Ties use earlier start, then earlier gap.
+- **Replan:** keeps `rankOptions` unchanged: one clamped-original candidate per fitting gap, at most `MAX_OPTIONS = 5` in rank order.
 
 | Criterion | Sort key (ascending) | Shown to the user as |
 |---|---|---|
@@ -433,7 +433,9 @@ These rules are normative. The algorithms in TECH_SPEC §8 implement them exactl
 | `nearest` | \|slot start − original start\| | "Closest to the original time (N min earlier/later)" |
 | `priorityAware` | maps to `earliest` (High), `bestFit` (Medium), `leastLoaded` (Low) | "Priority-aware: High priority → earliest slot" (etc.) |
 
-The user can choose `earliest`, `bestFit` or `priorityAware` in the task picker. `nearest` is used for alternatives. `leastLoaded` is used inside `priorityAware` and by the Balanced replan.
+The sort keys above remain the engine contract; their former repeated criterion sentences are no longer printed on every picker row. The user chooses `earliest`, `bestFit` or `priorityAware` in the task picker. `nearest` ranks alternatives. `leastLoaded` is used inside `priorityAware` and by the Balanced replan.
+
+**Picker presentation:** Find time names Earliest, Tightest fit and Lightest day picks. Rank by preselects the corresponding slot (`priorityAware`: High → Earliest, Medium → Tightest fit, Low → Lightest day). Alternatives names Closest (minimum shift), Same day (minimum shift on the original local day), and Lightest day (minimum load, then shift). Earlier starts break ties. Each pick has a slot and short reason; omit later picks naming an already represented slot, and omit Same day when none exists. Remaining slots are grouped by local start day in date/time order, independent of Rank by. Show eight chips per day with Show N more to expand. One native radio group spans picks and chips, with exactly one selected slot; each slot appears once. Cross-midnight chips include both dates to avoid ambiguity. Details is per dialog, initially off and never saved; it reveals BR-8 data and the buffer override. Empty-result explanations stay visible while Details is closed.
 
 The A1 definition of priority-aware ("place higher-priority tasks first") becomes the queue order in BR-11.
 
@@ -544,8 +546,8 @@ Twelve curated colours include the five seeds. Free colours are normalised six-d
 2. **Event dialog** (create and edit): title, category, priority, start, end, Fixed/Flexible scheduling radios, flex window (shown when flexible), description. Priority uses a fieldset with a legend and native High / Medium / Low radios, each with its [H]/[M]/[L] tag and priority colour; arrow keys change the selected option. The flex window is its own full-width group below End, without overlap or clipping at desktop and drawer widths in either theme. It has Save and Cancel buttons, plus Delete when editing.
 3. **Task dialog** (create and edit): name, duration (h and min), the same priority radio group, category, window from/to, Scheduling hours radios ("Working hours only", the default, and "Any time"), description. These radios still map to `useWorkingHours` true / false; barred slots apply to both. It has Save and Cancel buttons, plus Delete, Unschedule and Find time when editing.
 4. **Slot picker:**
-   - **Task mode:** the header shows the task name, duration, priority and "Task i of N". It contains the criterion selector, a buffer override, a summary line, ranked options with explanations, and the Apply, Skip and Stop buttons.
-   - **Alternatives mode:** the header shows the target and a toggle for which event to move. The criterion is fixed to "Closest to original time". There are Apply and Cancel buttons.
+   - **Task mode:** the header shows the task name, duration, priority and "Task i of N", then Rank by. Named top picks precede all other options as time chips by day. Details reveals the task window, search summary/window/buffer and the selected slot's explanation. Apply selected, Skip and Stop retain queue behaviour.
+   - **Alternatives mode:** the header shows the target/length, Move radios, fixed opt-in/temporary range and Search hours. The same picks/day chips/Details layout uses the alternatives picks in BR-7. Apply and Cancel retain their behaviour.
 5. **Replan dialog:** range from/to (default the visible week; from Month, whose grid exceeds 14 days, the first full week of the month, AUDIT A10), a buffer override, and a *Compute plans* button. Below them are two plan cards side by side (stacked when narrow). Each card shows its metrics and list of moves, with an *Apply this plan* button. Changing the range or buffer removes the cards until *Compute plans* runs again, so a plan is only applied for the inputs shown (AUDIT A08). Cancel closes the dialog.
 6. **Settings dialog:**
    - Five headed sections (WI-49): **Working time** (working days as day chips, working hours from / to), **Scheduling defaults** (default buffer, default ranking), **Barred slots** (one compact row per slot: label, from–to, day chips and a remove ×; *Add barred slot* puts a new row at the end and focuses its label), **Categories** (BR-16) and **Data**. Settings Save / Cancel stay in their sticky footer; category changes save independently as undo steps. The dialog has the × of §7.7.
@@ -575,21 +577,18 @@ Twelve curated colours include the five seeds. Free colours are normalised six-d
 
 ```text
 ┌ Find time — "Write report" (1 h 30 min, High) — Task 1 of 2 ───────────────────────────────┐
-│ Window: Mon 2 Nov 09:00 → Fri 6 Nov 18:00 · working hours only · Buffer [15] min            │
 │ Rank by: (●) Earliest fit  ( ) Best fit  ( ) Priority-aware                                │
-│ 4 free gaps in window (30 min, 1 h, 1 h 45, 4 h) — 2 fit 1 h 30 min                         │
-│                                                                                            │
-│ (●) 1. Wed 4 Nov 14:00–15:30  Earliest slot that fits.                                     │
-│        Gap 14:00–18:00 (4 h): after "Lab" ends 13:45 + 15 min buffer → working hours end.  │
-│        Leaves 2 h 30 min unused. Day load 2 h.                                             │
-│ ( ) 2. Thu 5 Nov 09:00–10:30  Gap 09:00–10:45 (1 h 45): working hours start →             │
-│        15 min buffer before "Seminar" 11:00. Leaves 15 min unused. Day load 3 h.           │
-│                                                                                            │
+│ Top picks: (●) Earliest — Wed 4 Nov 14:00–15:30                                           │
+│            ( ) Tightest fit — Thu 5 Nov 09:00–10:30                                      │
+│ All options by day                                                                      │
+│ Wed 4 Nov: ( )14:30–16:00 ( )15:00–16:30 ( )15:30–17:00 …                                │
+│ Thu 5 Nov: ( )09:15–10:45                                                                │
+│ [Details ▸] summary, window, buffer and selected gap explanation when expanded            │
 │                                   [Apply selected]  [Skip]  [Stop]                         │
 └────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-*Figure 2. The slot picker in task mode. In alternatives mode the header reads "Alternatives for "Meeting" (1 h) — Move: (●) Meeting ( ) Lecture", there is no Skip or Stop, and each option states its distance from the original time.*
+*Figure 2. Shared picker layout. Alternatives uses Closest / Same day / Lightest day, Move radios and optional fixed-event consent/range; short reasons describe shift or day load. There is no Skip or Stop.*
 
 ### 7.2 Controls
 
@@ -738,3 +737,4 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 | 2026-11-12 | v1.16 (WI-49, D-11/C-01): BR-16 specifies category CRUD/history, blocked deletion, shared colour validation, inline creation, tags, category filters and session defaults. FR6/FR11 include the controls; new events start Fixed regardless of category. T49 replaces category-based flexibility expectations. |
 | 2026-11-12 | v1.17 (WI-50, D-01–D-05): fixed/flexible scheduling radios; explicit fixed-search consent and temporary range; action-specific move/resize confirmations; session Calendar lock and grab-to-pan; separate persisted Calendar/List toggle and last Calendar view. FR2/FR7, glossary, BR-17, workflows and shortcuts updated; prior default three-day search removed. |
 | 2026-11-13 | WI-50 verification: releasing a locked-grid pan outside the calendar ends it, including before pointer capture; returning to the grid after release must not scroll it. T50 covers the regression. |
+| 2026-11-13 | v1.18 (WI-51, D-06/C-03/C-04): FR5/FR7, BR-7/BR-8 presentation and Figure 2 use complete half-hour/boundary/original candidates, distinct named picks, chronological day chips with eight-slot expansion, one selection and initially hidden Details. Replan's one-per-gap/MAX_OPTIONS contract is unchanged. |

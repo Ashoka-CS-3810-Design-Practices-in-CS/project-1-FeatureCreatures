@@ -26,9 +26,10 @@ import { computeDayLoads } from './algorithms/dayLoad';
 import { freeGaps, largestGap } from './algorithms/gaps';
 import { expand, length, maxLength } from './algorithms/interval';
 import { mergeBusy } from './algorithms/merge';
-import { rankOptions } from './algorithms/rank';
+import { rankCandidates } from './algorithms/rank';
 import { allowedSegments } from './algorithms/segments';
 import { eventsIntersecting } from './algorithms/sortedArray';
+import { generateCandidates } from './algorithms/suggestions';
 import type { EngineState } from './state';
 
 export interface SearchRequest {
@@ -116,14 +117,15 @@ export function search(
     });
   }
 
-  const options = rankOptions(fitting, {
+  const rankContext = {
     durationMin: request.durationMin,
     criterion: request.criterion,
     priority: request.priority,
     originalStart: request.originalStart,
     dayLoads: computeDayLoads(eventsOnDays(state, frames, request.excludeIds), frames),
     frames,
-  });
+  };
+  const options = rankCandidates(fitting.flatMap((gap) => generateCandidates(gap, rankContext)));
   return ok({
     baseVersion: state.version,
     subject: request.subject,
