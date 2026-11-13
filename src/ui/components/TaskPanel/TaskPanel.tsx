@@ -131,6 +131,33 @@ export function TaskPanel() {
       </div>
 
       <div className="task-filters">
+        <label>
+          Show{' '}
+          <select
+            value={panel.status}
+            onChange={(event) =>
+              actions.setTaskPanel({ status: event.target.value as PanelState['status'] })
+            }
+          >
+            <option value="open">Open</option>
+            <option value="unscheduled">Unscheduled</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="done">Done</option>
+            <option value="all">All</option>
+          </select>
+        </label>
+        <label>
+          Sort by{' '}
+          <select
+            value={panel.sort}
+            onChange={(event) =>
+              actions.setTaskPanel({ sort: event.target.value as PanelState['sort'] })
+            }
+          >
+            <option value="priority">Priority</option>
+            <option value="windowEnd">Window end</option>
+          </select>
+        </label>
         <details
           className="task-menu"
           onKeyDown={(event) => {
@@ -157,33 +184,6 @@ export function TaskPanel() {
             </button>
           </div>
         </details>
-        <label>
-          Sort by{' '}
-          <select
-            value={panel.sort}
-            onChange={(event) =>
-              actions.setTaskPanel({ sort: event.target.value as PanelState['sort'] })
-            }
-          >
-            <option value="priority">Priority</option>
-            <option value="windowEnd">Window end</option>
-          </select>
-        </label>
-        <label>
-          Show{' '}
-          <select
-            value={panel.status}
-            onChange={(event) =>
-              actions.setTaskPanel({ status: event.target.value as PanelState['status'] })
-            }
-          >
-            <option value="open">Open</option>
-            <option value="unscheduled">Unscheduled</option>
-            <option value="scheduled">Scheduled</option>
-            <option value="done">Done</option>
-            <option value="all">All</option>
-          </select>
-        </label>
       </div>
 
       {shown.length === 0 ? (

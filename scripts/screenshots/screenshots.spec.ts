@@ -64,7 +64,7 @@ for (const theme of THEMES) {
       await openApp(page, theme, width);
       await loadSampleWeek(page);
       await capture(page, `layout-${theme}-${width}`);
-      if (width < 1280) {
+      if (width < MEDIUM_DESKTOP_WIDTH) {
         await showTasks(page);
         await capture(page, `layout-tasks-drawer-${theme}-${width}`);
         await closeDrawers(page);

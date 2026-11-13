@@ -513,11 +513,7 @@ dialog .category-editor input[type='color'] {
   white-space: nowrap;
 }
 
-.task-filters > label:last-child {
-  order: -1;
-}
 .task-filters .task-menu {
-  order: 1;
   align-self: flex-end;
 }
 .task-filters select {

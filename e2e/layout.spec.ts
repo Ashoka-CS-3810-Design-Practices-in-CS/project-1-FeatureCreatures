@@ -82,6 +82,7 @@ for (const theme of ['light', 'dark'] as const) {
         const conflictTrigger = appBar.getByRole('button', { name: /^Conflicts \(\d+\)$/ });
         await conflictTrigger.click();
         const rightDrawer = page.getByRole('dialog', { name: /^Conflicts/ });
+        await expect.poll(() => rightDrawer.evaluate((dialog) => dialog.scrollTop)).toBe(0);
         await expect(
           rightDrawer.getByRole('region', { name: 'Replan', exact: true }),
         ).toBeVisible();

@@ -44,6 +44,7 @@ function wrapDialogTab(event: KeyboardEvent<HTMLDialogElement>): void {
 // POST: renders a native <dialog> opened with showModal() while open (so focus is trapped and the
 //       page behind is inert), labelled by its title; a dismissible dialog also shows a × button
 //       named Close that calls onClose exactly as Cancel / Esc do (WI-45, report #11)
+//       Each opening starts at the title rather than retaining a previous scroll position.
 export function Modal({
   open,
   title,
@@ -77,6 +78,7 @@ export function Modal({
     programmaticClose.current = false;
     if (!dialog.open) {
       dialog.showModal();
+      dialog.scrollTop = 0;
     }
 
     return () => {
