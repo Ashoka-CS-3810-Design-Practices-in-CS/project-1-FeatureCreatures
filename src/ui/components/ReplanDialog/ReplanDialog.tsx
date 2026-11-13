@@ -1,23 +1,34 @@
 import { useId, useState } from 'react';
-import { MAX_REPLAN_DAYS, MINUTES_PER_DAY, REPLAN_DST_SLACK_MIN } from '@/shared/constants';
+import {
+  DEFAULT_REPLAN_STRATEGY,
+  MAX_REPLAN_DAYS,
+  MINUTES_PER_DAY,
+  REPLAN_DST_SLACK_MIN,
+  REPLAN_STRATEGIES,
+  REPLAN_STRATEGY_LABELS,
+} from '@/shared/constants';
 import type { Result } from '@/shared/result';
 import { addLocalDays, startOfLocalWeek } from '@/shared/time';
-import type { Interval, Minute, ReplanNotMoved, ReplanPlan, ReplanResult } from '@/shared/types';
+import type {
+  Interval,
+  Minute,
+  ReplanNotMoved,
+  ReplanPlan,
+  ReplanResult,
+  ReplanStrategy,
+} from '@/shared/types';
 import { errorMessage } from '../../format/errors';
-import { moveText } from '../../format/explain';
 import { fmtDuration } from '../../format/time';
 import { fromDateInput, toDateInput } from '../../forms/eventForm';
 import { useAppStore } from '../../store/appStore';
 import { Modal } from '../Modal/Modal';
 import { NotMovedList } from './NotMovedList';
+import { ReplanMoves } from './ReplanMoves';
+import { combinedNotMoved } from './replanView';
 
 const LAST_DAY_OF_WEEK = 6; // Sunday, counted from Monday
 // The engine's limit on a replan range (TECH_SPEC §7.4.4), DST slack included.
 const MAX_REPLAN_SPAN_MIN = MAX_REPLAN_DAYS * MINUTES_PER_DAY + REPLAN_DST_SLACK_MIN;
-const PLAN_NAME: Record<ReplanPlan['id'], string> = {
-  minimalChange: 'Minimal change',
-  balanced: 'Balanced week',
-};
 
 // PRE:  activeRange is the visible range, or null; viewDate is the first day of the shown period
 // POST: returns the default first and last day: the week of viewDate while no range is known;
@@ -37,38 +48,46 @@ function defaultDays(activeRange: Interval | null, viewDate: Minute): { from: st
   return { from: toDateInput(monday), to: toDateInput(addLocalDays(monday, LAST_DAY_OF_WEEK)) };
 }
 
-// PRE:  plan is one computed plan; notMoved describes its remaining problems; onApply applies it
-//       + additional props from: NotMovedList
-// POST: shows metrics, moves and remaining problems with alternatives; a plan with no moves says
-//       No changes needed only if no diagnostic entries remain
+// PRE: plan is computed; name labels it; notMoved describes its remaining problems;
+//      details controls full metrics; onApply applies this plan
+//      + additional props from: ReplanMoves
+// POST: shows the move/conflict headline and grouped moves, full metrics only in Details;
+//       a plan with no moves says No changes needed only if no diagnostic entries remain
 function PlanCard({
   plan,
   notMoved,
+  name,
+  details,
   onApply,
-  onSuggest,
 }: {
   plan: ReplanPlan;
   notMoved: readonly ReplanNotMoved[];
+  name: string;
+  details: boolean;
   onApply: () => void;
-  onSuggest: (eventId: string) => void;
 }) {
   const { metrics } = plan;
-  const name = PLAN_NAME[plan.id];
   return (
     <section aria-label={name} className="plan-card">
       <h3>{name}</h3>
-      <ul>
-        <li>Moved: {metrics.moved}</li>
-        <li>Total shift: {fmtDuration(metrics.totalShiftMin)}</li>
-        <li>
-          Conflicts: {metrics.conflictsBefore} → {metrics.conflictsAfter}
-        </li>
-        <li>
-          Day-load spread: {fmtDuration(metrics.loadSpreadBeforeMin)} →{' '}
-          {fmtDuration(metrics.loadSpreadAfterMin)}
-        </li>
-        <li>Unplaced: {metrics.unplaced}</li>
-      </ul>
+      <p className="plan-headline">
+        {metrics.moved} {metrics.moved === 1 ? 'move' : 'moves'} · conflicts{' '}
+        {metrics.conflictsBefore} → {metrics.conflictsAfter}
+      </p>
+      {details && (
+        <ul>
+          <li>Moved: {metrics.moved}</li>
+          <li>Total shift: {fmtDuration(metrics.totalShiftMin)}</li>
+          <li>
+            Conflicts: {metrics.conflictsBefore} → {metrics.conflictsAfter}
+          </li>
+          <li>
+            Day-load spread: {fmtDuration(metrics.loadSpreadBeforeMin)} →{' '}
+            {fmtDuration(metrics.loadSpreadAfterMin)}
+          </li>
+          <li>Unplaced: {metrics.unplaced}</li>
+        </ul>
+      )}
       {plan.moves.length === 0 && (
         <p>
           {notMoved.length === 0
@@ -76,14 +95,7 @@ function PlanCard({
             : `No moves in this plan — ${notMoved.length} ${notMoved.length === 1 ? 'event still needs' : 'events still need'} attention.`}
         </p>
       )}
-      {plan.moves.length > 0 && (
-        <ul aria-label={`${name} moves`}>
-          {plan.moves.map((move) => (
-            <li key={move.eventId}>{moveText(move)}</li>
-          ))}
-        </ul>
-      )}
-      <NotMovedList entries={notMoved} planName={name} onSuggest={onSuggest} />
+      {plan.moves.length > 0 && <ReplanMoves moves={plan.moves} name={name} details={details} />}
       {plan.moves.length > 0 && (
         <button type="button" className="primary" aria-label={`Apply ${name}`} onClick={onApply}>
           Apply this plan
@@ -95,9 +107,9 @@ function PlanCard({
 
 // PRE:  rendered under StoreProvider; reads view and snapshot.settings; uses computeReplan,
 //       applyReplan, openEventAlternatives and closeDialog
-//       + additional props from: Modal, PlanCard
+//       + additional props from: Modal, PlanCard, NotMovedList
 // POST: shows the replan form (first and last day, defaulting to the visible week, and a buffer
-//       override), Compute plans, and then the two plan cards side by side, or "No flexible events
+//       override behind Details), Strategy and Compute plans, then compact plan cards and shared collapsed diagnostics, or "No flexible events
 //       in this range", or the range / buffer problem, until an input changes; applying a plan
 //       closes the dialog
 function ReplanForm() {
@@ -107,6 +119,8 @@ function ReplanForm() {
   const idPrefix = useId();
   const [days, setDays] = useState(() => defaultDays(view.activeRange, view.date));
   const [buffer, setBuffer] = useState('');
+  const [strategy, setStrategy] = useState<ReplanStrategy>(DEFAULT_REPLAN_STRATEGY);
+  const [details, setDetails] = useState(false);
   const [result, setResult] = useState<Result<ReplanResult> | null>(null);
 
   // PRE:  update applies one edit of From, To or Buffer
@@ -122,7 +136,7 @@ function ReplanForm() {
   function compute(): void {
     const range = { start: fromDateInput(days.from), end: addLocalDays(fromDateInput(days.to), 1) };
     const bufferMin = buffer.trim() === '' ? undefined : Number(buffer);
-    setResult(actions.computeReplan(range, bufferMin));
+    setResult(actions.computeReplan(range, bufferMin, strategy));
   }
 
   // PRE:  plans is the shown result; planId names one of its plans
@@ -137,33 +151,59 @@ function ReplanForm() {
   }
 
   return (
-    <Modal open title="Replan" onClose={actions.closeDialog}>
-      <label htmlFor={`${idPrefix}-from`}>From</label>
-      <input
-        id={`${idPrefix}-from`}
-        type="date"
-        value={days.from}
-        onChange={(event) => editInput(() => setDays({ ...days, from: event.target.value }))}
-      />
-      <label htmlFor={`${idPrefix}-to`}>To</label>
-      <input
-        id={`${idPrefix}-to`}
-        type="date"
-        value={days.to}
-        onChange={(event) => editInput(() => setDays({ ...days, to: event.target.value }))}
-      />
-      <label htmlFor={`${idPrefix}-buffer`}>Buffer (min)</label>
-      <input
-        id={`${idPrefix}-buffer`}
-        type="number"
-        min={0}
-        placeholder={String(settingsBuffer)}
-        value={buffer}
-        onChange={(event) => editInput(() => setBuffer(event.target.value))}
-      />
-      <button type="button" onClick={compute}>
-        Compute plans
+    <Modal open title="Replan" onClose={actions.closeDialog} className="replan-dialog">
+      <div className="replan-inputs">
+        <label>
+          From
+          <input
+            id={`${idPrefix}-from`}
+            type="date"
+            value={days.from}
+            onChange={(event) => editInput(() => setDays({ ...days, from: event.target.value }))}
+          />
+        </label>
+        <label>
+          To
+          <input
+            id={`${idPrefix}-to`}
+            type="date"
+            value={days.to}
+            onChange={(event) => editInput(() => setDays({ ...days, to: event.target.value }))}
+          />
+        </label>
+        <label>
+          Strategy{' '}
+          <select
+            value={strategy}
+            onChange={(event) => editInput(() => setStrategy(event.target.value as ReplanStrategy))}
+          >
+            {REPLAN_STRATEGIES.map((value) => (
+              <option key={value} value={value}>
+                {REPLAN_STRATEGY_LABELS[value]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button type="button" onClick={compute}>
+          Compute plans
+        </button>
+      </div>
+      <button type="button" aria-expanded={details} onClick={() => setDetails(!details)}>
+        Details
       </button>
+      {details && (
+        <>
+          <label htmlFor={`${idPrefix}-buffer`}>Buffer (min)</label>
+          <input
+            id={`${idPrefix}-buffer`}
+            type="number"
+            min={0}
+            placeholder={String(settingsBuffer)}
+            value={buffer}
+            onChange={(event) => editInput(() => setBuffer(event.target.value))}
+          />
+        </>
+      )}
 
       {result !== null && !result.ok && <p role="alert">{errorMessage(result.error)}</p>}
       {result?.ok === true &&
@@ -174,17 +214,29 @@ function ReplanForm() {
       {result?.ok === true &&
         (result.value.movableCount > 0 ||
           result.value.plans.some((plan) => result.value.notMoved[plan.id].length > 0)) && (
-          <div className="plan-cards">
-            {result.value.plans.map((plan) => (
-              <PlanCard
-                key={plan.id}
-                plan={plan}
-                notMoved={result.value.notMoved[plan.id]}
-                onApply={() => void apply(result.value, plan.id)}
-                onSuggest={actions.openEventAlternatives}
-              />
-            ))}
-          </div>
+          <>
+            <div className="plan-cards">
+              {result.value.plans.map((plan) => (
+                <PlanCard
+                  key={plan.id}
+                  plan={plan}
+                  notMoved={result.value.notMoved[plan.id]}
+                  name={
+                    plan.id === 'minimalChange'
+                      ? 'Minimal change'
+                      : REPLAN_STRATEGY_LABELS[result.value.strategy]
+                  }
+                  details={details}
+                  onApply={() => void apply(result.value, plan.id)}
+                />
+              ))}
+            </div>
+            <NotMovedList
+              entries={combinedNotMoved(result.value)}
+              details={details}
+              onSuggest={actions.openEventAlternatives}
+            />
+          </>
         )}
 
       <div className="dialog-actions">

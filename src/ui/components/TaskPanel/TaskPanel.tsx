@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { PRIORITY_TAGS } from '@/shared/constants';
 import type { CalendarEvent, Priority, Task } from '@/shared/types';
 import { fmtDay, fmtDuration, fmtRange, fmtTime } from '../../format/time';
 import { useAppStore, type AppActions, type AppState } from '../../store/appStore';
@@ -10,7 +11,6 @@ const PRIORITY_OPTIONS: { value: Priority; label: string; tag: string }[] = [
   { value: 'medium', label: 'Medium', tag: '[M]' },
   { value: 'low', label: 'Low', tag: '[L]' },
 ];
-const TAG_FOR: Record<Priority, string> = { high: '[H]', medium: '[M]', low: '[L]' };
 
 type PanelState = AppState['taskPanel'];
 
@@ -47,7 +47,7 @@ function TaskRow({
         />
       </label>{' '}
       <span className="task-heading">
-        <strong>{task.name}</strong> <span className="tag">{TAG_FOR[task.priority]}</span>
+        <strong>{task.name}</strong> <span className="tag">{PRIORITY_TAGS[task.priority]}</span>
         {category !== undefined && <CategoryTag category={category} />}
       </span>{' '}
       <span className="task-meta">

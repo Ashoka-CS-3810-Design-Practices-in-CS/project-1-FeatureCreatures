@@ -40,6 +40,7 @@ import type {
   Priority,
   ReplanPlan,
   ReplanResult,
+  ReplanStrategy,
   Settings,
   Snapshot,
   SlotSearchResult,
@@ -148,7 +149,11 @@ export interface AppActions {
   openEventAlternatives(eventId: string): void;
   setPanelsOpen(open: boolean): void;
   viewBarredOverlaps(): void;
-  computeReplan(range: Interval, bufferMin: number | undefined): Result<ReplanResult>;
+  computeReplan(
+    range: Interval,
+    bufferMin: number | undefined,
+    strategy?: ReplanStrategy,
+  ): Result<ReplanResult>;
   applyReplan(baseVersion: number, planId: ReplanPlan['id']): Promise<Result<MutationResult>>;
   pickerSelect(index: number): void;
   pickerSetCriterion(criterion: UserCriterion): void;
@@ -947,8 +952,8 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
 
       // PRE:  range and bufferMin come from the replan dialog (validated by the engine)
       // POST: returns both replan plans for range (FR10); the engine keeps them for applyReplan
-      computeReplan(range, bufferMin) {
-        return engine.planReplan({ range, bufferMin });
+      computeReplan(range, bufferMin, strategy) {
+        return engine.planReplan({ range, bufferMin, strategy });
       },
 
       // PRE:  baseVersion and planId come from the plans computeReplan returned

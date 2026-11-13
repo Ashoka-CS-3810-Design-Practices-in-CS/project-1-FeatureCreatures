@@ -1,10 +1,9 @@
 import { fmtDuration } from '../../format/time';
+import { PRIORITY_TAGS } from '@/shared/constants';
 import { useEffect, useId, useRef } from 'react';
 import { FixedTag } from '../FixedTag/FixedTag';
 import type { EventBlockProps } from './toFullCalendar';
 import { CategoryTag } from '../Categories/CategoryTag';
-
-const PRIORITY_TAG = { high: '[H]', medium: '[M]', low: '[L]' } as const;
 
 // PRE:  title and timeText come from FullCalendar; the rest from toFullCalendar's extendedProps
 //       onOpen opens the event dialog when supplied for a List-view button
@@ -53,7 +52,7 @@ export function EventContent({
       ))}{' '}
       <span className="event-time">{timeText}</span>{' '}
       <strong className="event-title">{title}</strong>{' '}
-      <span className={`tag prio-${priority}`}>{PRIORITY_TAG[priority]}</span>
+      <span className={`tag prio-${priority}`}>{PRIORITY_TAGS[priority]}</span>
       {category !== undefined && <CategoryTag category={category} />}
       {kind === 'Task' && <span className="tag">Task</span>}
       {kind === 'Flexible' && <span className="tag">Flexible</span>}

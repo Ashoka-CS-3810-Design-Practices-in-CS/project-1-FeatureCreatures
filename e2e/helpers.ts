@@ -75,18 +75,25 @@ export async function openCalendar(page: Page): Promise<void> {
 }
 
 // PRE:  calendar is open; start/end are valid datetime-local strings with end > start
-// POST: creates the named event through the dialog and waits for Save to finish
+//       window, when supplied, is a valid flexible window containing the event duration
+// POST: creates the named fixed event (or flexible event with window) and waits for Save to finish
 export async function createEvent(
   page: Page,
   title: string,
   start: string,
   end: string,
+  window?: { start: string; end: string },
 ): Promise<void> {
   await page.getByRole('button', { name: '+ Event', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'New event' });
   await dialog.getByLabel('Title', { exact: true }).fill(title);
   await dialog.getByLabel('Start', { exact: true }).fill(start);
   await dialog.getByLabel('End', { exact: true }).fill(end);
+  if (window !== undefined) {
+    await dialog.getByRole('radio', { name: /Flexible/ }).check();
+    await dialog.getByLabel('Window start', { exact: true }).fill(window.start);
+    await dialog.getByLabel('Window end', { exact: true }).fill(window.end);
+  }
   await dialog.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(dialog).toBeHidden();
 }

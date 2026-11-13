@@ -1169,6 +1169,72 @@ dialog.suggestion-dialog {
   margin-top: var(--space-5);
 }
 
+.replan-dialog {
+  width: min(70rem, calc(100vw - var(--space-6)));
+}
+
+.replan-inputs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.replan-inputs label {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+}
+
+.replan-inputs input,
+.replan-inputs select {
+  width: 100%;
+  min-width: 0;
+}
+
+.replan-inputs button {
+  flex-shrink: 0;
+}
+
+.replan-move-day h4 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.plan-card .replan-move-day {
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.replan-move-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  padding: var(--space-2) 0;
+}
+
+.replan-move-details {
+  flex-basis: 100%;
+  color: var(--muted);
+}
+
+.replan-not-moved li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.replan-not-moved li p {
+  flex-basis: 100%;
+}
+
 .plan-card {
   display: flex;
   flex-direction: column;
@@ -1213,9 +1279,13 @@ dialog .plan-card {
 }
 
 .plan-card > button,
-.plan-card > p {
+.plan-card > p:not(.plan-headline) {
   align-self: flex-start;
   margin-top: auto;
+}
+
+.plan-card > .plan-headline {
+  margin: 0;
 }
 
 /* ── Empty state and toasts ───────────────────────────────────────────── */

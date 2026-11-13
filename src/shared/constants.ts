@@ -10,6 +10,11 @@ export const REPLAN_STRATEGIES = [
   'fewerFragments',
 ] as const satisfies readonly ReplanStrategy[];
 export const DEFAULT_REPLAN_STRATEGY: ReplanStrategy = 'balanced';
+export const PRIORITY_TAGS: Readonly<Record<Priority, string>> = {
+  high: '[H]',
+  medium: '[M]',
+  low: '[L]',
+};
 export const REPLAN_STRATEGY_LABELS: Readonly<Record<ReplanStrategy, string>> = {
   balanced: 'Balanced week',
   clusterByCategory: 'Cluster by category',
