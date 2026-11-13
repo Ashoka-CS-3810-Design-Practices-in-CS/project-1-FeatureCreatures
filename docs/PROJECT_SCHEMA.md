@@ -193,7 +193,7 @@ The default flex window is the event's local day, from working start to working 
 | `barredSlots` | `{id, label, startMin, endMin, days}[]` | `[]` | `endMin > startMin`; label 1–40 characters; no positive time overlap on shared weekdays; touching is allowed; duplicate/overlap messages name the earlier label and times (D-09/D-20) |
 | `defaultCriterion` | `earliest \| bestFit \| priorityAware` | `earliest` | — |
 
-UI-only preferences (theme and last view) are stored in `localStorage`, not in Settings.
+UI-only preferences (theme, accent, last view and Calendar/List) are stored in `localStorage`, not in Settings or exported calendar data.
 
 #### Category (BR-16, WI-49)
 
@@ -353,7 +353,7 @@ Every engine command returns either success or a typed error (§5). Errors never
   - stress (5,000 events)
 - **First run:** an empty calendar shows a "Load sample week" button.
 
-**B3 — Dark mode.** The toolbar toggle cycles System → Light → Dark. The choice persists in `localStorage`. All colours come from CSS tokens. Contrast is at least 4.5:1 in both themes.
+**B3 — Appearance.** The app-bar toggle shows a sun for resolved Light and a moon for resolved Dark, and switches directly between Light and Dark. Settings → Appearance also offers System, which follows OS changes. Appearance offers Neutral (the active theme's dark grey/cream default) plus seven curated accents. Theme and accent persist in `localStorage` and are not exported. All colours come from CSS tokens. Text contrast is at least 4.5:1 and non-text contrast at least 3:1 in both themes.
 
 **B4 — Keyboard shortcuts.** See §7.6. Shortcuts are ignored while focus is in a text field. The toolbar button labelled Keyboard shortcuts and the `?` key open the same help overlay.
 
@@ -653,11 +653,13 @@ All toasts are announced through an ARIA live region. Errors use `assertive`; ev
 
 ### 7.5 Visual language (tokens; exact values in TECH_SPEC §11.4)
 
+- **Event fills:** one neutral dark-grey fill with light text in Light, and one cream fill with dark text in Dark. Fill contrast against the empty grid is at least 3:1; text on it is at least 4.5:1. Past blocks retain that fill with muted readable ink and regular title weight; past-day shading remains separate.
 - **Priority colours:** High = red family, Medium = amber, Low = slate blue. Each always comes with an [H]/[M]/[L] tag.
 - **Conflict:** a 2 px dashed outline in the danger colour, a ⚠ icon and the text "Conflict N min".
-- **Fixed events** show a small "Fixed" tag. **Scheduled-task events** show a "Task" tag.
+- **Tags** carry their own contrasted backgrounds. Priority tags use their priority colours, category tags use a coloured dot and normal text, and Fixed/Flexible/Task/In-label tags use grey icons plus text. Task rows reuse the priority/category tags without ribbons. Narrow blocks show title, priority and icons; the complete information stays in the accessible name and tooltip.
 - **Barred slots** are hatched background blocks with their label. Non-working hours/days have a distinct dotted shading while the global switch is on. Pattern contrast is ≥ 3:1 in both themes; normal text/background contrast remains ≥ 4.5:1.
 - Events overlapping barred slots carry `In Lunch` (or the configured label) text tags; these warnings have their own panel section and do not change conflict counts.
+- **Accent:** Neutral plus Fern, Teal, Cyan, Indigo, Violet, Rose and Olive. It marks each region's primary action, selected segments, focus rings, today and checked chips. The seven non-neutral accents and all category colours exclude reserved event fills, danger red and the three priority colours; Neutral intentionally matches the event fill.
 
 ### 7.6 Keyboard shortcuts (B4)
 
@@ -767,3 +769,4 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 | 2026-11-13 | v1.29 (WI-56 D-14 checkpoint): app-bar/calendar/task control ownership, three independently scrolling columns, separate counted drawers below 1280 and sibling Conflicts/Replan/Barred regions. |
 | 2026-11-13 | v1.30 (WI-56 D-21): Figure 1 now uses the planner-approved D-14 layout; Figure 2 uses ASCII and aligned box lines. Updated old main-screen/drawer/Replan/queue descriptions to match D-14/D-15. |
 | 2026-11-13 | WI-56 final layout review: compact task rows show both window dates with a full-time tooltip and aligned actions. Keyboard order follows Show/Sort/menu, and drawers reopen at their titles. |
+| 2026-11-14 | v1.31 (WI-57 D-12/D-13): neutral event fills and independent readable tags, compact icons on narrow blocks, shared task priority tags; persisted neutral-plus-seven accent choices and System/Light/Dark in Appearance; resolved sun/moon toggle switches Light/Dark. Past events retain the neutral fill with muted ink/weight. |

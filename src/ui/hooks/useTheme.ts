@@ -1,26 +1,16 @@
-import { useEffect, useState } from 'react';
-import { readPreference, writePreference } from './preferences';
+import { useEffect } from 'react';
+import { useAppStore } from '../store/appStore';
+import type { ThemeChoice, ResolvedTheme } from './appearance';
+import { useMediaQuery } from './useMediaQuery';
 
-export type ThemeChoice = 'system' | 'light' | 'dark';
+export { THEME_KEY, type ThemeChoice } from './appearance';
+const DARK_THEME_QUERY = '(prefers-color-scheme: dark)';
 
-export const THEME_KEY = 'fc-theme';
-const THEME_CYCLE: Record<ThemeChoice, ThemeChoice> = {
-  system: 'light',
-  light: 'dark',
-  dark: 'system',
-};
-
-// PRE:  theme is a theme choice
-// POST: returns the choice after it in the toggle's cycle, system → light → dark → system (B3)
-export function nextTheme(theme: ThemeChoice): ThemeChoice {
-  return THEME_CYCLE[theme];
-}
-
-// PRE:  none
-// POST: returns the stored theme choice, or 'system' when none (or an unknown one) is stored
-function storedTheme(): ThemeChoice {
-  const stored = readPreference(THEME_KEY);
-  return stored === 'light' || stored === 'dark' ? stored : 'system';
+// PRE: theme is a theme choice; systemTheme is the current operating-system theme
+// POST: returns the opposite of the resolved theme; System is selected through Appearance
+export function nextTheme(theme: ThemeChoice, systemTheme: ResolvedTheme = 'light'): ResolvedTheme {
+  const resolved = theme === 'system' ? systemTheme : theme;
+  return resolved === 'light' ? 'dark' : 'light';
 }
 
 // PRE:  theme is a theme choice
@@ -33,23 +23,27 @@ function applyTheme(theme: ThemeChoice): void {
   }
 }
 
-// PRE:  called in a React component (App)
-// POST: returns the current theme choice and cycleTheme, which moves to the next choice, applies it
-//       to <html> and stores it in localStorage['fc-theme'] (TECH_SPEC §11.4)
-export function useTheme(): { theme: ThemeChoice; cycleTheme: () => void } {
-  const [theme, setTheme] = useState<ThemeChoice>(storedTheme);
+// PRE: called under StoreProvider in a mounted component; window.matchMedia exists
+// POST: applies the stored theme, follows OS changes under System and returns a Light/Dark toggle
+export function useTheme(): {
+  theme: ThemeChoice;
+  resolvedTheme: ResolvedTheme;
+  cycleTheme: () => void;
+} {
+  const theme = useAppStore((state) => state.theme);
+  const setTheme = useAppStore((state) => state.actions.setTheme);
+  const systemTheme = useMediaQuery(DARK_THEME_QUERY) ? 'dark' : 'light';
+  const resolvedTheme = theme === 'system' ? systemTheme : theme;
 
   useEffect(() => {
     applyTheme(theme);
   }, [theme]);
 
   // PRE:  none
-  // POST: the theme is the next choice, and that choice is stored
+  // POST: stores the opposite of the currently resolved theme without changing calendar data
   function cycleTheme(): void {
-    const next = nextTheme(theme);
-    writePreference(THEME_KEY, next);
-    setTheme(next);
+    setTheme(nextTheme(theme, systemTheme));
   }
 
-  return { theme, cycleTheme };
+  return { theme, resolvedTheme, cycleTheme };
 }

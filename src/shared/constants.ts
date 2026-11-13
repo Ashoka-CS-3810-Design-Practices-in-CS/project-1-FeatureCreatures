@@ -37,6 +37,16 @@ export const MAX_CATEGORY_NAME_LENGTH = 40;
 export const MIN_CATEGORY_COLOUR_DISTANCE = 0.04;
 export const MIN_NON_TEXT_CONTRAST = 3;
 export const CATEGORY_TAG_BACKGROUNDS = ['#f4f1ea', '#1c1e1b'] as const;
+export const ACCENT_OPTIONS = [
+  { id: 'neutral', label: 'Neutral' },
+  { id: 'fern', label: 'Fern' },
+  { id: 'teal', label: 'Teal' },
+  { id: 'cyan', label: 'Cyan' },
+  { id: 'indigo', label: 'Indigo' },
+  { id: 'violet', label: 'Violet' },
+  { id: 'rose', label: 'Rose' },
+  { id: 'olive', label: 'Olive' },
+] as const;
 export const CATEGORY_PALETTE: readonly string[] = [
   '#467b70',
   '#9364a2',

@@ -4,6 +4,7 @@ import { useEffect, useId, useRef } from 'react';
 import { FixedTag } from '../FixedTag/FixedTag';
 import type { EventBlockProps } from './toFullCalendar';
 import { CategoryTag } from '../Categories/CategoryTag';
+import { Icon } from '../Icon/Icon';
 
 // PRE:  title and timeText come from FullCalendar; the rest from toFullCalendar's extendedProps
 //       onOpen opens the event dialog when supplied for a List-view button
@@ -43,19 +44,33 @@ export function EventContent({
   const content = (
     <>
       {conflictMinutes > 0 && (
-        <span className="tag tag-conflict">⚠ Conflict {fmtDuration(conflictMinutes)}</span>
+        <span className="tag tag-conflict">
+          <span aria-hidden="true">⚠</span>
+          <span className="tag-text"> Conflict {fmtDuration(conflictMinutes)}</span>
+        </span>
       )}{' '}
       {barredLabels.map((label) => (
         <span key={label} className="tag tag-barred">
-          In {label}
+          <Icon name="barred" />
+          <span className="tag-text">In {label}</span>
         </span>
       ))}{' '}
       <span className="event-time">{timeText}</span>{' '}
       <strong className="event-title">{title}</strong>{' '}
       <span className={`tag prio-${priority}`}>{PRIORITY_TAGS[priority]}</span>
       {category !== undefined && <CategoryTag category={category} />}
-      {kind === 'Task' && <span className="tag">Task</span>}
-      {kind === 'Flexible' && <span className="tag">Flexible</span>}
+      {kind === 'Task' && (
+        <span className="tag">
+          <Icon name="task" />
+          <span className="tag-text">Task</span>
+        </span>
+      )}
+      {kind === 'Flexible' && (
+        <span className="tag">
+          <Icon name="flexible" />
+          <span className="tag-text">Flexible</span>
+        </span>
+      )}
       {kind === 'Fixed' && <FixedTag descriptionId={hintId} />}
     </>
   );

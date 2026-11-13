@@ -31,13 +31,19 @@ async function renderSettings(showDialog = true) {
 }
 
 describe('T47: Settings layout', () => {
-  it('T53 D-09: keeps four Settings sections and edits barred slots in its separate region', async () => {
+  it('T53 D-09, D-13: keeps separate barred editing and adds Appearance to Settings', async () => {
     await renderSettings();
 
     const headings = within(screen.getByRole('dialog', { name: 'Settings' }))
       .getAllByRole('heading', { level: 3 })
       .map((heading) => heading.textContent);
-    expect(headings).toEqual(['Working time', 'Scheduling defaults', 'Categories', 'Data']);
+    expect(headings).toEqual([
+      'Working time',
+      'Scheduling defaults',
+      'Categories',
+      'Appearance',
+      'Data',
+    ]);
 
     const workingTime = screen.getByRole('region', { name: 'Working time' });
     expect(within(workingTime).getByRole('group', { name: 'Working days' })).toBeInTheDocument();

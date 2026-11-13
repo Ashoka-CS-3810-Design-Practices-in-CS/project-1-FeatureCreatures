@@ -37,6 +37,7 @@ A browser-based week planner that detects every scheduling conflict, finds free 
   - Unresolved future or ongoing problems Replan won't move are listed with the reason. Entirely past problem overlaps are omitted; Already started describes a currently running event.
 - **Your rules.** Set working time/buffer in Settings and edit lunch or other slots in the **Barred slots** region. Ongoing/future barred overlaps are flagged separately from conflicts; past overlaps have no tag, row or settings warning. **Keep here** moves an overlap into the collapsed **Kept** group; **Stop keeping** restores its warning. Both are undoable. Time edits or slot time/day changes clear it. New overlapping barred slots are rejected.
 - **Comfort features.** Undo/redo, JSON export/import, six built-in sample calendars, light and dark themes, keyboard shortcuts (press **?**), and screen-reader and keyboard support.
+- **Appearance.** Neutral event blocks keep priority, category and scheduling tags readable on their own backgrounds. Settings → Appearance offers Neutral plus seven accent choices and System/Light/Dark; the app-bar sun/moon switches Light/Dark directly. These choices stay on your device and are not exported.
 
 Nothing changes without your say-so: suggestions and plans are previews until you click **Apply**.
 
@@ -182,6 +183,8 @@ Every test case, with its exact inputs and expected outputs, is listed in [TEST_
 | Settings                 | [1440 px](docs/screenshots/settings-light-1440.png) · [900 px](docs/screenshots/settings-light-900.png)                                                                                                                                                                | [1440 px](docs/screenshots/settings-dark-1440.png) · [900 px](docs/screenshots/settings-dark-900.png)                                                                                                                                                              |
 
 ## Documentation
+
+Appearance: [Light](docs/screenshots/appearance-light-1440.png) / [Dark](docs/screenshots/appearance-dark-1440.png). Fern accent: [Light](docs/screenshots/accent-fern-light-1440.png) / [Dark](docs/screenshots/accent-fern-dark-1440.png); the same scenes are captured at 1280 and 1024 px.
 
 | Document                                     | Read it for                                                                                       |
 | -------------------------------------------- | ------------------------------------------------------------------------------------------------- |

@@ -24,7 +24,7 @@ function renderToolbar(store: AppStore, onCycleTheme = vi.fn()): void {
   renderWithStore(
     <>
       <Toolbar calendarRef={calendarRef} />
-      <AppBar theme="system" onCycleTheme={onCycleTheme} narrow={false} />
+      <AppBar theme="system" resolvedTheme="light" onCycleTheme={onCycleTheme} narrow={false} />
       <TaskPanel />
       <ReplanPanel />
     </>,
@@ -40,7 +40,7 @@ describe('Toolbar', () => {
     renderWithStore(
       <>
         <Toolbar calendarRef={calendarRef} />
-        <AppBar theme="system" onCycleTheme={() => {}} narrow={false} />
+        <AppBar theme="system" resolvedTheme="light" onCycleTheme={() => {}} narrow={false} />
         <ShortcutHelp />
       </>,
       store,

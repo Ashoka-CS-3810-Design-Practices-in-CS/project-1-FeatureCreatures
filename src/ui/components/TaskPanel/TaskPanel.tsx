@@ -41,7 +41,8 @@ function TaskRow({
         />
       </label>{' '}
       <span className="task-heading">
-        <strong>{task.name}</strong> <span className="tag">{PRIORITY_TAGS[task.priority]}</span>
+        <strong>{task.name}</strong>{' '}
+        <span className={`tag prio-${task.priority}`}>{PRIORITY_TAGS[task.priority]}</span>
         {category !== undefined && <CategoryTag category={category} />}
       </span>{' '}
       <span className="task-meta">

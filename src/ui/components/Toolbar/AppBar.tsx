@@ -1,4 +1,6 @@
 import type { ThemeChoice } from '../../hooks/useTheme';
+import type { ResolvedTheme } from '../../hooks/appearance';
+import { Icon } from '../Icon/Icon';
 import { useAppStore } from '../../store/appStore';
 import { upcomingOverlaps } from '../../store/selectors';
 
@@ -11,15 +13,18 @@ function historyTooltip(verb: 'Undo' | 'Redo', label: string | null): string {
 }
 
 // PRE: StoreProvider supplies snapshot history/tasks/conflicts, currentMinute and drawer actions;
-//      theme is current choice, onCycleTheme changes it, narrow enables drawer triggers
+//      theme is current choice, resolvedTheme is its active Light/Dark state; onCycleTheme toggles it;
+//      narrow enables drawer triggers
 // POST: renders the app name and one set of history/theme/help/settings controls; narrow adds
 //       independent Tasks and Conflicts drawer triggers with their current counts
 export function AppBar({
   theme,
+  resolvedTheme,
   onCycleTheme,
   narrow,
 }: {
   theme: ThemeChoice;
+  resolvedTheme: ResolvedTheme;
   onCycleTheme: () => void;
   narrow: boolean;
 }) {
@@ -74,10 +79,13 @@ export function AppBar({
         <button
           type="button"
           aria-label={`Theme: ${THEME_NAME[theme]}`}
-          title="Switch theme (System → Light → Dark)"
+          title={`Theme: ${THEME_NAME[theme]} (${THEME_NAME[resolvedTheme]}). Switch to ${resolvedTheme === 'light' ? 'Dark' : 'Light'}.`}
           onClick={onCycleTheme}
         >
-          ◐
+          <Icon
+            name={resolvedTheme === 'light' ? 'sun' : 'moon'}
+            label={`${THEME_NAME[resolvedTheme]} theme`}
+          />
         </button>
         <button
           type="button"

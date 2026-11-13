@@ -26,8 +26,13 @@ for (const theme of ['light', 'dark'] as const) {
       );
       const meeting = page.getByRole('button', { name: /^Meeting,/ });
       await expect(meeting.getByText('[M]', { exact: true })).toBeVisible();
-      await expect(meeting.getByText('Fixed', { exact: true })).toBeHidden();
-      await expect(meeting).toHaveAttribute('title', /Meeting.*Fixed/);
+      await expect(meeting.getByText('Flexible', { exact: true })).toBeHidden();
+      await expect(meeting).toHaveAttribute('title', /Meeting.*Flexible/);
+      await page.getByRole('button', { name: 'List', exact: true }).click();
+      const listEvent = page.getByRole('button', { name: /^Seminar,/ });
+      await listEvent.hover();
+      await expect(listEvent).toHaveCSS('background-color', EVENT_FILLS[theme]);
+      await page.getByRole('button', { name: 'Calendar', exact: true }).click();
       await expect(
         page
           .getByRole('button', { name: 'Theme: System', exact: true })
