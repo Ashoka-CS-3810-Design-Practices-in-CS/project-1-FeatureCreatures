@@ -305,6 +305,7 @@ Binding design: `docs/extras/AUDIT_2.md` (D-01–D-19, C-01–C-08). Work in ord
 - [~] **WI-56** Layout — owner S + Dv — depends on 55
   - Done when: Five regions at 1440, 1280 and 1024 (drawers) in both themes; no duplicate controls; e2e updated.
   - 2026-11-13 · Codex · branch `feat/wi-56-layout` · done: WI-55 full main gate verified, WI-56 claimed and D-14/current App/Toolbar/SidePanel reconstructed · next: RTL region/control ownership and browser geometry/drawer tests first, then split app bar/calendar toolbar/tasks/right regions, 1280 breakpoint and independent scroll, docs and full gates · note: D-12/D-13 visual tokens/accent/theme remain WI-57; D-16 format/dialog polish remains WI-58.
+  - 2026-11-13 · Codex · branch `feat/wi-56-layout` · done: detected a new coherent external edit to binding AUDIT_2.md after the WI-55 gate: D-20 replaces numeric barred-slot messages with label/time text · next: preserve the audit verbatim, add D-14 layout and D-20 message tests first, implement both while moving the Barred slots region · note: D-20 explicitly permits WI-56 when touching this region; expected duplicate text is Same days and times as "Lunch" (13:00–14:00). Overlap text is Overlaps "Lunch" (13:00–14:00) on Mon, Tue. This is a decided expectation change, not a weakening.
 - [ ] **WI-57** Visual system — owner S + Dv — depends on 56
   - Done when: `tokens.test.ts` covers fills, tags, accents and shading; screenshots refreshed and reviewed.
 - [ ] **WI-58** Dialog and format polish — owner S + Dv — depends on 57

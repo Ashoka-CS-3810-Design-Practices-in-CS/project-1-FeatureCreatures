@@ -241,7 +241,7 @@ All of this explanation stays in the code (BR-8); it is only hidden.
 | 6 | **Keep here** | An action on an overlap row. It stores that slot's id on the event. The tag and the row then disappear into a collapsed **Kept (N)** group, where **Stop keeping** undoes it. While kept, Replan does not move the event for the *barred* reason (other reasons still apply). It is one undo step. It clears itself automatically when the event's start or end changes, or when that slot is deleted or its times or days change. |
 | 7 | Past overlaps | Not tagged or listed (D-08). |
 | 8 | Conflicts | Barred slots never create conflicts (BR-3 unchanged). |
-| 9 | Two slots overlap | **Rejected** when they share at least one weekday and their times overlap; touching is allowed. The message is "Overlaps barred slot N (Lunch) on Mon, Tue." Exact duplicates fall under this rule too. |
+| 9 | Two slots overlap | **Rejected** when they share at least one weekday and their times overlap; touching is allowed. The message names the other slot by its label and times, never by a number (slots are not numbered in the UI), e.g. 'Overlaps "Lunch" (13:00–14:00) on Mon, Tue.' Exact duplicates fall under this rule too, with 'Same days and times as "Lunch" (13:00–14:00).' (D-20). |
 | 10 | Older data with overlapping slots | The Dexie upgrade and v1 import keep them as they are. The Barred slots region then shows "Lunch and TT overlap on Mon–Fri. Edit one of them." Saving any barred-slot change requires resolving the overlap. Labels never draw on top of each other: overlapping labels stack. |
 | 11 | Working hours off or a non-working day | Slots still apply on their configured weekdays (unchanged). |
 
@@ -424,6 +424,16 @@ Each placed event counts as busy for the events after it.
 - Esc or Stop on a **single-task** Find time shows no "Scheduled 0 of 1 task" toast. A queue of 2 or more tasks keeps its summary.
 - Out-of-month day numbers in Month view are readable (≥ 4.5:1).
 
+### D-20 Barred-slot messages name the slot, not a number (added 2026-11-13, after WI-53)
+
+- **The problem:** WI-43 and WI-53 report clashes as "Duplicate of barred slot N." and "Overlaps barred slot N (Lunch) on …". Barred slots are not numbered anywhere in the UI, so N means nothing to the user.
+- **The decision:** every barred-slot message names the other slot by its label and times:
+  - duplicate: 'Same days and times as "Lunch" (13:00–14:00).'
+  - overlap: 'Overlaps "Lunch" (13:00–14:00) on Mon, Tue.'
+  - the older-data banner already names both labels; keep that.
+- **Scope:** the settings and import schemas, the Barred slots region, Settings if it still shows slots, and the import error toast. Update the tests that assert the old texts (for example `barredRules.test.tsx`, `SettingsDialog.test.tsx`, the schema and import tests, and TEST_PLAN T44 and the WI-53 T-number) to the new exact texts. This is a decided change, not a weakening. Also update PROJECT_SCHEMA §3.2 (Settings), BR-15 and their change logs.
+- **Done in:** WI-58 (dialog and format polish), or WI-56 or WI-57 if either is already touching the Barred slots region.
+
 ### D-17 Data, migration and export
 
 **Dexie version 3,** with no edit to versions 1 or 2:
@@ -515,7 +525,7 @@ An upgrade test with v2 data must prove every row is kept. Stored data written b
 | 55 | Replan strategies and dialog | D-15 | Strategy keys unit-tested; properties for each strategy; dialog RTL tests |
 | 56 | Layout | D-14, D-05 | Five regions at 1440, 1280 and 1024 (drawers) in both themes; no duplicate controls; e2e updated |
 | 57 | Visual system | D-12, D-13 | `tokens.test.ts` covers fills, tags, accents and shading; screenshots refreshed and reviewed |
-| 58 | Dialog and format polish | D-16 | Field-order and format tests; U9/U19/U20/U23 checks |
+| 58 | Dialog and format polish | D-16, D-20 (barred-slot messages name the slot) | Field-order and format tests; U9/U19/U20/U23 checks |
 | 59 | Docs, smoke test and final gate | D-19, README, consistency pass | Full gate against the baseline; smoke test written; human steps listed |
 
 ---
