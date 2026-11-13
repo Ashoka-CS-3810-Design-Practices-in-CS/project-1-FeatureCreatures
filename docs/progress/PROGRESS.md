@@ -6,9 +6,9 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-55 complete on `feat/wi-55-replan-strategies`; merge/main gate next, then WI-56 Layout.
-- **Last session:** 2026-11-13 · Codex · WI-55 final branch gate green: 838 + 1 skipped, overall 98.56/94.27/98.17/98.79, algorithms 99.72/96.80/100/99.71, DST 9, ten properties × 10,000, typecheck/lint/build and 135/135 browsers (45 × 3, zero retries). All 94 capture scenarios verified across runs, twelve final Replan recaptures pass; compact/Details reviewed both themes at 1440/1280/1024, 156 PNGs total. Next: merge/main gate, WI-56.
-- **Gate status:** 2026-11-13 on `main` at `d3bf189`: full gate green, 804 + 1 existing skipped, overall 98.52/94.19/98.13/98.76, algorithms 99.71/96.50/100/99.69, DST 9, six properties × 10,000, build, 114/114 browsers, zero retries.
+- **Active WI:** WI-56 Layout, claimed; branch `feat/wi-56-layout`.
+- **Last session:** 2026-11-13 · Codex · WI-55 merged as `2a8c311`; full main gate green with 838 + 1 skipped, all ten properties × 10,000 and 135/135 browser runs. WI-56 next: test-first D-14 region ownership, compact task controls, independent columns and separate drawers below 1280 px; then implementation/docs/gates.
+- **Gate status:** 2026-11-13 on `main` at `2a8c311`: full gate green, 838 + 1 existing skipped, overall 98.56/94.27/98.17/98.79, algorithms 99.72/96.80/100/99.71, DST 9, ten properties × 10,000, build, 135/135 browsers, zero retries.
 
 ## Work items
 
@@ -302,8 +302,9 @@ Binding design: `docs/extras/AUDIT_2.md` (D-01–D-19, C-01–C-08). Work in ord
   - 2026-11-13 · Codex · branch `feat/wi-55-replan-strategies` · done: compact inputs/cards/day groups, shared collapsed diagnostics/partial-plan hints, Details and store selector implemented; four new UI and nineteen old dialog cases pass; full core 830 + 1 skipped, coverage 98.36/94.00/98.08/98.61, algorithms 99.72/96.80/100/99.71, DST 9, ten × 10,000 properties and build green. Added eight presentation derivation checks; all docs/README and old moved detailed assertions updated · next: finish current 94 captures, recapture all Replan scenes after spacing fix/tall Details context, review both themes/three widths, seven new browser checks plus complete 135-run gate, final core/merge/main gate · note: first capture found inherited auto margins on the headline and dialog-section spacing; fixed CSS only. No assertions removed; T40/diagnostic captures now assert one shared heading per D-15.
   - 2026-11-13 · Codex · branch `feat/wi-55-replan-strategies` · done: final core gate 838 + 1 skipped, overall 98.56/94.27/98.17/98.79, algorithms 99.72/96.80/100/99.71, DST 9, ten properties × 10,000; all 94 capture scenarios verified (92 first run, two old named-region collisions fixed in product markup, all twelve Replan recaptures green). Reviewed all compact/Details widths/themes, 156 PNGs total, README links · next: finish current 135-run browser gate, finish/merge/full main gate, then WI-56 · note: day groups use headings and named move lists, leaving one named region per plan; every prior assertion retained or relocated for D-15. No further production changes planned.
   - 2026-11-13 · Codex · branch `feat/wi-55-replan-strategies` · done: D-15 complete, all ranking/five-strategy safety/compact UI Done-when checks pass; final branch gate green, 838 + 1 skipped, overall 98.56/94.27/98.17/98.79, algorithms 99.72/96.80/100/99.71, DST 9, ten × 10,000 properties, build and 135/135 browsers, zero retries; final reviewed captures committed · next: merge retaining branch, full main gate, WI-56 · note: tests +199 vs baseline, all coverage differences within 0.5 points; old default plans, metrics and all assertions preserved. No remaining WI-55 work.
-- [ ] **WI-56** Layout — owner S + Dv — depends on 55
+- [~] **WI-56** Layout — owner S + Dv — depends on 55
   - Done when: Five regions at 1440, 1280 and 1024 (drawers) in both themes; no duplicate controls; e2e updated.
+  - 2026-11-13 · Codex · branch `feat/wi-56-layout` · done: WI-55 full main gate verified, WI-56 claimed and D-14/current App/Toolbar/SidePanel reconstructed · next: RTL region/control ownership and browser geometry/drawer tests first, then split app bar/calendar toolbar/tasks/right regions, 1280 breakpoint and independent scroll, docs and full gates · note: D-12/D-13 visual tokens/accent/theme remain WI-57; D-16 format/dialog polish remains WI-58.
 - [ ] **WI-57** Visual system — owner S + Dv — depends on 56
   - Done when: `tokens.test.ts` covers fills, tags, accents and shading; screenshots refreshed and reviewed.
 - [ ] **WI-58** Dialog and format polish — owner S + Dv — depends on 57
