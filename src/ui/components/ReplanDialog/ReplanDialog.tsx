@@ -35,7 +35,10 @@ const MAX_REPLAN_SPAN_MIN = MAX_REPLAN_DAYS * MINUTES_PER_DAY + REPLAN_DST_SLACK
 //       the visible range when a replan may cover it; else the first full week (Monday–Sunday)
 //       starting on or after viewDate. Month shows 35–42 days, more than MAX_REPLAN_DAYS, so it
 //       gets that week (AUDIT A10)
-function defaultDays(activeRange: Interval | null, viewDate: Minute): { from: string; to: string } {
+export function defaultReplanDays(
+  activeRange: Interval | null,
+  viewDate: Minute,
+): { from: string; to: string } {
   if (activeRange !== null && activeRange.end - activeRange.start <= MAX_REPLAN_SPAN_MIN) {
     return {
       from: toDateInput(activeRange.start),
@@ -116,10 +119,15 @@ function ReplanForm() {
   const view = useAppStore((state) => state.view);
   const settingsBuffer = useAppStore((state) => state.snapshot.settings.bufferMin);
   const actions = useAppStore((state) => state.actions);
+  const dialog = useAppStore((state) => state.dialog);
   const idPrefix = useId();
-  const [days, setDays] = useState(() => defaultDays(view.activeRange, view.date));
+  const [days, setDays] = useState(() => defaultReplanDays(view.activeRange, view.date));
   const [buffer, setBuffer] = useState('');
-  const [strategy, setStrategy] = useState<ReplanStrategy>(DEFAULT_REPLAN_STRATEGY);
+  const [strategy, setStrategy] = useState<ReplanStrategy>(
+    dialog?.kind === 'replan'
+      ? (dialog.strategy ?? DEFAULT_REPLAN_STRATEGY)
+      : DEFAULT_REPLAN_STRATEGY,
+  );
   const [details, setDetails] = useState(false);
   const [result, setResult] = useState<Result<ReplanResult> | null>(null);
 

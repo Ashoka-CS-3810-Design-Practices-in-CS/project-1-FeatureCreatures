@@ -2,7 +2,6 @@ import type FullCalendar from '@fullcalendar/react';
 import type { RefObject } from 'react';
 import type { Priority } from '@/shared/types';
 import { fmtViewTitle } from '../../format/time';
-import type { ThemeChoice } from '../../hooks/useTheme';
 import { useAppStore, type ViewType } from '../../store/appStore';
 import { CategoryTag } from '../Categories/CategoryTag';
 
@@ -17,62 +16,23 @@ const PRIORITY_CHIPS: { priority: Priority; tag: string; title: string }[] = [
   { priority: 'medium', tag: 'M', title: 'Show medium-priority events' },
   { priority: 'low', tag: 'L', title: 'Show low-priority events' },
 ];
-const THEME_NAME: Record<ThemeChoice, string> = { system: 'System', light: 'Light', dark: 'Dark' };
-
-// PRE:  verb is 'Undo' or 'Redo'; label is the change it would undo / redo (null when none)
-// POST: returns the button's tooltip, e.g. 'Undo: Delete "Gym"', or 'Nothing to undo'
-function historyTooltip(verb: 'Undo' | 'Redo', label: string | null): string {
-  return label === null ? `Nothing to ${verb.toLowerCase()}` : `${verb}: ${label}`;
-}
-
-// PRE:  rendered under StoreProvider; reads view, lastCalendarView, calendarLocked, filters, categories and snapshot's undo / redo
-//       state; uses openDialog, toggleEventPriority, undo and redo; calendarRef points at the
-//       FullCalendar that CalendarView renders; theme is the current theme choice and onCycleTheme
-//       moves to the next one
-//       onOpenPanels, when supplied, opens the narrow-screen drawer; panelsOpen is its state
-//       + additional props from: CategoryTag
-// POST: shows the toolbar of Figure 1: previous / Today / next, the period title, the view switch,
-//       separate Calendar/List and Calendar lock controls, filters, + Event, + Task, Replan, Undo / Redo (disabled when there is
-//       nothing to do, tooltip = the change), theme, Keyboard shortcuts and Settings
-export function Toolbar({
-  calendarRef,
-  theme,
-  onCycleTheme,
-  onOpenPanels,
-  panelsOpen = false,
-}: {
-  calendarRef: RefObject<FullCalendar | null>;
-  theme: ThemeChoice;
-  onCycleTheme: () => void;
-  onOpenPanels?: () => void;
-  panelsOpen?: boolean;
-}) {
+// PRE: StoreProvider supplies calendar view, lock, priority/category filters and actions;
+//      calendarRef points at CalendarView's FullCalendar
+//      + additional props from: CategoryTag
+// POST: shows calendar-only navigation/title/view row and presentation/filter/lock/+ Event row
+export function Toolbar({ calendarRef }: { calendarRef: RefObject<FullCalendar | null> }) {
   const view = useAppStore((state) => state.view);
   const lastCalendarView = useAppStore((state) => state.lastCalendarView);
   const locked = useAppStore((state) => state.calendarLocked);
   const filter = useAppStore((state) => state.eventPriorityFilter);
   const categories = useAppStore((state) => state.snapshot.categories);
   const hiddenCategories = useAppStore((state) => state.hiddenCategoryIds);
-  const canUndo = useAppStore((state) => state.snapshot.canUndo);
-  const canRedo = useAppStore((state) => state.snapshot.canRedo);
-  const undoLabel = useAppStore((state) => state.snapshot.undoLabel);
-  const redoLabel = useAppStore((state) => state.snapshot.redoLabel);
   const actions = useAppStore((state) => state.actions);
   const calendar = () => calendarRef.current?.getApi();
 
   return (
     <div className="toolbar">
       <div className="toolbar-period">
-        {onOpenPanels !== undefined && (
-          <button
-            type="button"
-            aria-controls="side-panels"
-            aria-expanded={panelsOpen}
-            onClick={onOpenPanels}
-          >
-            Tasks and conflicts
-          </button>
-        )}
         <div role="group" aria-label="Navigation">
           <button type="button" aria-label="Previous period" onClick={() => calendar()?.prev()}>
             ◀
@@ -85,6 +45,18 @@ export function Toolbar({
           </button>
         </div>
         <h2 className="toolbar-title">{fmtViewTitle(view.type, view.date)}</h2>
+        <div role="group" aria-label="View">
+          {VIEWS.map((option) => (
+            <button
+              key={option.type}
+              type="button"
+              aria-pressed={view.type === option.type}
+              onClick={() => calendar()?.changeView(option.type)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
       </div>
       <div className="toolbar-controls">
         <div role="group" aria-label="Presentation">
@@ -103,47 +75,37 @@ export function Toolbar({
             List
           </button>
         </div>
-        <div role="group" aria-label="View">
-          {VIEWS.map((option) => (
-            <button
-              key={option.type}
-              type="button"
-              aria-pressed={view.type === option.type}
-              onClick={() => calendar()?.changeView(option.type)}
-            >
-              {option.label}
-            </button>
-          ))}
+        <div className="calendar-filters">
+          <div role="group" aria-label="Priority filter">
+            {PRIORITY_CHIPS.map((chip) => (
+              <button
+                key={chip.priority}
+                type="button"
+                className={`chip prio-${chip.priority}`}
+                title={chip.title}
+                aria-pressed={filter.includes(chip.priority)}
+                onClick={() => actions.toggleEventPriority(chip.priority)}
+              >
+                {chip.tag}
+              </button>
+            ))}
+          </div>
+          <div role="group" aria-label="Category filter" className="category-filters">
+            {categories.map((category) => (
+              <button
+                key={category.id}
+                type="button"
+                aria-pressed={!hiddenCategories.includes(category.id)}
+                onClick={() => actions.toggleEventCategory(category.id)}
+              >
+                <CategoryTag category={category} />
+              </button>
+            ))}
+          </div>
+          <button type="button" onClick={actions.showAllEventPriorities}>
+            Reset filters
+          </button>
         </div>
-        <div role="group" aria-label="Priority filter">
-          {PRIORITY_CHIPS.map((chip) => (
-            <button
-              key={chip.priority}
-              type="button"
-              className={`chip prio-${chip.priority}`}
-              title={chip.title}
-              aria-pressed={filter.includes(chip.priority)}
-              onClick={() => actions.toggleEventPriority(chip.priority)}
-            >
-              {chip.tag}
-            </button>
-          ))}
-        </div>
-        <div role="group" aria-label="Category filter" className="category-filters">
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              type="button"
-              aria-pressed={!hiddenCategories.includes(category.id)}
-              onClick={() => actions.toggleEventCategory(category.id)}
-            >
-              <CategoryTag category={category} />
-            </button>
-          ))}
-        </div>
-        <button type="button" onClick={actions.showAllEventPriorities}>
-          Reset filters
-        </button>
         <button
           type="button"
           aria-label="Calendar lock"
@@ -158,59 +120,6 @@ export function Toolbar({
           onClick={() => actions.openDialog({ kind: 'event', mode: 'create', defaults: {} })}
         >
           + Event
-        </button>
-        <button
-          type="button"
-          className="primary"
-          onClick={() => actions.openDialog({ kind: 'task', mode: 'create' })}
-        >
-          + Task
-        </button>
-        <button type="button" onClick={() => actions.openDialog({ kind: 'replan' })}>
-          Replan
-        </button>
-      </div>
-      <div className="toolbar-utilities">
-        <button
-          type="button"
-          aria-label="Undo"
-          title={historyTooltip('Undo', undoLabel)}
-          disabled={!canUndo}
-          onClick={() => void actions.undo()}
-        >
-          ↶
-        </button>
-        <button
-          type="button"
-          aria-label="Redo"
-          title={historyTooltip('Redo', redoLabel)}
-          disabled={!canRedo}
-          onClick={() => void actions.redo()}
-        >
-          ↷
-        </button>
-        <button
-          type="button"
-          aria-label={`Theme: ${THEME_NAME[theme]}`}
-          title="Switch theme (System → Light → Dark)"
-          onClick={onCycleTheme}
-        >
-          ◐
-        </button>
-        <button
-          type="button"
-          aria-label="Keyboard shortcuts"
-          title="Keyboard shortcuts (?)"
-          onClick={() => actions.openDialog({ kind: 'shortcuts' })}
-        >
-          ?
-        </button>
-        <button
-          type="button"
-          aria-label="Settings"
-          onClick={() => actions.openDialog({ kind: 'settings' })}
-        >
-          ⚙
         </button>
       </div>
     </div>

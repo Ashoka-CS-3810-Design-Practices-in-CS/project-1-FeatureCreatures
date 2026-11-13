@@ -9,6 +9,7 @@ import { BASE_MONDAY } from '../../../../tests/helpers/time';
 import { App } from '../../App';
 import { SlotPicker } from '../SlotPicker/SlotPicker';
 import { ConflictPanel } from './ConflictPanel';
+import { BarredSlotsPanel } from '../BarredSlotsPanel/BarredSlotsPanel';
 
 const LUNCH = { id: 'lunch', label: 'Lunch', startMin: 780, endMin: 840, days: [1] as const };
 
@@ -25,7 +26,13 @@ describe('T38 barred warning UI', () => {
         events: [event],
         settings: settings({ barredSlots: [LUNCH] }),
       });
-      renderWithStore(<ConflictPanel />, storeFor(engine));
+      renderWithStore(
+        <>
+          <ConflictPanel />
+          <BarredSlotsPanel />
+        </>,
+        storeFor(engine),
+      );
       const section = screen.getByRole('region', { name: 'Barred-slot overlaps (1)' });
       expect(
         within(section).getByText(flexible ? 'Flexible' : 'Fixed', { exact: true }),
@@ -64,7 +71,7 @@ describe('T38 barred warning UI', () => {
   });
 
   it('new settings warnings count events, and View opens the narrow drawer and focuses the section', async () => {
-    const media = window.matchMedia('(max-width: 1023px)');
+    const media = window.matchMedia('(max-width: 1279px)');
     vi.spyOn(window, 'matchMedia').mockReturnValue({ ...media, matches: true });
     const { engine } = await makeEngine({
       events: [ev('A', 'Mon 13:00', 'Mon 14:00'), ev('B', 'Mon 13:15', 'Mon 13:45')],
@@ -79,7 +86,7 @@ describe('T38 barred warning UI', () => {
       store.getState().toasts.find((toast) => toast.text === '2 events overlap barred slots')?.tone,
     ).toBe('info');
     await userEvent.click(screen.getByRole('button', { name: 'View' }));
-    expect(screen.getByRole('dialog', { name: 'Tasks and conflicts' })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Conflicts' })).toBeInTheDocument();
     await waitFor(() =>
       expect(screen.getByRole('heading', { name: 'Barred-slot overlaps (2)' })).toHaveFocus(),
     );

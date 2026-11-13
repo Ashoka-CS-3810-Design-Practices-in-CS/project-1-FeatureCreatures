@@ -546,6 +546,8 @@ Twelve curated colours include the five seeds. Free colours are normalised six-d
 
 ## 7. UX specification
 
+**D-14 layout (WI-56).** The app bar contains name and Undo/Redo/Theme/Help/Settings. Desktop >=1280 uses independent scrolling Tasks, Calendar and Planning columns. Calendar owns navigation/period/view on row one and presentation/filters/reset/lock/+ Event on row two; filters scroll horizontally when needed, with one primary event creation control. Tasks (N) owns its primary + Task (no New task duplicate), compact Show/Sort/menu row, no duplicate priority checkboxes, and Find time (N) only for a nonempty selection. Calendar filters do not hide tasks. The right column has sibling Conflicts (upcoming/past), Replan (visible default range, strategy and Plan…), and Barred slots (N) (editor/overlaps/Kept). Below 1280, counted Tasks and Conflicts app-bar buttons open separate mutually exclusive native drawers; closing restores the trigger. All five regions still have exactly one copy.
+
 ### 7.1 Screens and views
 
 1. **Main screen** (Figure 1):
@@ -759,3 +761,4 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 | 2026-11-13 | v1.26 (WI-55 D-15 engine checkpoint): BR-12 exact strategy sort keys, category-minute/busy updates, preserved Minimal change/default Balanced, reason precedence and unchanged safety/undo. UI remains in progress. |
 | 2026-11-13 | v1.27 (WI-55 D-15 UI): FR10 compact inputs/cards/day groups, named strategy, Details, and one collapsed diagnostics union. Issues unresolved in only one plan name that plan; full problem labels remain behind Details. |
 | 2026-11-13 | v1.28 (WI-56 D-20): Settings/BR-15 named duplicate and overlap errors include the first earlier slot label and 24-hour times instead of a number. Schema/import/editor errors share the same text; legacy banner unchanged. |
+| 2026-11-13 | v1.29 (WI-56 D-14 checkpoint): app-bar/calendar/task control ownership, three independently scrolling columns, separate counted drawers below 1280 and sibling Conflicts/Replan/Barred regions. |

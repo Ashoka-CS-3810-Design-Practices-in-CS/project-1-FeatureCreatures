@@ -1,10 +1,15 @@
 import { ConflictPanel } from '../ConflictPanel/ConflictPanel';
 import { Modal } from '../Modal/Modal';
 import { TaskPanel } from '../TaskPanel/TaskPanel';
+import { BarredSlotsPanel } from '../BarredSlotsPanel/BarredSlotsPanel';
+import { ReplanPanel } from '../ReplanDialog/ReplanPanel';
+import { useAppStore } from '../../store/appStore';
 
-// PRE:  narrow says whether the side column is collapsed; open controls its drawer; onClose
-//       closes it; + additional props from: TaskPanel, ConflictPanel, Modal
-// POST: shows one copy of the panels, in the desktop side column or a labelled native drawer
+// PRE: narrow controls the <1280px layout; open/onClose control the right drawer;
+//      StoreProvider supplies tasksOpen, snapshot/currentMinute and setTasksOpen
+//      + additional props from: TaskPanel, ConflictPanel, ReplanPanel, BarredSlotsPanel, Modal
+// POST: shows one Tasks column and one right column; narrow uses separate mutually exclusive
+//       native drawers while retaining exactly one mounted copy of each region
 export function SidePanel({
   narrow,
   open,
@@ -14,28 +19,44 @@ export function SidePanel({
   open: boolean;
   onClose: () => void;
 }) {
+  const tasksOpen = useAppStore((state) => state.tasksOpen);
+  const setTasksOpen = useAppStore((state) => state.actions.setTasksOpen);
   const panels = (
     <>
-      <TaskPanel />
       <ConflictPanel />
+      <ReplanPanel />
+      <BarredSlotsPanel />
     </>
   );
   return narrow ? (
-    <Modal
-      open={open}
-      title="Tasks and conflicts"
-      id="side-panels"
-      className="panel-drawer"
-      onClose={onClose}
-    >
-      <button type="button" onClick={onClose}>
-        Close panels
-      </button>
-      {panels}
-    </Modal>
+    <>
+      <Modal
+        open={tasksOpen}
+        title="Tasks"
+        id="task-drawer"
+        className="panel-drawer"
+        onClose={() => setTasksOpen(false)}
+      >
+        <TaskPanel />
+      </Modal>
+      <Modal
+        open={open}
+        title="Conflicts"
+        id="side-panels"
+        className="panel-drawer"
+        onClose={onClose}
+      >
+        {panels}
+      </Modal>
+    </>
   ) : (
-    <aside id="side-panels" aria-label="Tasks and conflicts">
-      {panels}
-    </aside>
+    <>
+      <aside className="task-column" aria-label="Tasks column">
+        <TaskPanel />
+      </aside>
+      <aside id="side-panels" className="right-column" aria-label="Planning column">
+        {panels}
+      </aside>
+    </>
   );
 }

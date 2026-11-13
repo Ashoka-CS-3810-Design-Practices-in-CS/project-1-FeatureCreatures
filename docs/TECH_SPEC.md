@@ -1537,7 +1537,8 @@ interface AppState {
         cancelLabel?: string; onCancel?: () => void };   // WI-42: onCancel runs on the cancel button, Esc or close
   picker: PickerState | null;                  // store/pickerSlice.ts
   emphasisIds: string[];                       // briefly highlighted after a change (1.5 s)
-  panelsOpen: boolean;                         // UI-only narrow drawer state
+  panelsOpen: boolean; // right drawer
+  tasksOpen: boolean;  // Tasks drawer; opening either closes the other                         // UI-only narrow drawer state
   barredViewRequest: number;                   // UI-only focus/scroll request counter
   toasts: Toast[];                             // store/toastSlice.ts
   actions: AppActions;
@@ -1580,6 +1581,8 @@ All sample loads and imports with more than `IMPORT_SPINNER_THRESHOLD` events pl
   - Changing the criterion or buffer re-runs the current search.
 - **Alternatives.** `openAlternatives(conflict)` uses `eventId = conflict.targetId` and `otherEventId = the other id`. The "Move: (●) A ( ) B" toggle swaps the two and re-runs the search.
 - **Undo / redo.** The toast reads `Undid: <label>` or `Redid: <label>`.
+
+WI-56 / D-14: AppBar owns brand/history/theme/help/settings and counted Tasks/Conflicts drawer triggers. Toolbar is calendar-only (navigation/title/view, presentation/filters/reset/lock/+ Event); App mounts it inside the named Calendar region. App.module.css uses three independently scrolling columns (Tasks 18rem, flexible Calendar, right 20rem) at widths >=1280. Below that, DRAWER_BREAKPOINT_PX=1280 drives useNarrowLayout and SidePanel's two native drawers; one mounted copy per region. Store `tasksOpen/setTasksOpen` and existing `panelsOpen/setPanelsOpen` are mutually exclusive; viewBarredOverlaps opens only the right drawer. Tasks (N) has one primary + Task, status/sort/menu, no duplicate priority checkbox UI, and conditional Find time (N). Existing internal task-priority selection remains testable and independent of calendar filters. Conflicts owns only upcoming/past conflicts; ReplanPanel and BarredSlotsPanel are its siblings with their own counts. ReplanPanel shares exported `defaultReplanDays(activeRange, viewDate)` with the dialog, stores a local strategy and opens `{kind:'replan', strategy}` so the dialog starts with that choice. Existing shortcuts still open default Replan. No domain or persistence contracts change.
 
 ### 11.2 Components
 
@@ -2030,3 +2033,4 @@ Production URL: https://…vercel.app
 | 2026-11-13 | v1.51 (WI-55 D-15 engine checkpoint): ReplanStrategy/constants/options validation, optional request/input and required result.strategy, stable second-plan ids, category ranking with shared optionFor/rankCandidates key callback, named strategy reasons and ten full property cases. Fourteen ranking/facade cases preserve old defaults and prove new sort keys/apply/undo. UI remains in progress. |
 | 2026-11-13 | v1.52 (WI-55 D-15 UI): strategy action/selector, compact day-grouped cards and shared priority tags, Details metrics/buffer/explanations, one collapsed deduplicated diagnostics list with per-plan hints. Four initially red RTL cases and all nineteen older dialog cases pass; old detailed assertions now open Details/shared diagnostics. Browser all-strategy/apply/undo and six desktop geometry checks added. |
 | 2026-11-13 | v1.53 (WI-56 D-20): shared clockText.toClockTime (UI re-export keeps its public helper) and barredClashText supply exact label/time duplicate versus overlap messages at the existing later Days path. No overlap/import/legacy validation behavior changes. T44/T53 exact text updates follow binding D-20. |
+| 2026-11-13 | v1.54 (WI-56 D-14 checkpoint): AppBar/calendar-only Toolbar, three independent columns, counted Tasks/Conflicts/Replan/Barred regions, separate mutually exclusive drawers below 1280, task control deduplication and shared Replan defaults/strategy. Existing counted headings/drawer and moved-control tests adapted without dropping assertions. Final browser/capture/full gate remains in progress. |

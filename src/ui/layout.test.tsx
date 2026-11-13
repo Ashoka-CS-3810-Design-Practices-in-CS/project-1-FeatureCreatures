@@ -47,8 +47,12 @@ describe('T56: five-region ownership (D-14)', () => {
     expect(screen.queryByRole('button', { name: 'New task' })).not.toBeInTheDocument();
     await userEvent.click(within(replan).getByRole('button', { name: 'Plan…' }));
     expect(screen.getByRole('dialog', { name: 'Replan' })).toBeInTheDocument();
-    expect(screen.getByLabelText('From')).toHaveValue('2026-11-02');
-    expect(screen.getByLabelText('Strategy')).toHaveValue('balanced');
+    expect(
+      within(screen.getByRole('dialog', { name: 'Replan' })).getByLabelText('From'),
+    ).toHaveValue('2026-11-02');
+    expect(
+      within(screen.getByRole('dialog', { name: 'Replan' })).getByLabelText('Strategy'),
+    ).toHaveValue('balanced');
   });
 
   it('removes duplicate task-priority controls and shows the selection action only for a nonempty selection', async () => {

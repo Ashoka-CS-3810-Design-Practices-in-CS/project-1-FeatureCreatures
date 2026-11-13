@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen, within } from '@testing-library/react';
+import { act, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { flexEv, task } from '../../../../tests/helpers/builders';
 import { makeEngine } from '../../../../tests/helpers/engine';
@@ -26,8 +26,7 @@ describe('TaskPanel (T30 UI, FR6)', () => {
     expect(rowNames()).toEqual(['D', 'B', 'C', 'A']);
     await userEvent.selectOptions(screen.getByLabelText('Sort by'), 'windowEnd');
     expect(rowNames()).toEqual(['D', 'C', 'B', 'A']);
-    await userEvent.click(screen.getByRole('checkbox', { name: 'High' }));
-    await userEvent.click(screen.getByRole('checkbox', { name: 'Low' }));
+    act(() => store.getState().actions.setTaskPanel({ priorities: ['medium'] }));
     expect(rowNames()).toEqual(['C']);
     expect(store.getState().snapshot.tasks).toHaveLength(4);
   });
@@ -57,21 +56,21 @@ describe('TaskPanel (T30 UI, FR6)', () => {
     expect(rowNames()).toEqual(['S']);
   });
 
-  it('"Find time for N selected" opens the picker for the ticked tasks', async () => {
+  it('"Find time (N)" opens the picker for the ticked tasks', async () => {
     const store = storeFor((await makeEngine({ tasks })).engine);
     renderWithStore(<TaskPanel />, store);
-    const findSelected = () => screen.getByRole('button', { name: /^Find time for \d+ selected$/ });
+    const findSelected = () => screen.getByRole('button', { name: /^Find time \(\d+\)$/ });
 
-    expect(findSelected()).toBeDisabled();
+    expect(screen.queryByRole('button', { name: /^Find time \(\d+\)$/ })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('checkbox', { name: 'Select A' }));
     await userEvent.click(screen.getByRole('checkbox', { name: 'Select B' }));
-    expect(findSelected()).toHaveTextContent('Find time for 2 selected');
+    expect(findSelected()).toHaveTextContent('Find time (2)');
     await userEvent.click(findSelected());
 
     expect(store.getState().picker).toMatchObject({ mode: 'task', queue: ['B', 'A'] });
   });
 
-  it('row buttons open the picker or the edit dialog; New task opens the create dialog', async () => {
+  it('row buttons open the picker or the edit dialog; + Task opens the create dialog', async () => {
     const store = storeFor((await makeEngine({ tasks: tasks.slice(0, 1) })).engine);
     renderWithStore(<TaskPanel />, store);
 
@@ -79,7 +78,7 @@ describe('TaskPanel (T30 UI, FR6)', () => {
     expect(store.getState().picker).toMatchObject({ queue: ['A'] });
     await userEvent.click(screen.getByRole('button', { name: 'Edit A' }));
     expect(store.getState().dialog).toEqual({ kind: 'task', mode: 'edit', id: 'A' });
-    await userEvent.click(screen.getByRole('button', { name: 'New task' }));
+    await userEvent.click(screen.getByRole('button', { name: '+ Task' }));
     expect(store.getState().dialog).toEqual({ kind: 'task', mode: 'create' });
   });
 

@@ -141,7 +141,7 @@ describe('SettingsDialog', () => {
       ),
     ).not.toBeInTheDocument();
     expect(store.getState().dialog).toBeNull();
-    expect(screen.getByRole('region', { name: 'Barred slots' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: /^Barred slots \(/ })).toBeInTheDocument();
     expect(engine.snapshot().settings.barredSlots).toEqual([]);
   });
 

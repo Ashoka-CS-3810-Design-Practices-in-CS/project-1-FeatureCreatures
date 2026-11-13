@@ -1,16 +1,10 @@
 import { useMemo } from 'react';
 import { PRIORITY_TAGS } from '@/shared/constants';
-import type { CalendarEvent, Priority, Task } from '@/shared/types';
+import type { CalendarEvent, Task } from '@/shared/types';
 import { fmtDay, fmtDuration, fmtRange, fmtTime } from '../../format/time';
 import { useAppStore, type AppActions, type AppState } from '../../store/appStore';
 import { visibleTasks } from '../../store/selectors';
 import { CategoryTag } from '../Categories/CategoryTag';
-
-const PRIORITY_OPTIONS: { value: Priority; label: string; tag: string }[] = [
-  { value: 'high', label: 'High', tag: '[H]' },
-  { value: 'medium', label: 'Medium', tag: '[M]' },
-  { value: 'low', label: 'Low', tag: '[L]' },
-];
 
 type PanelState = AppState['taskPanel'];
 
@@ -103,19 +97,11 @@ function TaskRow({
   );
 }
 
-// PRE:  panel is the task panel state; priority is one of the priorities
-// POST: returns panel.priorities with priority added or removed
-function togglePriority(panel: PanelState, priority: Priority): Priority[] {
-  return panel.priorities.includes(priority)
-    ? panel.priorities.filter((entry) => entry !== priority)
-    : [...panel.priorities, priority];
-}
-
 // PRE:  rendered under StoreProvider; reads snapshot.tasks, snapshot.events and taskPanel; uses
 //       setTaskPanel, toggleTaskSelection, openTaskPicker and openDialog
 //       + additional props from: TaskRow
-// POST: shows the task panel (FR6): sort and filter controls that never change stored data, the
-//       visible tasks, "New task", and "Find time for N selected" for the ticked unscheduled tasks
+// POST: shows the counted Tasks region, status/sort/menu row, one + Task action and visible tasks;
+//       Find time (N) exists only for selected unscheduled tasks; controls never change stored data
 export function TaskPanel() {
   const tasks = useAppStore((state) => state.snapshot.tasks);
   const events = useAppStore((state) => state.snapshot.events);
@@ -133,7 +119,18 @@ export function TaskPanel() {
   return (
     <section aria-labelledby="task-panel-title" className="task-panel">
       <div className="panel-heading">
-        <h2 id="task-panel-title">Tasks</h2>
+        <h2 id="task-panel-title">Tasks ({tasks.length})</h2>
+
+        <button
+          type="button"
+          className="primary"
+          onClick={() => actions.openDialog({ kind: 'task', mode: 'create' })}
+        >
+          + Task
+        </button>
+      </div>
+
+      <div className="task-filters">
         <details
           className="task-menu"
           onKeyDown={(event) => {
@@ -160,12 +157,6 @@ export function TaskPanel() {
             </button>
           </div>
         </details>
-        <button type="button" onClick={() => actions.openDialog({ kind: 'task', mode: 'create' })}>
-          New task
-        </button>
-      </div>
-
-      <div className="task-filters">
         <label>
           Sort by{' '}
           <select
@@ -178,21 +169,6 @@ export function TaskPanel() {
             <option value="windowEnd">Window end</option>
           </select>
         </label>
-        <fieldset>
-          <legend>Priorities</legend>
-          {PRIORITY_OPTIONS.map((option) => (
-            <label key={option.value}>
-              <input
-                type="checkbox"
-                checked={panel.priorities.includes(option.value)}
-                onChange={() =>
-                  actions.setTaskPanel({ priorities: togglePriority(panel, option.value) })
-                }
-              />{' '}
-              {option.label}
-            </label>
-          ))}
-        </fieldset>
         <label>
           Show{' '}
           <select
@@ -228,13 +204,11 @@ export function TaskPanel() {
         </ul>
       )}
 
-      <button
-        type="button"
-        disabled={selected.length === 0}
-        onClick={() => actions.openTaskPicker(selected)}
-      >
-        Find time for {selected.length} selected
-      </button>
+      {selected.length > 0 && (
+        <button type="button" onClick={() => actions.openTaskPicker(selected)}>
+          Find time ({selected.length})
+        </button>
+      )}
     </section>
   );
 }

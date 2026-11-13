@@ -69,7 +69,7 @@ describe('T53: soft barred slots UI (D-09)', () => {
       within(dialog).queryByRole('button', { name: 'Add barred slot' }),
     ).not.toBeInTheDocument();
     await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
-    const region = screen.getByRole('region', { name: 'Barred slots' });
+    const region = screen.getByRole('region', { name: /^Barred slots \(/ });
     await userEvent.click(within(region).getByRole('button', { name: 'Add barred slot' }));
     const first = within(region).getByRole('group', { name: 'Barred slot 1' });
     expect(within(first).getByLabelText('Label')).toHaveFocus();
