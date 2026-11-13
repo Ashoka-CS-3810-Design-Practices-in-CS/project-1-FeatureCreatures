@@ -62,6 +62,11 @@ describe('T56: five-region ownership (D-14)', () => {
     expect(within(tasks).queryByRole('group', { name: 'Priorities' })).not.toBeInTheDocument();
     expect(within(tasks).getByLabelText('Show')).toHaveValue('open');
     expect(within(tasks).getByLabelText('Sort by')).toHaveValue('priority');
+    expect(
+      within(tasks)
+        .getAllByRole('combobox')
+        .map((control) => (control as HTMLSelectElement).value),
+    ).toEqual(['open', 'priority']);
     expect(within(tasks).queryByRole('button', { name: /^Find time \(/ })).not.toBeInTheDocument();
     await userEvent.click(within(tasks).getByRole('checkbox', { name: 'Select Read' }));
     await userEvent.click(within(tasks).getByRole('button', { name: 'Find time (1)' }));

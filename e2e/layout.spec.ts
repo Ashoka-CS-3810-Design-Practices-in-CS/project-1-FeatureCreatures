@@ -74,6 +74,9 @@ for (const theme of ['light', 'dark'] as const) {
         await taskTrigger.click();
         const taskDrawer = page.getByRole('dialog', { name: /^Tasks/ });
         await expect(taskDrawer.getByRole('region', { name: /^Tasks \(/ })).toHaveCount(1);
+        await taskDrawer.getByRole('button', { name: '+ Task', exact: true }).focus();
+        await page.keyboard.press('Tab');
+        await expect(taskDrawer.getByRole('combobox', { name: 'Show', exact: true })).toBeFocused();
         await taskDrawer.getByRole('button', { name: 'Close', exact: true }).click();
         await expect(taskTrigger).toBeFocused();
         const conflictTrigger = appBar.getByRole('button', { name: /^Conflicts \(\d+\)$/ });

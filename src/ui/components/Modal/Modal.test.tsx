@@ -10,6 +10,28 @@ function flushQueuedTasks(): Promise<void> {
 }
 
 describe('Modal', () => {
+  it('T56: reopens a scrolled drawer at its title instead of retaining a clipped header', () => {
+    const onClose = vi.fn();
+    const { rerender } = render(
+      <Modal open title="Planning" onClose={onClose}>
+        <button>First</button>
+      </Modal>,
+    );
+    const dialog = screen.getByRole('dialog', { name: 'Planning' });
+    dialog.scrollTop = 100;
+    rerender(
+      <Modal open={false} title="Planning" onClose={onClose}>
+        <button>First</button>
+      </Modal>,
+    );
+    rerender(
+      <Modal open title="Planning" onClose={onClose}>
+        <button>First</button>
+      </Modal>,
+    );
+    expect(dialog.scrollTop).toBe(0);
+  });
+
   it('T56: wraps Tab at both boundaries without focusing disabled or closed-menu controls', () => {
     render(
       <Modal open title="Tasks" onClose={() => {}}>
