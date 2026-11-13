@@ -354,6 +354,8 @@ Five regions in three columns, all visible at desktop widths (layout A, chosen b
 └──────────────────────┴──────────────────────────────────────────────┴────────────────────────┘
 ```
 
+Column widths: Tasks about 300 px, the right column about 320 px, and the calendar takes the rest.
+
 1. **App bar:** the app name, then Undo, Redo, Theme, Help and Settings, as icon buttons with their existing accessible names and tooltips.
 2. **Calendar region:**
    - Row 1: ◀ Today ▶, the period title, and the Day/Week/Month segmented control.
