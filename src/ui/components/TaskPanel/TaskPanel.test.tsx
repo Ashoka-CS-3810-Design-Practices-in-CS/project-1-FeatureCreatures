@@ -19,6 +19,16 @@ const rowNames = () =>
     .map((row) => row.querySelector('strong')?.textContent);
 
 describe('TaskPanel (T30 UI, FR6)', () => {
+  it('T56: shows both window dates with the full time range available on the row', async () => {
+    const store = storeFor((await makeEngine({ tasks: tasks.slice(0, 1) })).engine);
+    renderWithStore(<TaskPanel />, store);
+
+    expect(screen.getByText('Mon 2 Nov–Fri 6 Nov')).toHaveAttribute(
+      'title',
+      'Mon 2 Nov 09:00 – Fri 6 Nov 18:00',
+    );
+  });
+
   it('lists tasks by priority, re-sorts by window end and filters by priority', async () => {
     const store = storeFor((await makeEngine({ tasks })).engine);
     renderWithStore(<TaskPanel />, store);

@@ -53,7 +53,7 @@ More presets (overlap cluster, midnight crossing, fully booked day, a 5,000-even
 
 Existing browser data upgrades automatically to database v3 with events, tasks, settings and the multi-tab revision preserved. New JSON exports use version 2 and include categories; version 1 backups still import.
 
-**Layout.** Tasks, Calendar and Planning use separate scrolling columns at 1280 px and wider. Below that, use the counted Tasks and Conflicts buttons in the app bar to open their drawers. **+ Task** lives in Tasks, **+ Event** in Calendar, and **Plan…** in Replan. Barred-slot validation names the overlapping slot and its times.
+**Layout.** Tasks, Calendar and Planning use separate scrolling columns at 1280 px and wider. Below that, use the counted Tasks and Conflicts buttons in the app bar to open their drawers. **+ Task** lives in Tasks, **+ Event** in Calendar, and **Plan…** in Replan. Task rows show both window dates; hover them for the full time range. Barred-slot validation names the overlapping slot and its times.
 
 **Replan strategies.** Keep Minimal change as the first plan, and choose Balanced week, Cluster by category, Vary categories, Front-load or Fewer fragments for the second. Cards show compact moves by day; **Details** reveals full metrics, explanations and Buffer. **Not moved by Replan** appears once below the cards with alternatives for unresolved events.
 

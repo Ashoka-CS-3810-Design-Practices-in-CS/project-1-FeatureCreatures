@@ -208,6 +208,7 @@ for (const theme of THEMES) {
     test(`task suggestions ${theme} ${width}`, async ({ page }) => {
       await openApp(page, theme, width);
       await loadSampleWeek(page);
+      await showTasks(page);
       const row = page
         .getByRole('listitem')
         .filter({ has: page.getByText('Write report', { exact: true }) });

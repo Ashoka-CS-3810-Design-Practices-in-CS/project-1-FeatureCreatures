@@ -67,6 +67,17 @@ for (const theme of ['light', 'dark'] as const) {
           (rightColumn?.left ?? 0) + COLUMN_ALIGNMENT_TOLERANCE_PX,
         );
         await expect(tasks.getByRole('button', { name: '+ Task', exact: true })).toHaveCount(1);
+        const firstTask = tasks.getByRole('listitem').first();
+        const doneBounds = await firstTask
+          .getByRole('button', { name: /^Mark .+ done$/ })
+          .boundingBox();
+        const findBounds = await firstTask
+          .getByRole('button', { name: 'Find time', exact: true })
+          .boundingBox();
+        const editBounds = await firstTask.getByRole('button', { name: /^Edit / }).boundingBox();
+        expect(doneBounds).not.toBeNull();
+        expect(findBounds?.y).toBe(doneBounds?.y);
+        expect(editBounds?.y).toBe(doneBounds?.y);
       } else {
         await expect(tasks).toBeHidden();
         await expect(conflicts).toBeHidden();

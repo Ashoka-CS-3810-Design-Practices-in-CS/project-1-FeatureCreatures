@@ -597,11 +597,12 @@ dialog .category-editor input[type='color'] {
 }
 
 .task-row {
+  padding-left: 0;
   grid-template-columns: auto minmax(0, 1fr);
   grid-template-areas:
     'select heading'
     '. meta'
-    '. actions';
+    'actions actions';
   align-items: center;
 }
 

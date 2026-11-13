@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { PRIORITY_TAGS } from '@/shared/constants';
 import type { CalendarEvent, Task } from '@/shared/types';
-import { fmtDay, fmtDuration, fmtRange, fmtTime } from '../../format/time';
+import { fmtDay, fmtDuration, fmtRange } from '../../format/time';
 import { useAppStore, type AppActions, type AppState } from '../../store/appStore';
 import { visibleTasks } from '../../store/selectors';
 import { CategoryTag } from '../Categories/CategoryTag';
@@ -12,7 +12,7 @@ type PanelState = AppState['taskPanel'];
 //       actions are the store's actions; reads snapshot.categories under StoreProvider
 //       + additional props from: CategoryTag
 // POST: renders one task row: a selection box (unscheduled tasks only), name, priority tag,
-//       category tag, duration, deadline, status and applicable scheduling/completion/edit/delete actions
+//       category tag, duration, window dates, status and applicable scheduling/completion/edit/delete actions
 function TaskRow({
   task,
   event,
@@ -46,8 +46,8 @@ function TaskRow({
       </span>{' '}
       <span className="task-meta">
         <span>{fmtDuration(task.durationMin)}</span>{' '}
-        <span>
-          due {fmtDay(task.window.end)} {fmtTime(task.window.end)}
+        <span title={fmtRange(task.window)}>
+          {fmtDay(task.window.start)}–{fmtDay(task.window.end)}
         </span>{' '}
         <span className={`task-status${isDone ? ' tag' : ''}`}>
           {isDone ? '✓ Done' : event === undefined ? 'Unscheduled' : `Scheduled ${fmtRange(event)}`}
