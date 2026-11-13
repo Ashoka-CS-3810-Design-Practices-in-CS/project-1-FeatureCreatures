@@ -55,12 +55,14 @@ for (const theme of THEMES) {
       await createEvent(page, 'Lunch event', '2026-11-02T13:00', '2026-11-02T14:00');
       await addLunchBarredSlot(page);
       const region = page.getByRole('region', { name: 'Barred slots', exact: true });
+      await expect(page.locator('.toast')).toHaveCount(0, { timeout: TOAST_WAIT_MS });
       await region.screenshot({
         path: `${OUTPUT_DIR}/barred-slots-${theme}-${width}.png`,
         animations: 'disabled',
       });
       await region.getByRole('button', { name: /^Keep here: Lunch event in Lunch/ }).click();
       await region.getByRole('button', { name: 'Kept (1)', exact: true }).click();
+      await expect(page.locator('.toast')).toHaveCount(0, { timeout: TOAST_WAIT_MS });
       await region.screenshot({
         path: `${OUTPUT_DIR}/barred-kept-${theme}-${width}.png`,
         animations: 'disabled',
@@ -73,6 +75,7 @@ for (const theme of THEMES) {
       await expect(
         page.getByText('Lunch and TT overlap on Mon–Fri. Edit one of them.', { exact: true }),
       ).toBeVisible();
+      await expect(page.locator('.toast')).toHaveCount(0, { timeout: TOAST_WAIT_MS });
       await capture(page, `barred-legacy-${theme}-${width}`);
     });
 

@@ -6,6 +6,8 @@ import { makeEngine } from '../../../../tests/helpers/engine';
 import { renderWithStore, storeFor } from '../../../../tests/helpers/render';
 import { t } from '../../../../tests/helpers/time';
 import { App } from '../../App';
+import { BarredSlotsPanel } from '../BarredSlotsPanel/BarredSlotsPanel';
+import { SettingsDialog } from '../SettingsDialog/SettingsDialog';
 
 const LUNCH = {
   id: 'lunch',
@@ -54,7 +56,13 @@ describe('T53: soft barred slots UI (D-09)', () => {
   it('edits only in the Barred slots region, rejects overlapping rows, and Cancel preserves saved slots', async () => {
     const { engine } = await makeEngine();
     const store = storeFor(engine);
-    renderWithStore(<App />, store);
+    renderWithStore(
+      <>
+        <SettingsDialog />
+        <BarredSlotsPanel />
+      </>,
+      store,
+    );
     act(() => store.getState().actions.openDialog({ kind: 'settings' }));
     const dialog = screen.getByRole('dialog', { name: 'Settings' });
     expect(
@@ -93,7 +101,13 @@ describe('T53: soft barred slots UI (D-09)', () => {
     const slots = [LUNCH, { ...LUNCH, id: 'tt', label: 'TT', startMin: 810, endMin: 870 }];
     const { engine } = await makeEngine({ settings: settings({ barredSlots: slots }) });
     const store = storeFor(engine);
-    renderWithStore(<App />, store);
+    renderWithStore(
+      <>
+        <SettingsDialog />
+        <BarredSlotsPanel />
+      </>,
+      store,
+    );
     expect(
       screen.getByText('Lunch and TT overlap on Mon–Fri. Edit one of them.'),
     ).toBeInTheDocument();
@@ -114,7 +128,7 @@ describe('T53: soft barred slots UI (D-09)', () => {
       events: [ev('Past', 'Mon 13:00', 'Mon 14:00', { keptInBarred: ['lunch'] })],
     });
     const store = storeFor(engine, { now: () => t('Mon 14:00') });
-    renderWithStore(<App />, store);
+    renderWithStore(<BarredSlotsPanel />, store);
     expect(screen.getByRole('heading', { name: 'Barred-slot overlaps (0)' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Kept (0)' })).toBeInTheDocument();
     expect(engine.snapshot().barredOverlaps).toHaveLength(1);
