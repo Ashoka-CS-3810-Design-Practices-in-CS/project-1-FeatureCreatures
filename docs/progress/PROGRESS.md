@@ -6,7 +6,7 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-52 Past time on `feat/wi-52-past-time`; claimed after WI-51's complete post-merge gate. Test-first implementation begins next.
+- **Active WI:** WI-52 Past time on `feat/wi-52-past-time`; nine T52 engine/RTL cases written, with eight expected failures and one preservation case green. No WI-52 production changes yet.
 - **Last session:** 2026-11-13 · Codex · WI-51 merged as `53f23f3`, branch retained; full main gate green with identical branch counts/coverage and 96/96 browsers. All 64 screenshot scenes/90 PNGs captured; relevant picker/Details views reviewed at every desktop width in both themes. Next: T52 past/upcoming/clock/barred/calendar/Replan regressions, then implementation and matching docs.
 - **Gate status:** 2026-11-13 on `main` at `53f23f3`: full gate green (737 tests + 1 skipped, 98.73% statements / 94.17% branches / 98.22% functions / 98.89% lines, algorithms 99.71/96.48/100/99.69, 7 DST, six properties × 10,000, build, 96/96 browser runs, zero retries).
 
@@ -258,6 +258,7 @@ Binding design: `docs/extras/AUDIT_2.md` (D-01–D-19, C-01–C-08). Work in ord
 - [~] **WI-52** Past time — owner S + Dv — depends on 51
   - 2026-11-13 · Codex · branch `feat/wi-52-past-time` · done: claimed after WI-51 full main gate; D-08 and current panel/count/calendar/warning/diagnostic paths reviewed · next: failing T52 tests, then implementation with exact end ≤ now semantics and running-only Already started; keep raw conflict detection/storage and Replan placement/metrics unchanged.
   - Done when: Panel grouping and counts; muted past styling; Replan wording.
+  - 2026-11-13 · Codex · branch `feat/wi-52-past-time` · done: nine T52 tests written first; three engine and five RTL behavior failures observed, ongoing overlap ending before rounded notBefore already passes · next: use raw now for diagnostics, implement UI clock/grouping/counts/barred suppression/past tokens/now guide, add clock/contrast/browser coverage, matching specs/README, screenshots/full gates · note: no existing assertions changed or production code modified.
 - [ ] **WI-53** Barred slots and working hours — owner S + Dv — depends on 52
   - Done when: Overlap rejection; older-data banner; Keep here behaviour and its automatic clearing; the switch behaviour across all three searches.
 - [ ] **WI-54** Done tasks — owner S + Dv — depends on 53
