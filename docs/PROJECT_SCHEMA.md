@@ -245,7 +245,7 @@ Each requirement lists its acceptance criteria. The tests that prove it are in `
   - The detector is sound and complete. It never misses an overlap and never reports a false one.
   - Back-to-back events do not conflict.
   - Both events in a pair are highlighted with an icon, the word "Conflict" and a colour.
-  - The conflict panel lists each pair with its overlap interval and minutes.
+  - The conflict panel groups pairs into Upcoming and a collapsed Past group, with overlap interval and minutes. Badges count upcoming only; status includes the past count (BR-19).
 
 **FR5 — Best-time finder (single task).**
 - **Input:** a task, a criterion (default from settings), and a buffer (default from settings).
@@ -490,7 +490,7 @@ Every search result also carries:
 - **Range:** `[from, to)`, with `from` at a local midnight and `to` at a local midnight, between 1 and 14 days long.
 - **Movable events:** flexible, `start ≥ notBefore`, and intersecting the range.
 - **Static events:** every other event that intersects the range. These are never moved.
-- **UX diagnostics (no change to placement rules):** after projecting each plan, list unchanged events with conflicts/barred overlaps whose overlap intersects the range, plus its unplaced events. Classify in order: fixed → "Fixed event"; flexible with `start < notBefore` → "Already started"; unplaced with move reason `outsideFlexWindow` → "Outside its flex window"; otherwise → "No free slot". Unplaced events have no fitting allowed free gap within `flexWindow ∩ range` with the buffer. Reasons describe the current request and can differ after changing the range/settings. Every entry offers the existing per-event Suggest alternatives action; applying alternatives still needs consent (BR-14).
+- **UX diagnostics (no change to placement rules):** after projecting each plan, list unchanged events with conflicts/barred overlaps whose overlap intersects the range and ends after raw now, plus its unplaced events. Entirely past problem overlaps (end ≤ now) are omitted even when an involved event is still running. Classify in order: fixed → "Fixed event"; flexible with `start ≤ now < end` → "Already started"; unplaced with move reason `outsideFlexWindow` → "Outside its flex window"; otherwise → "No free slot". Unplaced events have no fitting allowed free gap within `flexWindow ∩ range` with the buffer. Reasons describe the current request and can differ after changing the range/settings. Every entry offers the existing per-event Suggest alternatives action; applying alternatives still needs consent (BR-14).
 - **Order:** movable events are processed one at a time, by priority (High first), then duration (longest first), then start, then ID. Each placed event becomes busy for the events after it. If an event cannot be placed, it stays where it is and is listed as unplaced, and it remains busy for every other movable event, including those processed before it (no placed event may land on it).
 - **Allowed region:** for each movable event, the allowed segments of `flexWindow ∩ range`, respecting working hours (BR-5).
 - **Minimal change:**
@@ -522,9 +522,9 @@ Every search result also carries:
 - An event overlaps a barred slot on each local day it touches iff their absolute, half-open intervals overlap. Touching boundaries produce no warning. A slot applies on its own configured weekdays even when that day is not a working day.
 - Every overlap is a derived `{eventId, label, overlap, minutes}` record, with `overlap = [max(starts), min(ends))` and `minutes = overlap.end − overlap.start`. Existing events remain allowed inside barred slots.
 - These warnings are separate from BR-3 event-pair conflicts: the sweep, conflict counts and replan metrics do not include them. They are recomputed after data changes and settings changes, and are never persisted or exported.
-- Event blocks show a text tag `In <label>` for each distinct overlapping label. A second panel section, **Barred-slot overlaps (N)**, lists every record with event title, label, range, minutes and **Suggest alternatives** for that event (no other-event toggle).
+- Event blocks show a text tag `In <label>` for each distinct ongoing/future overlapping label. A second panel section, **Barred-slot overlaps (N)**, lists those records with event title, label, range, minutes and **Suggest alternatives** for that event (no other-event toggle). Entirely past overlaps are neither tagged nor listed (BR-19); derived snapshot records retain history.
 - Each barred-overlap row also shows **Fixed** or **Flexible**. Flexible events can be replanned only when not already started and a free placement exists within the range and flex window (BR-12).
-- When saving settings introduces overlap records, an info toast counts distinct events among the new records: `2 events overlap barred slots` (singular: `1 event overlaps barred slots`). **View** opens the panels drawer when needed and focuses/scrolls the barred-overlap section. An unchanged save or a save only removing overlaps produces no overlap toast.
+- When saving settings introduces ongoing/future overlap records, an info toast counts distinct events among those new records: `2 events overlap barred slots` (singular: `1 event overlaps barred slots`). Entirely past records do not count. **View** opens the panels drawer when needed and focuses/scrolls the barred-overlap section. An unchanged save or a save only removing overlaps produces no overlap toast.
 
 ---
 
@@ -533,6 +533,8 @@ Every search result also carries:
 Twelve curated colours include the five seeds. Free colours are normalised six-digit hex, at least `MIN_CATEGORY_COLOUR_DISTANCE = 0.04` apart in OKLab from other categories and reserved fills, conflict/priority colours. A dot has at least 3:1 contrast on its tag in both themes; its name uses normal text at least 4.5:1. Deleting/recolouring frees a swatch. Imports and stored-data validation enforce the same colour safety. Calendar blocks, accessible names/tooltips and task rows resolve the category by id. Multi-category and category-less items remain out of scope.
 
 **BR-17 Calendar lock and manual confirmations (D-03/D-04).** Calendar lock is an icon plus Locked/Unlocked, accessible name Calendar lock and aria-pressed; K toggles it. At a page load it is on if stored events exist and off when empty. It is not persisted, exported, undoable or automatically changed when events are later added/removed in the session. While locked, no event can be dragged/resized and no timeline click/drag creates an event; time-grid dragging scrolls horizontally/vertically. Clicking an event still edits it. + Event, N, dialog edits, Apply, Replan and undo/redo keep working. An unlocked fixed move asks `"Class" is fixed. Move it to Fri 13 Nov 10:00–11:00?` with Move/Keep it. A resize asks `"Class" is fixed. Change it to 1 h 30 min (10:00–11:30)?` with Change/Keep it. Keep it, Esc and close revert with no write/history. Fixed manual mutation commands still ask when invoked directly; the lock prevents the timeline gesture from invoking them. Flexible events ask nothing.
+
+**BR-19 Past time (D-08).** Past means `end ≤ now`, using raw current Minute. For conflicts and barred warnings, use the overlap's end, independently of either event's end. Ongoing overlaps count as upcoming; searches remain clipped at rounded now (BR-5). Conflicts show Upcoming (N) and a collapsed Past (N) group. Past rows retain names, overlap and minutes without Suggest. Region badges and the status line count upcoming only, independent of calendar filters; status appends `(N past)` when nonzero. Past barred overlaps have no tag, row or settings-toast count. Replan diagnostics follow BR-12. Calendar past days and ended events use muted tokens with text contrast ≥ 4.5:1; running events retain active styling. Every time-grid day has a faint guide at the current local clock time, with a stronger line on today. Presentation updates each minute and on returning to the page, without changing detection, storage, revisions, undo or metrics.
 
 ## 7. UX specification
 
@@ -599,7 +601,7 @@ Twelve curated colours include the five seeds. Free colours are normalised six-d
   - click an event to edit it
   - drag to move and drag the bottom edge to resize, snapping to 5 minutes
 - Task rows have a checkbox, a *Find time* button and a context menu (Edit, Unschedule, Delete).
-- Conflict rows have a *Suggest alternatives* button.
+- Upcoming conflict rows have a *Suggest alternatives* button; past rows are read-only under the collapsed Past group (BR-19).
 - Every drag and resize action is also available through the event dialog, for keyboard users.
 
 ### 7.3 Workflows
@@ -738,3 +740,6 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 | 2026-11-12 | v1.17 (WI-50, D-01–D-05): fixed/flexible scheduling radios; explicit fixed-search consent and temporary range; action-specific move/resize confirmations; session Calendar lock and grab-to-pan; separate persisted Calendar/List toggle and last Calendar view. FR2/FR7, glossary, BR-17, workflows and shortcuts updated; prior default three-day search removed. |
 | 2026-11-13 | WI-50 verification: releasing a locked-grid pan outside the calendar ends it, including before pointer capture; returning to the grid after release must not scroll it. T50 covers the regression. |
 | 2026-11-13 | v1.18 (WI-51, D-06/C-03/C-04): FR5/FR7, BR-7/BR-8 presentation and Figure 2 use complete half-hour/boundary/original candidates, distinct named picks, chronological day chips with eight-slot expansion, one selection and initially hidden Details. Replan's one-per-gap/MAX_OPTIONS contract is unchanged. |
+
+| 2026-11-13 | v1.19 (WI-52 engine checkpoint, D-08): BR-12 diagnostics omit entirely past problem overlaps and reserve Already started for currently running events, using raw now independently of rounded placement notBefore. Placement, metrics, detection and storage are unchanged. Remaining UI past-time behavior is still in progress. |
+| 2026-11-13 | v1.20 (WI-52, D-08): BR-19/FR4 and BR-15 define raw-now Upcoming/Past grouping, upcoming-only counts/actions/barred feedback, muted accessible past days/events and cross-day now guides; presentation time refreshes without domain writes. |

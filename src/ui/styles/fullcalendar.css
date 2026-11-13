@@ -352,6 +352,34 @@
   opacity: 1;
 }
 
+/* Neutral fills mute history without opacity reducing text or tag contrast (D-08). */
+.fc .fc-day-past {
+  background-color: var(--past-bg);
+  color: var(--past-text);
+}
+
+.fc .ev.is-past {
+  --text: var(--past-text);
+  --muted: var(--past-text);
+  --fc-event-bg-color: var(--past-bg);
+  --fc-event-border-color: var(--past-edge);
+  --ev-edge: var(--past-edge);
+  background-color: var(--past-bg);
+  color: var(--past-text);
+}
+
+.fc .fc-bg-event.now-guide {
+  background: transparent;
+  border-top: 1px dashed var(--now-guide);
+  opacity: 1;
+  pointer-events: none;
+}
+
+/* Month has no time axis; only the time grid needs a wall-clock guide. */
+.fc-daygrid .now-guide {
+  display: none;
+}
+
 .barred-label {
   display: inline-block;
   margin: var(--space-1) var(--space-2);

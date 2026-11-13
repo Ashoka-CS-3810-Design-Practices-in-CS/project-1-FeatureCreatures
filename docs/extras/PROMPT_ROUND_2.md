@@ -5,6 +5,18 @@ Paste the block below into a fresh Codex or Claude Code session at the repo root
 ```text
 You are a coding agent on int-calendar (CS-3810, team Feature Creatures). This is round 2: a large redesign that is already planned and decided. Your job is to implement it, one work item at a time, exactly as specified.
 
+## RUN CONTINUOUSLY: this overrides any habit of stopping
+- The human is NOT watching between work items. Do not stop, summarise or wait after a WI.
+- After merging a WI (§3), go straight to §1 step 4 and claim the next WI in the same session, with no message to the human in between. A finished WI, a merge, a phase boundary or a green gate is never a stopping point.
+- Do not ask "shall I continue?" and do not offer a plan for the next WI. Just start it.
+- Stop only when one of these is true:
+  (a) every WI-47–59 and "Finish" is [x];
+  (b) your usage budget is nearly gone, in which case do AGENTS.md §5 "Before you stop" first;
+  (c) a blocker under AGENTS.md §8 that AUDIT_2.md does not settle and that is expensive to undo. Record it in the progress file, and continue with any later WI that does not depend on it if one exists.
+- A human-only step (push, deploy) is never a reason to stop. Note it and keep going.
+- Keep your progress messages to one line per WI.
+- First action this session: if docs/extras/PROMPT_ROUND_2.md does not contain this "RUN CONTINUOUSLY" section, put this whole prompt into that file's code block. Commit it as "docs: make the round-2 prompt run continuously", on the current branch if a WI is in progress (it is a docs-only commit). Then carry on.
+
 ## 0. Rules you follow throughout
 - AGENTS.md is the law for this repo, and CLAUDE.md applies too if you are Claude Code. Follow its session protocol (§3–§5), its human-only list (§7) and its rules for asking (§8).
 - Load the disciplined-coding skill before writing any code. Use .agents/skills/disciplined-coding/SKILL.md (Codex) or /disciplined-coding (Claude Code). Every line you write or modify follows it: PRE/POST on every function and component, INVARIANT/POST on every loop, no magic numbers, Facade and Strategy as the only patterns.
@@ -13,8 +25,8 @@ You are a coding agent on int-calendar (CS-3810, team Feature Creatures). This i
 - Never push, deploy, create PRs, change remotes, delete branches or rewrite history. Those steps are human-only.
 
 ## 1. Find out where the batch stands (every session)
-1. Read docs/progress/PROGRESS.md: "Current state" and the section "### Round 2 overhaul (batch)". WI-47 moved the progress file out of the docs root.
-2. Run AGENTS.md §3 in full: git status, branches, the log, leftovers from a cut-off session, the gate on main, and a spot-check of the last [x] WI.
+1. Find the progress file. It is at docs/progress/PROGRESS.md, or at docs/PROGRESS.md if WI-47 has not been merged yet. Read "Current state" and the section "### Round 2 overhaul (batch)".
+2. Run AGENTS.md §3 in full, once, at the start of the session: git status, branches, the log, leftovers from a cut-off session, the gate on main, and a spot-check of the last [x] WI. This check is for recovering from an abrupt stop. Do not repeat it between WIs in the same session.
 3. If the section "Round 2 overhaul (batch)" does not exist, this is the first session. Do this setup on main, then continue with step 4:
    a. Commit the untracked planning inputs exactly as they are, with the message "docs: add round-2 audit and planning inputs". These are docs/extras/AUDIT_2.md, docs/extras/PROMPT_ROUND_2.md, docs/extras/audit-2/ and docs/extras/feedback-2026-11-12/. Commit nothing else in that commit.
    b. Record a BASELINE gate. Run every command in §3 and write the exact numbers into the progress file under the batch heading: test count, skipped count, coverage for statements, branches, functions and lines (overall and for algorithms), DST count, property runs, build result, and e2e checks × repeats.
@@ -55,7 +67,7 @@ Docs restructure (WI-47; D-18), done with git mv:
 - AUDIT.md, BUG_REPORTS.md and PROMPTS.md move to docs/extras/.
 - PROJECT_SCHEMA.md, TECH_SPEC.md and TEST_PLAN.md stay in docs/. samples/ and screenshots/ stay where they are.
 - Fix every link and reference: AGENTS.md (its docs table, session protocol and examples), CLAUDE.md, README, the three main docs, the extras, scripts/, .github/, playwright configs and both skill copies, if they mention paths.
-- Check with `rg -n --hidden -g '!node_modules/**' -g '!dist/**' -g '!coverage/**' -g '!.git/**' 'docs/(PROGRESS|AUDIT|BUG_REPORTS|PROMPTS)' .` across the repo. No old root-level documentation paths may be left outside historical change-log text.
+- Check with a grep for "docs/PROGRESS", "docs/AUDIT", "docs/BUG_REPORTS" and "docs/PROMPTS" across the repo, excluding node_modules, dist and coverage. Nothing may be left outside historical change-log text.
 
 Smoke test (WI-59; D-19):
 - Write ONE manual smoke test as TEST_PLAN §7. It replaces the demo scripts D1–D5 (§8), the accessibility checklist (§7.1), the UX sanity list (§7.2) and the peer-fix smoke checklist in the progress file.

@@ -24,7 +24,7 @@ function hasBlockProps(
 }
 
 // PRE:  info is FullCalendar's eventContent argument; onOpenEvent opens an event's edit dialog
-// POST: returns a barred slot's label for a background block; only the time for an event
+// POST: returns no text for a decorative now guide, a barred slot's label for a background block; only the time for an event
 //       without block props (the select mirror); else the EventContent block (a button that
 //       calls onOpenEvent(info.event.id) in the List view)
 export function renderEventContent(
@@ -33,6 +33,7 @@ export function renderEventContent(
 ): ReactNode {
   // Barred-slot backgrounds carry no event props; they only show their label.
   if (info.event.display === 'background') {
+    if (info.event.title === '') return null;
     return <span className="barred-label">{info.event.title}</span>;
   }
   // FullCalendar draws the time being selected as a mirror event with no extendedProps

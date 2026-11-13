@@ -9,7 +9,7 @@ import { addLocalDays, buildDayFrames, startOfLocalDay } from '@/shared/time';
 import type { CalendarEvent, Interval, Minute, ReplanPlan, ReplanResult } from '@/shared/types';
 import { planReplan as planWithHeuristics } from '../algorithms/replanHeuristics';
 import { diagnoseReplan } from '../replanDiagnostics';
-import { requireCurrentVersion, requireNotPast, segmentsFor } from '../search';
+import { notBeforeFor, requireCurrentVersion, requireNotPast, segmentsFor } from '../search';
 import {
   commit,
   type EngineState,
@@ -53,15 +53,16 @@ function requireReplanRange(range: Interval): Result<null, EngineError> {
   });
 }
 
-// PRE:  state.events is sorted; request comes from outside; notBefore is now rounded up to SNAP_MIN
+// PRE:  state.events is sorted; request comes from outside; now is the current unrounded Minute
 // POST: returns both BR-12 plans for request.range (buffer = request.bufferMin ?? settings.bufferMin)
 //       with the version and per-plan remaining-problem diagnostics; err InvalidInput for a bad bufferMin, or
 //       InvalidTime for a bad range
 export function planReplan(
   state: EngineState,
   request: PlanReplanRequest,
-  notBefore: Minute,
+  now: Minute,
 ): Result<ReplanResult, EngineError> {
+  const notBefore = notBeforeFor(now);
   const options = parseInput(searchOptionsSchema, { bufferMin: request.bufferMin });
   if (!options.ok) {
     return options;
@@ -88,8 +89,8 @@ export function planReplan(
     movableCount,
     plans,
     notMoved: {
-      minimalChange: diagnoseReplan(state.events, frames, request.range, notBefore, plans[0]),
-      balanced: diagnoseReplan(state.events, frames, request.range, notBefore, plans[1]),
+      minimalChange: diagnoseReplan(state.events, frames, request.range, now, plans[0]),
+      balanced: diagnoseReplan(state.events, frames, request.range, now, plans[1]),
     },
   });
 }

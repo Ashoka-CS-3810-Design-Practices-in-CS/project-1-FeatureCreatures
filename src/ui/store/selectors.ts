@@ -1,10 +1,19 @@
 // Derived views of the snapshot for the panels (FR6). They never change the snapshot itself.
 
 import { PRIORITY_RANK } from '@/shared/constants';
-import type { CalendarEvent, Priority, Task } from '@/shared/types';
+import type { CalendarEvent, Interval, Minute, Priority, Task } from '@/shared/types';
 import type { AppState } from './appStore';
 
 type TaskPanelState = AppState['taskPanel'];
+
+// PRE:  records contain valid half-open overlap intervals; now is raw current time
+// POST: returns only ongoing or future overlaps in input order, without changing records
+export function upcomingOverlaps<Record extends { overlap: Interval }>(
+  records: readonly Record[],
+  now: Minute,
+): Record[] {
+  return records.filter((record) => record.overlap.end > now);
+}
 
 // PRE:  state supplies current categories and the last session choice
 // POST: returns that choice if still present, otherwise the first id or '' when none remain

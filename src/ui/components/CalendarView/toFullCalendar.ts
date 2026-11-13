@@ -11,8 +11,10 @@ import type {
   Conflict,
   Interval,
   Priority,
+  Minute,
   Snapshot,
 } from '@/shared/types';
+import { upcomingOverlaps } from '../../store/selectors';
 
 export interface EventBlockProps {
   category?: Category;
@@ -58,7 +60,8 @@ function labelsByEvent(warnings: readonly BarredOverlap[]): Map<string, Set<stri
 }
 
 // PRE:  event is an event; conflictMinutes ≥ 0; emphasised says whether it was just changed;
-//       barredLabels contains its distinct overlapping labels; category is its current category
+//       barredLabels contains its upcoming overlapping labels; category is its current category;
+//       now is raw current time
 // POST: returns its FullCalendar entry with priority / conflict / emphasis classes and the
 //       props EventContent renders
 function toEntry(
@@ -67,8 +70,10 @@ function toEntry(
   emphasised: boolean,
   barredLabels: readonly string[],
   category: Category | undefined,
+  now: Minute,
 ): EventInput {
   const classNames = ['ev', `prio-${event.priority}`];
+  if (event.end <= now) classNames.push('is-past');
   if (conflictMinutes > 0) {
     classNames.push('is-conflict');
   }
@@ -115,7 +120,8 @@ function barredEntries(snapshot: Snapshot, activeRange: Interval | null): EventI
 }
 
 // PRE:  snapshot is the store's snapshot; filter lists the priorities to show (FR6);
-//       emphasisIds are the events changed a moment ago; hiddenCategoryIds lists hidden categories
+//       emphasisIds are the events changed a moment ago; now is raw current time;
+//       hiddenCategoryIds lists hidden categories
 // POST: returns FullCalendar's events: every event allowed by both filters with its current category,
 //       then the barred background blocks for activeRange
 export function toFullCalendar(
@@ -123,10 +129,11 @@ export function toFullCalendar(
   filter: readonly Priority[],
   activeRange: Interval | null,
   emphasisIds: readonly string[],
+  now: Minute,
   hiddenCategoryIds: readonly string[] = [],
 ): EventInput[] {
   const overlaps = largestOverlaps(snapshot.conflicts);
-  const barredLabels = labelsByEvent(snapshot.barredOverlaps);
+  const barredLabels = labelsByEvent(upcomingOverlaps(snapshot.barredOverlaps, now));
   const emphasised = new Set(emphasisIds);
   const categories = new Map(snapshot.categories.map((category) => [category.id, category]));
   const hidden = new Set(hiddenCategoryIds);
@@ -139,6 +146,7 @@ export function toFullCalendar(
         emphasised.has(event.id),
         [...(barredLabels.get(event.id) ?? [])],
         categories.get(event.categoryId),
+        now,
       ),
     );
   return [...events, ...barredEntries(snapshot, activeRange)];

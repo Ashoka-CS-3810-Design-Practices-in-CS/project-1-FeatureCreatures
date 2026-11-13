@@ -84,6 +84,7 @@ export const MIN_SUPPORTED_MINUTE = 0;
 export const MAX_SUPPORTED_MINUTE = 4_223_371_679;
 export const MINUTES_PER_HOUR = 60;
 export const MS_PER_MINUTE = 60_000;
+export const NOW_GUIDE_DURATION_MIN = 1;
 export const MAX_TITLE_LENGTH = 100; // event title and task name
 export const MAX_DESCRIPTION_LENGTH = 1000;
 export const MAX_BARRED_LABEL_LENGTH = 40;

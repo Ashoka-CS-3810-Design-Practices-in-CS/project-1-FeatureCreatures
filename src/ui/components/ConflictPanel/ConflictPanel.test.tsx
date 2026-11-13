@@ -83,7 +83,10 @@ describe('ConflictPanel', () => {
       );
     }
     // POST: Base conflicts with every other event, and those never overlap each other
-    renderWithStore(<ConflictPanel />, storeFor((await makeEngine({ events })).engine));
+    renderWithStore(
+      <ConflictPanel />,
+      storeFor((await makeEngine({ events })).engine, { now: () => t('Mon 00:00') }),
+    );
 
     expect(
       within(screen.getByRole('list', { name: 'Conflict list' })).getAllByRole('listitem'),

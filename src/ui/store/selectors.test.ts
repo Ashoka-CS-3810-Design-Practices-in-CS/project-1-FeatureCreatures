@@ -2,6 +2,7 @@ import { DEFAULT_CATEGORIES } from '@/shared/constants';
 import { createState } from '@/engine/state';
 import type { Snapshot } from '@/shared/types';
 import { ev, settings, task } from '../../../tests/helpers/builders';
+import { t } from '../../../tests/helpers/time';
 import { toFullCalendar } from '../components/CalendarView/toFullCalendar';
 import type { AppState } from './appStore';
 import { visibleTasks } from './selectors';
@@ -69,7 +70,9 @@ describe('visibleTasks (T30, FR6)', () => {
     };
     const events = snapshot.events;
 
-    expect(ids(toFullCalendar(snapshot, ['high'], null, []) as { id: string }[])).toEqual(['H']);
+    expect(
+      ids(toFullCalendar(snapshot, ['high'], null, [], t('Mon 08:00')) as { id: string }[]),
+    ).toEqual(['H']);
     expect(snapshot.events).toBe(events);
     expect(snapshot.conflicts.map((conflict) => conflict.key)).toEqual(['L1|L2']);
   });

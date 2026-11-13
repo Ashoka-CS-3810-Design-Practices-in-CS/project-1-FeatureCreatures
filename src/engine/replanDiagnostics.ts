@@ -16,29 +16,29 @@ interface RemainingProblems {
   conflictTitles: Set<string>;
 }
 
-// PRE:  event intersects the range and is unchanged by plan; notBefore is rounded now;
+// PRE:  event intersects the range and is unchanged by plan; now is the current unrounded Minute;
 //       unplaced is plan's entry for event, if it failed placement
 // POST: explains its exclusion in order: fixed, started, failed outside-flex placement, no slot
 function exclusionReason(
   event: CalendarEvent,
-  notBefore: Minute,
+  now: Minute,
   unplaced: ReplanPlan['unplaced'][number] | undefined,
 ): ReplanNotMoved['reason'] {
   if (!event.flexible) return 'fixed';
-  if (event.start < notBefore) return 'started';
+  if (event.start <= now && event.end > now) return 'started';
   return unplaced?.reason?.kind === 'outsideFlexWindow' ? 'outsideFlexWindow' : 'noSlot';
 }
 
 // PRE:  events are valid and sorted; frames cover range's whole local days;
-//       plan is a BR-12 plan over events/range at notBefore (rounded now)
+//       plan is a BR-12 plan over events/range at ceil(now, SNAP_MIN)
 // POST: returns one entry per unchanged in-range event left unplaced or still in a conflict/barred
-//       overlap AFTER this plan, in original event order, with deduplicated problem names;
+//       overlap AFTER this plan whose end > now, in original event order, with deduplicated problem names;
 //       no inputs, placements or plan metrics are changed
 export function diagnoseReplan(
   events: readonly CalendarEvent[],
   frames: readonly DayFrame[],
   range: Interval,
-  notBefore: Minute,
+  now: Minute,
   plan: ReplanPlan,
 ): ReplanNotMoved[] {
   const moves = new Map(plan.moves.map((move) => [move.eventId, move.to]));
@@ -50,24 +50,24 @@ export function diagnoseReplan(
     events.map((event) => [event.id, { barredLabels: new Set(), conflictTitles: new Set() }]),
   );
 
-  // INVARIANT: every visited warning intersecting range is recorded once by label for its event
+  // INVARIANT: every visited non-past warning intersecting range is recorded once by label for its event
   for (const warning of detectBarredOverlaps(projected, frames)) {
-    if (overlaps(warning.overlap, range)) {
+    if (warning.overlap.end > now && overlaps(warning.overlap, range)) {
       (problems.get(warning.eventId) as RemainingProblems).barredLabels.add(warning.label);
     }
   }
-  // POST: each event's remaining barred labels are recorded only for the selected range
+  // POST: each event's non-past barred labels are recorded only for the selected range
 
-  // INVARIANT: both participants of each visited in-range conflict record the other's title
+  // INVARIANT: both participants of each visited non-past in-range conflict record the other's title
   for (const conflict of detectConflicts(projected)) {
-    if (overlaps(conflict.overlap, range)) {
+    if (conflict.overlap.end > now && overlaps(conflict.overlap, range)) {
       const first = byId.get(conflict.aId) as CalendarEvent;
       const second = byId.get(conflict.bId) as CalendarEvent;
       (problems.get(first.id) as RemainingProblems).conflictTitles.add(second.title);
       (problems.get(second.id) as RemainingProblems).conflictTitles.add(first.title);
     }
   }
-  // POST: conflicts resolved by the plan do not contribute diagnostic entries
+  // POST: resolved and entirely past conflicts do not contribute diagnostic entries
 
   const unplaced = new Map(plan.unplaced.map((entry) => [entry.eventId, entry]));
   const entries: ReplanNotMoved[] = [];
@@ -83,7 +83,7 @@ export function diagnoseReplan(
       entries.push({
         eventId: event.id,
         title: event.title,
-        reason: exclusionReason(event, notBefore, unplaced.get(event.id)),
+        reason: exclusionReason(event, now, unplaced.get(event.id)),
         barredLabels: [...remaining.barredLabels],
         conflictTitles: [...remaining.conflictTitles],
       });

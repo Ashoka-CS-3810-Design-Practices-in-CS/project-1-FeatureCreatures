@@ -43,6 +43,7 @@ describe('T49: category filters (D-11)', () => {
         store.getState().eventPriorityFilter,
         null,
         [],
+        store.getState().currentMinute,
         store.getState().hiddenCategoryIds,
       ),
     ).toEqual([]);

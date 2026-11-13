@@ -19,7 +19,7 @@ import { useShortcuts } from './hooks/useShortcuts';
 import { useTheme } from './hooks/useTheme';
 import { useNarrowLayout } from './hooks/useNarrowLayout';
 import { useAppStore } from './store/appStore';
-import { eventIsVisible } from './store/selectors';
+import { eventIsVisible, upcomingOverlaps } from './store/selectors';
 import styles from './App.module.css';
 
 // PRE:  count ≥ 0; noun is singular
@@ -49,7 +49,7 @@ function FatalScreen() {
   );
 }
 
-// PRE:  rendered under StoreProvider; reads status, storageWarning, snapshot, eventPriorityFilter
+// PRE:  rendered under StoreProvider; reads currentMinute, status, storageWarning, snapshot, eventPriorityFilter
 //       hiddenCategoryIds and panelsOpen;
 //       uses setPanelsOpen to control the responsive drawer
 //       + additional props from: Toolbar, EmptyState, CalendarView, SidePanel, BusyOverlay,
@@ -58,7 +58,7 @@ function FatalScreen() {
 // POST: applies the theme and listens for shortcuts (B3, B4); shows the loading line, the fatal
 //       screen, or the app: the degraded-mode banner when storage is unavailable, the toolbar, the
 //       empty state on a blank calendar, the status line (events the priority filter shows, and
-//       how many it hides; conflicts always count every event, FR6), the calendar, the task and conflict
+//       how many it hides; upcoming conflicts count every event, with past counted separately, FR6/BR-19), the calendar, the task and conflict
 //       panels, the open dialog, the picker and the toasts
 export function App() {
   const calendarRef = useRef<FullCalendar>(null);
@@ -72,6 +72,7 @@ export function App() {
   const snapshot = useAppStore((state) => state.snapshot);
   const filter = useAppStore((state) => state.eventPriorityFilter);
   const hiddenCategories = useAppStore((state) => state.hiddenCategoryIds);
+  const now = useAppStore((state) => state.currentMinute);
 
   if (status === 'loading') {
     return <p role="status">Loading your calendar…</p>;
@@ -81,6 +82,8 @@ export function App() {
   }
 
   const isEmpty = snapshot.events.length === 0 && snapshot.tasks.length === 0;
+  const upcomingCount = upcomingOverlaps(snapshot.conflicts, now).length;
+  const pastCount = snapshot.conflicts.length - upcomingCount;
   const visibleCount = snapshot.events.filter((event) =>
     eventIsVisible(event, filter, hiddenCategories),
   ).length;
@@ -105,8 +108,8 @@ export function App() {
         {isEmpty && <EmptyState />}
         <p className="status-line">
           {eventCountText(visibleCount, snapshot.events.length - visibleCount)} ·{' '}
-          {countOf(snapshot.tasks.length, 'task')} ·{' '}
-          {countOf(snapshot.conflicts.length, 'conflict')}
+          {countOf(snapshot.tasks.length, 'task')} · {countOf(upcomingCount, 'conflict')}
+          {pastCount > 0 && ` (${pastCount} past)`}
         </p>
         <CalendarView calendarRef={calendarRef} />
       </main>
