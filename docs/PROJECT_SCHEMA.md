@@ -134,7 +134,7 @@ These optional features from the project description are also covered by the cor
 | **Candidate / option** | A concrete slot `[s, s + duration)` inside one free gap, with an explanation. |
 | **Criterion** | The rule used to rank options: `earliest`, `bestFit`, `priorityAware`, `nearest`, `leastLoaded`. |
 | **Conflict** | An unordered pair of events whose intervals overlap, plus the overlap interval and its length in minutes. |
-| **Day load** | The total minutes of events on a working day, clipped to that day's working hours. Overlapping events are summed, not unioned. |
+| **Day load** | Event minutes clipped to the day's working hours, or the whole local day when working hours are globally off. Overlapping events are summed, not unioned. |
 | **Plan** | A proposed set of moves produced by Replan, with metrics. |
 | **Snapshot** | The read-only state the engine hands to the UI after every command. |
 | **Version** | An integer that increases by one on every successful data change. Used to detect stale options and plans. |
@@ -161,7 +161,7 @@ The TypeScript definitions live in `TECH_SPEC.md` §5. This table lists the fiel
 
 New events start Fixed for every category (D-11, C-01). Selecting or creating a category never changes the user's scheduling choice.
 
-The default flex window is the event's local day, from working start to working end. When the event does not overlap its day's working hours (for example at night) or falls on a non-working day, the default is that whole local day, 00:00–24:00, so the window is never empty by default (WI-41, reports #4 and #9). This only fills the form of a new event or one without a window; stored events are never changed.
+The default flex window is the event's local day, from working start to working end. When global working hours are off, or the event does not overlap its day's working hours (for example at night) or falls on a non-working day, the default is that whole local day, 00:00–24:00, so the window is never empty by default (D-10; WI-41, reports #4 and #9). This only fills the form of a new event or one without a window; stored events are never changed.
 
 #### Task
 
@@ -410,8 +410,8 @@ These rules are normative. The algorithms in TECH_SPEC §8 implement them exactl
   2. Intersect it with the search window.
   3. Subtract that day's barred slots.
   4. Clip everything to start no earlier than `notBefore`, which is now rounded up to the next multiple of 5 minutes.
-- **When working hours don't apply** (`useWorkingHours = false`): the segments are the search window minus barred slots, clipped at `notBefore`.
-- **Usage:** task searches use `task.useWorkingHours`. Alternatives use the picker's *Search hours* choice (FR7; working hours by default unless the target lies outside them, WI-41). Replan always respects working hours.
+- **When working hours don't apply** (global `settings.useWorkingHours = false`, or the request opts out): segments are the search window minus barred slots, clipped at `notBefore`. Adjacent local days do not split those free stretches, so candidates may cross midnight. Barred slots still apply on their own weekdays.
+- **Usage:** when the global switch is on, task searches use `task.useWorkingHours`, alternatives use the picker's *Search hours* choice, and Replan respects working hours. When globally off, all three act as Any time; day loads cover whole local days and default flex windows cover the whole local day. Stored working days/hours and task preferences are retained for switching back on (D-10).
 - **Edge labels:** each segment edge records why it is there (window start/end, working start/end, barred slot "Lunch", now). These labels are used in explanations.
 
 **BR-6 Busy blocks and free gaps.**
@@ -743,3 +743,4 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 
 | 2026-11-13 | v1.19 (WI-52 engine checkpoint, D-08): BR-12 diagnostics omit entirely past problem overlaps and reserve Already started for currently running events, using raw now independently of rounded placement notBefore. Placement, metrics, detection and storage are unchanged. Remaining UI past-time behavior is still in progress. |
 | 2026-11-13 | v1.20 (WI-52, D-08): BR-19/FR4 and BR-15 define raw-now Upcoming/Past grouping, upcoming-only counts/actions/barred feedback, muted accessible past days/events and cross-day now guides; presentation time refreshes without domain writes. |
+| 2026-11-13 | v1.21 (WI-53 D-10 engine checkpoint): BR-5, day loads and default flex windows obey the global working-time switch. Off means whole local days with barred slots retained, including cross-midnight placement; task/working-time preferences stay stored. UI and D-09 remain in progress. |

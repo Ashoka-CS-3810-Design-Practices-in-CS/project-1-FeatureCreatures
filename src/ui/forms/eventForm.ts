@@ -79,7 +79,7 @@ export function fromDateInput(text: string): Minute {
 
 // PRE:  start ≤ end are the event's Minutes (end defaults to start); settings are valid
 // POST: returns the default flex window: start's local day from working start to working end when
-//       the event overlaps that day's working hours, otherwise the whole local day 00:00–24:00, so
+//       global working hours are on and the event overlaps them, otherwise the whole local day, so
 //       a night or weekend event's window is not empty (WI-41, reports #4 and #9)
 export function defaultFlexWindow(
   start: Minute,
@@ -87,7 +87,7 @@ export function defaultFlexWindow(
   end: Minute = start,
 ): Interval {
   const day = startOfLocalDay(start);
-  if (!overlapsWorkingHours({ start, end }, settings)) {
+  if (!settings.useWorkingHours || !overlapsWorkingHours({ start, end }, settings)) {
     return { start: day, end: addLocalDays(day, 1) };
   }
   return {

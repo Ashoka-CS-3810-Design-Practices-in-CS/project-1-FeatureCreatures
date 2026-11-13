@@ -82,18 +82,20 @@ export function startOfLocalWeek(minute: Minute): Minute {
 }
 
 // PRE:  dayStart is a local midnight; settings satisfies settingsSchema
-// POST: returns the DayFrame of dayStart's local day: its end, weekday, work interval (null on a
-//       non-working day) and the barred slots of that weekday sorted by start (stable for ties)
+// POST: returns the DayFrame of dayStart's local day: its end, weekday, effective work interval
+//       (whole day when globally off; otherwise null on non-working days) and sorted barred slots
 function buildDayFrame(dayStart: Minute, settings: Settings): DayFrame {
   const dayEnd = addLocalDays(dayStart, 1);
   // getDay() is always 0..6, so the cast to Weekday is safe.
   const weekday = fromMinute(dayStart).getDay() as Weekday;
-  const work = settings.workDays.includes(weekday)
-    ? {
-        start: atMinuteOfDay(dayStart, dayEnd, settings.workStartMin),
-        end: atMinuteOfDay(dayStart, dayEnd, settings.workEndMin),
-      }
-    : null;
+  const work = !settings.useWorkingHours
+    ? { start: dayStart, end: dayEnd }
+    : settings.workDays.includes(weekday)
+      ? {
+          start: atMinuteOfDay(dayStart, dayEnd, settings.workStartMin),
+          end: atMinuteOfDay(dayStart, dayEnd, settings.workEndMin),
+        }
+      : null;
   const barred = settings.barredSlots
     .filter((slot) => slot.days.includes(weekday))
     .toSorted((first, second) => first.startMin - second.startMin)

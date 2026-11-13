@@ -6,8 +6,8 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-53 Barred slots and working hours on `feat/wi-53-barred-working-hours`; claimed, test-first D-09/D-10 implementation next.
-- **Last session:** 2026-11-13 · Codex · WI-52 merged as c2e5b5c with branch retained and full main gate green (750 + 1 skipped, 98.72/94.20/98.24/98.90 overall, algorithms 99.71/96.48/100/99.69, DST 8, six properties × 10,000, build and 99/99 browsers, zero retries). 70 screenshot scenes/102 PNGs pass, relevant captures reviewed. WI-53 claimed; begin D-10 engine/clock/frame tests and D-09 overlap/Keep here tests before implementation.
+- **Active WI:** WI-53 Barred slots and working hours on `feat/wi-53-barred-working-hours`; D-10 engine/form semantics implemented and green. D-10 UI and D-09 remain.
+- **Last session:** 2026-11-13 · Codex · WI-52 merged as c2e5b5c with full main gate (750 + 1 skipped, DST 8, properties and 99 browsers). WI-53 D-10 engine/form checkpoint: eight regressions failed first, now all 758 unit tests + 1 skipped pass; coverage 98.72/94.23/98.24/98.90, DST 9, six properties × 10,000, typecheck/lint clean. UI switch/hidden hours/shading and D-09 remain; no WI-53 merge/full browser gate yet.
 - **Gate status:** 2026-11-13 on `main` at c2e5b5c: full gate green (750 + 1 existing skipped, 98.72% statements / 94.20% branches / 98.24% functions / 98.90% lines, algorithms 99.71/96.48/100/99.69, 8 DST, six properties × 10,000, build, 99/99 browser runs, zero retries).
 
 ## Work items
@@ -271,6 +271,7 @@ Binding design: `docs/extras/AUDIT_2.md` (D-01–D-19, C-01–C-08). Work in ord
   - 2026-11-13 · Codex · branch `feat/wi-53-barred-working-hours` · done: claimed after the full WI-52 main gate; D-09/D-10 and existing validation, frames, searches, Replan and settings paths reviewed · next: failing tests before implementing global working-time semantics, overlapping-slot rejection/legacy handling, Keep here lifecycle and UI.
   - Done when: Overlap rejection; older-data banner; Keep here behaviour and its automatic clearing; the switch behaviour across all three searches.
   - 2026-11-13 · Codex · branch `feat/wi-53-barred-working-hours` · done: seven exact D-10 integration regressions written first and observed failing for missing global-off semantics in frames, Find time, alternatives, Replan, cross-midnight barred detection and day loads · next: implement the effective working-time rules, whole-day frames and Replan working-hours input; add form/DST checks, then D-09 and UI work · note: no existing tests or production behavior changed yet.
+  - 2026-11-13 · Codex · branch `feat/wi-53-barred-working-hours` · done: D-10 engine/form checkpoint green: all eight initially red cases pass; shared local-day frames/load, global/request search rules and cross-midnight Replan/barred detection implemented; ReplanInput explicitly carries the global flag; full coverage suite 758 + 1 skipped, 98.72/94.23/98.24/98.90 overall, algorithms 99.71/96.48/100/99.69, DST 9, six properties × 10,000, typecheck/lint/format clean; all three specs/README updated · next: D-10 settings switch/hidden controls/shading and browser coverage; D-09 overlap/legacy/Keep here lifecycle and region editing; then screenshots/full branch/main gates · note: existing Replan unit/property fixtures only add useWorkingHours: true; no old assertion/expectation, timeout, threshold, skip or property count changed. WI-53 remains in progress and unmerged.
 - [ ] **WI-54** Done tasks — owner S + Dv — depends on 53
   - Done when: Atomic mark-done and unschedule; Reopen; bulk preview and apply; undo.
 - [ ] **WI-55** Replan strategies and dialog — owner S + Dv — depends on 54

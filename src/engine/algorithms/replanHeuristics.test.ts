@@ -31,6 +31,7 @@ function input(events: CalendarEvent[], options: InputOptions = {}): ReplanInput
     range: RANGE,
     bufferMin: options.bufferMin ?? 0,
     notBefore,
+    useWorkingHours: true,
     segmentsFor: (window: Interval) =>
       allowedSegments(window, frames, { useWorkingHours: true, notBefore }),
   };

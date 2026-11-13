@@ -104,6 +104,7 @@ const scenarios = fc
       range,
       bufferMin,
       notBefore,
+      useWorkingHours: true,
       segmentsFor: (window: Interval) =>
         allowedSegments(window, frames, { useWorkingHours: true, notBefore }),
     };

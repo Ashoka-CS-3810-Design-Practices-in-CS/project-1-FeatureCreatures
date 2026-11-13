@@ -53,6 +53,8 @@ More presets (overlap cluster, midnight crossing, fully booked day, a 5,000-even
 
 Existing browser data upgrades automatically to database v3 with events, tasks, settings and the multi-tab revision preserved. New JSON exports use version 2 and include categories; version 1 backups still import.
 
+When a backup has working hours switched off, Find time, alternatives and Replan use whole local days, including nights and weekends. Barred slots still apply; saved working-time preferences are retained.
+
 ## Run it locally
 
 You need Node.js 22 and npm.

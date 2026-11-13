@@ -1112,7 +1112,8 @@ export function startOfLocalWeek(m: Minute): Minute;                    // Monda
    { dayStart: d,
      dayEnd: addLocalDays(d, 1),
      weekday,
-     work: workDays.includes(weekday) ? [set(d, workStart), set(d, workEnd)] : null,
+     work: !settings.useWorkingHours ? [d, addLocalDays(d, 1)] :
+           workDays.includes(weekday) ? [set(d, workStart), set(d, workEnd)] : null,
      barred: for each slot whose days include weekday, sorted by start → {label, [set(d, s), set(d, e)]} }
    ```
 
@@ -1263,7 +1264,8 @@ export interface ReplanInput {
   conflicts: readonly Conflict[];          // current, for conflictsBefore
   frames: readonly DayFrame[];             // for the range
   range: Interval; bufferMin: number; notBefore: Minute;
-  segmentsFor: (window: Interval) => Segment[];   // injected allowedSegments(…, useWorkingHours: true)
+  useWorkingHours: boolean;                   // global working-time switch
+  segmentsFor: (window: Interval) => Segment[]; // injected allowedSegments with the global switch
 }
 export function planReplan(input: ReplanInput): { movableCount: number; plans: [ReplanPlan, ReplanPlan] };
 ```
@@ -1313,7 +1315,7 @@ pass(kind, pinned):
 
 invalidReason(e, win, segs, occupied, b, frames):   // first failing check, in this order
   win null or ¬contains(win, e)                          → outsideFlexWindow
-  no frame f with f.work and contains(f.work, e)         → outsideWorkingHours
+  useWorkingHours and no frame f with f.work containing e → outsideWorkingHours
   e overlaps some barred interval of its frame(s)        → barred{label}
   e overlaps some o ∈ occupied (raw)                     → conflict{o}
   e overlaps some o ∈ occupied expanded by b             → buffer{o}
@@ -1981,3 +1983,4 @@ Production URL: https://…vercel.app
 | 2026-11-13 | v1.42 (WI-51, D-06): SlotSearchResult.options contains every ranked picker candidate; §7.5 wires generation, §8.10a/§10 document contracts/cost, and §11.2 documents shared named picks/day chips/native radio selection and hidden Details. Replan's rankOptions/MAX_OPTIONS and assertions remain unchanged. |
 | 2026-11-13 | v1.43 (WI-52 engine checkpoint, D-08): Replan pipeline receives raw now and computes the unchanged rounded placement cutoff internally. diagnoseReplan's fourth Minute argument means raw now; past problem overlaps are excluded and started means currently running. T52 raw-clock boundary regressions pass; UI grouping/clock/styling remains in progress. |
 | 2026-11-13 | v1.44 (WI-52, D-08): currentMinute/refreshCurrentMinute and provider timer/focus/visibility lifecycle; upcomingOverlaps shared by panels/status/tags/toast; toFullCalendar takes raw now and marks ended events; local-day nowGuideEntries and tested past/guide tokens. Snapshot/repository/metric contracts remain unchanged. |
+| 2026-11-13 | v1.45 (WI-53 D-10 engine checkpoint): DayFrame.work is the whole local day when globally off. Shared search/empty-cause/Replan segments use effective global/request working-time rules. ReplanInput gains required useWorkingHours; false skips the working-day containment check, while reused detectBarredOverlaps checks every touched day. Unit/property fixtures explicitly pass true without assertion changes. UI and D-09 remain in progress. |
