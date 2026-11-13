@@ -7,7 +7,7 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 ## Current state
 
 - **Active WI:** WI-56 Layout, claimed; branch `feat/wi-56-layout`.
-- **Last session:** 2026-11-13 · Codex · WI-55 merged as `2a8c311`; full main gate green with 838 + 1 skipped, all ten properties × 10,000 and 135/135 browser runs. WI-56 next: test-first D-14 region ownership, compact task controls, independent columns and separate drawers below 1280 px; then implementation/docs/gates.
+- **Last session:** 2026-11-13 · Codex · WI-54/55 merged and fully verified on main (`2a8c311`, 838 + 1 skipped, 135/135 browsers). WI-56: preserved new external D-20 binding edit; four D-14 RTL, three D-20 schema/import and six both-theme/three-width browser tests written and confirmed red. Typecheck/lint pass; no WI-56 production changes yet. Next: implement named errors, then five-region layout/drawers and full gates.
 - **Gate status:** 2026-11-13 on `main` at `2a8c311`: full gate green, 838 + 1 existing skipped, overall 98.56/94.27/98.17/98.79, algorithms 99.72/96.80/100/99.71, DST 9, ten properties × 10,000, build, 135/135 browsers, zero retries.
 
 ## Work items
@@ -306,6 +306,7 @@ Binding design: `docs/extras/AUDIT_2.md` (D-01–D-19, C-01–C-08). Work in ord
   - Done when: Five regions at 1440, 1280 and 1024 (drawers) in both themes; no duplicate controls; e2e updated.
   - 2026-11-13 · Codex · branch `feat/wi-56-layout` · done: WI-55 full main gate verified, WI-56 claimed and D-14/current App/Toolbar/SidePanel reconstructed · next: RTL region/control ownership and browser geometry/drawer tests first, then split app bar/calendar toolbar/tasks/right regions, 1280 breakpoint and independent scroll, docs and full gates · note: D-12/D-13 visual tokens/accent/theme remain WI-57; D-16 format/dialog polish remains WI-58.
   - 2026-11-13 · Codex · branch `feat/wi-56-layout` · done: detected a new coherent external edit to binding AUDIT_2.md after the WI-55 gate: D-20 replaces numeric barred-slot messages with label/time text · next: preserve the audit verbatim, add D-14 layout and D-20 message tests first, implement both while moving the Barred slots region · note: D-20 explicitly permits WI-56 when touching this region; expected duplicate text is Same days and times as "Lunch" (13:00–14:00). Overlap text is Overlaps "Lunch" (13:00–14:00) on Mon, Tue. This is a decided expectation change, not a weakening.
+  - 2026-11-13 · Codex · branch `feat/wi-56-layout` · done: four D-14 RTL and three D-20 schema/import cases confirmed red; six D-14 browser scenes confirmed red for the missing Calendar region; typecheck/lint/format pass · next: D-20 pure shared clock/named clash helper + exact old-message expectation updates, then AppBar/CalendarToolbar/Tasks/right regions, separate mutually exclusive drawers <1280, task control/selection cleanup, matching specs/screenshots/full gates · note: current tests deliberately fail on the old UI/messages. Main remains fully green; no production implementation in this checkpoint.
 - [ ] **WI-57** Visual system — owner S + Dv — depends on 56
   - Done when: `tokens.test.ts` covers fills, tags, accents and shading; screenshots refreshed and reviewed.
 - [ ] **WI-58** Dialog and format polish — owner S + Dv — depends on 57
