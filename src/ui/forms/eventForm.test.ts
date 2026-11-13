@@ -13,6 +13,12 @@ import {
   type EventFormValues,
 } from './eventForm';
 
+it('T53: global working hours off defaults a daytime flex window to the whole local day', () => {
+  expect(
+    defaultFlexWindow(t('Mon 10:00'), settings({ useWorkingHours: false }), t('Mon 11:00')),
+  ).toEqual(iv('Mon 00:00', 'Tue 00:00'));
+});
+
 // PRE:  overrides holds any subset of the form values
 // POST: returns a valid fixed meeting form for Mon 10:00–11:00, with overrides applied
 function form(overrides: Partial<EventFormValues> = {}): EventFormValues {

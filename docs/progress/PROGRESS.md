@@ -270,6 +270,7 @@ Binding design: `docs/extras/AUDIT_2.md` (D-01–D-19, C-01–C-08). Work in ord
 - [~] **WI-53** Barred slots and working hours — owner S + Dv — depends on 52
   - 2026-11-13 · Codex · branch `feat/wi-53-barred-working-hours` · done: claimed after the full WI-52 main gate; D-09/D-10 and existing validation, frames, searches, Replan and settings paths reviewed · next: failing tests before implementing global working-time semantics, overlapping-slot rejection/legacy handling, Keep here lifecycle and UI.
   - Done when: Overlap rejection; older-data banner; Keep here behaviour and its automatic clearing; the switch behaviour across all three searches.
+  - 2026-11-13 · Codex · branch `feat/wi-53-barred-working-hours` · done: seven exact D-10 integration regressions written first and observed failing for missing global-off semantics in frames, Find time, alternatives, Replan, cross-midnight barred detection and day loads · next: implement the effective working-time rules, whole-day frames and Replan working-hours input; add form/DST checks, then D-09 and UI work · note: no existing tests or production behavior changed yet.
 - [ ] **WI-54** Done tasks — owner S + Dv — depends on 53
   - Done when: Atomic mark-done and unschedule; Reopen; bulk preview and apply; undo.
 - [ ] **WI-55** Replan strategies and dialog — owner S + Dv — depends on 54
