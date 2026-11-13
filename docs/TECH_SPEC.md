@@ -421,13 +421,15 @@ export interface SlotSearchResult {
   readonly options: readonly SlotOption[]; // all D-06 picker candidates, ranked; no MAX_OPTIONS limit
 }
 
+export type ReplanStrategy = 'balanced' | 'clusterByCategory' | 'varyCategories' | 'frontLoad' | 'fewerFragments';
 export type MoveReason =
   | { readonly kind: 'outsideFlexWindow' }
   | { readonly kind: 'outsideWorkingHours' }
   | { readonly kind: 'barred'; readonly label: string }
   | { readonly kind: 'conflict'; readonly withEventId: string; readonly withTitle: string }
   | { readonly kind: 'buffer'; readonly withEventId: string; readonly withTitle: string }
-  | { readonly kind: 'balance'; readonly fromDayLoadMin: number; readonly toDayLoadMin: number };
+  | { readonly kind: 'balance'; readonly fromDayLoadMin: number; readonly toDayLoadMin: number }
+  | { readonly kind: 'strategy'; readonly strategy: Exclude<ReplanStrategy, 'balanced'> };
 
 export interface ReplanMove {
   readonly eventId: string; readonly title: string; readonly priority: Priority;
@@ -446,6 +448,7 @@ export interface ReplanPlan {
   readonly metrics: ReplanMetrics;
 }
 export interface ReplanResult {
+  readonly strategy: ReplanStrategy;
   readonly baseVersion: number; readonly range: Interval; readonly bufferMin: number;
   readonly movableCount: number;
   readonly plans: readonly [ReplanPlan, ReplanPlan];      // [minimalChange, balanced]
@@ -764,7 +767,7 @@ export interface Engine {
 
   // ── Replan pipeline (FR10) ──
   explainWindow(req: { taskId: string; bufferMin?: number } | { eventId: string; useWorkingHours?: boolean; bufferMin?: number; allowMoving?: boolean; range?: Interval }): Result<WindowExplanation>;
-  planReplan(req: { range: Interval; bufferMin?: number }): Result<ReplanResult>;
+  planReplan(req: { range: Interval; bufferMin?: number; strategy?: ReplanStrategy }): Result<ReplanResult>;
   applyReplan(req: { baseVersion: number; planId: ReplanPlan['id'] }): Promise<Result<MutationResult>>;
 
   // ── services ──
@@ -876,6 +879,12 @@ Every mutation pipeline follows the same skeleton: validate → look up → buil
 **Done task commands (WI-54, D-07).** `markTaskDone(id)` deletes any linked event and sets `status: done, scheduledEventId: null, doneAt: now, updatedAt: now` in one revision-checked Change (`Mark done "<name>"`), one undo step. Already done is a no-op. `reopenTask(id)` changes only a done task to unscheduled, clears doneAt, creates no event, and is one undo step; open tasks are no-ops. Missing ids give NotFound. `unscheduleTask` leaves done tasks unchanged. Search/explain/schedule reject done tasks with InvalidInput at status: "Reopen this task before finding time." Queue ordering excludes them.
 
 **Bulk completion.** Derived `DoneTasksPreview = {readonly before: Minute; readonly baseVersion: number; readonly tasks: readonly Task[]}` is never stored/exported. `doneBeforeSchema` validates supported integer cutoff Minutes; `doneBeforeApplySchema` also requires a nonnegative integer baseVersion. `previewDoneBefore(before)` returns detached eligible rows in stored task order, without writes: scheduled event.end ≤ before, unscheduled window.end ≤ before, excluding done. `applyDoneBefore({before, baseVersion})` validates and checks the current version inside the mutation queue (ER7), derives membership again, and atomically completes all with the same apply-time now (`Mark N tasks done`). Empty sets are no-ops. Repository failures/ER8 preserve every row and history; undo restores tasks and linked events together.
+
+**Second-plan strategies (WI-55, D-15).** `ReplanStrategy` is `balanced | clusterByCategory | varyCategories | frontLoad | fewerFragments`; `REPLAN_STRATEGIES`, `DEFAULT_REPLAN_STRATEGY` (balanced) and `REPLAN_STRATEGY_LABELS` are shared constants. `replanOptionsSchema` validates optional strategy together with bufferMin. The facade/pipeline request and pure `ReplanInput` gain optional strategy; `ReplanResult.strategy` is required and records the effective choice. Plan ids stay `minimalChange` and `balanced` (the stable second-plan identity), as do diagnostics/apply keys. Minimal change is independent of the selector, and omitted strategy is identical to the previous Balanced week.
+
+`rankReplanOptions(fitting, context, strategy, occupied, categoryId): SlotOption[]` shares existing `rankOptions` for Balanced, Front-load (earliest) and Fewer fragments (bestFit). Front-load/Fewer fragments pass originalStart=null so each gap candidate starts at its earliest edge. Category strategies clamp nearest within each gap, then rank **all** candidates before MAX_OPTIONS. Their ascending keys are Cluster `[-sameCategoryMin, distance, start]` and Vary `[sameCategoryMin, dayLoadMin, distance, start]`. Same-category minutes reuse `computeDayLoads` over matching category ids: sums of each event's overlap with effective working time, including separately overlapping bookings and excluding the event being placed. Occupied includes static, pinned and already placed events, so counts refresh after each placement/pass. No category label has functional meaning. `optionFor` becomes exported for reuse; `rankCandidates(options, keyFor?)` accepts a numeric-key Strategy callback, defaulting to its unchanged BR-7 key and stable input-order tie-break. No picker generation or Minimal-change rules change.
+
+When a selected nondefault strategy moves a valid event, MoveReason adds `{kind: 'strategy'; strategy: Exclude<ReplanStrategy, 'balanced'>}`. Existing Minimal-change reasons take precedence; Balanced retains its existing numeric balance reason. Unchanged intervals count as zero moves. Processing order, pinned-unplaced busy handling, metrics, safety and one-step apply/undo remain unchanged. All five strategies run the retained T35 checks at 10,000 runs each (ten full property cases project-wide).
 
 #### 7.4.4 Replan (`pipelines/replan.ts`)
 
@@ -1213,7 +1222,8 @@ export function effectiveCriterion(c: Criterion, p: Priority): EffectiveCriterio
 //   priorityAware → high: 'earliest', medium: 'bestFit', low: 'leastLoaded'; others unchanged
 export function rankOptions(fitting: readonly FreeGap[], ctx: RankContext): SlotOption[];
 export function optionAt(gap: FreeGap, start: Minute, ctx: RankContext): Omit<SlotOption, 'rank'>;
-export function rankCandidates(options: readonly Omit<SlotOption, 'rank'>[]): SlotOption[];
+export function optionFor(gap: FreeGap, context: RankContext): Omit<SlotOption, 'rank'>;
+export function rankCandidates(options: readonly Omit<SlotOption, 'rank'>[], keyFor?: (option: Omit<SlotOption, 'rank'>) => readonly number[]): SlotOption[];
 ```
 
 ```text
@@ -1277,9 +1287,12 @@ export interface ReplanInput {
   frames: readonly DayFrame[];             // for the range
   range: Interval; bufferMin: number; notBefore: Minute;
   useWorkingHours: boolean;                   // global working-time switch
+  strategy?: ReplanStrategy;                  // omitted = Balanced week; first plan unchanged
   segmentsFor: (window: Interval) => Segment[]; // injected allowedSegments with the global switch
 }
 export function planReplan(input: ReplanInput): { movableCount: number; plans: [ReplanPlan, ReplanPlan] };
+export function rankReplanOptions(fitting: readonly FreeGap[], context: RankContext, strategy: ReplanStrategy, occupied: readonly CalendarEvent[], categoryId: string): SlotOption[];
+export function replanSortKey(option: Pick<SlotOption, 'slot' | 'distanceMin' | 'dayLoadMin'>, strategy: 'clusterByCategory' | 'varyCategories', sameCategoryMin: number): number[];
 ```
 
 ```text
@@ -1312,11 +1325,15 @@ pass(kind, pinned):
      else:
         crit ← kind = balanced ? 'leastLoaded' : 'nearest'
         loads ← computeDayLoads(occupied, frames)
-        best ← rankOptions(fitting, {d, crit, e.priority, originalStart: e.start, loads, frames})[0]
+        context ← {d, crit, e.priority, originalStart: e.start, loads, frames}
+        best ← kind = minimalChange ? rankOptions(fitting, context)[0]
+                                    : rankReplanOptions(fitting, context, strategy, occupied, e.categoryId)[0]
         place ← {...e, start: best.slot.start, end: best.slot.end}
         if place.start ≠ e.start:
            moves.push({e, from: e, to: place,
-                       reason: why ?? {balance, fromDayLoad: load(day(e)), toDayLoad: best.dayLoadMin}})
+                       reason: why ?? (strategy = balanced
+                         ? {balance, fromDayLoad: load(day(e)), toDayLoad: best.dayLoadMin}
+                         : {strategy, strategy})})
      occupied ← insertSorted(occupied, place)
   after ← inRange with moved events replaced, re-sorted
   metrics ← moved = |moves|, totalShiftMin = Σ|to.start − from.start|,
@@ -1901,7 +1918,7 @@ Phases match A3 §7. Owners follow A3: **S** = Samar, **Dv** = Divyam. Each WI i
 
 ### Round 2 overhaul (WI-47–59)
 
-Binding design: `extras/AUDIT_2.md` §7. Each WI depends on the previous one; update the behaviour/contracts/tests in the WI that implements them. The Round 2 full gate is typecheck, lint, coverage, DST, all six 10,000-case properties, build, then Playwright with three repeats and two workers, on both the branch and main. UI WIs also capture and review both-theme screenshots at 1440, 1280 and 1024 px. WI-59's final comparison uses five browser repeats and the baseline recorded in the progress file.
+Binding design: `extras/AUDIT_2.md` §7. Each WI depends on the previous one; update the behaviour/contracts/tests in the WI that implements them. The Round 2 full gate is typecheck, lint, coverage, DST, all ten 10,000-case property cases, build, then Playwright with three repeats and two workers, on both the branch and main. UI WIs also capture and review both-theme screenshots at 1440, 1280 and 1024 px. WI-59's final comparison uses five browser repeats and the baseline recorded in the progress file.
 
 | WI | Phase | Title | Owner | Files | Depends | Done when |
 |---|---|---|---|---|---|---|
@@ -2008,3 +2025,4 @@ Production URL: https://…vercel.app
 | 2026-11-13 | v1.48 (WI-53 D-09/D-10): extracted shared form controls, region editor and legacy-readable Settings resolver, unkept warning/tag/toast filtering and store action, collapsed Kept groups, grouped background stackedLabels, fixed 12-hour field width and tested non-working pattern token. T53 browser flows cover persistence and legacy label geometry. |
 | 2026-11-13 | v1.49 (WI-54 D-07 engine checkpoint): frozen DoneTasksPreview, cutoff/apply schemas and four completion commands; scheduled completion/bulk use one atomic revision-checked Change; Reopen, idempotence and done-search guards. Twelve T54 cases first red then green. |
 | 2026-11-13 | v1.50 (WI-54 D-07 UI): completion store actions, Open/Done filtering, row/dialog lifecycle, shared delete confirmation and version-aware bulk preview dialog. Four UI regressions first red, plus empty/invalid/storage-retry coverage; browser persistence and keyboard menu cases added. |
+| 2026-11-13 | v1.51 (WI-55 D-15 engine checkpoint): ReplanStrategy/constants/options validation, optional request/input and required result.strategy, stable second-plan ids, category ranking with shared optionFor/rankCandidates key callback, named strategy reasons and ten full property cases. Fourteen ranking/facade cases preserve old defaults and prove new sort keys/apply/undo. UI remains in progress. |

@@ -84,7 +84,7 @@ export function optionAt(
 
 // PRE:  gap.length ≥ context.durationMin; context.frames cover gap
 // POST: returns Replan's one option for gap, clamped nearest to the original start when present
-function optionFor(gap: FreeGap, context: RankContext): Omit<SlotOption, 'rank'> {
+export function optionFor(gap: FreeGap, context: RankContext): Omit<SlotOption, 'rank'> {
   const start =
     context.originalStart === null
       ? gap.start
@@ -115,12 +115,17 @@ export function rankOptions(fitting: readonly FreeGap[], context: RankContext): 
   return rankCandidates(fitting.map((gap) => optionFor(gap, context))).slice(0, MAX_OPTIONS);
 }
 
-// PRE:  options share an effective criterion and carry valid slot/explanation data
-// POST: returns all options in criterion order, ties by start then input order, ranked 1…k
-export function rankCandidates(options: readonly Omit<SlotOption, 'rank'>[]): SlotOption[] {
+// PRE: options carry valid slot data; default ranking shares an effective criterion;
+//      keyFor returns equal-length numeric keys for every option
+// POST: returns all options in keyFor order (default BR-7), input order for equal keys, ranked 1…k
+export function rankCandidates(
+  options: readonly Omit<SlotOption, 'rank'>[],
+  keyFor: (option: Omit<SlotOption, 'rank'>) => readonly number[] = (option) =>
+    sortKey(option, option.effectiveCriterion),
+): SlotOption[] {
   const candidates: Candidate[] = options.map((option, gapIndex) => ({
     option,
-    key: sortKey(option, option.effectiveCriterion),
+    key: keyFor(option),
     gapIndex,
   }));
   return candidates

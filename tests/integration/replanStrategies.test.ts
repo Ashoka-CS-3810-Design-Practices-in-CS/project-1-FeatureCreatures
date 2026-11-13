@@ -1,11 +1,12 @@
 import { flexEv, iv } from '../helpers/builders';
 import { capture, makeEngine } from '../helpers/engine';
+import type { ReplanStrategy } from '@/shared/types';
 
 describe('T55: Replan strategy facade contract', () => {
   it('validates an unknown strategy without changing state, history or storage', async () => {
     const { engine, repo } = await makeEngine();
     const before = await capture(engine, repo);
-    const request = { range: iv('Mon 00:00', 'Thu 00:00'), strategy: 'unknown' };
+    const request = { range: iv('Mon 00:00', 'Thu 00:00'), strategy: 'unknown' as ReplanStrategy };
     expect(engine.planReplan(request)).toMatchObject({
       ok: false,
       error: { code: 'InvalidInput', issues: [{ path: 'strategy' }] },

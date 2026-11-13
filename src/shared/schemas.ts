@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { colourDistance, contrastRatio } from './colours';
 import {
   CATEGORY_TAG_BACKGROUNDS,
+  REPLAN_STRATEGIES,
   MIN_CATEGORY_COLOUR_DISTANCE,
   MIN_NON_TEXT_CONTRAST,
   RESERVED_COLOURS,
@@ -228,6 +229,9 @@ export const slotSchema = z.object({ slot: interval });
 
 // The optional per-search override of the settings buffer (findSlots, suggestAlternatives, planReplan).
 export const searchOptionsSchema = z.object({ bufferMin: bufferMinSchema.optional() });
+export const replanOptionsSchema = searchOptionsSchema.extend({
+  strategy: z.enum(REPLAN_STRATEGIES).optional(),
+});
 export const alternativesOptionsSchema = searchOptionsSchema.extend({
   allowMoving: z.boolean().optional(),
   useWorkingHours: z.boolean().optional(),

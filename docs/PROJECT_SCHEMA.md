@@ -516,6 +516,8 @@ Every search result also carries:
   - `unplaced`
 - **Applying a plan** moves all of its events in one atomic change and one undo step, after the version check (ER7).
 
+**BR-12 strategy extension (WI-55, D-15).** The first plan remains Minimal change. The second plan defaults to Balanced week (day load, distance, start), with Cluster by category (negative same-category minutes, distance, start), Vary categories (same-category minutes, day load, distance, start), Front-load (earliest start) and Fewer fragments (gap leftover, start). All use the same processing order, busy updates, safety checks and metrics. Category minutes follow the day-load definition and current occupied set; category identity, not name, is compared. Existing Minimal-change invalidity reasons take precedence, otherwise a move names the chosen strategy. Equal intervals are not moves. The selector does not affect the first plan; every applied plan is still one atomic undo step.
+
 **BR-13 Priorities.** The order is `high > medium > low`. The shorthand tags are `[H]`, `[M]` and `[L]`. Priority is always shown as both a text tag and a colour.
 
 **BR-14 Nothing changes without consent.** Searches, alternatives and replan plans are read-only queries. Only *Apply* buttons and direct edits change data.
@@ -754,3 +756,4 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 | 2026-11-13 | v1.23 (WI-53 D-09 engine checkpoint): BR-15 defines identified slot warnings, undoable Keep here, automatic event/settings/history clearing, shared-day overlap rejection and legacy preservation. UI region/editor/grouping and remaining shading are still in progress. |
 | 2026-11-13 | v1.24 (WI-53 D-09/D-10): barred editing moves into its region, Settings retains four sections, Kept groups suppress current tags/warnings and restore through Stop keeping/history; legacy banners/stacked labels and contrasted enabled non-working dots are specified. |
 | 2026-11-13 | v1.25 (WI-54 D-07 engine checkpoint): BR-18 completion/unschedule atomicity, Reopen, inclusive bulk cutoff/preview, stale guard and default-hidden done tasks. |
+| 2026-11-13 | v1.26 (WI-55 D-15 engine checkpoint): BR-12 exact strategy sort keys, category-minute/busy updates, preserved Minimal change/default Balanced, reason precedence and unchanged safety/undo. UI remains in progress. |

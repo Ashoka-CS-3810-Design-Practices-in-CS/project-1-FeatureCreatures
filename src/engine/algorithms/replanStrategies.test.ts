@@ -1,13 +1,12 @@
-import type { CalendarEvent, DayFrame, Interval } from '@/shared/types';
+import type { CalendarEvent, DayFrame, Interval, ReplanStrategy } from '@/shared/types';
 import { dayFrame, ev, flexEv, iv } from '../../../tests/helpers/builders';
 import { t } from '../../../tests/helpers/time';
 import { planReplan, type ReplanInput } from './replanHeuristics';
 import { allowedSegments } from './segments';
 import { compareEvents } from './sortedArray';
 import { detectConflicts } from './sweep';
+import { replanSortKey } from './replanStrategies';
 
-type TestStrategy =
-  'balanced' | 'clusterByCategory' | 'varyCategories' | 'frontLoad' | 'fewerFragments';
 const FRAMES = (['Mon', 'Tue', 'Wed'] as const).map((day) => dayFrame(day, ['09:00', '18:00']));
 const WINDOW: [string, string] = ['Mon 09:00', 'Wed 18:00'];
 const TWO_DAYS = FRAMES.slice(0, 2);
@@ -16,9 +15,9 @@ const TWO_DAYS = FRAMES.slice(0, 2);
 // POST: returns the proposed strategy input over frames, retaining the unchanged BR-12 safety rules
 function input(
   events: CalendarEvent[],
-  strategy: TestStrategy,
+  strategy: ReplanStrategy,
   frames: DayFrame[] = FRAMES,
-): ReplanInput & { strategy: TestStrategy } {
+): ReplanInput & { strategy: ReplanStrategy } {
   const sorted = events.toSorted(compareEvents);
   const range = {
     start: (frames[0] as DayFrame).dayStart,
@@ -40,6 +39,34 @@ function input(
 }
 
 describe('T55: Replan strategy sort keys (D-15)', () => {
+  it('uses the exact category-key ordering, including the shared zero-distance fallback', () => {
+    const option = { slot: iv('Mon 13:00', 'Mon 14:00'), distanceMin: 45, dayLoadMin: 120 };
+    expect(replanSortKey(option, 'clusterByCategory', 60)).toEqual([-60, 45, t('Mon 13:00')]);
+    expect(replanSortKey(option, 'varyCategories', 60)).toEqual([60, 120, 45, t('Mon 13:00')]);
+    expect(replanSortKey({ ...option, distanceMin: null }, 'clusterByCategory', 60)).toEqual([
+      -60,
+      0,
+      t('Mon 13:00'),
+    ]);
+  });
+
+  it('ranks every gap by category before applying MAX_OPTIONS, including a far-away seventh day', () => {
+    const frames = (['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const).map((day) =>
+      dayFrame(day, ['09:00', '18:00']),
+    );
+    const result = planReplan(
+      input(
+        [
+          ev('Monday same', 'Mon 09:00', 'Mon 10:00'),
+          flexEv('Move', 'Sun 14:00', 'Sun 15:00', ['Mon 09:00', 'Sun 18:00']),
+        ],
+        'clusterByCategory',
+        frames,
+      ),
+    );
+    expect(result.plans[1].moves[0]?.to).toEqual(iv('Mon 17:00', 'Mon 18:00'));
+  });
+
   it('keeps omitted/default Balanced week and Minimal change exactly unchanged', () => {
     const events = [
       ev('Lecture', 'Mon 10:00', 'Mon 12:00'),

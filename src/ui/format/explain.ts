@@ -1,6 +1,7 @@
 // User-visible sentences (TECH_SPEC §11.6): every toast and explanation line is built here, so the
 // engine stays free of UI text. WI-21 adds the slot and plan explanations (BR-7, BR-8).
 
+import { REPLAN_STRATEGY_LABELS } from '@/shared/constants';
 import type {
   Boundary,
   CalendarEvent,
@@ -336,6 +337,8 @@ export function moveReasonText(reason: MoveReason): string {
       return `inside the buffer of "${reason.withTitle}"`;
     case 'balance':
       return `balances the week (day load ${fmtDuration(reason.fromDayLoadMin)} → ${fmtDuration(reason.toDayLoadMin)})`;
+    case 'strategy':
+      return REPLAN_STRATEGY_LABELS[reason.strategy];
   }
 }
 

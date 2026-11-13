@@ -1,12 +1,19 @@
 // Replan pipeline (TECH_SPEC §7.4.4, FR10): build the inputs for the pure replan heuristics, and
 // apply one of the two plans as a single undoable change.
 
-import { MAX_REPLAN_DAYS } from '@/shared/constants';
+import { DEFAULT_REPLAN_STRATEGY, MAX_REPLAN_DAYS } from '@/shared/constants';
 import type { EngineError } from '@/shared/errors';
 import { err, ok, type Result } from '@/shared/result';
-import { parseInput, searchOptionsSchema } from '@/shared/schemas';
+import { parseInput, replanOptionsSchema } from '@/shared/schemas';
 import { addLocalDays, buildDayFrames, startOfLocalDay } from '@/shared/time';
-import type { CalendarEvent, Interval, Minute, ReplanPlan, ReplanResult } from '@/shared/types';
+import type {
+  CalendarEvent,
+  Interval,
+  Minute,
+  ReplanPlan,
+  ReplanResult,
+  ReplanStrategy,
+} from '@/shared/types';
 import { planReplan as planWithHeuristics } from '../algorithms/replanHeuristics';
 import { diagnoseReplan } from '../replanDiagnostics';
 import { notBeforeFor, requireCurrentVersion, requireNotPast, segmentsFor } from '../search';
@@ -22,6 +29,7 @@ import {
 export interface PlanReplanRequest {
   range: Interval;
   bufferMin?: number;
+  strategy?: ReplanStrategy;
 }
 
 export interface ApplyReplanRequest {
@@ -63,7 +71,10 @@ export function planReplan(
   now: Minute,
 ): Result<ReplanResult, EngineError> {
   const notBefore = notBeforeFor(now);
-  const options = parseInput(searchOptionsSchema, { bufferMin: request.bufferMin });
+  const options = parseInput(replanOptionsSchema, {
+    bufferMin: request.bufferMin,
+    strategy: request.strategy,
+  });
   if (!options.ok) {
     return options;
   }
@@ -72,6 +83,7 @@ export function planReplan(
     return range;
   }
   const bufferMin = options.value.bufferMin ?? state.settings.bufferMin;
+  const strategy = options.value.strategy ?? DEFAULT_REPLAN_STRATEGY;
   const frames = buildDayFrames(request.range, state.settings);
   const { movableCount, plans } = planWithHeuristics({
     events: state.events,
@@ -79,12 +91,14 @@ export function planReplan(
     frames,
     range: request.range,
     bufferMin,
+    strategy,
     notBefore,
     useWorkingHours: state.settings.useWorkingHours,
     segmentsFor: segmentsFor(state, notBefore),
   });
   return ok({
     baseVersion: state.version,
+    strategy,
     range: request.range,
     bufferMin,
     movableCount,
