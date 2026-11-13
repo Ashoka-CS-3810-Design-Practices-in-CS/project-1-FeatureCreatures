@@ -9,12 +9,14 @@ import type {
   Category,
   BarredOverlap,
   Conflict,
+  DayFrame,
   Interval,
   Priority,
   Minute,
   Snapshot,
 } from '@/shared/types';
 import { upcomingOverlaps } from '../../store/selectors';
+import { unkeptBarredOverlaps } from '@/shared/barredSlots';
 
 export interface EventBlockProps {
   category?: Category;
@@ -100,23 +102,40 @@ function toEntry(
   };
 }
 
+// PRE:  frame contains valid absolute barred intervals sorted by start
+// POST: groups only positively overlapping legacy backgrounds, retaining every label in a vertical stack
+function barredFrameEntries(frame: DayFrame): EventInput[] {
+  const groups: { start: Minute; end: Minute; labels: string[] }[] = [];
+  // INVARIANT: groups covers visited slots in order; distinct groups do not overlap
+  for (const slot of frame.barred) {
+    const previous = groups.at(-1);
+    if (previous !== undefined && slot.interval.start < previous.end) {
+      previous.end = Math.max(previous.end, slot.interval.end);
+      previous.labels.push(slot.label);
+    } else {
+      groups.push({ start: slot.interval.start, end: slot.interval.end, labels: [slot.label] });
+    }
+  }
+  // POST: every slot belongs to exactly one group and every label is retained
+  return groups.map((group, index) => ({
+    id: `barred-${frame.dayStart}-${index}`,
+    title: group.labels.join(' · '),
+    start: fromMinute(group.start),
+    end: fromMinute(group.end),
+    display: 'background',
+    classNames: ['barred'],
+    extendedProps: { stackedLabels: group.labels },
+  }));
+}
+
 // PRE:  snapshot is the store's snapshot; activeRange is the visible range, or null before the
 //       first datesSet
-// POST: returns one background entry per barred slot per visible day (BR-5), labelled
+// POST: returns labelled backgrounds per day, stacking labels in legacy overlapping groups
 function barredEntries(snapshot: Snapshot, activeRange: Interval | null): EventInput[] {
   if (activeRange === null) {
     return [];
   }
-  return buildDayFrames(activeRange, snapshot.settings).flatMap((frame) =>
-    frame.barred.map((slot) => ({
-      id: `barred-${frame.dayStart}-${slot.label}`,
-      title: slot.label,
-      start: fromMinute(slot.interval.start),
-      end: fromMinute(slot.interval.end),
-      display: 'background',
-      classNames: ['barred'],
-    })),
-  );
+  return buildDayFrames(activeRange, snapshot.settings).flatMap(barredFrameEntries);
 }
 
 // PRE:  snapshot is the store's snapshot; filter lists the priorities to show (FR6);
@@ -133,7 +152,9 @@ export function toFullCalendar(
   hiddenCategoryIds: readonly string[] = [],
 ): EventInput[] {
   const overlaps = largestOverlaps(snapshot.conflicts);
-  const barredLabels = labelsByEvent(upcomingOverlaps(snapshot.barredOverlaps, now));
+  const barredLabels = labelsByEvent(
+    upcomingOverlaps(unkeptBarredOverlaps(snapshot.barredOverlaps, snapshot.events), now),
+  );
   const emphasised = new Set(emphasisIds);
   const categories = new Map(snapshot.categories.map((category) => [category.id, category]));
   const hidden = new Set(hiddenCategoryIds);

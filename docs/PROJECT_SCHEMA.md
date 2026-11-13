@@ -555,10 +555,11 @@ Twelve curated colours include the five seeds. Free colours are normalised six-d
    - **Alternatives mode:** the header shows the target/length, Move radios, fixed opt-in/temporary range and Search hours. The same picks/day chips/Details layout uses the alternatives picks in BR-7. Apply and Cancel retain their behaviour.
 5. **Replan dialog:** range from/to (default the visible week; from Month, whose grid exceeds 14 days, the first full week of the month, AUDIT A10), a buffer override, and a *Compute plans* button. Below them are two plan cards side by side (stacked when narrow). Each card shows its metrics and list of moves, with an *Apply this plan* button. Changing the range or buffer removes the cards until *Compute plans* runs again, so a plan is only applied for the inputs shown (AUDIT A08). Cancel closes the dialog.
 6. **Settings dialog:**
-   - Five headed sections (WI-49): **Working time** (Use working hours switch, retained working days/hours disabled while off), **Scheduling defaults** (default buffer, default ranking), **Barred slots** (one compact row per slot: label, from–to, day chips and a remove ×; *Add barred slot* puts a new row at the end and focuses its label), **Categories** (BR-16) and **Data**. Settings Save / Cancel stay in their sticky footer; category changes save independently as undo steps. The dialog has the × of §7.7.
+   - Four headed sections (D-09): **Working time** (Use working hours switch, retained working days/hours disabled while off), **Scheduling defaults** (default buffer, default ranking), **Categories** (BR-16) and **Data**. Settings Save / Cancel stay in their sticky footer; category changes save independently as undo steps. The dialog has the × of §7.7.
    - A **Data** section: Export JSON, Import JSON, Load sample calendar (menu), Clear all data (with confirmation).
 7. **Confirm dialog:** used for delete, import and clear.
 8. **Shortcut help overlay:** lists the shortcuts in §7.6.
+9. **Barred slots region (D-09):** inline label/from–to/day-chip/remove rows, Add barred slot (focuses its label), and Save/Cancel while edits are pending. Fixed-width time inputs remain readable in 12-hour locales. Saving touches only barred content; errors stay on their rows and Cancel restores saved slots. Older overlaps show an actionable banner; positively overlapping calendar backgrounds group their labels in a vertical stack. Upcoming unkept overlaps retain Suggest alternatives and add Keep here; kept records live under a collapsed Kept (N) group with Stop keeping. Past overlaps stay out of both groups.
 
 ```text
 [◀] [Today] [▶]  Week of 2 Nov 2026   [Day|Week|Month|List]  Priority: [H][M][L]   [+ Event] [+ Task] [Replan] [↶][↷] [◐] [?] [⚙]
@@ -617,7 +618,7 @@ Twelve curated colours include the five seeds. Free colours are normalised six-d
 | W4 | Schedule one task | + Task → Save → *Find time* → review the options → Apply. The task is marked Scheduled and the event appears on the timeline. |
 | W5 | Schedule several tasks | Tick the tasks → *Find time for N selected* → the picker shows Task 1 of N → Apply or Skip → it moves on to the next task automatically → a summary toast: "Scheduled 2 of 3 tasks (1 skipped)". |
 | W6 | Replan a week | Replan → (adjust the range and buffer) → Compute plans → compare the two cards → *Apply this plan*. The moved events are briefly emphasised and the toast reads "Plan applied: 2 events moved". |
-| W7 | Configure | ⚙ → edit working hours, buffer, barred slots → Save. The shading updates, and later searches use the new rules. |
+| W7 | Configure | ⚙ → edit working hours/buffer → Save; Barred slots region → edit rows → Save. The shading updates, and later searches use the new rules. |
 | W8 | Undo a mistake | ↶ or Ctrl+Z → the toast reads "Undid: Delete "Gym"" → ↷ redoes it. |
 | W9 | Back up or restore | ⚙ → Data → Export (file downloads), or Import → confirm → everything is replaced. |
 | W10 | First visit (grader) | Empty calendar → *Load sample week* → a populated week with conflicts and tasks ready to demo. |
@@ -645,7 +646,7 @@ All toasts are announced through an ARIA live region. Errors use `assertive`; ev
 - **Priority colours:** High = red family, Medium = amber, Low = slate blue. Each always comes with an [H]/[M]/[L] tag.
 - **Conflict:** a 2 px dashed outline in the danger colour, a ⚠ icon and the text "Conflict N min".
 - **Fixed events** show a small "Fixed" tag. **Scheduled-task events** show a "Task" tag.
-- **Barred slots** are hatched background blocks with their label. Non-working hours are lightly shaded.
+- **Barred slots** are hatched background blocks with their label. Non-working hours/days have a distinct dotted shading while the global switch is on. Pattern contrast is ≥ 3:1 in both themes; normal text/background contrast remains ≥ 4.5:1.
 - Events overlapping barred slots carry `In Lunch` (or the configured label) text tags; these warnings have their own panel section and do not change conflict counts.
 
 ### 7.6 Keyboard shortcuts (B4)
@@ -749,3 +750,4 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 | 2026-11-13 | v1.21 (WI-53 D-10 engine checkpoint): BR-5, day loads and default flex windows obey the global working-time switch. Off means whole local days with barred slots retained, including cross-midnight placement; task/working-time preferences stay stored. UI and D-09 remain in progress. |
 | 2026-11-13 | v1.22 (WI-53 D-10 UI checkpoint): FR11/UX expose Use working hours, disabled retained preferences, hidden effective task/search-hour choices and shading removal. D-09 and stronger enabled-hours shading remain in progress. |
 | 2026-11-13 | v1.23 (WI-53 D-09 engine checkpoint): BR-15 defines identified slot warnings, undoable Keep here, automatic event/settings/history clearing, shared-day overlap rejection and legacy preservation. UI region/editor/grouping and remaining shading are still in progress. |
+| 2026-11-13 | v1.24 (WI-53 D-09/D-10): barred editing moves into its region, Settings retains four sections, Kept groups suppress current tags/warnings and restore through Stop keeping/history; legacy banners/stacked labels and contrasted enabled non-working dots are specified. |

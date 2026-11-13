@@ -9,6 +9,15 @@ import { renderWithStore, storeFor } from '../../../../tests/helpers/render';
 import type { AppStore } from '../../store/appStore';
 import { ConfirmDialog } from '../ConfirmDialog/ConfirmDialog';
 import { SettingsDialog } from './SettingsDialog';
+import { BarredSlotsPanel } from '../BarredSlotsPanel/BarredSlotsPanel';
+
+// PRE:  engine is initialised
+// POST: renders the inline barred editor outside Settings (D-09)
+function renderBarred(engine: Engine): AppStore {
+  const store = storeFor(engine);
+  renderWithStore(<BarredSlotsPanel />, store);
+  return store;
+}
 
 // PRE:  engine is initialised
 // POST: renders the settings dialog (opened) and the confirm dialog over a store for engine
@@ -77,39 +86,39 @@ describe('SettingsDialog', () => {
 
   it('adds and removes a barred slot', async () => {
     const { engine } = await makeEngine();
-    const store = renderOpen(engine);
+    const store = renderBarred(engine);
 
     await userEvent.click(screen.getByRole('button', { name: 'Add barred slot' }));
     const slot = screen.getByRole('group', { name: 'Barred slot 1' });
     expect(within(slot).getByLabelText('Label')).toHaveValue('Lunch');
     expect(within(slot).getByRole('checkbox', { name: 'Fri' })).toBeChecked();
-    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Save barred slots' }));
+    await waitFor(() => expect(engine.snapshot().settings.barredSlots).toHaveLength(1));
     await waitFor(() => expect(store.getState().dialog).toBeNull());
     expect(engine.snapshot().settings.barredSlots).toMatchObject([
       { label: 'Lunch', startMin: 720, endMin: 780, days: [1, 2, 3, 4, 5] },
     ]);
 
-    act(() => store.getState().actions.openDialog({ kind: 'settings' }));
     await userEvent.click(screen.getByRole('button', { name: 'Remove barred slot 1' }));
     expect(screen.queryByRole('group', { name: 'Barred slot 1' })).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Save barred slots' }));
     await waitFor(() => expect(engine.snapshot().settings.barredSlots).toEqual([]));
   });
 
   it('shows a barred-slot error on its row', async () => {
-    renderOpen((await makeEngine()).engine);
+    renderBarred((await makeEngine()).engine);
 
     await userEvent.click(screen.getByRole('button', { name: 'Add barred slot' }));
     const slot = screen.getByRole('group', { name: 'Barred slot 1' });
     await userEvent.clear(within(slot).getByLabelText('Label'));
-    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Save barred slots' }));
 
     expect(await within(slot).findByText('Label is required.')).toBeInTheDocument();
   });
 
   it('T44: a duplicate barred slot is shown inline on the later row and nothing is saved', async () => {
     const { engine } = await makeEngine();
-    const store = renderOpen(engine);
+    const store = renderBarred(engine);
 
     await userEvent.click(screen.getByRole('button', { name: 'Add barred slot' }));
     await userEvent.click(screen.getByRole('button', { name: 'Add barred slot' }));
@@ -120,16 +129,19 @@ describe('SettingsDialog', () => {
       within(screen.getByRole('group', { name: 'Barred slot 2' })).getByLabelText('Label'),
       'Break',
     );
-    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Save barred slots' }));
 
     const second = screen.getByRole('group', { name: 'Barred slot 2' });
     expect(
       await within(second).findByText('Overlaps barred slot 1 (Lunch) on Mon, Tue, Wed, Thu, Fri.'),
     ).toBeInTheDocument();
     expect(
-      within(screen.getByRole('group', { name: 'Barred slot 1' })).queryByText(/Duplicate/),
+      within(screen.getByRole('group', { name: 'Barred slot 1' })).queryByText(
+        /Overlaps barred slot/,
+      ),
     ).not.toBeInTheDocument();
-    expect(store.getState().dialog).toEqual({ kind: 'settings' });
+    expect(store.getState().dialog).toBeNull();
+    expect(screen.getByRole('region', { name: 'Barred slots' })).toBeInTheDocument();
     expect(engine.snapshot().settings.barredSlots).toEqual([]);
   });
 

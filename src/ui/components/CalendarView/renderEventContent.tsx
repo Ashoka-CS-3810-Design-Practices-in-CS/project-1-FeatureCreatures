@@ -34,6 +34,18 @@ export function renderEventContent(
   // Barred-slot backgrounds carry no event props; they only show their label.
   if (info.event.display === 'background') {
     if (info.event.title === '') return null;
+    const labels = info.event.extendedProps.stackedLabels;
+    if (Array.isArray(labels) && labels.every((label) => typeof label === 'string')) {
+      return (
+        <span className="barred-label-stack">
+          {labels.map((label, index) => (
+            <span className="barred-label" key={index}>
+              {label}
+            </span>
+          ))}
+        </span>
+      );
+    }
     return <span className="barred-label">{info.event.title}</span>;
   }
   // FullCalendar draws the time being selected as a mirror event with no extendedProps

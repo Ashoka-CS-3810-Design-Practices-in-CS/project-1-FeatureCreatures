@@ -35,7 +35,7 @@ A browser-based week planner that detects every scheduling conflict, finds free 
 - **Replan.** For a chosen week, the app proposes two rearrangements of your flexible events: _Minimal change_ and _Balanced week_.
   - Each plan lists every move with a reason, plus before/after metrics. Apply one or neither.
   - Unresolved future or ongoing problems Replan won't move are listed with the reason. Entirely past problem overlaps are omitted; Already started describes a currently running event.
-- **Your rules.** Working days and hours, a buffer between events, and barred slots such as lunch. Ongoing/future barred overlaps are flagged separately from conflicts; past overlaps have no tag, row or settings warning. Keep here records an undoable exception for that slot; time edits or slot time/day changes clear it. New overlapping barred slots are rejected.
+- **Your rules.** Set working time/buffer in Settings and edit lunch or other slots in the **Barred slots** region. Ongoing/future barred overlaps are flagged separately from conflicts; past overlaps have no tag, row or settings warning. **Keep here** moves an overlap into the collapsed **Kept** group; **Stop keeping** restores its warning. Both are undoable. Time edits or slot time/day changes clear it. New overlapping barred slots are rejected.
 - **Comfort features.** Undo/redo, JSON export/import, six built-in sample calendars, light and dark themes, keyboard shortcuts (press **?**), and screen-reader and keyboard support.
 
 Nothing changes without your say-so: suggestions and plans are previews until you click **Apply**.

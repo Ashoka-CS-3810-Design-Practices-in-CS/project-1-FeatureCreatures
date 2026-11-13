@@ -1,5 +1,5 @@
-import { WEEKDAY_NAMES, WEEKDAY_ORDER } from './constants';
-import type { BarredSlot, CalendarEvent, Weekday } from './types';
+import { MIN_BARRED_RANGE_DAYS, WEEKDAY_NAMES, WEEKDAY_ORDER } from './constants';
+import type { BarredOverlap, BarredSlot, CalendarEvent, Weekday } from './types';
 
 export interface BarredSlotClash {
   firstIndex: number;
@@ -11,7 +11,7 @@ export interface BarredSlotClash {
 // POST: returns every overlapping pair with shared days in Monday-first order; touching is allowed
 export function barredSlotClashes(slots: readonly BarredSlot[]): BarredSlotClash[] {
   const clashes: BarredSlotClash[] = [];
-  // INVARIANT: 1 ≤ secondIndex ≤ slots.length; every pair ending before secondIndex was considered once
+  // INVARIANT: 1 ≤ secondIndex ≤ max(1, slots.length); every pair ending before secondIndex was considered once
   for (let secondIndex = 1; secondIndex < slots.length; secondIndex += 1) {
     const second = slots[secondIndex] as BarredSlot;
     // INVARIANT: 0 ≤ firstIndex ≤ secondIndex; pairs ending at secondIndex before firstIndex are considered
@@ -31,9 +31,32 @@ export function barredSlotClashes(slots: readonly BarredSlot[]): BarredSlotClash
 }
 
 // PRE:  days are weekdays in the desired display order
-// POST: returns their short names separated by commas
-export function barredDaysText(days: readonly Weekday[]): string {
+// POST: returns short names, compacting a contiguous run of at least three days when requested
+export function barredDaysText(days: readonly Weekday[], compact = false): string {
+  if (
+    compact &&
+    days.length >= MIN_BARRED_RANGE_DAYS &&
+    days.every(
+      (day, index) =>
+        index === 0 ||
+        WEEKDAY_ORDER.indexOf(day) === WEEKDAY_ORDER.indexOf(days[index - 1] as Weekday) + 1,
+    )
+  ) {
+    return `${WEEKDAY_NAMES[days[0] as Weekday]}–${WEEKDAY_NAMES[days.at(-1) as Weekday]}`;
+  }
   return days.map((day) => WEEKDAY_NAMES[day]).join(', ');
+}
+
+// PRE:  warnings and events belong to the same valid snapshot
+// POST: returns warning records whose event has not explicitly kept that slot, in input order
+export function unkeptBarredOverlaps(
+  warnings: readonly BarredOverlap[],
+  events: readonly CalendarEvent[],
+): BarredOverlap[] {
+  const byId = new Map(events.map((event) => [event.id, event]));
+  return warnings.filter(
+    (warning) => !byId.get(warning.eventId)?.keptInBarred.includes(warning.slotId),
+  );
 }
 
 // PRE:  slots are structurally valid barred slots

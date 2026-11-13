@@ -77,6 +77,7 @@ import {
 import type { PickerState } from './pickerSlice';
 import { withoutToast, type Toast } from './toastSlice';
 import { upcomingOverlaps } from './selectors';
+import { unkeptBarredOverlaps } from '@/shared/barredSlots';
 
 export type ViewType = 'timeGridDay' | 'timeGridWeek' | 'dayGridMonth' | 'listWeek';
 export type CalendarViewType = Exclude<ViewType, 'listWeek'>;
@@ -112,6 +113,11 @@ export interface AppActions {
   rememberCategory(id: string): void;
   createEvent(input: EventInput): Promise<Result<MutationResult>>;
   updateEvent(id: string, input: EventInput): Promise<Result<MutationResult>>;
+  setBarredKept(request: {
+    eventId: string;
+    slotId: string;
+    kept: boolean;
+  }): Promise<Result<MutationResult>>;
   moveEvent(id: string, to: Interval): Promise<Result<MutationResult>>;
   dragEvent(id: string, to: Interval, revert: () => void): Promise<void>;
   deleteEvent(id: string): Promise<Result<MutationResult>>;
@@ -212,22 +218,21 @@ function subjectAndOther(conflict: Conflict, changedIds: readonly string[]): [st
 function barredOverlapKey(overlap: BarredOverlap): string {
   return JSON.stringify([
     overlap.eventId,
+    overlap.slotId,
     overlap.label,
     overlap.overlap.start,
     overlap.overlap.end,
   ]);
 }
 
-// PRE:  before/after are warning lists from successive settings snapshots; now is raw current time
+// PRE:  before/after are successive settings snapshots; now is raw current time
 // POST: counts distinct events with newly introduced future or ongoing warnings (D-08)
-function newlyWarnedEventCount(
-  before: readonly BarredOverlap[],
-  after: readonly BarredOverlap[],
-  now: Minute,
-): number {
-  const previous = new Set(before.map(barredOverlapKey));
+function newlyWarnedEventCount(before: Snapshot, after: Snapshot, now: Minute): number {
+  const previous = new Set(
+    unkeptBarredOverlaps(before.barredOverlaps, before.events).map(barredOverlapKey),
+  );
   return new Set(
-    upcomingOverlaps(after, now)
+    upcomingOverlaps(unkeptBarredOverlaps(after.barredOverlaps, after.events), now)
       .filter((warning) => !previous.has(barredOverlapKey(warning)))
       .map((warning) => warning.eventId),
   ).size;
@@ -667,6 +672,15 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
         );
       },
 
+      // PRE:  request identifies an overlap row; the engine validates its current event/slot
+      // POST: adopts one undoable keep change through the shared mutation/error/toast path
+      setBarredKept(request) {
+        return runMutation(
+          () => engine.setBarredKept(request),
+          (value) => value.label,
+        );
+      },
+
       // PRE:  to comes from a drag or resize
       // POST: moves the event through runMutation; the toast names where it went
       moveEvent(id, to) {
@@ -1070,7 +1084,7 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
       //       saved." plus info/View for newly introduced barred warnings; on err handles the
       //       error (handleError) and keeps the old settings
       async updateSettings(settings) {
-        const previous = get().snapshot.barredOverlaps;
+        const previous = get().snapshot;
         const result = await engine.updateSettings(settings);
         if (!result.ok) {
           await handleError(result.error, () => {
@@ -1080,7 +1094,7 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
         }
         set({ snapshot: result.value });
         pushToast({ tone: 'success', text: SETTINGS_SAVED_TEXT });
-        const count = newlyWarnedEventCount(previous, result.value.barredOverlaps, options.now());
+        const count = newlyWarnedEventCount(previous, result.value, options.now());
         if (count > 0) {
           pushToast({
             tone: 'info',
