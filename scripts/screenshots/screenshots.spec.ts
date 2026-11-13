@@ -67,6 +67,14 @@ for (const theme of THEMES) {
         path: `${OUTPUT_DIR}/barred-kept-${theme}-${width}.png`,
         animations: 'disabled',
       });
+      await page.getByRole('button', { name: 'Settings', exact: true }).click();
+      const settings = page.getByRole('dialog', { name: 'Settings', exact: true });
+      await settings.getByRole('switch', { name: 'Use working hours' }).uncheck();
+      await capture(page, `working-hours-off-${theme}-${width}`);
+      await settings.getByRole('button', { name: 'Save', exact: true }).click();
+      await expect(settings).toHaveCount(0);
+      await expect(page.locator('.toast')).toHaveCount(0, { timeout: TOAST_WAIT_MS });
+      await capture(page, `working-time-off-${theme}-${width}`);
     });
 
     test(`legacy barred labels ${theme} ${width}`, async ({ page }) => {
