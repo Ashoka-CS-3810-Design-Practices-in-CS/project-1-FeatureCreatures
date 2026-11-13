@@ -10,6 +10,7 @@ import { SettingsDialog } from './components/SettingsDialog/SettingsDialog';
 import { ShortcutHelp } from './components/ShortcutHelp/ShortcutHelp';
 import { SlotPicker } from './components/SlotPicker/SlotPicker';
 import { TaskDialog } from './components/TaskDialog/TaskDialog';
+import { DoneBeforeDialog } from './components/TaskPanel/DoneBeforeDialog';
 import { SidePanel } from './components/SidePanel/SidePanel';
 import { Toasts } from './components/Toasts/Toasts';
 import { Toolbar } from './components/Toolbar/Toolbar';
@@ -53,7 +54,7 @@ function FatalScreen() {
 //       hiddenCategoryIds and panelsOpen;
 //       uses setPanelsOpen to control the responsive drawer
 //       + additional props from: Toolbar, EmptyState, CalendarView, SidePanel, BusyOverlay,
-//       EventDialog, TaskDialog, ReplanDialog, SettingsDialog, ShortcutHelp, ConfirmDialog,
+//       EventDialog, TaskDialog, DoneBeforeDialog, ReplanDialog, SettingsDialog, ShortcutHelp, ConfirmDialog,
 //       SlotPicker, Toasts, FatalScreen
 // POST: applies the theme and listens for shortcuts (B3, B4); shows the loading line, the fatal
 //       screen, or the app: the degraded-mode banner when storage is unavailable, the toolbar, the
@@ -116,6 +117,7 @@ export function App() {
       <SidePanel narrow={narrow} open={drawerOpen} onClose={() => setPanelsOpen(false)} />
       <EventDialog />
       <TaskDialog />
+      <DoneBeforeDialog />
       <ReplanDialog />
       <SettingsDialog />
       <ShortcutHelp />

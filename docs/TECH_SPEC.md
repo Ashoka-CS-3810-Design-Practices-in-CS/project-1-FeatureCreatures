@@ -1507,13 +1507,13 @@ interface AppState {
   calendarLocked: boolean;                   // initial events.length > 0; session only
   lastCalendarView: 'timeGridDay' | 'timeGridWeek' | 'dayGridMonth';
   lastCategoryId: string | null;             // session choice; missing id falls back to first
-  taskPanel: { sort: 'priority' | 'windowEnd'; priorities: Priority[]; status: 'unscheduled' | 'scheduled' | 'all';
+  taskPanel: { sort: 'priority' | 'windowEnd'; priorities: Priority[]; status: 'open' | 'unscheduled' | 'scheduled' | 'done' | 'all';
                selectedIds: string[] };
   dialog: null
     | { kind: 'event'; mode: 'create'; defaults: Partial<EventInput> }
     | { kind: 'event'; mode: 'edit'; id: string }
     | { kind: 'task'; mode: 'create' } | { kind: 'task'; mode: 'edit'; id: string }
-    | { kind: 'replan' } | { kind: 'settings' } | { kind: 'shortcuts' }
+    | { kind: 'replan' } | { kind: 'doneBefore' } | { kind: 'settings' } | { kind: 'shortcuts' }
     | { kind: 'confirm'; title: string; body: string; confirmLabel: string; onConfirm: () => void;
         cancelLabel?: string; onCancel?: () => void };   // WI-42: onCancel runs on the cancel button, Esc or close
   picker: PickerState | null;                  // store/pickerSlice.ts
@@ -1590,6 +1590,8 @@ WI-51 / D-06: `SlotPicker` uses a wide scrollable native Modal. `SuggestionOptio
 
 
 **WI-53 / D-09 UI.** BarredSlotsPanel is a separate named region containing the editor and BarredOverlapPanel; it is currently mounted beside the conflict groups pending WI-56 layout. BarredSlotRow and WeekdayCheckboxes are extracted from Settings, retaining all labels/controls. The editor uses the existing SettingsFormValues/settingsResolver for nested errors, with saved settings as defaults; pending edits expose Save barred slots and Cancel barred slot changes, and Add focuses Label. Save passes only edited barred rows on the current settings. Settings keeps four sections and uses settingsDefaultsResolver (shape/time without editing legacy bars). Shared unkeptBarredOverlaps filters tags, warnings and settings-toast counts; raw snapshots retain every overlap. BarredRows offers Keep here/Stop keeping through actions.setBarredKept and the engine command; Kept starts collapsed, with past records excluded. Legacy clash banners use compact Monday-first day ranges. Calendar backgrounds merge only positive overlaps, retaining all titles in stackedLabels rendered as vertical labelled spans; touching slots remain separate. This grouping is presentation-only and never changes stored slots or search intervals. Token nonwork-pattern has ≥ 3:1 contrast against working/past/non-working backgrounds in both themes; CSS dots make enabled non-working time distinct, with whole shading removed when off. Every time input in the region has a fixed 8.5rem width for 12-hour locales.
+
+**Done task UI (WI-54).** The default Show filter is Open (unscheduled + scheduled); other choices are Unscheduled, Scheduled, Done and All. Rows and the task dialog expose ✓ Mark done for open tasks and Reopen for done. Done rows use a struck title and existing tested muted text, show ✓ Done, and offer only Reopen/Edit/Delete (no Find time). Row/dialog deletion shares `confirmDeleteTask`. Store completion actions use `runMutation`; `previewDoneBefore` is read-only. The Tasks ⋯ disclosure menu opens `DoneBeforeDialog`: date/time Before, Preview, count/list, Apply, Cancel. Apply is disabled before a nonempty preview, after cutoff edits, while pending or when snapshot.version changes; the changed-snapshot message asks for a new preview. Errors leave the dialog open. App mounts it through the `doneBefore` dialog kind. Broader five-region layout stays in WI-56.
 
 ### 11.3 FullCalendar integration (`CalendarView/`)
 
@@ -2005,3 +2007,4 @@ Production URL: https://…vercel.app
 | 2026-11-13 | v1.47 (WI-53 D-09 engine checkpoint): BarredOverlap/DayFrame bars carry slotId; shared clash/day formatting and settings-change validation preserve legacy data but reject edited overlaps. Engine.setBarredKept validates/idempotently records metadata, commit clears on time changes, Replan skips kept barred reasons, and settings sanitizes affected history. Repository.saveSettings gains optional cleared event rows in one revision-checked transaction; Memory/Dexie/failing adapter updated. |
 | 2026-11-13 | v1.48 (WI-53 D-09/D-10): extracted shared form controls, region editor and legacy-readable Settings resolver, unkept warning/tag/toast filtering and store action, collapsed Kept groups, grouped background stackedLabels, fixed 12-hour field width and tested non-working pattern token. T53 browser flows cover persistence and legacy label geometry. |
 | 2026-11-13 | v1.49 (WI-54 D-07 engine checkpoint): frozen DoneTasksPreview, cutoff/apply schemas and four completion commands; scheduled completion/bulk use one atomic revision-checked Change; Reopen, idempotence and done-search guards. Twelve T54 cases first red then green. |
+| 2026-11-13 | v1.50 (WI-54 D-07 UI): completion store actions, Open/Done filtering, row/dialog lifecycle, shared delete confirmation and version-aware bulk preview dialog. Four UI regressions first red, plus empty/invalid/storage-retry coverage; browser persistence and keyboard menu cases added. |

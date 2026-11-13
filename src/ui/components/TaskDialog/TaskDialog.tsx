@@ -58,21 +58,6 @@ function TaskForm({ existing }: { existing: Task | undefined }) {
     }
   }
 
-  // PRE:  task is the edited task
-  // POST: replaces this dialog with a confirmation that deletes the task (and its event)
-  function confirmDelete(task: Task): void {
-    actions.openDialog({
-      kind: 'confirm',
-      title: 'Delete task?',
-      body:
-        task.status === 'scheduled'
-          ? `Delete "${task.name}" and its scheduled event? You can undo this.`
-          : `Delete "${task.name}"? You can undo this.`,
-      confirmLabel: 'Delete',
-      onConfirm: () => void actions.deleteTask(task.id),
-    });
-  }
-
   return (
     <Modal
       open
@@ -207,9 +192,31 @@ function TaskForm({ existing }: { existing: Task | undefined }) {
             </button>
           )}
           {existing !== undefined && (
-            <button type="button" onClick={() => confirmDelete(existing)}>
-              Delete
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() =>
+                  void (
+                    existing.status === 'done'
+                      ? actions.reopenTask(existing.id)
+                      : actions.markTaskDone(existing.id)
+                  ).then((result) => {
+                    if (result.ok) actions.closeDialog();
+                  })
+                }
+              >
+                {existing.status === 'done' ? (
+                  'Reopen'
+                ) : (
+                  <>
+                    <span aria-hidden="true">✓</span> Mark done
+                  </>
+                )}
+              </button>
+              <button type="button" onClick={() => actions.confirmDeleteTask(existing.id)}>
+                Delete
+              </button>
+            </>
           )}
         </div>
       </form>

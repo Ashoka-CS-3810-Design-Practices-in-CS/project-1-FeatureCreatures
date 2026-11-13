@@ -1,4 +1,5 @@
 import type { Result } from '@/shared/result';
+import { createEngine } from '@/engine';
 import { flexEv, iv, task } from '../helpers/builders';
 import { capture, makeEngine } from '../helpers/engine';
 import { FailingRepository } from '../helpers/failingRepository';
@@ -41,6 +42,20 @@ function seed() {
 }
 
 describe('T54: done task lifecycle (D-07)', () => {
+  it('rejects another tab’s newer revision without partially completing any task', async () => {
+    const { engine, repo } = await makeEngine(seed());
+    const other = createEngine({ repo, now: () => t('Mon 08:01'), newId: () => 'other-id' });
+    expectOk(await other.init());
+    const preview = expectOk(engine.previewDoneBefore(t('Mon 11:00')));
+    expectOk(await other.markTaskDone('window-later'));
+    const before = await capture(engine, repo);
+    expect(await engine.applyDoneBefore(preview)).toMatchObject({
+      ok: false,
+      error: { code: 'ConcurrentModification' },
+    });
+    expect(await capture(engine, repo)).toEqual(before);
+  });
+
   it('atomically frees scheduled time, timestamps completion, persists, and undoes/redoes once', async () => {
     const { engine, repo } = await makeEngine(seed());
     const before = engine.snapshot();

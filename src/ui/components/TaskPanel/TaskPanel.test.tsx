@@ -47,6 +47,8 @@ describe('TaskPanel (T30 UI, FR6)', () => {
     );
     renderWithStore(<TaskPanel />, store);
 
+    expect(rowNames()).toEqual(['S', 'U']);
+    await userEvent.selectOptions(screen.getByLabelText('Show'), 'unscheduled');
     expect(rowNames()).toEqual(['U']);
     await userEvent.selectOptions(screen.getByLabelText('Show'), 'all');
     expect(screen.getByText('Scheduled Tue 3 Nov 10:00–11:00')).toBeInTheDocument();

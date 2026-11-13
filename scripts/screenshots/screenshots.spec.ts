@@ -1,5 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
-import { addLunchBarredSlot, createEvent, importLegacyBarredSlots } from '../../e2e/helpers';
+import {
+  addLunchBarredSlot,
+  createEvent,
+  createTask,
+  importLegacyBarredSlots,
+} from '../../e2e/helpers';
 
 // Design-review screenshots (WI-34), linked from README.md. Not part of `npm run e2e`: run
 // `npm run screenshots` and look at docs/screenshots/ after any visual change.
@@ -50,6 +55,23 @@ async function capture(page: Page, name: string): Promise<void> {
 for (const theme of THEMES) {
   // INVARIANT: a week capture is registered for every width visited so far, in this theme
   for (const width of WEEK_WIDTHS) {
+    test(`done tasks ${theme} ${width}`, async ({ page }) => {
+      await openApp(page, theme, width);
+      await createTask(page, 'Report', '2026-11-02T09:00', '2026-11-02T11:00');
+      await createTask(page, 'Read', '2026-11-02T09:00', '2026-11-02T10:00');
+      await createTask(page, 'Later', '2026-11-02T09:00', '2026-11-02T10:01');
+      await page.getByRole('button', { name: 'Mark Report done', exact: true }).click();
+      await page.getByLabel('Show', { exact: true }).selectOption('all');
+      await expect(page.locator('.toast')).toHaveCount(0, { timeout: TOAST_WAIT_MS });
+      await capture(page, `done-tasks-${theme}-${width}`);
+      await page.getByRole('button', { name: 'Tasks menu', exact: true }).click();
+      await page.getByRole('menuitem', { name: 'Mark done before…', exact: true }).click();
+      const dialog = page.getByRole('dialog', { name: 'Mark done before…', exact: true });
+      await dialog.getByLabel('Before', { exact: true }).fill('2026-11-02T10:00');
+      await dialog.getByRole('button', { name: 'Preview', exact: true }).click();
+      await capture(page, `done-before-${theme}-${width}`);
+    });
+
     test(`barred region ${theme} ${width}`, async ({ page }) => {
       await openApp(page, theme, width);
       await createEvent(page, 'Lunch event', '2026-11-02T13:00', '2026-11-02T14:00');

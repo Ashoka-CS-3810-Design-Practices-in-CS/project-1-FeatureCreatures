@@ -27,18 +27,33 @@ export async function importLegacyBarredSlots(page: Page): Promise<void> {
   };
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
   const settings = page.getByRole('dialog', { name: 'Settings', exact: true });
-  await settings
-    .getByLabel('Import JSON', { exact: true })
-    .setInputFiles({
-      name: 'legacy-bars.json',
-      mimeType: 'application/json',
-      buffer: Buffer.from(JSON.stringify(file)),
-    });
+  await settings.getByLabel('Import JSON', { exact: true }).setInputFiles({
+    name: 'legacy-bars.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(file)),
+  });
   const confirm = page.getByRole('dialog', { name: 'Import calendar?', exact: true });
   await confirm.getByRole('button', { name: 'Import', exact: true }).click();
   await expect(confirm).toHaveCount(0);
   await expect(settings).toHaveCount(0);
 }
+// PRE: calendar is open with no modal; from/to are valid datetime-local values with to > from
+// POST: creates a one-hour task through the form with the given window and waits for Save to finish
+export async function createTask(
+  page: Page,
+  name: string,
+  from: string,
+  to: string,
+): Promise<void> {
+  await page.getByRole('button', { name: '+ Task', exact: true }).click();
+  const form = page.getByRole('dialog', { name: 'New task', exact: true });
+  await form.getByLabel('Name', { exact: true }).fill(name);
+  await form.getByLabel('Window from', { exact: true }).fill(from);
+  await form.getByLabel('Window to', { exact: true }).fill(to);
+  await form.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(form).toHaveCount(0);
+}
+
 export const DRAG_STEPS = 12;
 
 // The toolbar button that opens each dialog, and the dialog's accessible name.

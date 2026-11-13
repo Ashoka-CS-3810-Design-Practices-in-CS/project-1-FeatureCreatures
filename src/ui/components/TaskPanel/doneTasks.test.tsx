@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { App } from '../../App';
+import { DoneBeforeDialog } from './DoneBeforeDialog';
 import { flexEv, task } from '../../../../tests/helpers/builders';
 import { capture, makeEngine } from '../../../../tests/helpers/engine';
 import { renderWithStore, storeFor } from '../../../../tests/helpers/render';
@@ -9,6 +9,7 @@ import { t } from '../../../../tests/helpers/time';
 import { ConfirmDialog } from '../ConfirmDialog/ConfirmDialog';
 import { TaskDialog } from '../TaskDialog/TaskDialog';
 import { TaskPanel } from './TaskPanel';
+import { FailingRepository } from '../../../../tests/helpers/failingRepository';
 
 const WINDOW: [string, string] = ['Mon 09:00', 'Fri 18:00'];
 
@@ -35,6 +36,48 @@ async function setup() {
 }
 
 describe('T54: task completion controls', () => {
+  it('shows missing-cutoff validation and an empty preview with Apply disabled', async () => {
+    const { store } = await setup();
+    renderWithStore(<DoneBeforeDialog />, store);
+    act(() => store.getState().actions.openDialog({ kind: 'doneBefore' }));
+    const dialog = screen.getByRole('dialog', { name: 'Mark done before…' });
+    fireEvent.change(within(dialog).getByLabelText('Before'), { target: { value: '' } });
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Preview' }));
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('Enter a date and time.');
+    expect(within(dialog).getByLabelText('Before')).toHaveAttribute('aria-invalid', 'true');
+    fireEvent.change(within(dialog).getByLabelText('Before'), {
+      target: { value: '2026-11-02T08:00' },
+    });
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Preview' }));
+    expect(within(dialog).getByText('0 tasks will be marked done.')).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: 'Apply' })).toBeDisabled();
+    expect(within(dialog).queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('keeps a failed bulk apply open, shows its error, and permits retry without partial completion', async () => {
+    const repo = new FailingRepository();
+    const { engine } = await makeEngine({
+      repo,
+      tasks: [task('One', 30, ['Mon 09:00', 'Mon 11:00'])],
+    });
+    const store = storeFor(engine);
+    renderWithStore(<DoneBeforeDialog />, store);
+    act(() => store.getState().actions.openDialog({ kind: 'doneBefore' }));
+    const dialog = screen.getByRole('dialog', { name: 'Mark done before…' });
+    fireEvent.change(within(dialog).getByLabelText('Before'), {
+      target: { value: '2026-11-02T11:00' },
+    });
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Preview' }));
+    expect(within(dialog).getByText('1 task will be marked done.')).toBeInTheDocument();
+    repo.failNextApply();
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Apply' }));
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent(/save|storage/i);
+    expect(engine.snapshot().tasks[0]?.status).toBe('unscheduled');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Apply' }));
+    await waitFor(() => expect(store.getState().dialog).toBeNull());
+    expect(engine.snapshot().tasks[0]?.status).toBe('done');
+  });
+
   it('defaults to Open, completes a scheduled row and exposes only Reopen/Edit/Delete on done rows', async () => {
     const { store } = await setup();
     renderWithStore(
@@ -72,7 +115,6 @@ describe('T54: task completion controls', () => {
     await userEvent.click(
       within(screen.getByRole('dialog', { name: 'Delete task?' })).getByRole('button', {
         name: 'Delete',
-        exact: true,
       }),
     );
     await waitFor(() =>
@@ -116,16 +158,22 @@ describe('T54: task completion controls', () => {
 
   it('opens the Tasks menu bulk dialog, previews exact membership, resets on cutoff edit, and Cancel never writes', async () => {
     const { engine, repo, store } = await setup();
-    renderWithStore(<App />, store);
+    renderWithStore(
+      <>
+        <TaskPanel />
+        <DoneBeforeDialog />
+      </>,
+      store,
+    );
     const before = await capture(engine, repo);
     await userEvent.click(screen.getByRole('button', { name: 'Tasks menu' }));
     await userEvent.click(screen.getByRole('menuitem', { name: 'Mark done before…' }));
     const dialog = screen.getByRole('dialog', { name: 'Mark done before…' });
-    expect(within(dialog).getByRole('button', { name: 'Apply', exact: true })).toBeDisabled();
+    expect(within(dialog).getByRole('button', { name: 'Apply' })).toBeDisabled();
     fireEvent.change(within(dialog).getByLabelText('Before'), {
       target: { value: '2026-11-02T11:00' },
     });
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Preview', exact: true }));
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Preview' }));
     expect(within(dialog).getByText('2 tasks will be marked done.')).toBeInTheDocument();
     expect(
       within(dialog)
@@ -137,35 +185,39 @@ describe('T54: task completion controls', () => {
     fireEvent.change(within(dialog).getByLabelText('Before'), {
       target: { value: '2026-11-02T11:01' },
     });
-    expect(within(dialog).getByRole('button', { name: 'Apply', exact: true })).toBeDisabled();
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel', exact: true }));
+    expect(within(dialog).getByRole('button', { name: 'Apply' })).toBeDisabled();
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
     expect(await capture(engine, repo)).toEqual(before);
   });
 
   it('applies a preview as one undo step and requires a fresh preview after any change', async () => {
     const { store } = await setup();
-    renderWithStore(<App />, store);
+    renderWithStore(
+      <>
+        <TaskPanel />
+        <DoneBeforeDialog />
+      </>,
+      store,
+    );
     await userEvent.click(screen.getByRole('button', { name: 'Tasks menu' }));
     await userEvent.click(screen.getByRole('menuitem', { name: 'Mark done before…' }));
     const dialog = screen.getByRole('dialog', { name: 'Mark done before…' });
     fireEvent.change(within(dialog).getByLabelText('Before'), {
       target: { value: '2026-11-02T11:00' },
     });
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Preview', exact: true }));
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Preview' }));
     await act(async () => {
-      await store
-        .getState()
-        .actions.updateTask('Later', {
-          ...task('Later', 30, ['Mon 09:00', 'Mon 11:01']),
-          name: 'Later edited',
-        });
+      await store.getState().actions.updateTask('Later', {
+        ...task('Later', 30, ['Mon 09:00', 'Mon 11:01']),
+        name: 'Later edited',
+      });
     });
-    expect(within(dialog).getByRole('button', { name: 'Apply', exact: true })).toBeDisabled();
+    expect(within(dialog).getByRole('button', { name: 'Apply' })).toBeDisabled();
     expect(
       within(dialog).getByText('Tasks changed. Preview again before applying.'),
     ).toBeInTheDocument();
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Preview', exact: true }));
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Apply', exact: true }));
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Preview' }));
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Apply' }));
     await waitFor(() => expect(store.getState().dialog).toBeNull());
     expect(store.getState().snapshot.tasks.filter((task) => task.status === 'done')).toHaveLength(
       3,

@@ -29,6 +29,7 @@ import {
 import type {
   Conflict,
   CalendarEvent,
+  DoneTasksPreview,
   CategoryInput,
   BarredOverlap,
   EventInput,
@@ -89,6 +90,7 @@ export type Dialog =
   | { kind: 'task'; mode: 'create' }
   | { kind: 'task'; mode: 'edit'; id: string }
   | { kind: 'replan' }
+  | { kind: 'doneBefore' }
   | { kind: 'settings' }
   | { kind: 'shortcuts' }
   | {
@@ -131,6 +133,14 @@ export interface AppActions {
   updateTask(id: string, input: TaskInput): Promise<Result<MutationResult>>;
   deleteTask(id: string): Promise<Result<MutationResult>>;
   unscheduleTask(id: string): Promise<Result<MutationResult>>;
+  markTaskDone(id: string): Promise<Result<MutationResult>>;
+  reopenTask(id: string): Promise<Result<MutationResult>>;
+  confirmDeleteTask(id: string): void;
+  previewDoneBefore(before: Minute): Result<DoneTasksPreview>;
+  applyDoneBefore(request: {
+    before: Minute;
+    baseVersion: number;
+  }): Promise<Result<MutationResult>>;
   setTaskPanel(change: Partial<AppState['taskPanel']>): void;
   toggleTaskSelection(id: string): void;
   openTaskPicker(taskIds: readonly string[]): void;
@@ -180,7 +190,7 @@ export interface AppState {
   taskPanel: {
     sort: 'priority' | 'windowEnd';
     priorities: Priority[];
-    status: 'unscheduled' | 'scheduled' | 'all';
+    status: 'open' | 'unscheduled' | 'scheduled' | 'done' | 'all';
     selectedIds: string[];
   };
   dialog: Dialog;
@@ -825,6 +835,56 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
         );
       },
 
+      // PRE: id is any task id
+      // POST: atomically completes the task through the shared mutation/toast path
+      markTaskDone(id) {
+        return runMutation(
+          () => engine.markTaskDone(id),
+          (value) => (value.label === '' ? null : `Marked done: "${taskNameIn(value, id)}".`),
+        );
+      },
+
+      // PRE: id is any task id
+      // POST: reopens the task through the shared mutation/toast path, without creating time
+      reopenTask(id) {
+        return runMutation(
+          () => engine.reopenTask(id),
+          (value) => (value.label === '' ? null : `Reopened: "${taskNameIn(value, id)}".`),
+        );
+      },
+
+      // PRE: id is any task id
+      // POST: opens the shared deletion confirmation if the task exists
+      confirmDeleteTask(id) {
+        const task = get().snapshot.tasks.find((candidate) => candidate.id === id);
+        if (task === undefined) return;
+        actions.openDialog({
+          kind: 'confirm',
+          title: 'Delete task?',
+          body:
+            task.status === 'scheduled'
+              ? `Delete "${task.name}" and its scheduled event? You can undo this.`
+              : `Delete "${task.name}"? You can undo this.`,
+          confirmLabel: 'Delete',
+          onConfirm: () => void actions.deleteTask(id),
+        });
+      },
+
+      // PRE: before comes from a date/time input
+      // POST: returns the engine's validated read-only completion preview without writing
+      previewDoneBefore(before) {
+        return engine.previewDoneBefore(before);
+      },
+
+      // PRE: request comes from a completion preview
+      // POST: applies one atomic version-guarded completion through the shared mutation/toast path
+      applyDoneBefore(request) {
+        return runMutation(
+          () => engine.applyDoneBefore(request),
+          (value) => (value.label === '' ? null : `${value.label}.`),
+        );
+      },
+
       // PRE:  change holds any subset of the task panel state
       // POST: the task panel state has change applied
       setTaskPanel(change) {
@@ -1209,7 +1269,7 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
       taskPanel: {
         sort: 'priority',
         priorities: [...ALL_PRIORITIES],
-        status: 'unscheduled',
+        status: 'open',
         selectedIds: [],
       },
       dialog: null,

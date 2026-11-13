@@ -53,6 +53,8 @@ More presets (overlap cluster, midnight crossing, fully booked day, a 5,000-even
 
 Existing browser data upgrades automatically to database v3 with events, tasks, settings and the multi-tab revision preserved. New JSON exports use version 2 and include categories; version 1 backups still import.
 
+**Done tasks.** Use **✓ Mark done** on a task row or in its dialog to free any scheduled time and complete it in one undo step. **Show → Done** reveals completed tasks; **Reopen** returns them to unscheduled for a fresh search. In the Tasks **⋯** menu, **Mark done before…** previews tasks by scheduled event end or unscheduled window end before applying them together. Editing the cutoff or changing tasks requires a new preview.
+
 Turn off **Use working hours** in Settings to let Find time, alternatives and Replan use whole local days, including nights and weekends. Barred slots still apply. Saved working-time preferences are disabled and retained; task/search-hour choices and non-working shading return when you switch it back on.
 
 ## Run it locally

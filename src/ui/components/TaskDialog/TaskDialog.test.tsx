@@ -121,9 +121,9 @@ describe('TaskDialog', () => {
     // The shared Modal adds its × (Close) last (WI-45).
     expect(buttonNames()).toEqual(['Save', 'Cancel', '×']);
     act(() => store.getState().actions.openDialog({ kind: 'task', mode: 'edit', id: 'U' }));
-    expect(buttonNames()).toEqual(['Save', 'Cancel', 'Find time', 'Delete', '×']);
+    expect(buttonNames()).toEqual(['Save', 'Cancel', 'Find time', '✓ Mark done', 'Delete', '×']);
     act(() => store.getState().actions.openDialog({ kind: 'task', mode: 'edit', id: 'S' }));
-    expect(buttonNames()).toEqual(['Save', 'Cancel', 'Unschedule', 'Delete', '×']);
+    expect(buttonNames()).toEqual(['Save', 'Cancel', 'Unschedule', '✓ Mark done', 'Delete', '×']);
   });
 
   it('Find time opens the picker for the task; Unschedule unschedules and closes', async () => {
