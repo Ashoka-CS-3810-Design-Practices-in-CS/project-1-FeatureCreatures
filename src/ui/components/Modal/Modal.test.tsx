@@ -10,6 +10,26 @@ function flushQueuedTasks(): Promise<void> {
 }
 
 describe('Modal', () => {
+  it('T56: wraps Tab at both boundaries without focusing disabled or closed-menu controls', () => {
+    render(
+      <Modal open title="Tasks" onClose={() => {}}>
+        <button disabled>Unavailable</button>
+        <button>First</button>
+        <details>
+          <summary>Tasks menu</summary>
+          <button>Hidden command</button>
+        </details>
+      </Modal>,
+    );
+    const first = screen.getByRole('button', { name: 'First' });
+    const close = screen.getByRole('button', { name: 'Close' });
+    first.focus();
+    fireEvent.keyDown(first, { key: 'Tab', shiftKey: true });
+    expect(close).toHaveFocus();
+    fireEvent.keyDown(close, { key: 'Tab' });
+    expect(first).toHaveFocus();
+  });
+
   it('opens as a dialog named by its title, closes when open turns false', () => {
     const onClose = vi.fn();
     const { rerender } = render(
