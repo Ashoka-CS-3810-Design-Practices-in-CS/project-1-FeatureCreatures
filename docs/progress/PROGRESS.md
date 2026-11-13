@@ -6,9 +6,9 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** WI-53 complete on `feat/wi-53-barred-working-hours`; merge/main full gate next, then WI-54 Done tasks.
-- **Last session:** 2026-11-13 · Codex · WI-53 final branch gate green: typecheck/lint, 785 + 1 existing skipped, overall 98.67/94.32/98.14/98.87, algorithms 99.71/96.50/100/99.69, DST 9, six properties × 10,000, fresh build and 108/108 browsers (36 × 3, zero retries). All 82 capture scenes pass; relevant final region/legacy/off-state captures reviewed in both themes at 1440/1280/1024, 132 PNGs committed. Next: merge, full main gate, WI-54.
-- **Gate status:** 2026-11-13 on `main` at c2e5b5c: full gate green (750 + 1 existing skipped, 98.72% statements / 94.20% branches / 98.24% functions / 98.90% lines, algorithms 99.71/96.48/100/99.69, 8 DST, six properties × 10,000, build, 99/99 browser runs, zero retries).
+- **Active WI:** WI-54 Done tasks, claimed; branch `feat/wi-54-done-tasks`.
+- **Last session:** 2026-11-13 · Codex · WI-53 merged as `2b7cce1`; complete main gate green including 108/108 browsers. WI-54 next: test-first atomic completion/reopening and guarded bulk preview/apply, then UI, docs and full gates.
+- **Gate status:** 2026-11-13 on `main` at `2b7cce1`: full gate green, 785 + 1 existing skipped, overall 98.67/94.32/98.14/98.87, algorithms 99.71/96.50/100/99.69, DST 9, six properties × 10,000, build, 108/108 browsers, zero retries.
 
 ## Work items
 
@@ -283,8 +283,9 @@ Binding design: `docs/extras/AUDIT_2.md` (D-01–D-19, C-01–C-08). Work in ord
   - 2026-11-13 · Codex · branch `feat/wi-53-barred-working-hours` · done: full core gate 785 + 1 skipped, DST 9, six × 10,000 properties green; first unobscured region/Kept captures readable; working-hours-off review found disabled green chips still looked active, so disabled preferences now use existing muted/surface token pairs (no opacity/contrast loss) · next: complete current recapture then refresh six region/off-state scenarios after this CSS fix, review light/dark at 1440/1280/1024, fresh-build full browsers and final branch checks, finish/merge/full main gate · note: no domain behavior or test assertion changed by the visual fix.
   - 2026-11-13 · Codex · branch `feat/wi-53-barred-working-hours` · done: all 82 screenshot scenarios pass, twelve new region/legacy scenarios recaptured without toast overlays and six region/off-state scenarios refreshed after muted-control CSS; 132 PNGs total; reviewed region and Kept rows, stacked legacy backgrounds/non-working dots, disabled Settings and unshaded grid in both themes at 1440/1280/1024, README links added; final post-CSS core gate remains green, 785 + 1 skipped, 98.67/94.32/98.14/98.87 overall, algorithms 99.71/96.50/100/99.69, DST 9, six properties × 10,000 and build · next: full 108-run branch browser gate is running, then finish/merge/full main gate · note: existing tight event blocks/toolbar/sidebar flow remain assigned to WI-56/58; no further production changes planned for WI-53.
   - 2026-11-13 · Codex · branch `feat/wi-53-barred-working-hours` · done: D-09/D-10 Done-when complete; full final branch gate green with 785 + 1 skipped, coverage 98.67/94.32/98.14/98.87, algorithms 99.71/96.50/100/99.69, DST 9, six properties × 10,000, build and 108/108 browsers with zero retries; 82 screenshot scenarios and reviewed final 132 PNGs committed · next: merge retaining branch, full main gate, WI-54 · note: tests +146 versus baseline, all coverage differences within 0.5 points; no remaining WI-53 work. No existing assertions removed; only binding D-09 changes/moved selectors and the scoped new RTL fixture described above.
-- [ ] **WI-54** Done tasks — owner S + Dv — depends on 53
+- [~] **WI-54** Done tasks — owner S + Dv — depends on 53
   - Done when: Atomic mark-done and unschedule; Reopen; bulk preview and apply; undo.
+  - 2026-11-13 · Codex · branch `feat/wi-54-done-tasks` · done: WI-53 full main gate verified and WI-54 claimed · next: atomic completion/reopen and stale-safe bulk tests first, engine/UI/docs, browser/screenshots and full branch/main gates · note: D-07 is binding; default Open filter and Tasks menu follow D-14, broader layout stays WI-56.
 - [ ] **WI-55** Replan strategies and dialog — owner S + Dv — depends on 54
   - Done when: Strategy keys unit-tested; properties for each strategy; dialog RTL tests.
 - [ ] **WI-56** Layout — owner S + Dv — depends on 55
