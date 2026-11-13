@@ -137,6 +137,8 @@ test('T58: Escape cancels a single-task picker without a zero-scheduled toast or
 }) => {
   await openCalendar(page);
   await page.getByRole('button', { name: 'Load sample week', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Tasks (4)', exact: true })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: 'Loading calendar', exact: true })).toHaveCount(0);
   await page.clock.pauseAt(new Date('2026-11-02T09:00:00'));
   await showTasks(page);
   const row = page
