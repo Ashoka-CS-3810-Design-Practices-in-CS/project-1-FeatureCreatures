@@ -58,7 +58,7 @@ function FatalScreen() {
 //       + additional props from: AppBar, Toolbar, EmptyState, CalendarView, SidePanel, BusyOverlay,
 //       EventDialog, TaskDialog, DoneBeforeDialog, ReplanDialog, SettingsDialog, ShortcutHelp, ConfirmDialog,
 //       SlotPicker, Toasts, FatalScreen
-// POST: applies the theme and listens for shortcuts (B3, B4); shows the loading line, the fatal
+// POST: applies theme/accent preferences and listens for shortcuts (B3, B4); shows the loading line, the fatal
 //       screen, or the app: the degraded-mode banner when storage is unavailable, the toolbar, the
 //       empty state on a blank calendar, the status line (events the priority filter shows, and
 //       how many it hides; upcoming conflicts count every event, with past counted separately, FR6/BR-19), the calendar, the task and conflict

@@ -1597,10 +1597,11 @@ WI-53 / D-10: Settings registers the native `Use working hours` switch. `useWatc
 | Component | Responsibility | Reads | Calls |
 |---|---|---|---|
 | `App` | Layout grid, empty state, banners, fatal screen, mounts dialogs/toasts, `useShortcuts`, `useTheme` | `status`, `dialog`, `picker` | — |
-| `Toolbar` | Navigation, view switch, priority filters, + Event/+ Task/Replan, labelled Undo/Redo, theme, `?` button labelled Keyboard shortcuts (opens the existing help), settings, drawer toggle (< 1024 px) | `view`, `snapshot.canUndo…`, dialog state | store actions |
+| `AppBar` | Brand, Undo/Redo, resolved theme icon, help, Settings, counted drawer triggers below 1280 | snapshot history/counts, theme/resolved theme, drawer state | history, theme toggle, dialogs/drawers |
+| `Toolbar` | Calendar navigation/title, Day/Week/Month, Calendar/List, priority/category filters/reset, lock and + Event | view, calendar lock/filters | view/filter/lock/dialog actions |
 | `CalendarView` | FullCalendar wrapper (§11.3) | `snapshot.events`, `conflicts`, `settings`, `eventPriorityFilter`, `emphasisIds` | `moveEvent`, open dialogs |
 | `EventContent` | Renders an event block: title, time, `[H]/[M]/[L]` tag, `Fixed`/`Task` tag, `⚠ Conflict N min` | props | — |
-| `TaskPanel` | Sort/filter controls, task rows with checkbox, status, *Find time*, context menu; "Find time for N selected" | `snapshot.tasks`, `taskPanel` | `openTaskPicker`, dialogs |
+| `TaskPanel` | Show/Sort/menu, + Task, compact priority/category/window/status rows and actions; conditional Find time (N) | `snapshot.tasks`, `taskPanel` | task/picker/dialog actions |
 | `ConflictPanel` | Upcoming and collapsed Past groups (first 50 + "and N more" in each), overlap/date/minutes and hidden-filter notes; only Upcoming offers Suggest alternatives; upcoming-empty text "No conflicts" | `snapshot.conflicts`, `events`, `currentMinute` | `openAlternatives` |
 | `EventDialog` | RHF form with `eventResolver`, shared priority radios and CategorySelect/inline creation; new events Fixed independent of category; full-width flex-window group below End, delete with confirm | `dialog`, event | `createEvent/updateEvent/deleteEvent` |
 | `TaskDialog` | RHF form with `taskResolver`; shared priority radios; Controller maps Working hours only / Any time to boolean useWorkingHours; Find time / Unschedule / Delete in edit mode | task | task actions |
