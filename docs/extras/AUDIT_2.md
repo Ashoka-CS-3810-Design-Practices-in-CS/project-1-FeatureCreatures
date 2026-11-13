@@ -336,20 +336,22 @@ Narrow blocks show the title, the priority tag and icons only. The full informat
 Five regions in three columns, all visible at desktop widths (layout A, chosen by Divyam).
 
 ```text
-┌ App bar ── Interactive Calendar ····························· ↶  ↷ │ ☾ │ ? │ ⚙ ┐
-├ Tasks (≈300 px) ─┬ Calendar ──────────────────────────────────┬ Right (≈320 px) ─┤
-│ Tasks (4)  [+Task]│ ◀ Today ▶  Week of 9 Nov 2026  [Day|Week|Month]│ Conflicts (1)      │
-│ [Show ▾][Sort ▾][⋯]│ [Calendar|List]  [H][M][L] [●Class][●Study]…   │  ⚠ Lecture↔Meeting │
-│ ☐ Write report     │                         🔒 Locked   [+ Event]  │    Tue 11:00 · 30m │
-│   [H] ●Assignment  │ ┌──────────────── week grid ──────────────┐ │    [Suggest]       │
-│   1 h 30 · Mon–Fri │ │                                          │ │  ▸ Past (2)        │
-│ …                  │ │                                          │ ├ Replan ───────────┤
-│ [Find time (2)]    │ │                                          │ │ This week          │
-│                    │ └──────────────────────────────────────────┘ │ [Plan…]            │
-│                    │ 8 events · 1 conflict (2 past)              │ ├ Barred slots (2) ─┤
-│                    │                                              │ Lunch 13–14 Mon–Fri│
-│                    │                                              │ Overlaps (1) · Kept│
-└────────────────────┴──────────────────────────────────────────────┴────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────────────────────┐
+│ Interactive Calendar                                          Undo  Redo  Theme  ?  Settings │
+├──────────────────────┬──────────────────────────────────────────────┬────────────────────────┤
+│ Tasks (4)    [+ Task]│ < Today >  Week of 9 Nov  [Day|Week|Month]   │ Conflicts (1)          │
+│ [Show v][Sort v][...]│ [Calendar|List]  [H][M][L]  (o)Class ...     │ ! Lecture <> Meeting   │
+│                      │ [Lock: on]                        [+ Event]  │   Tue 11:00 - 30 min   │
+│ [ ] Write report     │ +----------------------------------------+   │   [Suggest]            │
+│     [H] (o)Assignment│ |                                        |   │ > Past (2)             │
+│     1 h 30 - Mon-Fri │ |               week grid                |   ├────────────────────────┤
+│ [ ] Read ch. 4       │ |                                        |   │ Replan                 │
+│     [M] (o)Study     │ |                                        |   │ This week  [Plan...]   │
+│ ...                  │ |                                        |   ├────────────────────────┤
+│ [Find time (2)]      │ +----------------------------------------+   │ Barred slots (2)       │
+│                      │ 8 events - 1 conflict (2 past)               │ Lunch 13-14 Mon-Fri    │
+│                      │                                              │ Overlaps (1) - Kept (0)│
+└──────────────────────┴──────────────────────────────────────────────┴────────────────────────┘
 ```
 
 1. **App bar:** the app name, then Undo, Redo, Theme, Help and Settings, as icon buttons with their existing accessible names and tooltips.
@@ -433,6 +435,13 @@ Each placed event counts as busy for the events after it.
   - the older-data banner already names both labels; keep that.
 - **Scope:** the settings and import schemas, the Barred slots region, Settings if it still shows slots, and the import error toast. Update the tests that assert the old texts (for example `barredRules.test.tsx`, `SettingsDialog.test.tsx`, the schema and import tests, and TEST_PLAN T44 and the WI-53 T-number) to the new exact texts. This is a decided change, not a weakening. Also update PROJECT_SCHEMA §3.2 (Settings), BR-15 and their change logs.
 - **Done in:** WI-58 (dialog and format polish), or WI-56 or WI-57 if either is already touching the Barred slots region.
+
+### D-21 Text diagrams render aligned in any monospaced font (added 2026-11-13)
+
+- **The problem:** several ```text diagrams in the docs had lines of different lengths, and symbols such as 🔒, ⚠, ●, ☐, ↶, ☾ and ⚙ that common coding fonts (e.g. Fira Code) do not contain. Editors substitute those from fallback fonts at other widths, so the boxes break.
+- **The rule:** every text diagram in the docs uses only ASCII plus the box-drawing characters ─ │ ┌ ┐ └ ┘ ├ ┤ ┬ ┴ ┼ and the arrows ▲ ▼. Every line that draws a box border has the same length. Spell out symbols in words or ASCII (`[Lock: on]`, `!`, `(o)`, `[ ]`, `...`).
+- **Already fixed** (2026-11-13, by the planner, in the working tree): the D-14 drawing above and TECH_SPEC §3.1 Layers.
+- **Still to fix:** PROJECT_SCHEMA §7.1 Figure 1 (WI-56 replaces it with the D-14 layout) and Figure 2 (the D-06 picker; its content is current, only its alignment and symbols need fixing). In WI-59, check every ```text block in docs/, README.md and AGENTS.md with a short script (a box line's length must equal its block's widest box line, and no characters outside the allowed set), and fix any failure.
 
 ### D-17 Data, migration and export
 
@@ -526,7 +535,7 @@ An upgrade test with v2 data must prove every row is kept. Stored data written b
 | 56 | Layout | D-14, D-05 | Five regions at 1440, 1280 and 1024 (drawers) in both themes; no duplicate controls; e2e updated |
 | 57 | Visual system | D-12, D-13 | `tokens.test.ts` covers fills, tags, accents and shading; screenshots refreshed and reviewed |
 | 58 | Dialog and format polish | D-16, D-20 (barred-slot messages name the slot) | Field-order and format tests; U9/U19/U20/U23 checks |
-| 59 | Docs, smoke test and final gate | D-19, README, consistency pass | Full gate against the baseline; smoke test written; human steps listed |
+| 59 | Docs, smoke test and final gate | D-19, D-21, README, consistency pass | Full gate against the baseline; smoke test written; human steps listed |
 
 ---
 

@@ -185,21 +185,23 @@ Every file listed here exists by the end of the project. The WI column says whic
 ### 3.1 Layers
 
 ```text
-            ┌───────────────────────── UI layer (src/ui) ─────────────────────────┐
-            │ React components · zustand store · forms · formatting · shortcuts   │
-            └───────────────┬─────────────────────────────────▲──────────────────┘
-                 commands   │ (Engine methods, typed)         │ Result<…> (Snapshot, options, plans, errors)
-            ┌───────────────▼──────── Intelligent Engine (src/engine) ─┴──────────┐
-            │ facade.ts ─ command queue, validation, version checks               │
-            │ pipelines/ ─ Event CRUD · Conflict Resolution · Task Scheduler · Replan
-            │ state.ts ─ sorted in-memory arrays, commit, undo/redo history       │
-            │ algorithms/ ─ pure: sweep · merge · segments · gaps · rank · replan │
-            └───────────────┬─────────────────────────────────▲──────────────────┘
-                 ChangeSet  │ (Repository interface)          │ StoredData
-            ┌───────────────▼──────────── Data Store (src/data) ┴─────────────────┐
-            │ repository.ts (interface) · dexieRepository · memoryRepository · samples
-            └─────────────────────────────────────────────────────────────────────┘
-   src/shared (types, schemas, constants, result, time) is importable by all three layers.
+┌──────────────────────────── UI layer (src/ui) ─────────────────────────────┐
+│ React components, zustand store, forms, formatting, shortcuts              │
+└────────────┬─────────────────────────────────────▲─────────────────────────┘
+             │ commands:                           │ Result<...>: Snapshot,
+             │ typed Engine methods                │ options, plans, errors
+┌────────────▼─ Intelligent Engine (src/engine) ───┴─────────────────────────┐
+│ facade.ts - command queue, validation, version checks                      │
+│ pipelines/ - Event CRUD, Conflict Resolution, Task Scheduler, Replan       │
+│ state.ts - sorted in-memory arrays, commit, undo/redo history              │
+│ algorithms/ - pure: sweep, merge, segments, gaps, rank, replan             │
+└────────────┬─────────────────────────────────────▲─────────────────────────┘
+             │ ChangeSet                           │ StoredData
+             │ (Repository interface)              │
+┌────────────▼─ Data Store (src/data) ─────────────┴─────────────────────────┐
+│ repository.ts (interface), dexieRepository, memoryRepository, samples      │
+└────────────────────────────────────────────────────────────────────────────┘
+src/shared (types, schemas, constants, result, time) is importable by all three layers.
 ```
 
 ### 3.2 Dependency rules (enforced by `eslint.config.js`)
