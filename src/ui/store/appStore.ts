@@ -552,8 +552,9 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
 
     // PRE:  eventId names the event to search; otherEventId is the optional conflict counterpart
     // POST: opens the existing alternatives picker and refreshes via engine.suggestAlternatives;
-    //       it searches working hours only, unless the event lies outside working hours or on a
-    //       non-working day, where it searches any time (WI-41); the Move radios keep moveOrder
+    //       with the global switch on, it searches working hours unless the event is outside them or on a
+    //       non-working day, where it searches any time; global off always searches any time;
+    //       the Move radios keep moveOrder
     function openAlternativePicker(eventId: string, otherEventId: string | null): void {
       const { settings, events } = get().snapshot;
       const event = events.find((candidate) => candidate.id === eventId);
@@ -565,7 +566,9 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
         allowMoving: false,
         range: temporaryRangeFor(event),
         bufferMin: settings.bufferMin,
-        useWorkingHours: event === undefined || overlapsWorkingHours(event, settings),
+        useWorkingHours:
+          settings.useWorkingHours &&
+          (event === undefined || overlapsWorkingHours(event, settings)),
         order: moveOrder(eventId, otherEventId),
         result: { ok: false, error: { code: 'StaleResult' } },
         explanation: null,

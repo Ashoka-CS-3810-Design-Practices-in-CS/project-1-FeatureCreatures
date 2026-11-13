@@ -14,7 +14,7 @@ test('T53: working-hours switch persists, hides task/search choices and removes 
   await expect(settings).toHaveCount(0);
   // FullCalendar's decorative business-hour shading has no accessible control.
   await expect(page.locator('.fc-non-business')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Suggest alternatives for A ↔ B' }).click();
+  await page.getByRole('button', { name: /^Suggest alternatives for (A ↔ B|B ↔ A)$/ }).click();
   const picker = page.getByRole('dialog', { name: /^Alternatives for/ });
   await picker.getByRole('checkbox', { name: 'Allow moving this event' }).check();
   await expect(picker.getByRole('group', { name: 'Search hours', exact: true })).toHaveCount(0);

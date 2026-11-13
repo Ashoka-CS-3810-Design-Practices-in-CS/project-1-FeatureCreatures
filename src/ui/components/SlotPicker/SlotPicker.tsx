@@ -193,11 +193,12 @@ function SearchHoursField({ useWorkingHours }: { useWorkingHours: boolean }) {
   );
 }
 
-// PRE:  picker is a task picker; reads the queued task; uses the picker actions and openDialog
+// PRE:  picker is a task picker; reads the queued task and settings.useWorkingHours; uses picker actions and openDialog
 //       + additional props from: SearchResults, BufferField
 // POST: shows "Find time — <task> — Task i of N", Rank by and the shared picker; task window
 //       and buffer are behind Details; Apply selected / Skip / Stop retain queue behaviour
 function TaskPicker({ picker }: { picker: TaskPickerState }) {
+  const useWorkingHours = useAppStore((state) => state.snapshot.settings.useWorkingHours);
   const task = useAppStore((state) =>
     state.snapshot.tasks.find((candidate) => candidate.id === picker.queue[picker.index]),
   );
@@ -235,7 +236,7 @@ function TaskPicker({ picker }: { picker: TaskPickerState }) {
         selected={picker.selected}
         originalStart={null}
         bufferMin={picker.bufferMin}
-        windowNote={`${fmtDay(task.window.start)} ${fmtTime(task.window.start)} → ${fmtDay(task.window.end)} ${fmtTime(task.window.end)} · ${task.useWorkingHours ? 'working hours only' : 'any time'}`}
+        windowNote={`${fmtDay(task.window.start)} ${fmtTime(task.window.start)} → ${fmtDay(task.window.end)} ${fmtTime(task.window.end)} · ${useWorkingHours && task.useWorkingHours ? 'working hours only' : 'any time'}`}
       />
       <div className="dialog-actions">
         <button
@@ -268,13 +269,15 @@ function TaskPicker({ picker }: { picker: TaskPickerState }) {
   );
 }
 
-// PRE:  picker is an alternatives picker; reads its two events; uses the picker actions
+// PRE:  picker is an alternatives picker; reads its two events and settings.useWorkingHours;
+//       uses the picker actions
 //       + additional props from: SearchResults, BufferField
 //       + SearchHoursField, TemporaryRange
 // POST: shows "Alternatives for <event>" with the Move toggle between the two events, a note when
-//       the target is fixed (BR-10 may still pick it), opt-in/range controls, the search hours, the buffer, the
+//       the target is fixed (BR-10 may still pick it), opt-in/range controls, search hours when globally on, the buffer, the
 //       shared picks/day chips, optional Details and Apply / Cancel
 function AlternativesPicker({ picker }: { picker: AlternativesPickerState }) {
+  const useWorkingHours = useAppStore((state) => state.snapshot.settings.useWorkingHours);
   const events = useAppStore((state) => state.snapshot.events);
   const actions = useAppStore((state) => state.actions);
   const toggleName = useId();
@@ -333,7 +336,7 @@ function AlternativesPicker({ picker }: { picker: AlternativesPickerState }) {
       )}
       {(target.flexible || picker.allowMoving) && (
         <>
-          <SearchHoursField useWorkingHours={picker.useWorkingHours} />
+          {useWorkingHours && <SearchHoursField useWorkingHours={picker.useWorkingHours} />}
           <SearchResults
             result={picker.result}
             explanation={picker.explanation}

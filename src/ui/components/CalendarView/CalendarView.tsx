@@ -94,7 +94,7 @@ export function CalendarView({ calendarRef }: { calendarRef: RefObject<FullCalen
     ],
     [snapshot, filter, view.activeRange, emphasisIds, hiddenCategories, now],
   );
-  const { workDays, workStartMin, workEndMin } = snapshot.settings;
+  const { useWorkingHours, workDays, workStartMin, workEndMin } = snapshot.settings;
   const hiddenByFilter = filterHidesEventsIn(snapshot, filter, view.activeRange, hiddenCategories);
 
   return (
@@ -131,11 +131,15 @@ export function CalendarView({ calendarRef }: { calendarRef: RefObject<FullCalen
         selectMirror
         eventOverlap
         eventMinHeight={MIN_CLICK_TARGET_PX}
-        businessHours={{
-          daysOfWeek: [...workDays],
-          startTime: toClockTime(workStartMin),
-          endTime: toClockTime(workEndMin),
-        }}
+        businessHours={
+          useWorkingHours
+            ? {
+                daysOfWeek: [...workDays],
+                startTime: toClockTime(workStartMin),
+                endTime: toClockTime(workEndMin),
+              }
+            : false
+        }
         events={events}
         noEventsContent={() =>
           hiddenByFilter ? (

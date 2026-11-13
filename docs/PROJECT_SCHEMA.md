@@ -324,8 +324,8 @@ Each requirement lists its acceptance criteria. The tests that prove it are in `
   - Remaining problems are shown even with no movable events. A plan with zero moves and remaining problems says "No moves in this plan — N events still need attention." (singular as appropriate), never a bare "No changes needed". Problems resolved by that plan are omitted.
 
 **FR11 — Settings.**
-- **Editable:** working days and hours, default buffer, barred slots (add, edit, remove), default criterion, Categories (BR-16).
-- **Behaviour:** changes apply immediately to every later search. Barred slots are shown on the calendar as shaded background blocks with their label, and non-working hours are shaded.
+- **Editable:** Use working hours, working days and hours, default buffer, barred slots (add, edit, remove), default criterion, Categories (BR-16).
+- **Behaviour:** changes apply immediately to every later search. Barred slots are shown as labelled background blocks. Use working hours is on by default; while off, its retained days/hours are disabled, task/search-hour choices are hidden and non-working shading disappears. Switching back on restores the saved rules (D-10).
 - **Acceptance:** invalid settings (end ≤ start, buffer out of range, a duplicate barred slot) are rejected inline. A barred slot that repeats an earlier slot's days, start and end shows "Duplicate of barred slot N." under its Days, where N is the earlier slot's number; an import with such settings is rejected (ER6) with the same message.
 
 ### 4.2 Error handling (cross-cutting)
@@ -492,13 +492,13 @@ Every search result also carries:
 - **Static events:** every other event that intersects the range. These are never moved.
 - **UX diagnostics (no change to placement rules):** after projecting each plan, list unchanged events with conflicts/barred overlaps whose overlap intersects the range and ends after raw now, plus its unplaced events. Entirely past problem overlaps (end ≤ now) are omitted even when an involved event is still running. Classify in order: fixed → "Fixed event"; flexible with `start ≤ now < end` → "Already started"; unplaced with move reason `outsideFlexWindow` → "Outside its flex window"; otherwise → "No free slot". Unplaced events have no fitting allowed free gap within `flexWindow ∩ range` with the buffer. Reasons describe the current request and can differ after changing the range/settings. Every entry offers the existing per-event Suggest alternatives action; applying alternatives still needs consent (BR-14).
 - **Order:** movable events are processed one at a time, by priority (High first), then duration (longest first), then start, then ID. Each placed event becomes busy for the events after it. If an event cannot be placed, it stays where it is and is listed as unplaced, and it remains busy for every other movable event, including those processed before it (no placed event may land on it).
-- **Allowed region:** for each movable event, the allowed segments of `flexWindow ∩ range`, respecting working hours (BR-5).
+- **Allowed region:** for each movable event, the allowed segments of `flexWindow ∩ range`, respecting working hours only when globally enabled (BR-5).
 - **Minimal change:**
   - An event *stays* if its current interval lies entirely inside one free gap (with the buffer applied against everything already busy).
   - Otherwise it moves to the `nearest` candidate.
   - Its move reason is the first that applies, in this order:
     1. outside flex window
-    2. outside working hours
+    2. outside working hours when globally enabled
     3. in a barred slot
     4. conflicts with an event
     5. inside the buffer of an event
@@ -546,13 +546,13 @@ Twelve curated colours include the five seeds. Free colours are normalised six-d
    - On the right, the task panel above the conflict panel.
    - Below 1024 px, the right column collapses into a drawer opened from the toolbar.
 2. **Event dialog** (create and edit): title, category, priority, start, end, Fixed/Flexible scheduling radios, flex window (shown when flexible), description. Priority uses a fieldset with a legend and native High / Medium / Low radios, each with its [H]/[M]/[L] tag and priority colour; arrow keys change the selected option. The flex window is its own full-width group below End, without overlap or clipping at desktop and drawer widths in either theme. It has Save and Cancel buttons, plus Delete when editing.
-3. **Task dialog** (create and edit): name, duration (h and min), the same priority radio group, category, window from/to, Scheduling hours radios ("Working hours only", the default, and "Any time"), description. These radios still map to `useWorkingHours` true / false; barred slots apply to both. It has Save and Cancel buttons, plus Delete, Unschedule and Find time when editing.
+3. **Task dialog** (create and edit): name, duration (h and min), the same priority radio group, category, window from/to, Scheduling hours radios ("Working hours only", the default, and "Any time"), description. These radios map to the task preference true / false and are hidden while global working hours are off, without overwriting that preference; barred slots apply either way. It has Save and Cancel buttons, plus Delete, Unschedule and Find time when editing.
 4. **Slot picker:**
    - **Task mode:** the header shows the task name, duration, priority and "Task i of N", then Rank by. Named top picks precede all other options as time chips by day. Details reveals the task window, search summary/window/buffer and the selected slot's explanation. Apply selected, Skip and Stop retain queue behaviour.
    - **Alternatives mode:** the header shows the target/length, Move radios, fixed opt-in/temporary range and Search hours. The same picks/day chips/Details layout uses the alternatives picks in BR-7. Apply and Cancel retain their behaviour.
 5. **Replan dialog:** range from/to (default the visible week; from Month, whose grid exceeds 14 days, the first full week of the month, AUDIT A10), a buffer override, and a *Compute plans* button. Below them are two plan cards side by side (stacked when narrow). Each card shows its metrics and list of moves, with an *Apply this plan* button. Changing the range or buffer removes the cards until *Compute plans* runs again, so a plan is only applied for the inputs shown (AUDIT A08). Cancel closes the dialog.
 6. **Settings dialog:**
-   - Five headed sections (WI-49): **Working time** (working days as day chips, working hours from / to), **Scheduling defaults** (default buffer, default ranking), **Barred slots** (one compact row per slot: label, from–to, day chips and a remove ×; *Add barred slot* puts a new row at the end and focuses its label), **Categories** (BR-16) and **Data**. Settings Save / Cancel stay in their sticky footer; category changes save independently as undo steps. The dialog has the × of §7.7.
+   - Five headed sections (WI-49): **Working time** (Use working hours switch, retained working days/hours disabled while off), **Scheduling defaults** (default buffer, default ranking), **Barred slots** (one compact row per slot: label, from–to, day chips and a remove ×; *Add barred slot* puts a new row at the end and focuses its label), **Categories** (BR-16) and **Data**. Settings Save / Cancel stay in their sticky footer; category changes save independently as undo steps. The dialog has the × of §7.7.
    - A **Data** section: Export JSON, Import JSON, Load sample calendar (menu), Clear all data (with confirmation).
 7. **Confirm dialog:** used for delete, import and clear.
 8. **Shortcut help overlay:** lists the shortcuts in §7.6.
@@ -744,3 +744,4 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 | 2026-11-13 | v1.19 (WI-52 engine checkpoint, D-08): BR-12 diagnostics omit entirely past problem overlaps and reserve Already started for currently running events, using raw now independently of rounded placement notBefore. Placement, metrics, detection and storage are unchanged. Remaining UI past-time behavior is still in progress. |
 | 2026-11-13 | v1.20 (WI-52, D-08): BR-19/FR4 and BR-15 define raw-now Upcoming/Past grouping, upcoming-only counts/actions/barred feedback, muted accessible past days/events and cross-day now guides; presentation time refreshes without domain writes. |
 | 2026-11-13 | v1.21 (WI-53 D-10 engine checkpoint): BR-5, day loads and default flex windows obey the global working-time switch. Off means whole local days with barred slots retained, including cross-midnight placement; task/working-time preferences stay stored. UI and D-09 remain in progress. |
+| 2026-11-13 | v1.22 (WI-53 D-10 UI checkpoint): FR11/UX expose Use working hours, disabled retained preferences, hidden effective task/search-hour choices and shading removal. D-09 and stronger enabled-hours shading remain in progress. |

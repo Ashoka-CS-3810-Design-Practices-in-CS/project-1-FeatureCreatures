@@ -2,6 +2,7 @@ import { useId, useState, type ChangeEvent } from 'react';
 import {
   useFieldArray,
   useForm,
+  useWatch,
   type FieldError,
   type UseFormRegister,
   type UseFormRegisterReturn,
@@ -155,7 +156,7 @@ function BarredSlotRow({
 // PRE:  rendered under StoreProvider; settings are the current settings; uses
 //       actions.updateSettings and closeDialog
 //       + additional props from: WeekdayCheckboxes, BarredSlotRow, ErrorText
-// POST: shows the settings form in headed sections (WI-46): Working time (days and hours),
+// POST: shows Working time with a global switch and retained days/hours disabled while off,
 //       Scheduling defaults (buffer, ranking) and Barred slots (one compact row each, Add puts a
 //       new one at the end and focuses its label); Save validates with settingsResolver (errors
 //       inline, FR11) before saving, and closes the dialog once saved
@@ -172,6 +173,7 @@ function SettingsForm({ settings }: { settings: Settings }) {
     resolver: settingsResolver,
     defaultValues: settingsFormValues(settings),
   });
+  const useWorkingHours = useWatch({ control, name: 'useWorkingHours' });
   // keyName keeps RHF's row keys apart from each slot's own id field.
   const { fields, append, remove } = useFieldArray({
     control,
@@ -197,34 +199,42 @@ function SettingsForm({ settings }: { settings: Settings }) {
     <form className="settings-form" noValidate onSubmit={(event) => void handleSubmit(save)(event)}>
       <section aria-labelledby={headingId('working')}>
         <h3 id={headingId('working')}>Working time</h3>
-        <WeekdayCheckboxes
-          legend="Working days"
-          registration={register('workDays')}
-          error={errors.workDays}
-          errorId={errorId('workDays')}
-        />
-        <div className="field-pair">
-          <span>
-            <label htmlFor={fieldId('workStart')}>Working hours from</label>
-            <input
-              id={fieldId('workStart')}
-              type="time"
-              {...register('workStart')}
-              {...described('workStart')}
-            />
-          </span>
-          <span>
-            <label htmlFor={fieldId('workEnd')}>Working hours to</label>
-            <input
-              id={fieldId('workEnd')}
-              type="time"
-              {...register('workEnd')}
-              {...described('workEnd')}
-            />
-          </span>
-        </div>
-        <ErrorText id={errorId('workStart')} error={errors.workStart} />
-        <ErrorText id={errorId('workEnd')} error={errors.workEnd} />
+        <label>
+          <input type="checkbox" role="switch" {...register('useWorkingHours')} /> Use working hours
+        </label>
+        {!useWorkingHours && (
+          <p className="hint">Every day is available. Barred slots still apply.</p>
+        )}
+        <fieldset disabled={!useWorkingHours} aria-label="Working days and hours">
+          <WeekdayCheckboxes
+            legend="Working days"
+            registration={register('workDays')}
+            error={errors.workDays}
+            errorId={errorId('workDays')}
+          />
+          <div className="field-pair">
+            <span>
+              <label htmlFor={fieldId('workStart')}>Working hours from</label>
+              <input
+                id={fieldId('workStart')}
+                type="time"
+                {...register('workStart')}
+                {...described('workStart')}
+              />
+            </span>
+            <span>
+              <label htmlFor={fieldId('workEnd')}>Working hours to</label>
+              <input
+                id={fieldId('workEnd')}
+                type="time"
+                {...register('workEnd')}
+                {...described('workEnd')}
+              />
+            </span>
+          </div>
+          <ErrorText id={errorId('workStart')} error={errors.workStart} />
+          <ErrorText id={errorId('workEnd')} error={errors.workEnd} />
+        </fieldset>
       </section>
 
       <section aria-labelledby={headingId('defaults')}>
