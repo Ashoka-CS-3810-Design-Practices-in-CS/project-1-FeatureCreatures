@@ -1891,7 +1891,7 @@ Phases match A3 §7. Owners follow A3: **S** = Samar, **Dv** = Divyam. Each WI i
 
 ### Round 2 overhaul (WI-47–59)
 
-Binding design: `extras/AUDIT_2.md` §7. Each WI depends on the previous one; update the behaviour/contracts/tests in the WI that implements them. The Round 2 full gate is typecheck, lint, coverage, DST, five 10,000-case properties, build, then Playwright with three repeats and two workers, on both the branch and main. UI WIs also capture and review both-theme screenshots at 1440, 1280 and 1024 px. WI-59's final comparison uses five browser repeats and the baseline recorded in the progress file.
+Binding design: `extras/AUDIT_2.md` §7. Each WI depends on the previous one; update the behaviour/contracts/tests in the WI that implements them. The Round 2 full gate is typecheck, lint, coverage, DST, all six 10,000-case properties, build, then Playwright with three repeats and two workers, on both the branch and main. UI WIs also capture and review both-theme screenshots at 1440, 1280 and 1024 px. WI-59's final comparison uses five browser repeats and the baseline recorded in the progress file.
 
 | WI | Phase | Title | Owner | Files | Depends | Done when |
 |---|---|---|---|---|---|---|
