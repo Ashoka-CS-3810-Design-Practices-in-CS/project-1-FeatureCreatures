@@ -10,6 +10,48 @@ function flushQueuedTasks(): Promise<void> {
 }
 
 describe('Modal', () => {
+  it('T56: reopens a scrolled drawer at its title instead of retaining a clipped header', () => {
+    const onClose = vi.fn();
+    const { rerender } = render(
+      <Modal open title="Planning" onClose={onClose}>
+        <button>First</button>
+      </Modal>,
+    );
+    const dialog = screen.getByRole('dialog', { name: 'Planning' });
+    dialog.scrollTop = 100;
+    rerender(
+      <Modal open={false} title="Planning" onClose={onClose}>
+        <button>First</button>
+      </Modal>,
+    );
+    rerender(
+      <Modal open title="Planning" onClose={onClose}>
+        <button>First</button>
+      </Modal>,
+    );
+    expect(dialog.scrollTop).toBe(0);
+  });
+
+  it('T56: wraps Tab at both boundaries without focusing disabled or closed-menu controls', () => {
+    render(
+      <Modal open title="Tasks" onClose={() => {}}>
+        <button disabled>Unavailable</button>
+        <button>First</button>
+        <details>
+          <summary>Tasks menu</summary>
+          <button>Hidden command</button>
+        </details>
+      </Modal>,
+    );
+    const first = screen.getByRole('button', { name: 'First' });
+    const close = screen.getByRole('button', { name: 'Close' });
+    first.focus();
+    fireEvent.keyDown(first, { key: 'Tab', shiftKey: true });
+    expect(close).toHaveFocus();
+    fireEvent.keyDown(close, { key: 'Tab' });
+    expect(first).toHaveFocus();
+  });
+
   it('opens as a dialog named by its title, closes when open turns false', () => {
     const onClose = vi.fn();
     const { rerender } = render(

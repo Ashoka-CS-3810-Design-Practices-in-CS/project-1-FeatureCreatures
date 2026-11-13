@@ -46,7 +46,7 @@ describe('T47: Settings layout', () => {
     const defaults = screen.getByRole('region', { name: 'Scheduling defaults' });
     expect(within(defaults).getByLabelText('Default buffer (min)')).toBeInTheDocument();
     expect(within(defaults).getByLabelText('Default ranking')).toBeInTheDocument();
-    const barred = screen.getByRole('region', { name: 'Barred slots' });
+    const barred = screen.getByRole('region', { name: /^Barred slots \(/ });
     expect(within(barred).getAllByRole('group', { name: /^Barred slot \d$/ })).toHaveLength(2);
     expect(screen.getByRole('region', { name: 'Data' })).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Categories' })).toBeInTheDocument();

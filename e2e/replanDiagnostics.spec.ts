@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { addLunchBarredSlot, createEvent, openCalendar } from './helpers';
+import { addLunchBarredSlot, createEvent, openCalendar, openReplan } from './helpers';
 
 test('T40: Replan explains fixed Lunch overlaps while moving flexible events and reuses alternatives', async ({
   page,
@@ -20,7 +20,7 @@ test('T40: Replan explains fixed Lunch overlaps while moving flexible events and
   const warnings = page.getByRole('region', { name: 'Barred-slot overlaps (2)' });
   await expect(warnings.getByText('Fixed', { exact: true })).toBeVisible();
   await expect(warnings.getByText('Flexible', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Replan', exact: true }).click();
+  await openReplan(page);
   const replan = page.getByRole('dialog', { name: 'Replan', exact: true });
   await replan.getByRole('button', { name: 'Compute plans', exact: true }).click();
   await replan.getByRole('button', { name: 'Details', exact: true }).click();

@@ -14,7 +14,7 @@ test('T53: Keep here persists across reload and Stop keeping is undoable in the 
   await openCalendar(page);
   await createEvent(page, 'Lunch event', '2026-11-02T13:00', '2026-11-02T14:00');
   await addLunchBarredSlot(page);
-  const region = page.getByRole('region', { name: 'Barred slots', exact: true });
+  const region = page.getByRole('region', { name: /^Barred slots \(/ });
   const block = page.getByRole('button', { name: /^Lunch event, Mon 2 Nov/ });
   await expect(block).toHaveAccessibleName(/In Lunch/);
   await region.getByRole('button', { name: /^Keep here: Lunch event in Lunch/ }).click();
@@ -59,7 +59,7 @@ test('T53: older imported overlaps have a repair banner and labels stack without
   expect(tt).not.toBeNull();
   if (lunch === null || tt === null) throw new Error('Legacy labels have no visible geometry');
   expect(tt.y).toBeGreaterThanOrEqual(lunch.y + lunch.height);
-  const region = page.getByRole('region', { name: 'Barred slots', exact: true });
+  const region = page.getByRole('region', { name: /^Barred slots \(/ });
   const second = region.getByRole('group', { name: 'Barred slot 2', exact: true });
   await second.getByLabel('From', { exact: true }).fill('14:00');
   await region.getByRole('button', { name: 'Save barred slots', exact: true }).click();

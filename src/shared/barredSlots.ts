@@ -1,5 +1,24 @@
 import { MIN_BARRED_RANGE_DAYS, WEEKDAY_NAMES, WEEKDAY_ORDER } from './constants';
 import type { BarredOverlap, BarredSlot, CalendarEvent, Weekday } from './types';
+import { toClockTime } from './clockText';
+
+// PRE: first/second are valid clashing barred slots; days are their shared weekdays in display order
+// POST: names the first slot by label/time; exact duplicate days/times get the D-20 duplicate message
+export function barredClashText(
+  first: BarredSlot,
+  second: BarredSlot,
+  days: readonly Weekday[],
+): string {
+  const name = `"${first.label}" (${toClockTime(first.startMin)}–${toClockTime(first.endMin)})`;
+  const duplicate =
+    first.startMin === second.startMin &&
+    first.endMin === second.endMin &&
+    first.days.length === second.days.length &&
+    first.days.every((day) => second.days.includes(day));
+  return duplicate
+    ? `Same days and times as ${name}.`
+    : `Overlaps ${name} on ${barredDaysText(days)}.`;
+}
 
 export interface BarredSlotClash {
   firstIndex: number;

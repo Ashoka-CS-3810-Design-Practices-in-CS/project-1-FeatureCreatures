@@ -100,7 +100,7 @@ export function BarredSlotsPanel() {
   const headingId = useId();
   return (
     <section aria-labelledby={headingId} className="barred-slots-panel">
-      <h2 id={headingId}>Barred slots</h2>
+      <h2 id={headingId}>Barred slots ({settings.barredSlots.length})</h2>
       {barredSlotClashes(settings.barredSlots).map((clash) => (
         <p role="status" key={`${clash.firstIndex}-${clash.secondIndex}`}>
           {settings.barredSlots[clash.firstIndex]?.label} and{' '}

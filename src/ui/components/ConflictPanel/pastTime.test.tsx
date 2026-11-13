@@ -7,6 +7,7 @@ import { renderWithStore, storeFor } from '../../../../tests/helpers/render';
 import { t } from '../../../../tests/helpers/time';
 import { App } from '../../App';
 import { ConflictPanel } from './ConflictPanel';
+import { BarredSlotsPanel } from '../BarredSlotsPanel/BarredSlotsPanel';
 import { MS_PER_MINUTE } from '@/shared/constants';
 
 const EVENTS = [
@@ -68,7 +69,13 @@ describe('T52: past-time panels and calendar (D-08)', () => {
   it('counts upcoming conflicts, starts Past collapsed, and offers no past Suggest action', async () => {
     const { engine, repo } = await makeEngine({ now: 'Mon 10:30', events: EVENTS });
     const before = await capture(engine, repo);
-    renderWithStore(<ConflictPanel />, storeFor(engine, { now: () => t('Mon 10:30') }));
+    renderWithStore(
+      <>
+        <ConflictPanel />
+        <BarredSlotsPanel />
+      </>,
+      storeFor(engine, { now: () => t('Mon 10:30') }),
+    );
     expect(screen.getByRole('heading', { name: 'Conflicts (1)' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Upcoming (1)' })).toBeInTheDocument();
     const past = screen.getByRole('button', { name: 'Past (1)' });
@@ -88,7 +95,13 @@ describe('T52: past-time panels and calendar (D-08)', () => {
 
   it('treats overlap end = now as past and retains an ongoing conflict as upcoming', async () => {
     const { engine } = await makeEngine({ now: 'Mon 10:00', events: EVENTS });
-    renderWithStore(<ConflictPanel />, storeFor(engine, { now: () => t('Mon 10:00') }));
+    renderWithStore(
+      <>
+        <ConflictPanel />
+        <BarredSlotsPanel />
+      </>,
+      storeFor(engine, { now: () => t('Mon 10:00') }),
+    );
     expect(screen.getByRole('heading', { name: 'Upcoming (1)' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Past (1)' })).toBeInTheDocument();
   });

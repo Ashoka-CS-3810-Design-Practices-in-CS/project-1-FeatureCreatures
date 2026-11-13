@@ -9,21 +9,21 @@ import { App } from './App';
 describe('App', () => {
   afterEach(() => vi.restoreAllMocks());
 
-  it('below 1024 px opens one copy of the panels in a drawer and returns focus when closed', async () => {
-    const media = window.matchMedia('(max-width: 1023px)');
+  it('below 1280 px opens one copy of the panels in a drawer and returns focus when closed', async () => {
+    const media = window.matchMedia('(max-width: 1279px)');
     vi.spyOn(window, 'matchMedia').mockReturnValue({ ...media, matches: true });
     const store = storeFor((await makeEngine()).engine);
     renderWithStore(<App />, store);
-    const trigger = screen.getByRole('button', { name: 'Tasks and conflicts' });
-    expect(screen.queryByRole('heading', { name: 'Tasks' })).not.toBeInTheDocument();
+    const trigger = screen.getByRole('button', { name: 'Tasks (0)' });
+    expect(screen.queryByRole('heading', { name: 'Tasks (0)' })).not.toBeInTheDocument();
 
     await userEvent.click(trigger);
 
-    expect(screen.getByRole('dialog', { name: 'Tasks and conflicts' })).toBeInTheDocument();
-    expect(screen.getAllByRole('heading', { name: 'Tasks' })).toHaveLength(1);
+    expect(screen.getByRole('dialog', { name: 'Tasks' })).toBeInTheDocument();
+    expect(screen.getAllByRole('heading', { name: 'Tasks (0)' })).toHaveLength(1);
     expect(trigger).toHaveAttribute('aria-expanded', 'true');
-    await userEvent.click(screen.getByRole('button', { name: 'Close panels' }));
-    expect(screen.queryByRole('dialog', { name: 'Tasks and conflicts' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('dialog', { name: 'Tasks' })).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();
   });
 

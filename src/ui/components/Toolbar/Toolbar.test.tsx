@@ -9,6 +9,9 @@ import { renderWithStore, storeFor } from '../../../../tests/helpers/render';
 import { t } from '../../../../tests/helpers/time';
 import type { AppStore } from '../../store/appStore';
 import { Toolbar } from './Toolbar';
+import { AppBar } from './AppBar';
+import { TaskPanel } from '../TaskPanel/TaskPanel';
+import { ReplanPanel } from '../ReplanDialog/ReplanPanel';
 import { ShortcutHelp } from '../ShortcutHelp/ShortcutHelp';
 
 const fakeApi = { today: vi.fn(), prev: vi.fn(), next: vi.fn(), changeView: vi.fn() };
@@ -19,7 +22,12 @@ const calendarRef = { current: { getApi: () => fakeApi } } as unknown as RefObje
 // POST: renders the toolbar over store with the System theme
 function renderToolbar(store: AppStore, onCycleTheme = vi.fn()): void {
   renderWithStore(
-    <Toolbar calendarRef={calendarRef} theme="system" onCycleTheme={onCycleTheme} />,
+    <>
+      <Toolbar calendarRef={calendarRef} />
+      <AppBar theme="system" onCycleTheme={onCycleTheme} narrow={false} />
+      <TaskPanel />
+      <ReplanPanel />
+    </>,
     store,
   );
 }
@@ -31,7 +39,8 @@ describe('Toolbar', () => {
     const store = storeFor((await makeEngine()).engine);
     renderWithStore(
       <>
-        <Toolbar calendarRef={calendarRef} theme="system" onCycleTheme={() => {}} />
+        <Toolbar calendarRef={calendarRef} />
+        <AppBar theme="system" onCycleTheme={() => {}} narrow={false} />
         <ShortcutHelp />
       </>,
       store,
@@ -96,7 +105,7 @@ describe('Toolbar', () => {
     const opened: unknown[] = [];
 
     // INVARIANT: opened holds the dialog each visited button opened, in order
-    for (const name of ['+ Event', '+ Task', 'Replan', 'Settings']) {
+    for (const name of ['+ Event', '+ Task', 'Plan…', 'Settings']) {
       await userEvent.click(screen.getByRole('button', { name }));
       opened.push(store.getState().dialog);
     }
@@ -105,7 +114,7 @@ describe('Toolbar', () => {
     expect(opened).toEqual([
       { kind: 'event', mode: 'create', defaults: {} },
       { kind: 'task', mode: 'create' },
-      { kind: 'replan' },
+      { kind: 'replan', strategy: 'balanced' },
       { kind: 'settings' },
     ]);
   });

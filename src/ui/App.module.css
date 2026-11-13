@@ -1,15 +1,12 @@
 .app {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) var(--side-width);
+  grid-template-columns: 18rem minmax(0, 1fr) 20rem;
   grid-template-rows: auto auto minmax(0, 1fr);
-  grid-template-areas:
-    'banner banner'
-    'header header'
-    'main side';
+  grid-template-areas: 'banner banner banner' 'header header header' 'tasks main side';
   height: 100vh;
   height: 100dvh;
+  overflow: hidden;
 }
-
 .app > :global(.banner) {
   grid-area: banner;
   margin: 0;
@@ -17,103 +14,59 @@
   background: var(--surface);
   border-bottom: 2px solid var(--warning);
 }
-
-/* The header is a grid of the title and the toolbar's three groups (.toolbar uses display:
-   contents): a slim masthead row, then the period and the commands right above the calendar. */
 .app > header {
   grid-area: header;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  grid-template-areas:
-    'brand . utilities'
-    'period controls controls';
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: var(--space-2) var(--space-5);
-  padding: var(--space-3) var(--space-5) var(--space-4);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--border);
 }
-
 .app > header h1 {
-  grid-area: brand;
   margin: 0;
   font-size: var(--text-base);
-  letter-spacing: -0.005em;
 }
-
-.app > header :global(.toolbar-period) {
-  grid-area: period;
-}
-
-.app > header :global(.toolbar-controls) {
-  grid-area: controls;
-  justify-content: flex-end;
-}
-
-.app > header :global(.toolbar-utilities) {
-  grid-area: utilities;
-  justify-content: flex-end;
-}
-
 .app > main {
   grid-area: main;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  padding: var(--space-4);
+}
+.app :global(.calendar-region) {
   display: flex;
   flex-direction: column;
+  height: 100%;
   min-height: 0;
-  padding: 0 var(--space-5) var(--space-5);
 }
-
-/* FullCalendar fills the rest of the column: a zero flex basis overrides its height="100%". */
-.app > main > :global(.calendar-surface) {
+.app :global(.calendar-surface) {
   flex: 1 1 0;
   min-height: 0;
 }
-
-/* The side column is a flat plane of its own colour, with no cards inside. */
 .app > aside {
-  grid-area: side;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-6);
+  min-width: 0;
   min-height: 0;
   overflow-y: auto;
-  padding: var(--space-5);
-  border-top-left-radius: var(--radius-lg);
+  padding: var(--space-4);
   background: var(--surface);
 }
-
+.app > :global(.task-column) {
+  grid-area: tasks;
+  border-right: 1px solid var(--border);
+}
+.app > :global(.right-column) {
+  grid-area: side;
+  border-left: 1px solid var(--border);
+}
 :global(.status-line) {
-  margin: 0 0 var(--space-3);
+  margin: var(--space-2) 0 var(--space-3);
   color: var(--muted);
   font-size: var(--text-sm);
 }
-
-/* Narrower desktops: the commands move under the period so neither row wraps awkwardly. */
 @media (max-width: 1279px) {
-  .app {
-    --side-width: 336px;
-  }
-
-  .app > header {
-    grid-template-areas:
-      'brand period utilities'
-      'controls controls controls';
-  }
-
-  .app > header :global(.toolbar-controls) {
-    justify-content: flex-start;
-  }
-}
-
-@media (max-width: 1023px) {
   .app {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas: 'banner' 'header' 'main';
-  }
-
-  .app > header {
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      'brand utilities'
-      'period period'
-      'controls controls';
   }
 }

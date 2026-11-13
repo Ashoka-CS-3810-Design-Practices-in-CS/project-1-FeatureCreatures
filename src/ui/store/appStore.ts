@@ -90,7 +90,7 @@ export type Dialog =
   | { kind: 'event'; mode: 'edit'; id: string }
   | { kind: 'task'; mode: 'create' }
   | { kind: 'task'; mode: 'edit'; id: string }
-  | { kind: 'replan' }
+  | { kind: 'replan'; strategy?: ReplanStrategy }
   | { kind: 'doneBefore' }
   | { kind: 'settings' }
   | { kind: 'shortcuts' }
@@ -148,6 +148,7 @@ export interface AppActions {
   openAlternatives(conflict: Conflict): void;
   openEventAlternatives(eventId: string): void;
   setPanelsOpen(open: boolean): void;
+  setTasksOpen(open: boolean): void;
   viewBarredOverlaps(): void;
   computeReplan(
     range: Interval,
@@ -202,6 +203,7 @@ export interface AppState {
   picker: PickerState | null;
   emphasisIds: string[];
   panelsOpen: boolean;
+  tasksOpen: boolean;
   barredViewRequest: number;
   toasts: Toast[];
   actions: AppActions;
@@ -606,13 +608,19 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
       // PRE:  open is the desired drawer state
       // POST: the panels drawer state is open
       setPanelsOpen(open) {
-        set({ panelsOpen: open });
+        set({ panelsOpen: open, ...(open ? { tasksOpen: false } : {}) });
+      },
+
+      // PRE: open is the desired Tasks drawer state
+      // POST: sets that drawer; opening it closes the right drawer
+      setTasksOpen(open) {
+        set({ tasksOpen: open, ...(open ? { panelsOpen: false } : {}) });
       },
 
       // PRE:  none
       // POST: opens panels and requests focus/scroll to their barred-warning section
       viewBarredOverlaps() {
-        set({ panelsOpen: true, barredViewRequest: get().barredViewRequest + 1 });
+        set({ panelsOpen: true, tasksOpen: false, barredViewRequest: get().barredViewRequest + 1 });
       },
       // PRE:  id is any string
       // POST: removes that toast if present
@@ -1281,6 +1289,7 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
       picker: null,
       emphasisIds: [],
       panelsOpen: false,
+      tasksOpen: false,
       barredViewRequest: 0,
       toasts: [],
       actions,

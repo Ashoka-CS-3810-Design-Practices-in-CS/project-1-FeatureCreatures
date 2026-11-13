@@ -14,6 +14,7 @@ import { DoneBeforeDialog } from './components/TaskPanel/DoneBeforeDialog';
 import { SidePanel } from './components/SidePanel/SidePanel';
 import { Toasts } from './components/Toasts/Toasts';
 import { Toolbar } from './components/Toolbar/Toolbar';
+import { AppBar } from './components/Toolbar/AppBar';
 import { errorMessage } from './format/errors';
 import { eventCountText } from './format/explain';
 import { useShortcuts } from './hooks/useShortcuts';
@@ -53,7 +54,7 @@ function FatalScreen() {
 // PRE:  rendered under StoreProvider; reads currentMinute, status, storageWarning, snapshot, eventPriorityFilter
 //       hiddenCategoryIds and panelsOpen;
 //       uses setPanelsOpen to control the responsive drawer
-//       + additional props from: Toolbar, EmptyState, CalendarView, SidePanel, BusyOverlay,
+//       + additional props from: AppBar, Toolbar, EmptyState, CalendarView, SidePanel, BusyOverlay,
 //       EventDialog, TaskDialog, DoneBeforeDialog, ReplanDialog, SettingsDialog, ShortcutHelp, ConfirmDialog,
 //       SlotPicker, Toasts, FatalScreen
 // POST: applies the theme and listens for shortcuts (B3, B4); shows the loading line, the fatal
@@ -95,24 +96,18 @@ export function App() {
           Storage unavailable: changes will be lost when you close this tab.
         </p>
       )}
-      <header>
-        <h1>Interactive Calendar</h1>
-        <Toolbar
-          calendarRef={calendarRef}
-          theme={theme}
-          onCycleTheme={cycleTheme}
-          panelsOpen={narrow && drawerOpen}
-          onOpenPanels={narrow ? () => setPanelsOpen(true) : undefined}
-        />
-      </header>
+      <AppBar theme={theme} onCycleTheme={cycleTheme} narrow={narrow} />
       <main>
-        {isEmpty && <EmptyState />}
-        <p className="status-line">
-          {eventCountText(visibleCount, snapshot.events.length - visibleCount)} ·{' '}
-          {countOf(snapshot.tasks.length, 'task')} · {countOf(upcomingCount, 'conflict')}
-          {pastCount > 0 && ` (${pastCount} past)`}
-        </p>
-        <CalendarView calendarRef={calendarRef} />
+        <section aria-label="Calendar" className="calendar-region">
+          <Toolbar calendarRef={calendarRef} />
+          {isEmpty && <EmptyState />}
+          <p className="status-line">
+            {eventCountText(visibleCount, snapshot.events.length - visibleCount)} ·{' '}
+            {countOf(snapshot.tasks.length, 'task')} · {countOf(upcomingCount, 'conflict')}
+            {pastCount > 0 && ` (${pastCount} past)`}
+          </p>
+          <CalendarView calendarRef={calendarRef} />
+        </section>
       </main>
       <SidePanel narrow={narrow} open={drawerOpen} onClose={() => setPanelsOpen(false)} />
       <EventDialog />

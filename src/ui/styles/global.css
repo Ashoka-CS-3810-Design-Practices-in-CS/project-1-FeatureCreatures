@@ -229,9 +229,10 @@ th {
 
 /* ── Toolbar ──────────────────────────────────────────────────────────── */
 
-/* The toolbar's three groups are laid out by the header grid in App.module.css. */
 .toolbar {
-  display: contents;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
 }
 
 .toolbar-period,
@@ -244,7 +245,33 @@ th {
 }
 
 .toolbar-controls {
-  gap: var(--space-2) var(--space-4);
+  gap: var(--space-2);
+  flex-wrap: nowrap;
+}
+
+.toolbar-period {
+  flex-wrap: nowrap;
+  justify-content: space-between;
+}
+
+.toolbar-period .toolbar-title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--text-base);
+}
+
+.calendar-filters {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.calendar-filters > * {
+  flex-shrink: 0;
 }
 
 .toolbar [role='group'] {
@@ -469,18 +496,58 @@ dialog .category-editor input[type='color'] {
 
 .task-filters {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: var(--space-2) var(--space-4);
+  gap: var(--space-2);
   color: var(--muted);
   font-size: var(--text-sm);
 }
 
 .task-filters > label {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  min-width: 0;
+  flex: 1;
   white-space: nowrap;
+}
+
+.task-filters .task-menu {
+  align-self: flex-end;
+}
+.task-filters select {
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-1);
+}
+.right-column > section + section {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+.replan-panel select {
+  width: 100%;
+}
+.replan-panel h2,
+.barred-slots-panel h2 {
+  margin: 0;
+}
+.task-row::before {
+  content: none;
+}
+.task-row {
+  padding: var(--space-3) 0;
+}
+.task-actions {
+  gap: var(--space-1);
+}
+.task-actions button {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-sm);
+}
+.app-bar .toolbar-utilities {
+  flex-wrap: nowrap;
 }
 
 .task-filters fieldset {
@@ -513,7 +580,6 @@ dialog .category-editor input[type='color'] {
   padding: var(--space-3) 0 var(--space-3) var(--space-4);
 }
 
-.task-row::before,
 .conflict-panel li::before {
   content: '';
   position: absolute;
@@ -531,11 +597,12 @@ dialog .category-editor input[type='color'] {
 }
 
 .task-row {
+  padding-left: 0;
   grid-template-columns: auto minmax(0, 1fr);
   grid-template-areas:
     'select heading'
     '. meta'
-    '. actions';
+    'actions actions';
   align-items: center;
 }
 

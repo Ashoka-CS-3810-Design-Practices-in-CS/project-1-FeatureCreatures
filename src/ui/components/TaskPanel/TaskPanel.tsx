@@ -1,16 +1,10 @@
 import { useMemo } from 'react';
 import { PRIORITY_TAGS } from '@/shared/constants';
-import type { CalendarEvent, Priority, Task } from '@/shared/types';
-import { fmtDay, fmtDuration, fmtRange, fmtTime } from '../../format/time';
+import type { CalendarEvent, Task } from '@/shared/types';
+import { fmtDay, fmtDuration, fmtRange } from '../../format/time';
 import { useAppStore, type AppActions, type AppState } from '../../store/appStore';
 import { visibleTasks } from '../../store/selectors';
 import { CategoryTag } from '../Categories/CategoryTag';
-
-const PRIORITY_OPTIONS: { value: Priority; label: string; tag: string }[] = [
-  { value: 'high', label: 'High', tag: '[H]' },
-  { value: 'medium', label: 'Medium', tag: '[M]' },
-  { value: 'low', label: 'Low', tag: '[L]' },
-];
 
 type PanelState = AppState['taskPanel'];
 
@@ -18,7 +12,7 @@ type PanelState = AppState['taskPanel'];
 //       actions are the store's actions; reads snapshot.categories under StoreProvider
 //       + additional props from: CategoryTag
 // POST: renders one task row: a selection box (unscheduled tasks only), name, priority tag,
-//       category tag, duration, deadline, status and applicable scheduling/completion/edit/delete actions
+//       category tag, duration, window dates, status and applicable scheduling/completion/edit/delete actions
 function TaskRow({
   task,
   event,
@@ -52,8 +46,8 @@ function TaskRow({
       </span>{' '}
       <span className="task-meta">
         <span>{fmtDuration(task.durationMin)}</span>{' '}
-        <span>
-          due {fmtDay(task.window.end)} {fmtTime(task.window.end)}
+        <span title={fmtRange(task.window)}>
+          {fmtDay(task.window.start)}–{fmtDay(task.window.end)}
         </span>{' '}
         <span className={`task-status${isDone ? ' tag' : ''}`}>
           {isDone ? '✓ Done' : event === undefined ? 'Unscheduled' : `Scheduled ${fmtRange(event)}`}
@@ -103,19 +97,11 @@ function TaskRow({
   );
 }
 
-// PRE:  panel is the task panel state; priority is one of the priorities
-// POST: returns panel.priorities with priority added or removed
-function togglePriority(panel: PanelState, priority: Priority): Priority[] {
-  return panel.priorities.includes(priority)
-    ? panel.priorities.filter((entry) => entry !== priority)
-    : [...panel.priorities, priority];
-}
-
 // PRE:  rendered under StoreProvider; reads snapshot.tasks, snapshot.events and taskPanel; uses
 //       setTaskPanel, toggleTaskSelection, openTaskPicker and openDialog
 //       + additional props from: TaskRow
-// POST: shows the task panel (FR6): sort and filter controls that never change stored data, the
-//       visible tasks, "New task", and "Find time for N selected" for the ticked unscheduled tasks
+// POST: shows the counted Tasks region, status/sort/menu row, one + Task action and visible tasks;
+//       Find time (N) exists only for selected unscheduled tasks; controls never change stored data
 export function TaskPanel() {
   const tasks = useAppStore((state) => state.snapshot.tasks);
   const events = useAppStore((state) => state.snapshot.events);
@@ -133,7 +119,45 @@ export function TaskPanel() {
   return (
     <section aria-labelledby="task-panel-title" className="task-panel">
       <div className="panel-heading">
-        <h2 id="task-panel-title">Tasks</h2>
+        <h2 id="task-panel-title">Tasks ({tasks.length})</h2>
+
+        <button
+          type="button"
+          className="primary"
+          onClick={() => actions.openDialog({ kind: 'task', mode: 'create' })}
+        >
+          + Task
+        </button>
+      </div>
+
+      <div className="task-filters">
+        <label>
+          Show{' '}
+          <select
+            value={panel.status}
+            onChange={(event) =>
+              actions.setTaskPanel({ status: event.target.value as PanelState['status'] })
+            }
+          >
+            <option value="open">Open</option>
+            <option value="unscheduled">Unscheduled</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="done">Done</option>
+            <option value="all">All</option>
+          </select>
+        </label>
+        <label>
+          Sort by{' '}
+          <select
+            value={panel.sort}
+            onChange={(event) =>
+              actions.setTaskPanel({ sort: event.target.value as PanelState['sort'] })
+            }
+          >
+            <option value="priority">Priority</option>
+            <option value="windowEnd">Window end</option>
+          </select>
+        </label>
         <details
           className="task-menu"
           onKeyDown={(event) => {
@@ -160,54 +184,6 @@ export function TaskPanel() {
             </button>
           </div>
         </details>
-        <button type="button" onClick={() => actions.openDialog({ kind: 'task', mode: 'create' })}>
-          New task
-        </button>
-      </div>
-
-      <div className="task-filters">
-        <label>
-          Sort by{' '}
-          <select
-            value={panel.sort}
-            onChange={(event) =>
-              actions.setTaskPanel({ sort: event.target.value as PanelState['sort'] })
-            }
-          >
-            <option value="priority">Priority</option>
-            <option value="windowEnd">Window end</option>
-          </select>
-        </label>
-        <fieldset>
-          <legend>Priorities</legend>
-          {PRIORITY_OPTIONS.map((option) => (
-            <label key={option.value}>
-              <input
-                type="checkbox"
-                checked={panel.priorities.includes(option.value)}
-                onChange={() =>
-                  actions.setTaskPanel({ priorities: togglePriority(panel, option.value) })
-                }
-              />{' '}
-              {option.label}
-            </label>
-          ))}
-        </fieldset>
-        <label>
-          Show{' '}
-          <select
-            value={panel.status}
-            onChange={(event) =>
-              actions.setTaskPanel({ status: event.target.value as PanelState['status'] })
-            }
-          >
-            <option value="open">Open</option>
-            <option value="unscheduled">Unscheduled</option>
-            <option value="scheduled">Scheduled</option>
-            <option value="done">Done</option>
-            <option value="all">All</option>
-          </select>
-        </label>
       </div>
 
       {shown.length === 0 ? (
@@ -228,13 +204,11 @@ export function TaskPanel() {
         </ul>
       )}
 
-      <button
-        type="button"
-        disabled={selected.length === 0}
-        onClick={() => actions.openTaskPicker(selected)}
-      >
-        Find time for {selected.length} selected
-      </button>
+      {selected.length > 0 && (
+        <button type="button" onClick={() => actions.openTaskPicker(selected)}>
+          Find time ({selected.length})
+        </button>
+      )}
     </section>
   );
 }

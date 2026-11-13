@@ -27,7 +27,7 @@ import {
 import type { EngineError, FieldIssue } from './errors';
 import { err, ok, type Result } from './result';
 import { migrateLegacyData } from './legacy';
-import { barredSlotClashes, barredDaysText, sameBarredSlots } from './barredSlots';
+import { barredSlotClashes, barredClashText, sameBarredSlots } from './barredSlots';
 import type {
   BarredSlot,
   CalendarEvent,
@@ -251,7 +251,7 @@ export function parseAlternativeRange(input: unknown): Result<Interval> {
 }
 
 // PRE:  slots each passed barredSlotSchema
-// POST: adds the first earlier overlap's D-09 issue under every offending later slot's days
+// POST: adds the first earlier overlap's D-20 label/time issue under every offending later slot's days
 function refineDistinctBarredSlots(slots: readonly BarredSlot[], ctx: z.RefinementCtx): void {
   const reported = new Set<number>();
   // INVARIANT: reported contains each later slot already given its first earlier overlap issue
@@ -261,7 +261,7 @@ function refineDistinctBarredSlots(slots: readonly BarredSlot[], ctx: z.Refineme
       ctx.addIssue({
         code: 'custom',
         path: ['barredSlots', clash.secondIndex, 'days'],
-        message: `Overlaps barred slot ${clash.firstIndex + 1} (${first.label}) on ${barredDaysText(clash.days)}.`,
+        message: barredClashText(first, slots[clash.secondIndex] as BarredSlot, clash.days),
       });
       reported.add(clash.secondIndex);
     }

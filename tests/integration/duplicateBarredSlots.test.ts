@@ -42,7 +42,7 @@ describe('T44: duplicate barred slots', () => {
         issues: [
           {
             path: 'barredSlots.1.days',
-            message: 'Overlaps barred slot 1 (Lunch) on Mon, Tue, Wed.',
+            message: 'Same days and times as "Lunch" (13:00–14:00).',
           },
         ],
       },
@@ -70,9 +70,9 @@ describe('T44: duplicate barred slots', () => {
 
     expect(copies.ok ? [] : copies.error).toMatchObject({
       issues: [
-        { path: 'barredSlots.1.days', message: 'Overlaps barred slot 1 (Lunch) on Mon.' },
-        { path: 'barredSlots.2.days', message: 'Overlaps barred slot 1 (Lunch) on Mon.' },
-        { path: 'barredSlots.3.days', message: 'Overlaps barred slot 1 (Lunch) on Mon.' },
+        { path: 'barredSlots.1.days', message: 'Overlaps "Lunch" (13:00–14:00) on Mon.' },
+        { path: 'barredSlots.2.days', message: 'Same days and times as "Lunch" (13:00–14:00).' },
+        { path: 'barredSlots.3.days', message: 'Same days and times as "Lunch" (13:00–14:00).' },
       ],
     });
     expect(differing.ok).toBe(true);
@@ -96,7 +96,7 @@ describe('T44: duplicate barred slots', () => {
         issues: [
           {
             path: 'settings.barredSlots.1.days',
-            message: 'Overlaps barred slot 1 (Lunch) on Mon.',
+            message: 'Same days and times as "Lunch" (13:00–14:00).',
           },
         ],
       },

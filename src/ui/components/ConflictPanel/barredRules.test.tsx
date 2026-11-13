@@ -69,7 +69,7 @@ describe('T53: soft barred slots UI (D-09)', () => {
       within(dialog).queryByRole('button', { name: 'Add barred slot' }),
     ).not.toBeInTheDocument();
     await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
-    const region = screen.getByRole('region', { name: 'Barred slots' });
+    const region = screen.getByRole('region', { name: /^Barred slots \(/ });
     await userEvent.click(within(region).getByRole('button', { name: 'Add barred slot' }));
     const first = within(region).getByRole('group', { name: 'Barred slot 1' });
     expect(within(first).getByLabelText('Label')).toHaveFocus();
@@ -87,7 +87,7 @@ describe('T53: soft barred slots UI (D-09)', () => {
     await userEvent.type(within(second).getByLabelText('To'), '14:30');
     await userEvent.click(within(region).getByRole('button', { name: 'Save barred slots' }));
     expect(
-      await within(second).findByText('Overlaps barred slot 1 (Lunch) on Mon, Tue, Wed, Thu, Fri.'),
+      await within(second).findByText('Overlaps "Lunch" (13:00–14:00) on Mon, Tue, Wed, Thu, Fri.'),
     ).toBeInTheDocument();
     expect(engine.snapshot().settings.barredSlots).toEqual([]);
     await userEvent.click(

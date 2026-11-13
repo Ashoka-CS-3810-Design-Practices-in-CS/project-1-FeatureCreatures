@@ -2,13 +2,13 @@ import { expect, test, type Page } from '@playwright/test';
 import { openCalendar } from './helpers';
 
 const VIEWPORT_HEIGHT = 900;
-const DESKTOP_WIDTHS = [1280, 1024];
+const DESKTOP_WIDTHS = [1440, 1280];
 const NARROW_WIDTH = 900;
 const MIN_TARGET_SIZE = 32;
 const DIALOG_CASES = [
   { button: '+ Event', title: 'New event' },
   { button: '+ Task', title: 'New task' },
-  { button: 'Replan', title: 'Replan' },
+  { button: 'Plan…', title: 'Replan' },
   { button: 'Settings', title: 'Settings' },
 ];
 
@@ -29,10 +29,8 @@ test('desktop layout, click targets, responsive drawer and nested dialog focus',
   // INVARIANT: each visited desktop width has one side column and no page overflow
   for (const width of DESKTOP_WIDTHS) {
     await page.setViewportSize({ width, height: VIEWPORT_HEIGHT });
-    await expect(page.getByRole('complementary', { name: 'Tasks and conflicts' })).toBeVisible();
-    await expect(
-      page.getByRole('button', { name: 'Tasks and conflicts', exact: true }),
-    ).toBeHidden();
+    await expect(page.getByRole('complementary', { name: 'Planning column' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Tasks \(\d+\)$/ })).toBeHidden();
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
     ).toBe(true);
@@ -53,21 +51,21 @@ test('desktop layout, click targets, responsive drawer and nested dialog focus',
     );
   expect(undersized).toEqual([]);
   await page.setViewportSize({ width: NARROW_WIDTH, height: VIEWPORT_HEIGHT });
-  const trigger = page.getByRole('button', { name: 'Tasks and conflicts', exact: true });
+  const trigger = page.getByRole('button', { name: /^Tasks \(\d+\)$/ });
   await trigger.click();
-  const drawer = page.getByRole('dialog', { name: 'Tasks and conflicts' });
+  const drawer = page.getByRole('dialog', { name: 'Tasks', exact: true });
   await expect(drawer).toBeVisible();
-  await expect(drawer.getByRole('button', { name: 'Close panels' })).toBeFocused();
+  await expect(drawer.getByRole('button', { name: '+ Task', exact: true })).toBeFocused();
   await page.keyboard.press('Shift+Tab');
   expect(await page.evaluate(() => document.activeElement?.closest('dialog')?.id)).toBe(
-    'side-panels',
+    'task-drawer',
   );
-  await drawer.getByRole('button', { name: 'New task', exact: true }).click();
+  await drawer.getByRole('button', { name: '+ Task', exact: true }).click();
   await expect(page.getByRole('dialog', { name: 'New task' })).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog', { name: 'New task' })).toBeHidden();
   await expect(drawer).toBeVisible();
-  await expect(drawer.getByRole('button', { name: 'New task', exact: true })).toBeFocused();
+  await expect(drawer.getByRole('button', { name: '+ Task', exact: true })).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(drawer).toBeHidden();
   await expect(trigger).toBeFocused();

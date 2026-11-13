@@ -185,21 +185,23 @@ Every file listed here exists by the end of the project. The WI column says whic
 ### 3.1 Layers
 
 ```text
-            ┌───────────────────────── UI layer (src/ui) ─────────────────────────┐
-            │ React components · zustand store · forms · formatting · shortcuts   │
-            └───────────────┬─────────────────────────────────▲──────────────────┘
-                 commands   │ (Engine methods, typed)         │ Result<…> (Snapshot, options, plans, errors)
-            ┌───────────────▼──────── Intelligent Engine (src/engine) ─┴──────────┐
-            │ facade.ts ─ command queue, validation, version checks               │
-            │ pipelines/ ─ Event CRUD · Conflict Resolution · Task Scheduler · Replan
-            │ state.ts ─ sorted in-memory arrays, commit, undo/redo history       │
-            │ algorithms/ ─ pure: sweep · merge · segments · gaps · rank · replan │
-            └───────────────┬─────────────────────────────────▲──────────────────┘
-                 ChangeSet  │ (Repository interface)          │ StoredData
-            ┌───────────────▼──────────── Data Store (src/data) ┴─────────────────┐
-            │ repository.ts (interface) · dexieRepository · memoryRepository · samples
-            └─────────────────────────────────────────────────────────────────────┘
-   src/shared (types, schemas, constants, result, time) is importable by all three layers.
+┌──────────────────────────── UI layer (src/ui) ─────────────────────────────┐
+│ React components, zustand store, forms, formatting, shortcuts              │
+└────────────┬─────────────────────────────────────▲─────────────────────────┘
+             │ commands:                           │ Result<...>: Snapshot,
+             │ typed Engine methods                │ options, plans, errors
+┌────────────▼─ Intelligent Engine (src/engine) ───┴─────────────────────────┐
+│ facade.ts - command queue, validation, version checks                      │
+│ pipelines/ - Event CRUD, Conflict Resolution, Task Scheduler, Replan       │
+│ state.ts - sorted in-memory arrays, commit, undo/redo history              │
+│ algorithms/ - pure: sweep, merge, segments, gaps, rank, replan             │
+└────────────┬─────────────────────────────────────▲─────────────────────────┘
+             │ ChangeSet                           │ StoredData
+             │ (Repository interface)              │
+┌────────────▼─ Data Store (src/data) ─────────────┴─────────────────────────┐
+│ repository.ts (interface), dexieRepository, memoryRepository, samples      │
+└────────────────────────────────────────────────────────────────────────────┘
+src/shared (types, schemas, constants, result, time) is importable by all three layers.
 ```
 
 ### 3.2 Dependency rules (enforced by `eslint.config.js`)
@@ -628,6 +630,8 @@ export const exportFileSchema = z.object({
 ```
 
 `storedEventSchema` and `storedTaskSchema` extend the input schemas with `id`, `taskId`, `status`, `scheduledEventId`, `createdAt` and `updatedAt`.
+
+WI-56 / D-20: `barredClashText(first, second, sharedDays)` names the first clashing slot by its label and `clockText.toClockTime` times. Equal times/day sets give `Same days and times as "Lunch" (13:00–14:00).`; other clashes give `Overlaps "Lunch" (13:00–14:00) on Mon, Tue.` The schema keeps the later Days path; current import errors reuse it. UI format/time re-exports the shared pure formatter, so no formatting code is duplicated. The legacy banner still names both slots.
 
 WI-48 adds `keptInBarred` to stored events and `doneAt` to stored tasks. `categorySchema` validates `{id, name, colour, createdAt}`; hex colours normalise to lowercase. `parseCategorisedInput(schema, input, categories)` validates new/edited event and task inputs, including that `categoryId` exists. `linkIssues(events, tasks, categories)` additionally checks category identity/name/colour uniqueness and every reference on import/init/reload. `shared/legacy.ts` is the only enum-to-id mapping, shared by Dexie upgrades and v1 import.
 
@@ -1535,7 +1539,8 @@ interface AppState {
         cancelLabel?: string; onCancel?: () => void };   // WI-42: onCancel runs on the cancel button, Esc or close
   picker: PickerState | null;                  // store/pickerSlice.ts
   emphasisIds: string[];                       // briefly highlighted after a change (1.5 s)
-  panelsOpen: boolean;                         // UI-only narrow drawer state
+  panelsOpen: boolean; // right drawer
+  tasksOpen: boolean;  // Tasks drawer; opening either closes the other                         // UI-only narrow drawer state
   barredViewRequest: number;                   // UI-only focus/scroll request counter
   toasts: Toast[];                             // store/toastSlice.ts
   actions: AppActions;
@@ -1579,6 +1584,8 @@ All sample loads and imports with more than `IMPORT_SPINNER_THRESHOLD` events pl
 - **Alternatives.** `openAlternatives(conflict)` uses `eventId = conflict.targetId` and `otherEventId = the other id`. The "Move: (●) A ( ) B" toggle swaps the two and re-runs the search.
 - **Undo / redo.** The toast reads `Undid: <label>` or `Redid: <label>`.
 
+WI-56 / D-14: AppBar owns brand/history/theme/help/settings and counted Tasks/Conflicts drawer triggers. Toolbar is calendar-only (navigation/title/view, presentation/filters/reset/lock/+ Event); App mounts it inside the named Calendar region. App.module.css uses three independently scrolling columns (Tasks 18rem, flexible Calendar, right 20rem) at widths >=1280. Below that, DRAWER_BREAKPOINT_PX=1280 drives useNarrowLayout and SidePanel's two native drawers; one mounted copy per region. Store `tasksOpen/setTasksOpen` and existing `panelsOpen/setPanelsOpen` are mutually exclusive; viewBarredOverlaps opens only the right drawer. Tasks (N) has one primary + Task, status/sort/menu, no duplicate priority checkbox UI, and conditional Find time (N). Existing internal task-priority selection remains testable and independent of calendar filters. Conflicts owns only upcoming/past conflicts; ReplanPanel and BarredSlotsPanel are its siblings with their own counts. ReplanPanel shares exported `defaultReplanDays(activeRange, viewDate)` with the dialog, stores a local strategy and opens `{kind:'replan', strategy}` so the dialog starts with that choice. Existing shortcuts still open default Replan. No domain or persistence contracts change.
+
 ### 11.2 Components
 
 WI-53 / D-10: Settings registers the native `Use working hours` switch. `useWatch` disables the retained Working days and hours fieldset while off; RHF keeps its values for Save and re-enabling. TaskForm omits Scheduling hours while globally off, preserving the stored task preference. Alternatives omits Search hours; its initial UI choice is false while globally off. Task-picker Details describes the effective rule as any time. CalendarView sets FullCalendar `businessHours` to false while off, removing non-working shading without changing barred backgrounds or now guides. D-09 uses the separate BarredSlotsPanel editor described below; enabled-hours shading uses a tested nonwork-pattern dot texture.
@@ -1599,7 +1606,7 @@ WI-53 / D-10: Settings registers the native `Use working hours` switch. `useWatc
 | `SlotPicker` | Both picker modes (Figure 2), summary line, options as a radio group, ER2/ER3 blocks with suggestions + "Edit task" | `picker` | picker actions |
 | `ReplanDialog` | Range (date inputs, default `view.activeRange` when it is at most 14 days, else the first full Monday–Sunday week from `view.date` (Month, AUDIT A10), or the week of `view.date` before the first `datesSet`), inputs that drop computed plans when edited (A08), buffer override, Compute, two plan cards (metrics + moves + unplaced), Apply | engine via action | `planReplan`, `applyReplan` |
 | `SettingsDialog` | Four sections: Working time, Scheduling defaults, Categories and Data; barred editing lives in BarredSlotsPanel | `snapshot.settings` | `updateSettings`, `importData` |
-| `ConfirmDialog`, `ShortcutHelp`, `Toasts`, `Modal`, `EmptyState` | as named; `Toasts` is the ARIA live region; `Modal` wraps native `<dialog>` + `showModal()` and, when `dismissible`, renders a last-in-DOM `.dialog-close` × button (`aria-label="Close"`, calls `onClose` like Cancel/Esc; CSS puts it top-right; WI-45). `ShortcutHelp` relies on it instead of its own Close button | | |
+| `ConfirmDialog`, `ShortcutHelp`, `Toasts`, `Modal`, `EmptyState` | as named; `Toasts` is the ARIA live region; `Modal` wraps native `<dialog>` + `showModal()` and, wraps Tab/Shift+Tab at the first/last enabled visible control (skipping closed-menu controls), and when `dismissible`, renders a last-in-DOM `.dialog-close` × button (`aria-label="Close"`, calls `onClose` like Cancel/Esc; CSS puts it top-right; WI-45). `ShortcutHelp` relies on it instead of its own Close button | | |
 
 WI-55 / D-15: `computeReplan(range, bufferMin, strategy?)` forwards the validated strategy. ReplanForm keeps default Balanced and Details=false in per-dialog state; changing dates, strategy or Buffer invalidates plans. `.replan-inputs` puts From/To/Strategy/Compute on one row at all desktop widths. PlanCard shows the move/conflict headline; `ReplanMoves` groups destination-day rows with title, shared `PRIORITY_TAGS`, CategoryTag, compact start movement and reason chips. Details adds existing exact metrics and `moveText` explanations. `combinedNotMoved` unions diagnostics by event id, retains affected plan names and deduplicates barred/conflict labels. `NotMovedList` appears once below both cards, collapsed, with a reason chip and one alternatives action per event; an issue affecting just one plan names it. Details adds full problem text. Zero-move cards still count their own remaining entries, and diagnostics appear even with zero movable events. Existing `openEventAlternatives` and stale-result recomputation are retained. Shared priority tag labels replace the identical local mappings in EventContent and TaskPanel. Per-plan engine diagnostics and apply ids remain unchanged.
 
@@ -2027,3 +2034,8 @@ Production URL: https://…vercel.app
 | 2026-11-13 | v1.50 (WI-54 D-07 UI): completion store actions, Open/Done filtering, row/dialog lifecycle, shared delete confirmation and version-aware bulk preview dialog. Four UI regressions first red, plus empty/invalid/storage-retry coverage; browser persistence and keyboard menu cases added. |
 | 2026-11-13 | v1.51 (WI-55 D-15 engine checkpoint): ReplanStrategy/constants/options validation, optional request/input and required result.strategy, stable second-plan ids, category ranking with shared optionFor/rankCandidates key callback, named strategy reasons and ten full property cases. Fourteen ranking/facade cases preserve old defaults and prove new sort keys/apply/undo. UI remains in progress. |
 | 2026-11-13 | v1.52 (WI-55 D-15 UI): strategy action/selector, compact day-grouped cards and shared priority tags, Details metrics/buffer/explanations, one collapsed deduplicated diagnostics list with per-plan hints. Four initially red RTL cases and all nineteen older dialog cases pass; old detailed assertions now open Details/shared diagnostics. Browser all-strategy/apply/undo and six desktop geometry checks added. |
+| 2026-11-13 | v1.53 (WI-56 D-20): shared clockText.toClockTime (UI re-export keeps its public helper) and barredClashText supply exact label/time duplicate versus overlap messages at the existing later Days path. No overlap/import/legacy validation behavior changes. T44/T53 exact text updates follow binding D-20. |
+| 2026-11-13 | v1.54 (WI-56 D-14 checkpoint): AppBar/calendar-only Toolbar, three independent columns, counted Tasks/Conflicts/Replan/Barred regions, separate mutually exclusive drawers below 1280, task control deduplication and shared Replan defaults/strategy. Existing counted headings/drawer and moved-control tests adapted without dropping assertions. Final browser/capture/full gate remains in progress. |
+| 2026-11-13 | v1.55 (WI-56 browser/focus checkpoint): browser helpers expose the correct Tasks/Planning drawer before moved actions; existing D-14 selectors/counts retain assertions. Modal explicitly wraps boundary Tab within enabled visible controls (including closed-details exclusion), confirmed red then green; the prior browser focus-containment assertion is retained. D-21 Figure 1/2 use aligned allowed-character diagrams. |
+| 2026-11-13 | v1.56 (WI-56 layout review): TaskPanel DOM follows the visible Show, Sort by, menu order for keyboard and reading order. Native dialogs reset their scroll offset on opening so the title stays visible after browser initial focus. Both regressions fail first and then pass. |
+| 2026-11-13 | WI-56 compact-row review: TaskRow uses both window dates with fmtRange as its tooltip; its action row spans both grid columns and removes obsolete ribbon indentation. T56 first fails for the missing window start and a wrapped Edit button, then checks all three actions align. |

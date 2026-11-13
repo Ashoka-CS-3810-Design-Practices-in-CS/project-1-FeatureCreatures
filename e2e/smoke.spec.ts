@@ -1,5 +1,13 @@
 import { expect, test, type Page } from '@playwright/test';
-import { clickTime, collectPageErrors, dragSelect, openCalendar, TOOLBAR_DIALOGS } from './helpers';
+import {
+  clickTime,
+  collectPageErrors,
+  dragSelect,
+  openCalendar,
+  TOOLBAR_DIALOGS,
+  openReplan,
+  openNewTask,
+} from './helpers';
 
 // WI-35: runs on the built app and on the StrictMode dev server (playwright.config.ts), so a
 // crash or a dialog that closes itself in either mode fails here.
@@ -50,7 +58,7 @@ test('smoke: the main flows run without any page error', async ({ page }) => {
   await expect(alternatives).toHaveCount(0);
   await expect(page.getByText('No conflicts', { exact: true })).toBeVisible();
 
-  await page.getByRole('button', { name: '+ Task', exact: true }).click();
+  await openNewTask(page);
   const taskDialog = page.getByRole('dialog', { name: 'New task' });
   await taskDialog.getByLabel('Name', { exact: true }).fill('Report');
   await taskDialog.getByLabel('Window from', { exact: true }).fill('2026-11-02T09:00');
@@ -63,7 +71,7 @@ test('smoke: the main flows run without any page error', async ({ page }) => {
   await picker.getByRole('button', { name: 'Apply selected', exact: true }).click();
   await expect(picker).toHaveCount(0);
 
-  await page.getByRole('button', { name: 'Replan', exact: true }).click();
+  await openReplan(page);
   const replan = page.getByRole('dialog', { name: 'Replan', exact: true });
   await replan.getByRole('button', { name: 'Compute plans', exact: true }).click();
   // The scheduled Report task is the one flexible event, so both plan cards appear.

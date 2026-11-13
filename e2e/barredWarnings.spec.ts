@@ -15,7 +15,7 @@ test('T38: settings warns separately, View opens the drawer, and alternatives cl
   await expect(page.getByRole('heading', { name: 'Conflicts (0)', exact: true })).toBeVisible();
   await page.setViewportSize(NARROW_VIEWPORT);
   await page.getByRole('button', { name: 'View', exact: true }).click();
-  const drawer = page.getByRole('dialog', { name: 'Tasks and conflicts', exact: true });
+  const drawer = page.getByRole('dialog', { name: 'Conflicts', exact: true });
   await expect(drawer).toBeVisible();
   await expect(drawer.getByRole('heading', { name: 'Barred-slot overlaps (1)' })).toBeFocused();
   const warnings = drawer.getByRole('region', { name: 'Barred-slot overlaps (1)' });

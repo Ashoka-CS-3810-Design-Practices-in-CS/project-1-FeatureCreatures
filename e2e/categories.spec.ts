@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { collectPageErrors, openCalendar } from './helpers';
+import { collectPageErrors, openCalendar, openNewTask } from './helpers';
 
 const THEMES = ['light', 'dark'] as const;
 
@@ -24,7 +24,7 @@ for (const theme of THEMES) {
     await expect(event).toHaveCount(0);
     await expect(page.getByRole('button', { name: /^Research meeting,.*Research$/ })).toBeVisible();
 
-    await page.getByRole('button', { name: '+ Task', exact: true }).click();
+    await openNewTask(page);
     const task = page.getByRole('dialog', { name: 'New task', exact: true });
     const chosenCategory = await task.getByLabel('Category', { exact: true }).inputValue();
     await expect(task.getByRole('option', { name: 'Research', exact: true })).toHaveAttribute(
