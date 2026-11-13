@@ -87,7 +87,7 @@ describe('T53: soft barred slots UI (D-09)', () => {
     await userEvent.type(within(second).getByLabelText('To'), '14:30');
     await userEvent.click(within(region).getByRole('button', { name: 'Save barred slots' }));
     expect(
-      await within(second).findByText('Overlaps barred slot 1 (Lunch) on Mon, Tue, Wed, Thu, Fri.'),
+      await within(second).findByText('Overlaps "Lunch" (13:00–14:00) on Mon, Tue, Wed, Thu, Fri.'),
     ).toBeInTheDocument();
     expect(engine.snapshot().settings.barredSlots).toEqual([]);
     await userEvent.click(

@@ -133,11 +133,11 @@ describe('SettingsDialog', () => {
 
     const second = screen.getByRole('group', { name: 'Barred slot 2' });
     expect(
-      await within(second).findByText('Overlaps barred slot 1 (Lunch) on Mon, Tue, Wed, Thu, Fri.'),
+      await within(second).findByText('Same days and times as "Lunch" (12:00–13:00).'),
     ).toBeInTheDocument();
     expect(
       within(screen.getByRole('group', { name: 'Barred slot 1' })).queryByText(
-        /Overlaps barred slot/,
+        /Same days and times as|Overlaps "/,
       ),
     ).not.toBeInTheDocument();
     expect(store.getState().dialog).toBeNull();

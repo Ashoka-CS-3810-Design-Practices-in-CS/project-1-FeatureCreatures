@@ -11,7 +11,7 @@ const DAY_FORMAT = 'EEE d MMM';
 const DAY_TITLE_FORMAT = 'EEE d MMM yyyy';
 const WEEK_TITLE_FORMAT = "'Week of' d MMM yyyy";
 const MONTH_TITLE_FORMAT = 'MMMM yyyy';
-const PAD_WIDTH = 2;
+export { toClockTime } from '@/shared/clockText';
 const VIEW_TITLE_FORMAT: Record<ViewType, string> = {
   timeGridDay: DAY_TITLE_FORMAT,
   timeGridWeek: WEEK_TITLE_FORMAT,
@@ -51,14 +51,6 @@ export function fmtDuration(minutes: number): string {
     return `${rest} min`;
   }
   return rest === 0 ? `${hours} h` : `${hours} h ${rest} min`;
-}
-
-// PRE:  minuteOfDay is an integer 0 … 1440
-// POST: returns it as 'HH:mm' (1440 gives '24:00')
-export function toClockTime(minuteOfDay: number): string {
-  const hours = String(Math.floor(minuteOfDay / MINUTES_PER_HOUR)).padStart(PAD_WIDTH, '0');
-  const minutes = String(minuteOfDay % MINUTES_PER_HOUR).padStart(PAD_WIDTH, '0');
-  return `${hours}:${minutes}`;
 }
 
 // PRE:  type is the shown view; periodStart is the first day of the period it shows

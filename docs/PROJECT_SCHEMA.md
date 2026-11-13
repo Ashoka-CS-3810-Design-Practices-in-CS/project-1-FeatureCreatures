@@ -190,7 +190,7 @@ The default flex window is the event's local day, from working start to working 
 | `workStartMin` | minutes after local midnight | `540` (09:00) | 0–1439 |
 | `workEndMin` | minutes after local midnight | `1080` (18:00) | `> workStartMin`, ≤ 1440 |
 | `bufferMin` | integer | `0` | 0–120 |
-| `barredSlots` | `{id, label, startMin, endMin, days}[]` | `[]` | `endMin > startMin`; label 1–40 characters; no positive time overlap on shared weekdays; touching is allowed (D-09) |
+| `barredSlots` | `{id, label, startMin, endMin, days}[]` | `[]` | `endMin > startMin`; label 1–40 characters; no positive time overlap on shared weekdays; touching is allowed; duplicate/overlap messages name the earlier label and times (D-09/D-20) |
 | `defaultCriterion` | `earliest \| bestFit \| priorityAware` | `earliest` | — |
 
 UI-only preferences (theme and last view) are stored in `localStorage`, not in Settings.
@@ -530,7 +530,7 @@ Every search result also carries:
 - Each barred-overlap row also shows **Fixed** or **Flexible**. Flexible events can be replanned only when not already started and a free placement exists within the range and flex window (BR-12).
 - When saving settings introduces ongoing/future overlap records, an info toast counts distinct events among those new records: `2 events overlap barred slots` (singular: `1 event overlaps barred slots`). Entirely past records do not count. **View** opens the panels drawer when needed and focuses/scrolls the barred-overlap section. An unchanged save or a save only removing overlaps produces no overlap toast.
 - **Keep here / Stop keeping:** one undoable metadata change stores/removes that slot ID in `event.keptInBarred`. Kept rows/tags are suppressed and shown in a collapsed Kept group. A kept slot does not cause a barred Replan move or diagnostic; other reasons still apply. Time-changing data commands clear keeps; Undo restores their before-images. Slot deletion or changed times/days clears affected keeps atomically with settings, including stale history images; renaming or reordering weekdays preserves them. Settings changes remain non-undoable.
-- **Slot overlap validation:** new/edited barred content rejects any positive time overlap on a shared weekday, at the later slot's Days field, naming the first earlier overlap: `Overlaps barred slot 1 (Lunch) on Mon, Tue.` Touching and disjoint weekdays are allowed; exact duplicates follow the same rule. Stored data/Dexie upgrades and v1 imports preserve older overlaps. Unrelated settings saves may keep those rows; every barred edit must resolve them. The Barred slots region explains old overlaps and offers editing; labels stack on the calendar. Current-format imports use current validation.
+- **Slot overlap validation:** new/edited barred content rejects any positive time overlap on a shared weekday, at the later slot's Days field, naming the first earlier overlap: `Overlaps "Lunch" (13:00–14:00) on Mon, Tue.` Exact duplicates (same day set and times, regardless of label/day order) say `Same days and times as "Lunch" (13:00–14:00).` No message numbers the slots. Touching and disjoint weekdays are allowed. Stored data/Dexie upgrades and v1 imports preserve older overlaps. Unrelated settings saves may keep those rows; every barred edit must resolve them. The Barred slots region explains old overlaps and offers editing; labels stack on the calendar. Current-format imports use current validation.
 
 ---
 
@@ -758,3 +758,4 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 | 2026-11-13 | v1.25 (WI-54 D-07 engine checkpoint): BR-18 completion/unschedule atomicity, Reopen, inclusive bulk cutoff/preview, stale guard and default-hidden done tasks. |
 | 2026-11-13 | v1.26 (WI-55 D-15 engine checkpoint): BR-12 exact strategy sort keys, category-minute/busy updates, preserved Minimal change/default Balanced, reason precedence and unchanged safety/undo. UI remains in progress. |
 | 2026-11-13 | v1.27 (WI-55 D-15 UI): FR10 compact inputs/cards/day groups, named strategy, Details, and one collapsed diagnostics union. Issues unresolved in only one plan name that plan; full problem labels remain behind Details. |
+| 2026-11-13 | v1.28 (WI-56 D-20): Settings/BR-15 named duplicate and overlap errors include the first earlier slot label and 24-hour times instead of a number. Schema/import/editor errors share the same text; legacy banner unchanged. |

@@ -16,7 +16,7 @@ describe('T53: barred-slot rules and Keep here (D-09)', () => {
       error: {
         code: 'InvalidInput',
         issues: [
-          { path: 'barredSlots.1.days', message: 'Overlaps barred slot 1 (Lunch) on Mon, Tue.' },
+          { path: 'barredSlots.1.days', message: 'Overlaps "Lunch" (13:00–14:00) on Mon, Tue.' },
         ],
       },
     });
