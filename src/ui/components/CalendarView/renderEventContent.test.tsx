@@ -49,6 +49,21 @@ describe('renderEventContent', () => {
     expect(screen.getByText('[H]')).toBeInTheDocument();
   });
 
+  it('T59: keeps a named category marker and separate Flexible and Task tags', () => {
+    const info = contentInfo();
+    info.event.extendedProps = {
+      ...BLOCK_PROPS,
+      flexible: true,
+      isTask: true,
+      category: { id: 'class', name: 'Class', colour: '#467b70', createdAt: 0 },
+    };
+    render(<>{renderEventContent(info, vi.fn())}</>);
+
+    expect(screen.getByLabelText('Category: Class')).toHaveAttribute('title', 'Class');
+    expect(screen.getByText('Flexible', { exact: true })).toBeInTheDocument();
+    expect(screen.getByText('Task', { exact: true })).toBeInTheDocument();
+  });
+
   it('keeps the event props on a drag mirror of an existing event', () => {
     render(<>{renderEventContent(contentInfo({ isMirror: true }), vi.fn())}</>);
 
