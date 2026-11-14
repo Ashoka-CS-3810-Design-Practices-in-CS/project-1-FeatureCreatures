@@ -6,6 +6,24 @@ const ROUNDING_PX = 1;
 
 // INVARIANT: compact column checks cover each visited theme
 for (const theme of ['light', 'dark'] as const) {
+  test(`T63: task checkboxes and names stay separate at 1280, ${theme}`, async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.emulateMedia({ colorScheme: theme });
+    await openCalendar(page);
+    await page.getByRole('button', { name: 'Load sample week', exact: true }).click();
+    const rows = page.getByRole('region', { name: /^Tasks \(/ }).getByRole('listitem');
+    await expect(rows).toHaveCount(4);
+    // INVARIANT: every visited row keeps its checkbox fully before its task name
+    for (const row of await rows.all()) {
+      const selection = await row.getByRole('checkbox').boundingBox();
+      const name = await row.locator('.task-name').boundingBox();
+      expect(selection).not.toBeNull();
+      expect(name).not.toBeNull();
+      expect((selection?.x ?? 0) + (selection?.width ?? 0)).toBeLessThanOrEqual(name?.x ?? 0);
+    }
+    // POST: no sample task checkbox overlaps the task name
+  });
+
   test(`T63: four tasks and the whole barred region fit, ${theme}`, async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.emulateMedia({ colorScheme: theme });

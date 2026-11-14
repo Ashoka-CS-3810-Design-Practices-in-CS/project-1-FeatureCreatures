@@ -178,6 +178,11 @@
   padding: 0;
 }
 
+/* FullCalendar's percentage gutter otherwise pushes ordinary 1280 px blocks below Compact. */
+.fc .fc-timegrid-col-events {
+  margin-inline: calc(var(--space-1) / 4);
+}
+
 .event-content {
   overflow: hidden;
   font-size: var(--text-sm);
