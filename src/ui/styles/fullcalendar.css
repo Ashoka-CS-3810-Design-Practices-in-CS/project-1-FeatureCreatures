@@ -155,7 +155,6 @@
 }
 
 .fc .fc-timegrid-event.ev {
-  container: event-block / inline-size;
   /* The outer ring in the page colour keeps side-by-side blocks apart. */
   box-shadow: 0 0 0 1px var(--bg);
 }
@@ -176,7 +175,7 @@
 }
 
 .fc .fc-timegrid-event .fc-event-main {
-  padding: var(--space-1) var(--space-2);
+  padding: 0;
 }
 
 .event-content {
@@ -199,41 +198,61 @@
   margin-right: var(--space-1);
 }
 
-/* In the time grid the title leads (a half-hour block shows at least the title, or the conflict
-   warning, which stays first in the markup so a short block keeps it); time and tags follow. */
+.event-details,
+.event-tags {
+  display: contents;
+}
+
+/* Size containment uses the content element's already-sized FullCalendar parent, not JS measurement. */
 .fc-timegrid-event .event-content {
+  container: event-block / size;
+  height: 100%;
+}
+
+.fc-timegrid-event .event-details {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  height: 100%;
+  padding: var(--space-1);
+}
+
+.fc-timegrid-event .event-tags {
+  display: flex;
   align-items: center;
-  gap: 2px var(--space-1);
+  flex-wrap: wrap;
+  gap: calc(var(--space-1) / 2);
 }
 
 .fc-timegrid-event .event-content .tag {
+  flex: none;
   margin-right: 0;
+  padding-inline: var(--space-1);
+  line-height: var(--leading-tight);
 }
 
 .fc-timegrid-event .event-title {
-  flex: 1 0 100%;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  flex: none;
   font-weight: var(--weight-bold);
   overflow: hidden;
+  overflow-wrap: anywhere;
   text-overflow: ellipsis;
 }
 
 .fc-timegrid-event .event-time {
-  order: 1;
+  flex: none;
   color: var(--event-muted);
   font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
-/* The priority and Fixed / Task tags follow the time in the markup. */
-.fc-timegrid-event .event-content .event-time ~ .tag {
-  order: 2;
-}
-
-.fc-timegrid-event .event-content .tag-conflict,
-.fc-timegrid-event .event-content .tag-barred {
-  order: -1;
+.fc-timegrid-event .category-name {
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .fc .event-list-button {
@@ -369,40 +388,81 @@
   font-weight: var(--weight-regular);
 }
 
-/* A narrow block keeps its title/priority and compact icons; the full label remains on its button. */
-@container event-block (max-width: 7rem) {
-  .event-content {
-    row-gap: 0;
-    line-height: 1;
+/* Native query conditions require literals; tokens.test.ts keeps them equal to the named tokens. */
+@container event-block (width < 150px) {
+  .fc-timegrid-event .event-tags .tag-text,
+  .fc-timegrid-event .event-tags .category-name,
+  .fc-timegrid-event .event-tags .tag-barred,
+  .fc-timegrid-event .event-tags .event-task {
+    display: none;
   }
-  .fc .fc-timegrid-event .fc-event-main {
-    padding: calc(var(--space-1) / 2);
+}
+
+@container event-block (width < 90px) {
+  .fc-timegrid-event .event-details {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-auto-rows: min-content;
+    align-content: start;
   }
 
-  .event-content .tag-text,
-  .event-content .category-tag,
-  .event-content .event-time {
+  .fc-timegrid-event .event-details .event-title {
+    display: block;
+    grid-column: 1 / -1;
+    white-space: nowrap;
+  }
+
+  .fc-timegrid-event .event-details .event-time,
+  .fc-timegrid-event .event-tags > .tag:not(.event-priority):not(.tag-conflict) {
     display: none;
   }
 
-  .event-content .event-title {
-    white-space: nowrap;
-    order: 0;
+  .fc-timegrid-event .event-tags {
+    display: contents;
   }
 
-  .event-content .tag {
-    padding-inline: calc(var(--space-1) / 2);
+  .fc-timegrid-event .event-priority {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: start;
+  }
+
+  .fc-timegrid-event .tag-conflict {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
+  }
+}
+
+@container event-block (width < 56px) {
+  .fc-timegrid-event .tag-conflict {
+    grid-column: 1;
+    grid-row: 3;
+    justify-self: start;
+  }
+}
+
+@container event-block (height < 44px) {
+  .fc-timegrid-event .event-details {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .fc-timegrid-event .event-details .event-title {
+    display: block;
+    flex: 1 1 auto;
+    min-width: 0;
     font-size: var(--text-xs);
-    line-height: 1;
+    white-space: nowrap;
   }
 
-  .fc-timegrid-event .event-content .event-time ~ .tag {
-    order: 1;
+  .fc-timegrid-event .event-details .event-time {
+    display: block;
   }
 
-  .fc-timegrid-event .event-content .tag-conflict,
-  .fc-timegrid-event .event-content .tag-barred {
-    order: 2;
+  .fc-timegrid-event .event-details .event-tags {
+    display: none;
   }
 }
 

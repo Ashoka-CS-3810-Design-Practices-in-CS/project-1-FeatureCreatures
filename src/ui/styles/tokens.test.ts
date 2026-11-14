@@ -13,6 +13,10 @@ import {
 import { colourDistance } from '@/shared/colours';
 
 const TOKENS_CSS = readFileSync(fileURLToPath(new URL('./tokens.css', import.meta.url)), 'utf8');
+const CALENDAR_CSS = readFileSync(
+  fileURLToPath(new URL('./fullcalendar.css', import.meta.url)),
+  'utf8',
+);
 const MIN_TEXT_CONTRAST = 4.5; // WCAG AA, body text
 const HEX_COLOUR = /^#[0-9a-f]{6}$/i;
 const CHANNEL_MAX = 255;
@@ -103,6 +107,20 @@ const light = tokensOf(':root');
 const dark = tokensOf(":root[data-theme='dark']");
 
 describe('tokens.css', () => {
+  it('T59: container-query literals match their named size tokens and compact markers retain contrast', () => {
+    ['event-compact-width', 'event-full-width', 'event-narrow-stack-width'].forEach((name) => {
+      expect(CALENDAR_CSS).toContain(`(width < ${light.get(name)})`);
+    });
+    expect(CALENDAR_CSS).toContain(`(height < ${light.get('event-short-height')})`);
+    [light, dark].forEach((tokens) => {
+      expect(
+        contrast(tokens.get('tag-muted') ?? '', tokens.get('tag-bg') ?? ''),
+      ).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+      CATEGORY_PALETTE.forEach((colour) => {
+        expect(contrast(colour, tokens.get('tag-bg') ?? '')).toBeGreaterThanOrEqual(3);
+      });
+    });
+  });
   it('T57: neutral event fills contrast with every grid background and keep event/tag text readable', () => {
     [light, dark].forEach((tokens, index) => {
       const fill = tokens.get('event-fill') ?? '';

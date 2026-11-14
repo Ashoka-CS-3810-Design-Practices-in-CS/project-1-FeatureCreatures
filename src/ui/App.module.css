@@ -1,6 +1,9 @@
 .app {
   display: grid;
-  grid-template-columns: 18rem minmax(0, 1fr) 20rem;
+  /* The narrower desktop preserves 90 px ordinary event blocks beside the 320 px right column. */
+  grid-template-columns:
+    clamp(var(--tasks-min-width), calc(100vw - var(--tasks-width-offset)), var(--tasks-max-width))
+    minmax(0, 1fr) 20rem;
   grid-template-rows: auto auto minmax(0, 1fr);
   grid-template-areas: 'banner banner banner' 'header header header' 'tasks main side';
   height: 100vh;

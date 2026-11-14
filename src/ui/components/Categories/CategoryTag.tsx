@@ -4,13 +4,17 @@ import type { Category } from '@/shared/types';
 // POST: shows its colour dot and readable name, independent of the colour's text contrast
 export function CategoryTag({ category }: { category: Category }) {
   return (
-    <span className="tag category-tag">
+    <span
+      className="tag category-tag"
+      aria-label={`Category: ${category.name}`}
+      title={category.name}
+    >
       <span
         className="category-dot"
         style={{ backgroundColor: category.colour }}
         aria-hidden="true"
       />
-      {category.name}
+      <span className="category-name">{category.name}</span>
     </span>
   );
 }

@@ -27,8 +27,29 @@ const TOAST_WAIT_MS = 10_000;
 // Late Monday morning of TEST_PLAN's base week: "today" and the now line sit inside the grid, and
 // Tuesday's conflict is still ahead, so Replan has a move to show.
 const CLOCK_TIME = new Date('2026-11-02T11:15:00');
+const ROUND3_SIZES = [
+  { width: 1440, height: 900 },
+  { width: 1280, height: 800 },
+  { width: 1024, height: 768 },
+];
+const CAPTURE_PHASE = process.env.CAPTURE_PHASE ?? 'after';
 
 type Theme = (typeof THEMES)[number];
+
+// INVARIANT: Round 3 captures are registered for every visited theme
+for (const theme of THEMES) {
+  // INVARIANT: captures cover each visited desktop size for this theme
+  for (const size of ROUND3_SIZES) {
+    test(`readable blocks ${theme} ${size.width}`, async ({ page }) => {
+      await openApp(page, theme, size.width, new Date('2026-11-02T08:00:00'));
+      await page.setViewportSize(size);
+      await loadSampleWeek(page);
+      await capture(page, `wi60-${CAPTURE_PHASE}-${theme}-${size.width}`);
+    });
+  }
+  // POST: every required size is captured for this theme
+}
+// POST: both themes have captures at all three required sizes
 
 // PRE:  page has a fresh browser context; theme is the OS colour scheme to emulate; width > 0
 // POST: opens the empty calendar in the base week at that width, with the "System" theme following

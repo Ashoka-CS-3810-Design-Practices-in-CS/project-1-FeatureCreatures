@@ -1622,6 +1622,8 @@ WI-51 / D-06: `SlotPicker` uses a wide scrollable native Modal. `SuggestionOptio
 
 ### 11.3 FullCalendar integration (`CalendarView/`)
 
+WI-60: time-grid `.event-content` is an `event-block / size` CSS container filling FullCalendar's sized main element. `.event-details` owns 4 px padding, title/time and a wrapping `.event-tags` row. Native queries use the named token values (90/150 px widths, 44 px short height; 56 px stacks a narrow conflict icon), checked by `tokens.test.ts` because conditions cannot use `var()`. Full retains two-line title/all tags; Compact retains time/full priority/category-dot/kind/conflict icons; Narrow retains one-line title/priority/conflict; short blocks put title/time on one line. Category markers retain named tooltips/accessibility labels; linked events retain Flexible and Task. No JS measurement drives rendering. Desktop Tasks width clamps to 216–288 px as viewport minus 1152 px, preserving ordinary >=90 px blocks at 1280 without changing the 320 px right column or drawer breakpoint. T59 covers bounds, padding, complete priorities, titles and all tiers in both themes at the three exact desktop sizes.
+
 WI-50 / D-01–D-05: EventDialog's flexible boolean is a controlled Fixed/Flexible native radio pair (task-linked events keep Flexible and both controls disabled). Calendar/List is a separate Presentation group, with Day/Week/Month in View. `lastCalendarView` updates only for non-List views. `fc-view` remembers the active side/view, and `fc-calendar-view` remembers its return Calendar view; `storedCalendarView()` supplies `initialCalendarView`. L toggles the two sides, D/W/M switch to Calendar, K calls `toggleCalendarLock()`.
 
 `calendarLocked` initialises from the loaded snapshot's event count and never changes automatically later in the session. CalendarView sets editable/selectable to !locked. `createCalendarHandlers(actions, isLocked = () => false)` also checks the latest lock before mutations/selection (reverting a blocked mutation), retaining event clicks. A DOM container keeps calendar sizing and hosts `useCalendarPan(rootRef, locked)`: primary-pointer time-grid dragging over `CALENDAR_PAN_THRESHOLD_PX = 5` captures the pointer, scrolls from its initial coordinates and suppresses the resulting click; an ordinary event click remains intact. Cleanup releases capture and removes listeners/classes. Fixed confirmations describe destination or new duration, with Move/Change versus Keep it; all remain ordinary undoable moveEvent commands.
@@ -2011,6 +2013,8 @@ Production URL: https://…vercel.app
 ---
 
 ## 16. Change log
+
+- 2026-11-14 · WI-60: §11.3 documents CSS container-size tiers, tested size tokens, accessible category markers, separate scheduling/task metadata and responsive Tasks width; engine contracts remain unchanged.
 
 - 2026-11-14 · Round 3 plan: §14 adds WI-60–66, their sequential dependencies, acceptance checks, required review sizes and baseline/final gate comparison; binding prompt saved in `extras/PROMPT_ROUND_3.md`.
 

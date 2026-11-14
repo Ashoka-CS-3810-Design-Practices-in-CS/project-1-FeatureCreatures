@@ -69,6 +69,7 @@ describe('toFullCalendar', () => {
       classNames: ['ev', 'prio-low', 'is-emphasised'],
       extendedProps: { flexible: true, isTask: true, conflictMinutes: 0 },
     });
+    expect(third?.extendedProps?.label).toContain('Flexible, Task');
   });
 
   it('keeps only the priorities in the filter', () => {

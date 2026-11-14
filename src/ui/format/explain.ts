@@ -200,7 +200,7 @@ export function eventAccessibleText(
   conflictMinutes: number,
   barredLabels: readonly string[] = [],
 ): string {
-  const kind = event.taskId !== null ? 'Task' : event.flexible ? 'Flexible' : 'Fixed';
+  const kind = `${event.flexible ? 'Flexible' : 'Fixed'}${event.taskId !== null ? ', Task' : ''}`;
   const conflict = conflictMinutes > 0 ? `, Conflict ${fmtDuration(conflictMinutes)}` : '';
   const barred = barredLabels.map((label) => `, In ${label}`).join('');
   return `${event.title}, ${fmtRange(event)}, ${PRIORITY_NAME[event.priority]} priority, ${kind}${conflict}${barred}`;
