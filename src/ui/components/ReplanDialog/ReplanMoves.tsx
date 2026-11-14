@@ -1,5 +1,5 @@
 import type { ReplanMove } from '@/shared/types';
-import { PRIORITY_TAGS } from '@/shared/constants';
+import { PriorityTag } from '../PriorityTag/PriorityTag';
 import { moveText } from '../../format/explain';
 import { fmtDay } from '../../format/time';
 import { useAppStore } from '../../store/appStore';
@@ -8,7 +8,7 @@ import { compactMoveTime, moveReasonChip, movesByDay } from './replanView';
 
 // PRE: moves are valid; name labels the plan; details controls full explanations;
 //      StoreProvider supplies snapshot.events/categories for current category identity
-//      + additional props from: CategoryTag
+//      + additional props from: CategoryTag, PriorityTag
 // POST: renders compact move rows grouped by destination day, with optional full explanations
 export function ReplanMoves({
   moves,
@@ -33,8 +33,7 @@ export function ReplanMoves({
               const category = categoriesById.get(eventCategories.get(move.eventId) ?? '');
               return (
                 <li key={move.eventId} className="replan-move-row">
-                  <strong>{move.title}</strong>{' '}
-                  <span className="tag">{PRIORITY_TAGS[move.priority]}</span>
+                  <strong>{move.title}</strong> <PriorityTag priority={move.priority} />
                   {category !== undefined && <CategoryTag category={category} />}
                   <span>{compactMoveTime(move)}</span>{' '}
                   <span className="tag">{moveReasonChip(move.reason)}</span>

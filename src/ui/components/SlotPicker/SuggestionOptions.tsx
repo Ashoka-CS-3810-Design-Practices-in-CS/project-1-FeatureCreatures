@@ -96,7 +96,8 @@ export function SuggestionOptions({
               <label>
                 <SlotRadio option={pick.option} selected={selected} groupName={groupName} />
                 <span>
-                  <strong>{pick.name}</strong> <span>{fmtRange(pick.option.slot)}</span>
+                  <strong>{pick.name}</strong>{' '}
+                  <span className="picker-range">{fmtRange(pick.option.slot)}</span>
                 </span>
               </label>
               <p>{pick.reason}</p>

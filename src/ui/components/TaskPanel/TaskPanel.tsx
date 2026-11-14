@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { PRIORITY_TAGS } from '@/shared/constants';
+import { PriorityTag } from '../PriorityTag/PriorityTag';
 import type { CalendarEvent, Task } from '@/shared/types';
 import { fmtDuration, fmtRange, fmtTaskWindow, fmtWeekdayTime } from '../../format/time';
 import { useAppStore, type AppActions, type AppState } from '../../store/appStore';
@@ -71,7 +71,7 @@ function TaskActionsMenu({ task, actions }: { task: Task; actions: AppActions })
 
 // PRE:  task is a task; event is its scheduled event, if any; selected says whether it is ticked;
 //       actions are the store's actions; reads snapshot.categories under StoreProvider
-//       + additional props from: CategoryTag, TaskActionsMenu
+//       + additional props from: CategoryTag, TaskActionsMenu, PriorityTag
 // POST: renders one task row: a selection box (unscheduled tasks only), name, priority tag,
 //       category tag, duration, window dates, status and applicable scheduling/completion/edit/delete actions
 function TaskRow({
@@ -110,7 +110,7 @@ function TaskRow({
         >
           <strong>{task.name}</strong>
         </button>{' '}
-        <span className={`tag prio-${task.priority}`}>{PRIORITY_TAGS[task.priority]}</span>
+        <PriorityTag priority={task.priority} />
         {category !== undefined && <CategoryTag category={category} />}
       </span>{' '}
       <span className="task-meta">

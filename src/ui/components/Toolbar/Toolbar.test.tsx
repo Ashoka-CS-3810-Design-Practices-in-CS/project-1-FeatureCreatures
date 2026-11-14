@@ -3,7 +3,7 @@ import type FullCalendar from '@fullcalendar/react';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { RefObject } from 'react';
-import { ev } from '../../../../tests/helpers/builders';
+import { ev, flexEv } from '../../../../tests/helpers/builders';
 import { makeEngine } from '../../../../tests/helpers/engine';
 import { renderWithStore, storeFor } from '../../../../tests/helpers/render';
 import { t } from '../../../../tests/helpers/time';
@@ -33,6 +33,48 @@ function renderToolbar(store: AppStore, onCycleTheme = vi.fn()): void {
 }
 
 describe('Toolbar', () => {
+  it('T64: List selects and aria-disables Week while Calendar restores the previous Month view', async () => {
+    const store = storeFor((await makeEngine()).engine);
+    store.getState().actions.setView('dayGridMonth', t('Mon 00:00'));
+    store.getState().actions.setView('listWeek', t('Mon 00:00'));
+    renderToolbar(store);
+    const week = screen.getByRole('button', { name: 'Week' });
+    expect(week).toHaveAttribute('aria-pressed', 'true');
+    expect(week).toHaveAttribute('aria-disabled', 'true');
+    expect(week).toHaveAttribute('title', 'List always shows one week');
+    await userEvent.click(week);
+    expect(fakeApi.changeView).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole('button', { name: 'Calendar' }));
+    expect(fakeApi.changeView).toHaveBeenCalledWith('dayGridMonth');
+  });
+
+  it('T64: lock and history controls use full-size line SVGs with their original accessible names', async () => {
+    renderToolbar(storeFor((await makeEngine()).engine));
+    // INVARIANT: every visited control has its original accessible name and a line SVG
+    for (const name of ['Undo', 'Redo', 'Calendar lock']) {
+      expect(screen.getByRole('button', { name }).querySelector('svg')).toBeInTheDocument();
+    }
+    // POST: all three controls use line SVGs
+  });
+
+  it.each([0, 1, 2])(
+    'T64: Replan explains %i movable events outside the heading',
+    async (count) => {
+      const events = Array.from({ length: count }, (_, index) =>
+        flexEv(`E${index}`, 'Mon 10:00', 'Mon 11:00', ['Mon 09:00', 'Fri 18:00']),
+      );
+      renderToolbar(storeFor((await makeEngine({ events })).engine));
+      const replan = screen.getByRole('region', { name: 'Replan' });
+      expect(within(replan).getByRole('heading', { name: 'Replan' })).toBeInTheDocument();
+      expect(
+        within(replan).getByText(
+          count === 0
+            ? 'No flexible events in this range'
+            : `${count} flexible ${count === 1 ? 'event' : 'events'} can move`,
+        ),
+      ).toBeInTheDocument();
+    },
+  );
   it('T60: category disclosure reports selection, supports keyboard Escape/Show all and conditionally resets', async () => {
     const store = storeFor((await makeEngine()).engine);
     renderToolbar(store);

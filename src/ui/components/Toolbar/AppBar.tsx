@@ -65,7 +65,7 @@ export function AppBar({
           disabled={!snapshot.canUndo}
           onClick={() => void actions.undo()}
         >
-          ↶
+          <Icon name="undo" />
         </button>
         <button
           type="button"
@@ -74,7 +74,7 @@ export function AppBar({
           disabled={!snapshot.canRedo}
           onClick={() => void actions.redo()}
         >
-          ↷
+          <Icon name="redo" />
         </button>
         <button
           type="button"

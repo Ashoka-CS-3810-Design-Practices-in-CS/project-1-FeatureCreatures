@@ -99,6 +99,7 @@
   --tasks-width-offset: 1152px;
   --task-row-height: 72px;
   --barred-compact-time-width: 6rem;
+  --picker-card-min-width: 15rem;
   --barred-time-width: 8.5rem;
   --side-width: 384px;
 }

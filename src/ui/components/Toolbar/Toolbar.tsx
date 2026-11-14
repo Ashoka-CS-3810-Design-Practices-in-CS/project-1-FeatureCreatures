@@ -4,6 +4,7 @@ import type { Priority } from '@/shared/types';
 import { fmtViewTitle } from '../../format/time';
 import { useAppStore, type ViewType } from '../../store/appStore';
 import { CategoryFilter } from './CategoryFilter';
+import { Icon } from '../Icon/Icon';
 
 const VIEWS: { type: ViewType; label: string }[] = [
   { type: 'timeGridDay', label: 'Day' },
@@ -28,6 +29,7 @@ export function Toolbar({ calendarRef }: { calendarRef: RefObject<FullCalendar |
   const hiddenCategories = useAppStore((state) => state.hiddenCategoryIds);
   const actions = useAppStore((state) => state.actions);
   const calendar = () => calendarRef.current?.getApi();
+  const isList = view.type === 'listWeek';
 
   return (
     <div className="toolbar">
@@ -49,8 +51,15 @@ export function Toolbar({ calendarRef }: { calendarRef: RefObject<FullCalendar |
             <button
               key={option.type}
               type="button"
-              aria-pressed={view.type === option.type}
-              onClick={() => calendar()?.changeView(option.type)}
+              aria-pressed={view.type === option.type || (isList && option.type === 'timeGridWeek')}
+              aria-disabled={isList && option.type === 'timeGridWeek' ? true : undefined}
+              title={
+                isList && option.type === 'timeGridWeek' ? 'List always shows one week' : undefined
+              }
+              onClick={() => {
+                if (!(isList && option.type === 'timeGridWeek'))
+                  calendar()?.changeView(option.type);
+              }}
             >
               {option.label}
             </button>
@@ -102,7 +111,7 @@ export function Toolbar({ calendarRef }: { calendarRef: RefObject<FullCalendar |
           aria-pressed={locked}
           onClick={actions.toggleCalendarLock}
         >
-          <span aria-hidden="true">{locked ? '🔒' : '🔓'}</span> {locked ? 'Locked' : 'Unlocked'}
+          <Icon name={locked ? 'fixed' : 'unlock'} /> {locked ? 'Locked' : 'Unlocked'}
         </button>
         <button
           type="button"

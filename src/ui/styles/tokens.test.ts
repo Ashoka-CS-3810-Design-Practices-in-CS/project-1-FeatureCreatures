@@ -107,6 +107,17 @@ const light = tokensOf(':root');
 const dark = tokensOf(":root[data-theme='dark']");
 
 describe('tokens.css', () => {
+  it('T64: history/lock line icons retain 3:1 contrast in both themes, including disabled history ink', () => {
+    [light, dark].forEach((tokens) => {
+      ['text', 'muted'].forEach((foreground) => {
+        ['bg', 'surface'].forEach((background) => {
+          expect(
+            contrast(tokens.get(foreground) ?? '', tokens.get(background) ?? ''),
+          ).toBeGreaterThanOrEqual(3);
+        });
+      });
+    });
+  });
   it('T59: container-query literals match their named size tokens and compact markers retain contrast', () => {
     ['event-compact-width', 'event-full-width', 'event-narrow-stack-width'].forEach((name) => {
       expect(CALENDAR_CSS).toContain(`(width < ${light.get(name)})`);
