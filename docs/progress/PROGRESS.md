@@ -6,7 +6,7 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** None; WI-60 complete with targeted checks, WI-61 next. Full gate deferred to the round-3 final gate per user steer.
+- **Active WI:** WI-61, category filter disclosure, branch `feat/wi-61-category-filter`. Full gate deferred to the round-3 final gate per user steer.
 - **Last session:** 2026-11-14 · Codex · saved the binding Round 3 request, reconstructed clean main/history, spot-checked WI-59's documentation/smoke/checker deliverables and all existing tests, and recorded the fresh full baseline below. No leftover work or lockfile changes; node_modules already present. Round 3 plan is WI-60–66 in order.
 - **Gate status:** 2026-11-14 Round 3 BASELINE on `main` at `26aafa0`: typecheck/lint, 861 + 1 existing skipped, overall 98.53/94.38/98.05/98.74, algorithms 99.72/96.80/100/99.71, DST 9, ten properties × 10,000, build, 192/192 browsers (64 × 3), zero retries, exit 0. Evidence: .tmp-round3-baseline-core.log and .tmp-round3-baseline-browsers.log.
 
@@ -361,7 +361,8 @@ Binding spec: [PROMPT_ROUND_3.md](../extras/PROMPT_ROUND_3.md). D-01–D-21 rema
   - 2026-11-14 · Codex · branch `feat/wi-60-event-blocks` · done: six exact-size before captures reviewed; T59 category/Task RTL red and browser geometry red on missing padding; tests compile after a nullable assertion-message fix · next: container tiers and targeted checks; full gate deferred to the round-3 final gate · note: baseline capture run started before the user's gate-once steer; no more per-WI screenshot-suite runs. At 1280 the existing 288 px Tasks column leaves ordinary blocks ~80 px, so a responsive Tasks width is needed to keep ordinary desktop blocks in the required >=90 px Compact tier.
   - 2026-11-14 · Codex · branch `feat/wi-60-event-blocks` · done: claimed after the full green main baseline; existing container rule hides time/category below 112 px and reduces padding · next: exact-size before captures, red geometry/metadata tests, container-width/height tiers, docs, reviewed after captures/full branch/main gates · note: explicit Narrow/short tier exceptions govern overlapping/short blocks; >=90 px normal-height blocks retain time/category and <=20-character titles. No domain changes.
   - Done when: size/height-aware Full/Compact/Narrow blocks retain padding, time, complete priority and category markers; no crossing tags or truncated titles up to 20 characters at 1440/1280 in both themes; full 1024 blocks, complete accessible labels/tooltips and past contrast retained; §7.5/§11 updated; screenshots reviewed.
-- [ ] **WI-61** The filter row never overflows — owner S + Dv — depends on 60
+- [~] **WI-61** The filter row never overflows — owner S + Dv — depends on 60
+  - 2026-11-14 · Codex · branch `feat/wi-61-category-filter` · done: claimed after WI-60 targeted checks/merge · next: red disclosure/overflow tests, checkbox popover, conditional Reset and selector updates; full gate deferred to the round-3 final gate · note: preserve FR6/counts and every existing assertion's behavior.
   - Done when: Categories checkbox disclosure, Show all, conditional Reset and Esc/focus work; 5/12 categories fit all three widths in both themes; filtering/counts/FR6 remain tested.
 - [ ] **WI-62** The built-in samples are never a dead week — owner S + Dv — depends on 61
   - Done when: weekend clocks anchor next Monday, weekdays current Monday, DST retained; load navigates/names the sample week; Saturday browser offers upcoming conflict/task slots; fixed exports/fixtures unchanged; TEST_PLAN/schema/README updated.
