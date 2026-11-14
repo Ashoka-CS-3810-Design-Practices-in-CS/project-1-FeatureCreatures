@@ -135,6 +135,7 @@ test('dialog types keep keyboard focus and restore their connected trigger', asy
   await page.keyboard.press('Escape');
   const settingsTrigger = page.getByRole('button', { name: 'Settings', exact: true });
   await settingsTrigger.click();
+  await page.getByRole('tab', { name: 'Data', exact: true }).click();
   await page.getByRole('button', { name: 'Clear all data', exact: true }).click();
   const confirmation = page.getByRole('dialog', { name: 'Clear all data?' });
   await expect(confirmation).toBeVisible();

@@ -1,4 +1,4 @@
-import { useId, useRef, useState, type ChangeEvent } from 'react';
+import { useEffect, useId, useRef, useState, type ChangeEvent } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { SAMPLES, type SampleId } from '@/data/samples';
 import type { Settings } from '@/shared/types';
@@ -20,6 +20,8 @@ import { AppearanceSection } from './AppearanceSection';
 const SAMPLE_IDS = Object.keys(SAMPLES) as SampleId[];
 const DEFAULT_SAMPLE: SampleId = 'sparseWeek';
 const REPLACE_ALL_BODY = 'This replaces all your events, tasks and settings.';
+const SETTINGS_TABS = ['Scheduling', 'Categories', 'Appearance', 'Data'] as const;
+type SettingsTab = (typeof SETTINGS_TABS)[number];
 
 // PRE:  rendered under StoreProvider; settings are the current settings; uses
 //       actions.updateSettings and closeDialog
@@ -125,7 +127,7 @@ function SettingsForm({ settings }: { settings: Settings }) {
         <ErrorText id={errorId('bufferMin')} error={errors.bufferMin} />
       </section>
 
-      <div className="dialog-actions">
+      <div className="dialog-actions settings-save-footer">
         <button type="submit" disabled={isSubmitting}>
           Save
         </button>
@@ -134,6 +136,86 @@ function SettingsForm({ settings }: { settings: Settings }) {
         </button>
       </div>
     </form>
+  );
+}
+
+// PRE: settings are the saved scheduling defaults; StoreProvider supplies immediate category/appearance/data actions
+//      + additional props from: SettingsForm, CategoriesSection, AppearanceSection, DataSection
+// POST: exposes four keyboard tabs; hidden Scheduling stays mounted to preserve its draft until close
+function SettingsTabs({ settings }: { settings: Settings }) {
+  const [active, setActive] = useState<SettingsTab>('Scheduling');
+  const firstTab = useRef<HTMLButtonElement>(null);
+  const id = useId();
+  useEffect(() => {
+    queueMicrotask(() => firstTab.current?.focus());
+  }, []);
+  return (
+    <>
+      <div
+        role="tablist"
+        aria-label="Settings sections"
+        className="settings-tabs"
+        onKeyDown={(event) => {
+          const index = SETTINGS_TABS.indexOf(active);
+          const nextIndex =
+            event.key === 'Home'
+              ? 0
+              : event.key === 'End'
+                ? SETTINGS_TABS.length - 1
+                : event.key === 'ArrowRight'
+                  ? (index + 1) % SETTINGS_TABS.length
+                  : event.key === 'ArrowLeft'
+                    ? (index + SETTINGS_TABS.length - 1) % SETTINGS_TABS.length
+                    : null;
+          if (nextIndex === null) return;
+          event.preventDefault();
+          const next = SETTINGS_TABS[nextIndex];
+          if (next === undefined) return;
+          setActive(next);
+          document.getElementById(`${id}-${next}-tab`)?.focus();
+        }}
+      >
+        {SETTINGS_TABS.map((tab) => (
+          <button
+            key={tab}
+            ref={tab === 'Scheduling' ? firstTab : undefined}
+            type="button"
+            role="tab"
+            id={`${id}-${tab}-tab`}
+            aria-controls={`${id}-${tab}-panel`}
+            aria-selected={active === tab}
+            tabIndex={active === tab ? 0 : -1}
+            onClick={() => setActive(tab)}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+      {SETTINGS_TABS.map((tab) => (
+        <div
+          key={tab}
+          role="tabpanel"
+          id={`${id}-${tab}-panel`}
+          aria-labelledby={`${id}-${tab}-tab`}
+          hidden={active !== tab}
+        >
+          {tab === 'Scheduling' && <SettingsForm settings={settings} />}
+          {tab === 'Categories' && (
+            <>
+              <p className="hint">Changes apply immediately. You can undo them.</p>
+              <CategoriesSection />
+            </>
+          )}
+          {tab === 'Appearance' && (
+            <>
+              <p className="hint">Changes apply immediately.</p>
+              <AppearanceSection />
+            </>
+          )}
+          {tab === 'Data' && <DataSection />}
+        </div>
+      ))}
+    </>
   );
 }
 
@@ -253,7 +335,7 @@ function DataSection() {
 }
 
 // PRE:  rendered under StoreProvider; reads dialog and snapshot.settings; uses actions.closeDialog
-//       + additional props from: SettingsForm, CategoriesSection, AppearanceSection, DataSection
+//       + additional props from: SettingsTabs
 // POST: while the settings dialog is open, shows the settings form (fresh from the current
 //       settings each time it opens) and the Data section (FR11, B2)
 export function SettingsDialog() {
@@ -266,10 +348,7 @@ export function SettingsDialog() {
 
   return (
     <Modal open title="Settings" className="settings-dialog" onClose={closeDialog}>
-      <SettingsForm settings={settings} />
-      <CategoriesSection />
-      <AppearanceSection />
-      <DataSection />
+      <SettingsTabs settings={settings} />
     </Modal>
   );
 }

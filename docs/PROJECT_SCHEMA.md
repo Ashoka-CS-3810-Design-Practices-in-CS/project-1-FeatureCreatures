@@ -554,6 +554,8 @@ Twelve curated colours include the five seeds. Free colours are normalised six-d
 
 ### 7.1 Screens and views
 
+WI-63: Settings has a keyboard tablist in the order Scheduling, Categories, Appearance, Data, with Scheduling focused on open. Arrow keys wrap; Home/End select endpoints. Scheduling alone stages Working time/Scheduling defaults and has a sticky Save/Cancel footer. Its draft survives tab changes; Cancel, Escape or × discards it. Categories starts “Changes apply immediately. You can undo them.” and Appearance starts “Changes apply immediately.”; those actions retain immediate behavior. Data retains its existing actions. All existing control names remain unchanged inside their tabs.
+
 1. **Main screen** (Figure 1):
    - A slim app bar with utility actions; calendar navigation and controls stay in its own region.
    - The calendar in the centre, with Day, Week (the default), Month and List views.
@@ -740,6 +742,8 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 ---
 
 ## 10. Change log
+
+- 2026-11-14 · WI-63: §7.1 defines Settings tabs, keyboard/focus, Scheduling-only staged edits/footer and explicit immediate category/appearance behavior.
 
 - 2026-11-14 · WI-62: W10/built-in samples use next Monday on weekends, current Monday on weekdays, navigate after load and name the week in the toast. Fixed exports/fixtures remain unchanged.
 

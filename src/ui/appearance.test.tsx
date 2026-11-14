@@ -39,6 +39,7 @@ describe('T57: appearance preferences and tags (D-12/D-13)', () => {
     const initialExport = store.getState().actions.exportFile().json;
     const rendered = renderWithStore(<App />, store);
     await userEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    await userEvent.click(screen.getByRole('tab', { name: 'Appearance' }));
     const appearance = screen.getByRole('region', { name: 'Appearance' });
     const accents = within(appearance).getByRole('radiogroup', { name: 'Accent' });
     expect(
@@ -74,6 +75,7 @@ describe('T57: appearance preferences and tags (D-12/D-13)', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Theme: Dark' }));
     expect(document.documentElement.dataset.theme).toBe('light');
     act(() => store.getState().actions.openDialog({ kind: 'settings' }));
+    await userEvent.click(screen.getByRole('tab', { name: 'Appearance' }));
     await userEvent.click(screen.getByRole('radio', { name: 'System' }));
     expect(document.documentElement.dataset.theme).toBeUndefined();
     expect(localStorage.getItem('fc-theme')).toBe('system');

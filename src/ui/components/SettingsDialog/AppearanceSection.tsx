@@ -54,7 +54,6 @@ export function AppearanceSection() {
           </label>
         ))}
       </fieldset>
-      <p className="hint">Appearance changes apply immediately on this device.</p>
     </section>
   );
 }

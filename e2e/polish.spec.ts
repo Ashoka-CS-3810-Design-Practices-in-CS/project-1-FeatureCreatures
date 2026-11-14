@@ -121,6 +121,7 @@ for (const theme of ['light', 'dark'] as const) {
         contrastRatio(asHex(colours.foreground), asHex(colours.background)),
       ).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
       await page.getByRole('button', { name: 'Settings', exact: true }).click();
+      await page.getByRole('tab', { name: 'Data', exact: true }).click();
       await expect(page.getByRole('button', { name: 'Import JSON', exact: true })).toBeVisible();
       const choosingFile = page.waitForEvent('filechooser');
       await page.getByRole('button', { name: 'Import JSON', exact: true }).click();

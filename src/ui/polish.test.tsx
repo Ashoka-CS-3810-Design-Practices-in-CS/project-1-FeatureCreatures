@@ -75,6 +75,7 @@ describe('T58: dialog and format polish (D-16)', () => {
     const store = storeFor((await makeEngine()).engine);
     renderWithStore(<App />, store);
     act(() => store.getState().actions.openDialog({ kind: 'settings' }));
+    await userEvent.click(screen.getByRole('tab', { name: 'Data' }));
     expect(screen.getByRole('button', { name: 'Import JSON' })).toBeInTheDocument();
     expect(screen.getByLabelText('Import JSON')).toHaveAttribute('type', 'file');
   });

@@ -37,11 +37,78 @@ function renderOpen(engine: Engine): AppStore {
 // PRE:  text is the content of the file to pick
 // POST: picks it as a JSON file in the "Import JSON" file input
 async function pickImportFile(text: string): Promise<void> {
+  await userEvent.click(screen.getByRole('tab', { name: 'Data' }));
   const file = new File([text], 'backup.json', { type: 'application/json' });
   await userEvent.upload(screen.getByLabelText('Import JSON'), file);
 }
 
 describe('SettingsDialog', () => {
+  it('T62: focuses Scheduling, follows tab keys and keeps staged edits across tabs until Cancel', async () => {
+    const { engine } = await makeEngine();
+    const store = renderOpen(engine);
+    const user = userEvent.setup();
+    const scheduling = screen.getByRole('tab', { name: 'Scheduling' });
+    await waitFor(() => expect(scheduling).toHaveFocus());
+    expect(scheduling).toHaveAttribute('aria-selected', 'true');
+    await user.clear(screen.getByLabelText('Default buffer (min)'));
+    await user.type(screen.getByLabelText('Default buffer (min)'), '15');
+    scheduling.focus();
+    await user.keyboard('{ArrowRight}');
+    expect(screen.getByRole('tab', { name: 'Categories' })).toHaveFocus();
+    expect(screen.getByText('Changes apply immediately. You can undo them.')).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
+    await user.keyboard('{ArrowRight}');
+    expect(screen.getByRole('tab', { name: 'Appearance' })).toHaveFocus();
+    expect(screen.getByText('Changes apply immediately.')).toBeVisible();
+    await user.keyboard('{End}');
+    expect(screen.getByRole('tab', { name: 'Data' })).toHaveFocus();
+    await user.keyboard('{Home}');
+    expect(scheduling).toHaveFocus();
+    expect(screen.getByLabelText('Default buffer (min)')).toHaveValue(15);
+    expect(engine.snapshot().settings.bufferMin).toBe(0);
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(store.getState().dialog).toBeNull();
+    expect(engine.snapshot().settings.bufferMin).toBe(0);
+    act(() => store.getState().actions.openDialog({ kind: 'settings' }));
+    expect(screen.getByLabelText('Default buffer (min)')).toHaveValue(0);
+  });
+
+  it('T62: appearance applies immediately while close discards only Scheduling edits', async () => {
+    const { engine } = await makeEngine();
+    const store = renderOpen(engine);
+    await userEvent.clear(screen.getByLabelText('Default buffer (min)'));
+    await userEvent.type(screen.getByLabelText('Default buffer (min)'), '10');
+    await userEvent.click(screen.getByRole('tab', { name: 'Appearance' }));
+    await userEvent.click(screen.getByRole('radio', { name: 'Fern' }));
+    expect(store.getState().accent).toBe('fern');
+    expect(engine.snapshot().settings.bufferMin).toBe(0);
+    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(store.getState().accent).toBe('fern');
+    expect(engine.snapshot().settings.bufferMin).toBe(0);
+  });
+
+  it('T62: category edits apply immediately and survive discarding a Scheduling draft', async () => {
+    const { engine } = await makeEngine();
+    renderOpen(engine);
+    await userEvent.clear(screen.getByLabelText('Default buffer (min)'));
+    await userEvent.type(screen.getByLabelText('Default buffer (min)'), '10');
+    await userEvent.click(screen.getByRole('tab', { name: 'Categories' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Edit Class' }));
+    await userEvent.clear(screen.getByLabelText('Category name'));
+    await userEvent.type(screen.getByLabelText('Category name'), 'Seminars');
+    await userEvent.click(screen.getByRole('button', { name: 'Save category' }));
+    await waitFor(() =>
+      expect(engine.snapshot().categories.find((category) => category.id === 'class')?.name).toBe(
+        'Seminars',
+      ),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(engine.snapshot().categories.find((category) => category.id === 'class')?.name).toBe(
+      'Seminars',
+    );
+    expect(engine.snapshot().settings.bufferMin).toBe(0);
+    expect(engine.snapshot().canUndo).toBe(true);
+  });
   it('shows the current settings', async () => {
     renderOpen((await makeEngine({ settings: settings({ bufferMin: 15 }) })).engine);
 
@@ -153,6 +220,7 @@ describe('SettingsDialog', () => {
     const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
     renderOpen((await makeEngine({ events: [ev('A', 'Mon 10:00', 'Mon 11:00')] })).engine);
 
+    await userEvent.click(screen.getByRole('tab', { name: 'Data' }));
     await userEvent.click(screen.getByRole('button', { name: 'Export JSON' }));
 
     expect(createObjectURL).toHaveBeenCalledTimes(1);
@@ -200,6 +268,7 @@ describe('SettingsDialog', () => {
   it('loads a sample at once into an empty calendar, and asks first otherwise', async () => {
     const empty = renderOpen((await makeEngine()).engine);
 
+    await userEvent.click(screen.getByRole('tab', { name: 'Data' }));
     await userEvent.selectOptions(screen.getByLabelText('Load sample calendar'), 'Back-to-back');
     await userEvent.click(screen.getByRole('button', { name: 'Load sample' }));
 
@@ -211,6 +280,7 @@ describe('SettingsDialog', () => {
     expect(empty.getState().dialog).toBeNull();
 
     act(() => empty.getState().actions.openDialog({ kind: 'settings' }));
+    await userEvent.click(screen.getByRole('tab', { name: 'Data' }));
     await userEvent.click(screen.getByRole('button', { name: 'Load sample' }));
     expect(empty.getState().dialog).toMatchObject({ kind: 'confirm', confirmLabel: 'Load sample' });
   });
@@ -222,6 +292,7 @@ describe('SettingsDialog', () => {
     });
     const store = renderOpen(engine);
 
+    await userEvent.click(screen.getByRole('tab', { name: 'Data' }));
     await userEvent.click(screen.getByRole('button', { name: 'Clear all data' }));
     expect(store.getState().dialog).toMatchObject({ kind: 'confirm', title: 'Clear all data?' });
     await userEvent.click(screen.getByRole('button', { name: 'Clear all data' }));
