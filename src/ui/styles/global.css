@@ -246,7 +246,7 @@ th {
 
 .toolbar-controls {
   gap: var(--space-2);
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
 
 .toolbar-period {
@@ -267,7 +267,7 @@ th {
   gap: var(--space-2);
   flex: 1;
   min-width: 0;
-  overflow-x: auto;
+  flex-wrap: wrap;
 }
 
 .calendar-filters > * {
@@ -428,19 +428,31 @@ th {
   border-radius: var(--radius-pill);
 }
 
-.toolbar .category-filters {
-  flex-wrap: wrap;
+.category-filter {
+  position: relative;
 }
 
-.category-filters .category-tag {
-  padding: 0;
-  border: 0;
-}
-
-.category-filters button[aria-pressed='true'] {
-  border-color: var(--accent);
+.category-filter-popover {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + var(--space-1));
+  left: 0;
+  min-width: 12rem;
+  max-width: 18rem;
+  max-height: 18rem;
+  overflow: auto;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   background: var(--surface);
-  color: var(--text);
+  box-shadow: var(--shadow-toast);
+}
+
+.category-filter-popover label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
 }
 
 .category-row {

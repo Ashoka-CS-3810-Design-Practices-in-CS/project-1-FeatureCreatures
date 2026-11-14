@@ -3,7 +3,7 @@ import type { RefObject } from 'react';
 import type { Priority } from '@/shared/types';
 import { fmtViewTitle } from '../../format/time';
 import { useAppStore, type ViewType } from '../../store/appStore';
-import { CategoryTag } from '../Categories/CategoryTag';
+import { CategoryFilter } from './CategoryFilter';
 
 const VIEWS: { type: ViewType; label: string }[] = [
   { type: 'timeGridDay', label: 'Day' },
@@ -18,14 +18,13 @@ const PRIORITY_CHIPS: { priority: Priority; tag: string; title: string }[] = [
 ];
 // PRE: StoreProvider supplies calendar view, lock, priority/category filters and actions;
 //      calendarRef points at CalendarView's FullCalendar
-//      + additional props from: CategoryTag
+//      + additional props from: CategoryFilter
 // POST: shows calendar-only navigation/title/view row and presentation/filter/lock/+ Event row
 export function Toolbar({ calendarRef }: { calendarRef: RefObject<FullCalendar | null> }) {
   const view = useAppStore((state) => state.view);
   const lastCalendarView = useAppStore((state) => state.lastCalendarView);
   const locked = useAppStore((state) => state.calendarLocked);
   const filter = useAppStore((state) => state.eventPriorityFilter);
-  const categories = useAppStore((state) => state.snapshot.categories);
   const hiddenCategories = useAppStore((state) => state.hiddenCategoryIds);
   const actions = useAppStore((state) => state.actions);
   const calendar = () => calendarRef.current?.getApi();
@@ -90,21 +89,12 @@ export function Toolbar({ calendarRef }: { calendarRef: RefObject<FullCalendar |
               </button>
             ))}
           </div>
-          <div role="group" aria-label="Category filter" className="category-filters">
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                type="button"
-                aria-pressed={!hiddenCategories.includes(category.id)}
-                onClick={() => actions.toggleEventCategory(category.id)}
-              >
-                <CategoryTag category={category} />
-              </button>
-            ))}
-          </div>
-          <button type="button" onClick={actions.showAllEventPriorities}>
-            Reset filters
-          </button>
+          <CategoryFilter />
+          {(filter.length < PRIORITY_CHIPS.length || hiddenCategories.length > 0) && (
+            <button type="button" onClick={actions.showAllEventPriorities}>
+              Reset filters
+            </button>
+          )}
         </div>
         <button
           type="button"

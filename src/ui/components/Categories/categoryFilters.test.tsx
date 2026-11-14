@@ -18,12 +18,10 @@ describe('T49: category filters (D-11)', () => {
     });
     const store = storeFor(engine);
     renderWithStore(<App />, store);
+    await userEvent.click(screen.getByRole('button', { name: 'Category filter' }));
     const filters = screen.getByRole('group', { name: 'Category filter' });
-    expect(within(filters).getByRole('button', { name: 'Class' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
-    await userEvent.click(within(filters).getByRole('button', { name: 'Class' }));
+    expect(within(filters).getByRole('checkbox', { name: 'Class' })).toBeChecked();
+    await userEvent.click(within(filters).getByRole('checkbox', { name: 'Class' }));
     expect(
       screen.getByText('1 event (1 hidden by filter) · 1 task · 1 conflict'),
     ).toBeInTheDocument();
@@ -61,14 +59,16 @@ describe('T49: category filters (D-11)', () => {
     act(() => store.setState({ view: { ...store.getState().view, type: 'listWeek' } }));
     renderWithStore(<App />, store);
     expect(await screen.findByRole('button', { name: /Lecture,.*Class/ })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Category filter' }));
     await userEvent.click(
-      within(screen.getByRole('group', { name: 'Category filter' })).getByRole('button', {
+      within(screen.getByRole('group', { name: 'Category filter' })).getByRole('checkbox', {
         name: 'Class',
       }),
     );
     expect(
       await screen.findByText('All events in this range are hidden by the calendar filters'),
     ).toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
     await userEvent.click(screen.getByRole('button', { name: 'Show all' }));
     expect(await screen.findByRole('button', { name: /Lecture,.*Class/ })).toBeInTheDocument();
     await act(async () => {
@@ -79,8 +79,9 @@ describe('T49: category filters (D-11)', () => {
     await waitFor(() =>
       expect(screen.getByRole('button', { name: /Lecture,.*Seminar/ })).toBeInTheDocument(),
     );
+    await userEvent.click(screen.getByRole('button', { name: 'Category filter' }));
     expect(
-      within(screen.getByRole('group', { name: 'Category filter' })).getByRole('button', {
+      within(screen.getByRole('group', { name: 'Category filter' })).getByRole('checkbox', {
         name: 'Seminar',
       }),
     ).toBeInTheDocument();

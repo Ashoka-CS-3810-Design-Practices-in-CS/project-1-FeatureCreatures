@@ -33,6 +33,31 @@ function renderToolbar(store: AppStore, onCycleTheme = vi.fn()): void {
 }
 
 describe('Toolbar', () => {
+  it('T60: category disclosure reports selection, supports keyboard Escape/Show all and conditionally resets', async () => {
+    const store = storeFor((await makeEngine()).engine);
+    renderToolbar(store);
+    const user = userEvent.setup();
+    const trigger = screen.getByRole('button', { name: 'Category filter' });
+    expect(trigger).toHaveTextContent('Categories');
+    expect(screen.queryByRole('button', { name: 'Reset filters' })).not.toBeInTheDocument();
+    await user.click(trigger);
+    const category = screen.getByRole('checkbox', { name: 'Class' });
+    expect(category).toBeChecked();
+    await user.click(category);
+    expect(trigger).toHaveTextContent('Categories (4 of 5)');
+    await user.keyboard('{Escape}');
+    expect(trigger).toHaveFocus();
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    await user.keyboard('{Enter}');
+    await user.click(screen.getByRole('button', { name: 'Show all' }));
+    expect(category).toBeChecked();
+    expect(trigger).toHaveTextContent('Categories');
+    await user.keyboard('{Escape}');
+    await user.click(screen.getByRole('button', { name: 'H' }));
+    await user.click(screen.getByRole('button', { name: 'Reset filters' }));
+    expect(store.getState().eventPriorityFilter).toEqual(['high', 'medium', 'low']);
+    expect(screen.queryByRole('button', { name: 'Reset filters' })).not.toBeInTheDocument();
+  });
   afterEach(() => vi.clearAllMocks());
 
   it('WI-33: the ? button opens the existing labelled keyboard shortcut help', async () => {
