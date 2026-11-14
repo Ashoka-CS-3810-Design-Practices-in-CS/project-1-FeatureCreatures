@@ -6,7 +6,7 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** None; Round 3 baseline verified and WI-60 is next. Round 2 and its Finish remain complete locally; human push/deploy/live smoke are pending.
+- **Active WI:** WI-60, event-block readability, branch `feat/wi-60-event-blocks`. Round 3 baseline/plan committed; Round 2 human push/deploy/live smoke remain pending.
 - **Last session:** 2026-11-14 · Codex · saved the binding Round 3 request, reconstructed clean main/history, spot-checked WI-59's documentation/smoke/checker deliverables and all existing tests, and recorded the fresh full baseline below. No leftover work or lockfile changes; node_modules already present. Round 3 plan is WI-60–66 in order.
 - **Gate status:** 2026-11-14 Round 3 BASELINE on `main` at `26aafa0`: typecheck/lint, 861 + 1 existing skipped, overall 98.53/94.38/98.05/98.74, algorithms 99.72/96.80/100/99.71, DST 9, ten properties × 10,000, build, 192/192 browsers (64 × 3), zero retries, exit 0. Evidence: .tmp-round3-baseline-core.log and .tmp-round3-baseline-browsers.log.
 
@@ -354,7 +354,8 @@ Binding spec: [PROMPT_ROUND_3.md](../extras/PROMPT_ROUND_3.md). D-01–D-21 rema
 
 **BASELINE (2026-11-14, main at 26aafa0):** typecheck/lint pass; **861 passed + 1 existing skipped** (113 files pass + 1 skipped); overall statements/branches/functions/lines **98.53/94.38/98.05/98.74%**; algorithms **99.72/96.80/100/99.71%**; **DST 9/9**; **10 property cases × 10,000 random-seed runs**, pass; **build pass**; **192/192 browser checks (64 × 3 repeats, 2 workers), zero retries**, exit 0. Exact evidence: `.tmp-round3-baseline-core.log`, `.tmp-round3-baseline-browsers.log`. Matches Round 2 Finish's unit/DST/coverage counts.
 
-- [ ] **WI-60** Event blocks are readable at desktop widths — owner S + Dv — depends on 59
+- [~] **WI-60** Event blocks are readable at desktop widths — owner S + Dv — depends on 59
+  - 2026-11-14 · Codex · branch `feat/wi-60-event-blocks` · done: claimed after the full green main baseline; existing container rule hides time/category below 112 px and reduces padding · next: exact-size before captures, red geometry/metadata tests, container-width/height tiers, docs, reviewed after captures/full branch/main gates · note: explicit Narrow/short tier exceptions govern overlapping/short blocks; >=90 px normal-height blocks retain time/category and <=20-character titles. No domain changes.
   - Done when: size/height-aware Full/Compact/Narrow blocks retain padding, time, complete priority and category markers; no crossing tags or truncated titles up to 20 characters at 1440/1280 in both themes; full 1024 blocks, complete accessible labels/tooltips and past contrast retained; §7.5/§11 updated; screenshots reviewed.
 - [ ] **WI-61** The filter row never overflows — owner S + Dv — depends on 60
   - Done when: Categories checkbox disclosure, Show all, conditional Reset and Esc/focus work; 5/12 categories fit all three widths in both themes; filtering/counts/FR6 remain tested.
