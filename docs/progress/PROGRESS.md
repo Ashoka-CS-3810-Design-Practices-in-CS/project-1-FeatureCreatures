@@ -6,7 +6,7 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** None; WI-62 complete with targeted checks, WI-63 next. Full gate deferred to the round-3 final gate per user steer.
+- **Active WI:** WI-63, Settings tabs, branch `feat/wi-63-settings-tabs`. Full gate deferred to the round-3 final gate per user steer.
 - **Last session:** 2026-11-14 · Codex · saved the binding Round 3 request, reconstructed clean main/history, spot-checked WI-59's documentation/smoke/checker deliverables and all existing tests, and recorded the fresh full baseline below. No leftover work or lockfile changes; node_modules already present. Round 3 plan is WI-60–66 in order.
 - **Gate status:** 2026-11-14 Round 3 BASELINE on `main` at `26aafa0`: typecheck/lint, 861 + 1 existing skipped, overall 98.53/94.38/98.05/98.74, algorithms 99.72/96.80/100/99.71, DST 9, ten properties × 10,000, build, 192/192 browsers (64 × 3), zero retries, exit 0. Evidence: .tmp-round3-baseline-core.log and .tmp-round3-baseline-browsers.log.
 
@@ -369,7 +369,8 @@ Binding spec: [PROMPT_ROUND_3.md](../extras/PROMPT_ROUND_3.md). D-01–D-21 rema
   - 2026-11-14 · Codex · branch `feat/wi-62-sample-week` · done: DST-safe startOfSampleWeek, shared weekday/weekend load path, successful-load navigation and week-naming toast; seven store regressions and Saturday browser observed red, then 45 targeted units and browser green with typecheck/lint; docs/README updated · next: WI-63; four added spring/fall DST cases run in final gate; full gate deferred to the round-3 final gate · note: existing appStore/explain/Settings exact sample toasts now include week per WI-62; builders, export script and fixed JSON/fixtures unchanged. Removed unused old anchor import after typecheck caught it.
   - 2026-11-14 · Codex · branch `feat/wi-62-sample-week` · done: claimed after WI-61 merge · next: red weekday/weekend/navigation/toast and Saturday-browser tests, DST-safe sample anchor and shared load path; full gate deferred to the round-3 final gate · note: fixed sample exports/builders/fixtures stay at 2 November 2026.
   - Done when: weekend clocks anchor next Monday, weekdays current Monday, DST retained; load navigates/names the sample week; Saturday browser offers upcoming conflict/task slots; fixed exports/fixtures unchanged; TEST_PLAN/schema/README updated.
-- [ ] **WI-63** Settings has one clear saving model — owner S + Dv — depends on 62
+- [~] **WI-63** Settings has one clear saving model — owner S + Dv — depends on 62
+  - 2026-11-14 · Codex · branch `feat/wi-63-settings-tabs` · done: claimed after WI-62 merge · next: red tab/keyboard/draft/immediate tests, tabbed Settings and moved selectors; full gate deferred to the round-3 final gate · note: keep Scheduling mounted while switching, discard on close, preserve existing control names.
   - Done when: Scheduling/Categories/Appearance/Data keyboard tabs; Scheduling alone staged with sticky Save/Cancel; immediate explanatory lines elsewhere; drafts survive tab switches and discard on Cancel/close; RTL/existing tests and every-tab both-theme screenshots pass.
 - [ ] **WI-64** Right and left columns are compact — owner S + Dv — depends on 63
   - Done when: barred summary rows and per-slot inline editors retain validation/legacy semantics; compact two-line tasks with Find time/action menu/name editing retain queue/done behavior; all four tasks and whole barred region visible at 1440×900; RTL and existing tests pass.
