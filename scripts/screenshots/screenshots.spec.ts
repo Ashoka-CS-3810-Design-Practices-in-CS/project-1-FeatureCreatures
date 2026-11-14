@@ -9,6 +9,7 @@ import {
   showTasks,
   showPlanning,
   closeDrawers,
+  useConfiguredFont,
 } from '../../e2e/helpers';
 
 // Design-review screenshots (WI-34), linked from README.md. Not part of `npm run e2e`: run
@@ -71,6 +72,7 @@ async function openApp(page: Page, theme: Theme, width: number, now = CLOCK_TIME
   await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
   await page.clock.install({ time: now });
   await page.goto('/');
+  await useConfiguredFont(page);
   await expect(page.getByRole('heading', { name: 'Week of 2 Nov 2026' })).toBeVisible();
 }
 

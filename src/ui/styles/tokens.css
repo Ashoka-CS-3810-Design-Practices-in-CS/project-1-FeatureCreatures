@@ -92,6 +92,7 @@
   --slot-height: 32px; /* one half-hour row of the time grid */
   --event-compact-width: 90px;
   --event-full-width: 150px;
+  --event-compact-time-height: 80px;
   --event-short-height: 44px;
   --event-narrow-stack-width: 56px;
   --tasks-min-width: 216px;

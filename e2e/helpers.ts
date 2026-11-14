@@ -3,6 +3,30 @@ import { DEFAULT_SETTINGS, EXPORT_FORMAT, LEGACY_EXPORT_VERSION } from '../src/s
 
 const BASE_TIME = new Date('2026-11-02T08:00:00');
 const MONDAY_COLUMN = '.fc-timegrid-col[data-date="2026-11-02"]';
+const WIDE_FONT_CSS = ':root { --font-family: Verdana, "DejaVu Sans", sans-serif; }';
+
+// PRE: page has loaded a document
+// POST: applies the same wide-font override now and after subsequent document navigations/reloads
+export async function useWideFont(page: Page): Promise<void> {
+  await page.addInitScript((css) => {
+    document.addEventListener(
+      'DOMContentLoaded',
+      () => {
+        const style = document.createElement('style');
+        style.textContent = css;
+        document.head.append(style);
+      },
+      { once: true },
+    );
+  }, WIDE_FONT_CSS);
+  await page.addStyleTag({ content: WIDE_FONT_CSS });
+}
+
+// PRE: page has loaded a document; E2E_WIDE_FONT is unset or a string
+// POST: enables the shared wide-font override exactly when E2E_WIDE_FONT is '1'
+export async function useConfiguredFont(page: Page): Promise<void> {
+  if (process.env.E2E_WIDE_FONT === '1') await useWideFont(page);
+}
 
 // PRE: calendar is open without another modal, or the requested drawer is already open
 // POST: exposes the Tasks region by opening its drawer only when it is hidden
@@ -117,6 +141,7 @@ export const GRAB_OFFSET_PX = 2;
 export async function openCalendar(page: Page): Promise<void> {
   await page.clock.install({ time: BASE_TIME });
   await page.goto('/');
+  await useConfiguredFont(page);
   await expect(page.getByRole('heading', { name: 'Week of 2 Nov 2026' })).toBeVisible();
 }
 

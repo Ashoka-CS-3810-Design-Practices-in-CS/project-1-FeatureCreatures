@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { showTasks } from './helpers';
+import { showTasks, useConfiguredFont } from './helpers';
 
 test('T61: Saturday samples navigate to a live week with a conflict and task slots', async ({
   page,
@@ -7,6 +7,7 @@ test('T61: Saturday samples navigate to a live week with a conflict and task slo
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.clock.install({ time: new Date('2026-11-07T08:00:00') });
   await page.goto('/');
+  await useConfiguredFont(page);
   await page.getByRole('button', { name: 'Load sample week', exact: true }).click();
   await expect(
     page.getByRole('heading', { name: 'Week of 9 Nov 2026', exact: true }),

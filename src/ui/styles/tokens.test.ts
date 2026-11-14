@@ -123,6 +123,10 @@ describe('tokens.css', () => {
       expect(CALENDAR_CSS).toContain(`(width < ${light.get(name)})`);
     });
     expect(CALENDAR_CSS).toContain(`(height < ${light.get('event-short-height')})`);
+    expect(light.get('event-compact-time-height')).toBe('80px');
+    expect(CALENDAR_CSS).toContain(
+      `@container event-block (width < ${light.get('event-full-width')}) and (height < ${light.get('event-compact-time-height')})`,
+    );
     [light, dark].forEach((tokens) => {
       expect(
         contrast(tokens.get('tag-muted') ?? '', tokens.get('tag-bg') ?? ''),

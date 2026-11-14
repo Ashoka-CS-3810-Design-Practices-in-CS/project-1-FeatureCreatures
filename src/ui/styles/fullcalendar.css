@@ -471,6 +471,13 @@
   }
 }
 
+/* Wrapped titles need the short Compact block's remaining height for complete tags. */
+@container event-block (width < 150px) and (height < 80px) {
+  .fc-timegrid-event .event-details .event-time {
+    display: none;
+  }
+}
+
 .fc .fc-bg-event.now-guide {
   background: transparent;
   border-top: 1px dashed var(--now-guide);
