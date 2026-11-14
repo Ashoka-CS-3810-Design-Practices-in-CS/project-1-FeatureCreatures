@@ -18,22 +18,27 @@ describe('T49: category filters (D-11)', () => {
     });
     const store = storeFor(engine);
     renderWithStore(<App />, store);
-    await userEvent.click(screen.getByRole('button', { name: 'Category filter' }));
-    const filters = screen.getByRole('group', { name: 'Category filter' });
+    const calendar = within(screen.getByRole('region', { name: 'Calendar' }));
+    const conflictPanel = within(screen.getByRole('region', { name: /^Conflicts \(/ }));
+    const taskPanel = within(screen.getByRole('region', { name: /^Tasks \(/ }));
+    await userEvent.click(calendar.getByRole('button', { name: 'Category filter' }));
+    const filters = calendar.getByRole('group', { name: 'Category filter' });
     expect(within(filters).getByRole('checkbox', { name: 'Class' })).toBeChecked();
     await userEvent.click(within(filters).getByRole('checkbox', { name: 'Class' }));
     expect(
-      screen.getByText('1 event (1 hidden by filter) · 1 task · 1 conflict'),
+      calendar.getByText('1 event (1 hidden by filter) · 1 task · 1 conflict'),
     ).toBeInTheDocument();
     expect(
-      within(screen.getByRole('list', { name: 'Conflict list' })).getByText('(hidden by filter)'),
+      within(conflictPanel.getByRole('list', { name: 'Conflict list' })).getByText(
+        '(hidden by filter)',
+      ),
     ).toBeInTheDocument();
     expect(
-      within(screen.getByRole('list', { name: 'Task list' })).getByText('Report'),
+      within(taskPanel.getByRole('list', { name: 'Task list' })).getByText('Report'),
     ).toBeInTheDocument();
     act(() => store.getState().actions.toggleEventPriority('medium'));
     expect(
-      screen.getByText('0 events (2 hidden by filter) · 1 task · 1 conflict'),
+      calendar.getByText('0 events (2 hidden by filter) · 1 task · 1 conflict'),
     ).toBeInTheDocument();
     expect(
       toFullCalendar(
@@ -45,10 +50,10 @@ describe('T49: category filters (D-11)', () => {
         store.getState().hiddenCategoryIds,
       ),
     ).toEqual([]);
-    await userEvent.click(screen.getByRole('button', { name: 'Reset filters' }));
+    await userEvent.click(calendar.getByRole('button', { name: 'Reset filters' }));
     expect(store.getState().hiddenCategoryIds).toEqual([]);
     expect(store.getState().eventPriorityFilter).toEqual(['high', 'medium', 'low']);
-    expect(screen.getByText('2 events · 1 task · 1 conflict')).toBeInTheDocument();
+    expect(calendar.getByText('2 events · 1 task · 1 conflict')).toBeInTheDocument();
   });
 
   it('List explains category-hidden events, Show all restores them, and renamed tags reach accessible names', async () => {

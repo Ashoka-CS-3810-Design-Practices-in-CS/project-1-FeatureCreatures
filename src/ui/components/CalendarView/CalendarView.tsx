@@ -70,7 +70,7 @@ function HiddenByFilterNotice({
 }
 
 // PRE:  rendered under StoreProvider; reads currentMinute, snapshot (events, conflicts, settings), view,
-//       eventPriorityFilter, hiddenCategoryIds and emphasisIds; uses actions.moveEvent / openDialog / setActiveRange / setView;
+//       eventPriorityFilter, hiddenCategoryIds, emphasisIds and sampleNavigation; uses actions.moveEvent / openDialog / setActiveRange / setView;
 //       calendarRef receives the FullCalendar instance (the toolbar and shortcuts drive it)
 //       + additional props from: EventContent (via renderEventContent), HiddenByFilterNotice
 // POST: shows the calendar as a controlled, render-only FullCalendar (TECH_SPEC §11.3): its events
@@ -91,8 +91,11 @@ export function CalendarView({ calendarRef }: { calendarRef: RefObject<FullCalen
   const rootRef = useRef<HTMLDivElement>(null);
   useCalendarPan(rootRef, locked);
   useEffect(() => {
+    // FullCalendar flushes React while navigating, so wait until this render lifecycle has finished.
     if (sampleNavigation !== null)
-      calendarRef.current?.getApi().gotoDate(fromMinute(sampleNavigation.date));
+      queueMicrotask(() => {
+        calendarRef.current?.getApi().gotoDate(fromMinute(sampleNavigation.date));
+      });
   }, [calendarRef, sampleNavigation]);
 
   const handlers = useMemo(

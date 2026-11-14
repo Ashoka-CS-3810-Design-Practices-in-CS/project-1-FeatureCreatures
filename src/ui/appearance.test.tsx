@@ -38,9 +38,11 @@ describe('T57: appearance preferences and tags (D-12/D-13)', () => {
     const store = storeFor(engine);
     const initialExport = store.getState().actions.exportFile().json;
     const rendered = renderWithStore(<App />, store);
-    await userEvent.click(screen.getByRole('button', { name: 'Settings' }));
-    await userEvent.click(screen.getByRole('tab', { name: 'Appearance' }));
-    const appearance = screen.getByRole('region', { name: 'Appearance' });
+    const banner = within(screen.getByRole('banner'));
+    await userEvent.click(banner.getByRole('button', { name: 'Settings' }));
+    const settingsDialog = within(screen.getByRole('dialog', { name: 'Settings' }));
+    await userEvent.click(settingsDialog.getByRole('tab', { name: 'Appearance' }));
+    const appearance = settingsDialog.getByRole('region', { name: 'Appearance' });
     const accents = within(appearance).getByRole('radiogroup', { name: 'Accent' });
     expect(
       within(accents)
@@ -59,8 +61,9 @@ describe('T57: appearance preferences and tags (D-12/D-13)', () => {
     renderWithStore(<App />, storeFor(engine));
     expect(document.documentElement.dataset.accent).toBe('fern');
     expect(document.documentElement.dataset.theme).toBe('dark');
-    expect(screen.getByRole('button', { name: 'Theme: Dark' })).toContainElement(
-      screen.getByRole('img', { name: 'Dark theme' }),
+    const remountedBanner = within(screen.getByRole('banner'));
+    expect(remountedBanner.getByRole('button', { name: 'Theme: Dark' })).toContainElement(
+      remountedBanner.getByRole('img', { name: 'Dark theme' }),
     );
   });
 
