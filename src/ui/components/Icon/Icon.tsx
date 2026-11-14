@@ -1,6 +1,14 @@
 import type { ReactNode } from 'react';
 
 const ICONS = {
+  undo: <path d="M9 5 3 11l6 6M3 11h11a7 7 0 0 1 7 7v2" />,
+  redo: <path d="m15 5 6 6-6 6m6-6H10a7 7 0 0 0-7 7v2" />,
+  unlock: (
+    <>
+      <rect x="5" y="10" width="14" height="11" rx="2" />
+      <path d="M8 10V7a4 4 0 0 1 7-2m-3 9v3" />
+    </>
+  ),
   edit: <path d="m15 4 5 5M4 20l4-1L21 6l-5-5L3 14l-1 7Z" />,
   sun: (
     <>

@@ -60,6 +60,7 @@ describe('T55: compact Replan dialog (D-15)', () => {
     expect(within(second).getByText('Mon 2 Nov')).toBeInTheDocument();
     expect(within(second).getByText('Move', { selector: 'strong' })).toBeInTheDocument();
     expect(within(second).getByText('[M]')).toBeInTheDocument();
+    expect(within(second).getByText('[M]')).toHaveClass('prio-medium');
     expect(within(second).getByText('Meeting')).toBeInTheDocument();
     expect(second).toHaveTextContent('Tue 3 Nov 14:00 → Mon 2 Nov 09:00');
     expect(screen.queryByText(/Total shift:/)).not.toBeInTheDocument();
@@ -108,6 +109,7 @@ describe('T55: compact Replan dialog (D-15)', () => {
     expect(within(list).getAllByRole('listitem')).toHaveLength(1);
     expect(list).toHaveTextContent('Lunch event');
     expect(list).toHaveTextContent('Fixed event');
+    expect(within(list).getByText('[M]')).toHaveClass('prio-medium');
     expect(
       screen.getAllByRole('button', { name: 'Suggest alternatives for Lunch event' }),
     ).toHaveLength(1);

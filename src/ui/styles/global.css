@@ -427,6 +427,16 @@ th {
   height: var(--space-5);
 }
 
+.app-bar .toolbar-utilities button:disabled {
+  opacity: 1;
+  color: var(--muted);
+}
+
+.replan-movable-count {
+  margin-top: 0;
+  margin-bottom: var(--space-3);
+}
+
 .accent-options {
   display: flex;
   flex-wrap: wrap;
@@ -1330,7 +1340,7 @@ dialog.suggestion-dialog {
 
 .picker-picks {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--picker-card-min-width)), 1fr));
   gap: var(--space-3);
 }
 
@@ -1362,6 +1372,11 @@ dialog.suggestion-dialog {
 .picker-pick p {
   margin-top: var(--space-2);
   color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.picker-range {
+  white-space: nowrap;
   font-size: var(--text-sm);
 }
 

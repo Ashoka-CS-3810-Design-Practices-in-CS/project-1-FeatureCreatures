@@ -32,9 +32,14 @@ export function ReplanPanel() {
   ).length;
   return (
     <section aria-label="Replan" className="replan-panel">
-      <h2>Replan ({movable})</h2>
+      <h2>Replan</h2>
       <p>
         {fmtDay(start)} – {fmtDay(fromDateInput(days.to))}
+      </p>
+      <p className="hint replan-movable-count">
+        {movable === 0
+          ? 'No flexible events in this range'
+          : `${movable} flexible ${movable === 1 ? 'event' : 'events'} can move`}
       </p>
       <label>
         Strategy{' '}

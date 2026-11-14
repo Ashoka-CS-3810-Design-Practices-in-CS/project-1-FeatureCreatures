@@ -1,6 +1,8 @@
 import { useId, useState } from 'react';
 import type { ReplanNotMoved } from '@/shared/types';
 import type { PlanDiagnostic } from './replanView';
+import { useAppStore } from '../../store/appStore';
+import { PriorityTag } from '../PriorityTag/PriorityTag';
 
 const REASON_TEXT: Record<ReplanNotMoved['reason'], string> = {
   fixed: 'Fixed event',
@@ -11,6 +13,7 @@ const REASON_TEXT: Record<ReplanNotMoved['reason'], string> = {
 
 // PRE:  entries is the combined remaining-problem list with affected plan names; details shows full problems;
 //       onSuggest opens the existing alternatives flow for an entry's event
+//       StoreProvider supplies current event priorities; + additional props from: PriorityTag
 // POST: shows one collapsed list; expanded entries have reason chips and alternatives, with problems in Details
 export function NotMovedList({
   entries,
@@ -22,6 +25,8 @@ export function NotMovedList({
   onSuggest: (eventId: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const events = useAppStore((state) => state.snapshot.events);
+  const priorities = new Map(events.map((event) => [event.id, event.priority]));
   const listId = useId();
   if (entries.length === 0) return null;
   return (
@@ -38,30 +43,34 @@ export function NotMovedList({
       </h4>
       {open && (
         <ul id={listId} aria-label="Replan not moved">
-          {entries.map((entry) => (
-            <li key={entry.eventId}>
-              <strong>&quot;{entry.title}&quot;</strong> —{' '}
-              <span className="tag">{REASON_TEXT[entry.reason]}</span>
-              {entry.planNames.length === 1 && (
-                <span className="muted"> ({entry.planNames[0]})</span>
-              )}
-              {details && entry.barredLabels.length > 0 && (
-                <p>Overlaps {entry.barredLabels.join(', ')}.</p>
-              )}
-              {details && entry.conflictTitles.length > 0 && (
-                <p>
-                  Conflicts with {entry.conflictTitles.map((title) => `"${title}"`).join(', ')}.
-                </p>
-              )}
-              <button
-                type="button"
-                aria-label={`Suggest alternatives for ${entry.title}`}
-                onClick={() => onSuggest(entry.eventId)}
-              >
-                Suggest alternatives
-              </button>
-            </li>
-          ))}
+          {entries.map((entry) => {
+            const priority = priorities.get(entry.eventId);
+            return (
+              <li key={entry.eventId}>
+                <strong>&quot;{entry.title}&quot;</strong> —{' '}
+                {priority !== undefined && <PriorityTag priority={priority} />}
+                <span className="tag">{REASON_TEXT[entry.reason]}</span>
+                {entry.planNames.length === 1 && (
+                  <span className="muted"> ({entry.planNames[0]})</span>
+                )}
+                {details && entry.barredLabels.length > 0 && (
+                  <p>Overlaps {entry.barredLabels.join(', ')}.</p>
+                )}
+                {details && entry.conflictTitles.length > 0 && (
+                  <p>
+                    Conflicts with {entry.conflictTitles.map((title) => `"${title}"`).join(', ')}.
+                  </p>
+                )}
+                <button
+                  type="button"
+                  aria-label={`Suggest alternatives for ${entry.title}`}
+                  onClick={() => onSuggest(entry.eventId)}
+                >
+                  Suggest alternatives
+                </button>
+              </li>
+            );
+          })}
         </ul>
       )}
     </section>

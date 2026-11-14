@@ -661,6 +661,8 @@ All toasts are announced through an ARIA live region. Errors use `assertive`; ev
 
 ### 7.5 Visual language (tokens; exact values in TECH_SPEC §11.4)
 
+WI-65: List shows Week selected and aria-disabled with “List always shows one week”; returning to Calendar restores the previous Day/Week/Month choice. Replan move/Not moved rows share the same coloured priority tags as events/tasks. The Replan header is plain Replan, with No flexible events in this range / 1 flexible event can move / N flexible events can move below the range. Calendar lock and app-bar Undo/Redo use the common line SVG style with unchanged accessible names/state; history ink remains >=3:1 even while disabled. Pick-card ranges remain on one line at all three desktop sizes in both pickers.
+
 **Event block tiers (WI-60):** every block keeps 4 px inner padding. Its own content width selects Full (>=150 px: title up to two lines, separate 24-hour time, wrapping priority/category/scheduling/conflict/Task/In-label tags), Compact (90–149 px: two-line ellipsised title, separate time, full priority plus category dot and scheduling/conflict icons), or Narrow (<90 px, including overlaps: one-line title, full priority and conflict icon). Category markers retain their name in a tooltip/accessibility label and their contrasted tag background. Blocks under 44 px high (about 40 grid minutes) put title/time on one line and omit tags that cannot fit. Complete button names/tooltips retain time, priority, category, Fixed/Flexible, Task, conflict and barred labels in every tier. Past text retains >=4.5:1 contrast. Tasks narrows from 288 to 216 px at the smaller desktop width so ordinary 1280 px week blocks remain Compact; the right column stays 320 px and the <1280 drawer rule is unchanged.
 
 - App-written dates use `Mon 2 Nov` or `Mon 2 Nov 2026`, including List day headings; times use 24-hour `HH:mm` and ranges `HH:mm–HH:mm`. Native date/time fields follow the browser locale. Month numbers outside the active month retain at least 4.5:1 contrast without ancestor opacity dimming.
@@ -744,6 +746,8 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 ---
 
 ## 10. Change log
+
+- 2026-11-14 · WI-65: §7.5 defines consistent List selection, shared Replan priority tags/explanatory counts, line lock/history icons and nonwrapping pick ranges.
 
 - 2026-11-14 · WI-64: §7.1 specifies compact task/meta/action rows, named menus and saved barred summaries/inline editors; existing atomic settings validation and task lifecycle rules remain unchanged.
 

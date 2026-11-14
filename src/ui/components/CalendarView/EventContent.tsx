@@ -1,5 +1,5 @@
 import { fmtDuration } from '../../format/time';
-import { PRIORITY_TAGS } from '@/shared/constants';
+import { PriorityTag } from '../PriorityTag/PriorityTag';
 import { useEffect, useId, useRef } from 'react';
 import { FixedTag } from '../FixedTag/FixedTag';
 import type { EventBlockProps } from './toFullCalendar';
@@ -8,7 +8,7 @@ import { Icon } from '../Icon/Icon';
 
 // PRE:  title and timeText come from FullCalendar; the rest from toFullCalendar's extendedProps
 //       onOpen opens the event dialog when supplied for a List-view button
-//       + additional props from: CategoryTag
+//       + additional props from: CategoryTag, PriorityTag
 // POST: renders an event block: title, time, the priority tag (BR-13, text as well as colour),
 //       a Task, Fixed or Flexible tag, In <label> tags and "⚠ Conflict N min" when the event overlaps another; keeps its
 //       FullCalendar button's accessible name and tooltip complete even when the block is clipped;
@@ -46,7 +46,7 @@ export function EventContent({
       <strong className="event-title">{title}</strong>{' '}
       <span className="event-time">{timeText}</span>{' '}
       <span className="event-tags">
-        <span className={`tag event-priority prio-${priority}`}>{PRIORITY_TAGS[priority]}</span>
+        <PriorityTag priority={priority} className="event-priority" />
         {category !== undefined && <CategoryTag category={category} />}
         {kind === 'Flexible' && (
           <span className="tag event-kind">

@@ -1592,6 +1592,8 @@ WI-56 / D-14: AppBar owns brand/history/theme/help/settings and counted Tasks/Co
 
 ### 11.2 Components
 
+WI-65: PriorityTag is shared by EventContent, TaskRow, ReplanMoves and NotMovedList, preserving priority colour/text independently of category. NotMovedList resolves current priorities by event id. Toolbar marks Week pressed/aria-disabled while List is active and ignores that disabled activation; Calendar still uses lastCalendarView. ReplanPanel separates its plain heading and singular/plural movable-count sentence. Icon supplies SVG lock/unlock/Undo/Redo; disabled history retains muted ink without opacity loss. Picker cards use a named 15 rem minimum and a nowrap range span, so task/alternatives cards wrap as units instead of splitting time ranges.
+
 WI-64: TaskRow uses a 72 px two-row grid; the name remains an Edit button and native details exposes the existing completion/edit commands plus Unschedule/Delete. Compact date helpers retain both months across boundaries and full ranges stay in tooltips. BarredSlotsEditor retains its shared RHF/Zod settings form and atomic pending-row semantics, rendering summaries until Edit/Add activates row ids. Save/Cancel move beside active editors; removal-only pending changes retain their action row. A 6 rem native time input hides only its picker glyph so label/from/to fit at 320 px with locale text intact. Legacy overlap banners, errors, non-undoable settings and overlap/Kept groups are unchanged.
 
 WI-63: SettingsDialog mounts SettingsTabs fresh per opening. A roving native-button tablist selects four labelled tabpanels via ArrowLeft/Right/Home/End. Hidden panels stay mounted so React Hook Form retains Scheduling drafts across switches; unmounting on close discards them. Only SettingsForm has the sticky Save/Cancel footer. Categories/Appearance retain their immediate store actions and start with explicit saving-model text; Data is unchanged. Final capture script records every tab at all three exact sizes in both themes.
@@ -2021,6 +2023,8 @@ Production URL: https://…vercel.app
 ---
 
 ## 16. Change log
+
+- 2026-11-14 · WI-65: §11.2 records shared priority rendering, List state/restoration, Replan count text, line icons and whole-card picker wrapping; no engine behavior changes.
 
 - 2026-11-14 · WI-64: §11.2 records compact rows, native action disclosures, date formatting and read-only barred summaries/inline fields; existing region-level settings staging remains intact.
 
