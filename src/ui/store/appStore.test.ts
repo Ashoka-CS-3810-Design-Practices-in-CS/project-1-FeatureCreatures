@@ -1,4 +1,5 @@
 import { DEFAULT_CATEGORIES } from '@/shared/constants';
+import { atLocal } from '@/shared/time';
 import { MemoryRepository } from '@/data/memoryRepository';
 import type { Repository } from '@/data/repository';
 import { createEngine, type Engine } from '@/engine';
@@ -23,6 +24,28 @@ function storeFor(engine: Engine, resetStorage = async () => undefined): AppStor
 const texts = (store: AppStore) => store.getState().toasts.map((toast) => toast.text);
 
 describe('createAppStore', () => {
+  it.each([
+    ['2026-11-02', '2026-11-02'],
+    ['2026-11-03', '2026-11-02'],
+    ['2026-11-04', '2026-11-02'],
+    ['2026-11-05', '2026-11-02'],
+    ['2026-11-06', '2026-11-02'],
+    ['2026-11-07', '2026-11-09'],
+    ['2026-11-08', '2026-11-09'],
+  ])('T61: sample clock %s loads/navigates to Monday %s', async (today, monday) => {
+    const { engine } = await makeEngine();
+    const store = createAppStore(engine, {
+      storageWarning: false,
+      init: { ok: true, value: engine.snapshot() },
+      now: () => atLocal(today, '08:00'),
+      resetStorage: async () => undefined,
+    });
+    const result = await store.getState().actions.loadSample('sparseWeek');
+    expect(result.ok).toBe(true);
+    expect(store.getState().snapshot.events[0]?.start).toBe(atLocal(monday, '09:00'));
+    expect(store.getState().view.date).toBe(atLocal(monday, '00:00'));
+    expect(texts(store)[0]).toMatch(/Loaded sample: Sparse week \(week of \d+ Nov\)\./);
+  });
   it('starts ready with the engine snapshot, or fatal with the init error', async () => {
     const { engine } = await makeEngine({ events: [ev('A', 'Mon 10:00', 'Mon 11:00')] });
 
@@ -57,7 +80,7 @@ describe('createAppStore', () => {
     expect(result.ok).toBe(true);
     expect(store.getState().snapshot.conflicts).toHaveLength(1);
     expect(store.getState().snapshot.events[0]?.start).toBe(t('Mon 09:00'));
-    expect(texts(store)).toEqual(['Loaded sample: Sparse week.']);
+    expect(texts(store)).toEqual(['Loaded sample: Sparse week (week of 2 Nov).']);
   });
 
   it('undo and redo report what they did, or that there was nothing to do', async () => {

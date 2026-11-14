@@ -2,7 +2,13 @@
 // Everything else works in absolute Minutes; DayFrames hand algorithms pre-expanded local days.
 
 import { addDays, parse, set, startOfDay, startOfWeek } from 'date-fns';
-import { MINUTES_PER_DAY, MINUTES_PER_HOUR, MS_PER_MINUTE } from './constants';
+import {
+  DAYS_PER_WEEK,
+  WEEKEND_DAYS,
+  MINUTES_PER_DAY,
+  MINUTES_PER_HOUR,
+  MS_PER_MINUTE,
+} from './constants';
 import type { DayFrame, Interval, Minute, Settings, Weekday } from './types';
 
 const LOCAL_DATE_TIME_FORMAT = 'yyyy-MM-dd HH:mm';
@@ -79,6 +85,15 @@ export function onLocalDay(day: Minute, minuteOfDay: number): Minute {
 // POST: returns the local midnight that starts the Monday of minute's week
 export function startOfLocalWeek(minute: Minute): Minute {
   return toMinute(startOfWeek(fromMinute(minute), { weekStartsOn: MONDAY }));
+}
+
+// PRE: minute is an integer Minute
+// POST: returns current Monday midnight on weekdays, next Monday on weekends, using local calendar days
+export function startOfSampleWeek(minute: Minute): Minute {
+  const monday = startOfLocalWeek(minute);
+  return WEEKEND_DAYS.includes(fromMinute(minute).getDay())
+    ? addLocalDays(monday, DAYS_PER_WEEK)
+    : monday;
 }
 
 // PRE:  dayStart is a local midnight; settings satisfies storedSettingsSchema

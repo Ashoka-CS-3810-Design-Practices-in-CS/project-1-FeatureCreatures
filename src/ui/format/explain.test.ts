@@ -1,3 +1,4 @@
+import { atLocal } from '@/shared/time';
 import { iv } from '../../../tests/helpers/builders';
 import {
   alternativeAppliedText,
@@ -43,7 +44,9 @@ describe('format/explain (toast sentences)', () => {
     expect(historyText('Undid', 'Delete "Gym"')).toBe('Undid: Delete "Gym"');
     expect(historyText('Undid', '')).toBe('Nothing to undo.');
     expect(historyText('Redid', '')).toBe('Nothing to redo.');
-    expect(sampleLoadedText('Sparse week')).toBe('Loaded sample: Sparse week.');
+    expect(sampleLoadedText('Sparse week', atLocal('2026-11-02', '00:00'))).toBe(
+      'Loaded sample: Sparse week (week of 2 Nov).',
+    );
   });
 
   it('describes task changes and a shortened queue', () => {

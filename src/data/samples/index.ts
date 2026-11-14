@@ -1,5 +1,5 @@
 // Registry of the sample calendars (TECH_SPEC §9.5). The UI loads one with
-// engine.importData(JSON.stringify(SAMPLES[id].build(startOfLocalWeek(now)))).
+// engine.importData(JSON.stringify(SAMPLES[id].build(startOfSampleWeek(now)))).
 
 import type { ExportFile, Minute } from '@/shared/types';
 import { buildBackToBack } from './backToBack';

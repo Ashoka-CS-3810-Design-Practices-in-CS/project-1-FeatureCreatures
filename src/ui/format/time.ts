@@ -8,6 +8,7 @@ import type { ViewType } from '../store/appStore';
 
 const TIME_FORMAT = 'HH:mm';
 const DAY_FORMAT = 'EEE d MMM';
+const SHORT_DATE_FORMAT = 'd MMM';
 const DAY_TITLE_FORMAT = 'EEE d MMM yyyy';
 const WEEK_TITLE_FORMAT = "'Week of' d MMM yyyy";
 const MONTH_TITLE_FORMAT = 'MMMM yyyy';
@@ -29,6 +30,12 @@ export function fmtTime(minute: Minute): string {
 // POST: returns its local day as "EEE d MMM", e.g. "Tue 3 Nov"
 export function fmtDay(minute: Minute): string {
   return format(fromMinute(minute), DAY_FORMAT);
+}
+
+// PRE: minute is an integer Minute
+// POST: returns its local date as "d MMM", e.g. "16 Nov"
+export function fmtShortDate(minute: Minute): string {
+  return format(fromMinute(minute), SHORT_DATE_FORMAT);
 }
 
 // PRE:  interval has start < end

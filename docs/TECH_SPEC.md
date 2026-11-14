@@ -950,7 +950,7 @@ There is no history entry, and the conflicts are unchanged.
    5. clear `lastReplan`
    6. set `version + 1`
 
-**Samples.** `src/data/samples/*` build an `ExportFile` relative to the current week's Monday. The UI calls `engine.importData(JSON.stringify(buildSample(id, now)))`.
+**Samples.** `src/data/samples/*` build an `ExportFile` relative to an explicit Monday. Built-in UI loading uses current Monday on weekdays and next Monday on weekends via `startOfSampleWeek(now)`.
 
 ### 7.5 Shared search helper (`src/engine/search.ts`)
 
@@ -1441,16 +1441,18 @@ The UI downloads it via `Blob` + `URL.createObjectURL`. It reads imports via `<i
 
 ### 9.5 Samples (`src/data/samples/`)
 
+WI-62: built-in UI loading calls `startOfSampleWeek(now)` (new local-time helper in §8.6): current local Monday on weekdays, next local Monday on Saturday/Sunday, using `addLocalDays` across DST. Builders and `samples:export` still receive explicit fixed Mondays. Both load entry points share the store action; success sets `sampleNavigation: {date}` and the view date, and CalendarView consumes that fresh request with `gotoDate`. Repeated loads still navigate after the user leaves the sample week. `sampleLoadedText(label, weekMonday)` includes `week of d MMM`; no export schema or fixture changes.
+
 ```ts
 export type SampleId = 'sparseWeek' | 'backToBack' | 'overlapCluster' | 'fullyBooked' | 'midnight' | 'stress';
 export const SAMPLES: Record<SampleId, { label: string; build: (weekMonday: Minute) => ExportFile }>;
 ```
 
-Each sample uses `atLocal` relative to `weekMonday`. The UI passes `startOfLocalWeek(now)`, where Monday is the start of the week.
+Each sample uses `atLocal` relative to `weekMonday`. The UI passes `startOfSampleWeek(now)`; the export script passes its fixed Monday.
 
 `buildStress(weekMonday, seed = 42)` also accepts an integer seed so T15 reuses the same jittered-grid generator with seed 7. The registered stress sample continues to use its default seed 42. `tests/helpers/performance.ts` shares the initialized fixture and combined query between `bench/engine.bench.ts` and the gated eleven-run assertion in `tests/integration/perf.test.ts`. `npm run test:perf` sets `PERF=1` portably on Windows and Unix; setup is outside the measured query.
 
-`npm run samples:export` regenerates the six committed `docs/samples/*.json` files for Monday 2 November 2026 in UTC. `scripts/exportSamples.mjs` uses Vite's module loader for the existing TypeScript/alias configuration and validates each generated file with `parseExportFile`; it adds no dependency and starts no listening server. In-app samples still use the current local week.
+`npm run samples:export` regenerates the six committed `docs/samples/*.json` files for Monday 2 November 2026 in UTC. `scripts/exportSamples.mjs` uses Vite's module loader for the existing TypeScript/alias configuration and validates each generated file with `parseExportFile`; it adds no dependency and starts no listening server. In-app samples use the weekday-current/weekend-next local week.
 
 | Sample | Contents (must exist so demos D1–D5 work) |
 |---|---|
@@ -2015,6 +2017,8 @@ Production URL: https://…vercel.app
 ---
 
 ## 16. Change log
+
+- 2026-11-14 · WI-62: §9.5 records weekend-safe local sample anchors, navigation requests and named-week toast; the local-time module adds `startOfSampleWeek(minute): Minute`, preserving all existing contracts.
 
 - 2026-11-14 · WI-60: §11.3 documents CSS container-size tiers, tested size tokens, accessible category markers, separate scheduling/task metadata and responsive Tasks width; engine contracts remain unchanged.
 

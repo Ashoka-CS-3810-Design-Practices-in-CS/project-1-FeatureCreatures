@@ -3,7 +3,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import { useMemo, useRef, type RefObject } from 'react';
+import { useEffect, useMemo, useRef, type RefObject } from 'react';
 import { fromMinute } from '@/shared/time';
 import { MIN_CLICK_TARGET_PX } from '@/shared/constants';
 import type { Interval, Priority, Snapshot } from '@/shared/types';
@@ -81,6 +81,7 @@ export function CalendarView({ calendarRef }: { calendarRef: RefObject<FullCalen
   const snapshot = useAppStore((state) => state.snapshot);
   const now = useAppStore((state) => state.currentMinute);
   const view = useAppStore((state) => state.view);
+  const sampleNavigation = useAppStore((state) => state.sampleNavigation);
   const filter = useAppStore((state) => state.eventPriorityFilter);
   const hiddenCategories = useAppStore((state) => state.hiddenCategoryIds);
   const emphasisIds = useAppStore((state) => state.emphasisIds);
@@ -89,6 +90,10 @@ export function CalendarView({ calendarRef }: { calendarRef: RefObject<FullCalen
   const store = useAppStoreApi();
   const rootRef = useRef<HTMLDivElement>(null);
   useCalendarPan(rootRef, locked);
+  useEffect(() => {
+    if (sampleNavigation !== null)
+      calendarRef.current?.getApi().gotoDate(fromMinute(sampleNavigation.date));
+  }, [calendarRef, sampleNavigation]);
 
   const handlers = useMemo(
     () => createCalendarHandlers(actions, () => store.getState().calendarLocked),

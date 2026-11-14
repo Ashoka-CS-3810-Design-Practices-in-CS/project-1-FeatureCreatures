@@ -19,7 +19,7 @@ import type {
 } from '@/shared/types';
 import { MAX_LISTED_STRETCHES } from '@/shared/constants';
 import { startOfLocalDay } from '@/shared/time';
-import { fmtDuration, fmtRange, fmtTime } from './time';
+import { fmtDuration, fmtRange, fmtTime, fmtShortDate } from './time';
 
 // PRE:  title is an event title
 // POST: returns the success toast after creating it
@@ -66,10 +66,10 @@ export function historyText(verb: 'Undid' | 'Redid', label: string): string {
   return `${verb}: ${label}`;
 }
 
-// PRE:  label is a sample's label
-// POST: returns the success toast after loading it
-export function sampleLoadedText(label: string): string {
-  return `Loaded sample: ${label}.`;
+// PRE: label names a sample; weekMonday is its local Monday midnight
+// POST: returns the success toast naming the loaded sample and week
+export function sampleLoadedText(label: string, weekMonday: Minute): string {
+  return `Loaded sample: ${label} (week of ${fmtShortDate(weekMonday)}).`;
 }
 
 export const SETTINGS_SAVED_TEXT = 'Settings saved.';

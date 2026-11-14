@@ -204,7 +204,9 @@ describe('SettingsDialog', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Load sample' }));
 
     await waitFor(() =>
-      expect(empty.getState().toasts.at(-1)?.text).toBe('Loaded sample: Back-to-back.'),
+      expect(empty.getState().toasts.at(-1)?.text).toBe(
+        'Loaded sample: Back-to-back (week of 2 Nov).',
+      ),
     );
     expect(empty.getState().dialog).toBeNull();
 

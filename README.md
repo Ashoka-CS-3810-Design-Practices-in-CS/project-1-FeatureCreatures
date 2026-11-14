@@ -45,7 +45,7 @@ Nothing changes without your say-so: suggestions and plans are previews until yo
 ## Try it in two minutes
 
 1. Open the [live app](https://int-calendarfeature-creatures.vercel.app) and click **Load sample week**.
-2. **Conflicts.** Tuesday's _Lecture_ and _Meeting_ overlap for 30 minutes. Upcoming conflicts offer **Suggest alternatives**; ended overlaps are retained under **Past**. The sample uses the current week, so its tasks and conflicts may already be past when you open it.
+2. **Conflicts.** Tuesday's _Lecture_ and _Meeting_ overlap for 30 minutes. Upcoming conflicts offer **Suggest alternatives**; ended overlaps remain under **Past**. Built-in samples use the current week Mon–Fri and the next Monday on weekends. The calendar navigates there and the toast names the week. Fixed downloadable JSON samples remain dated 2 November 2026.
 3. **Finding time.** Use **+ Task** in Tasks to make a task with a future window, then **Find time**. Switch _Earliest fit_, _Best fit_ and _Priority-aware_ to change the selected pick. Choose a pick or chip, open **Details**, then **Apply selected**. Alternatives shares the layout with Closest, Same day and Lightest day picks.
 4. **Your own events.** Use **+ Event** for future Fixed or Flexible events. Creating overlapping events immediately shows their exact conflict. Fixed alternatives require **Allow moving this event** and a temporary range.
 5. **Replan.** In the Replan region choose **Plan…**, set a range containing future flexible events, then **Compute plans**. Compare, Apply and **Undo** to revert the whole plan in one step.
