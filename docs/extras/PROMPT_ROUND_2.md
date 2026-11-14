@@ -2,7 +2,7 @@
 
 Paste the block below into a fresh Codex or Claude Code session at the repo root. It is safe to paste again after a usage-limit halt: the agent resumes from the batch plan in the progress file and does not start over.
 
-```text
+```markdown
 You are a coding agent on int-calendar (CS-3810, team Feature Creatures). This is round 2: a large redesign that is already planned and decided. Your job is to implement it, one work item at a time, exactly as specified.
 
 ## RUN CONTINUOUSLY: this overrides any habit of stopping

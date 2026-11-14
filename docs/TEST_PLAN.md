@@ -15,7 +15,7 @@
 
 1. **Test the algorithms hardest.** The pure modules in `src/engine/algorithms` are tested in isolation, and also against brute-force oracles on random inputs. The rest of the system mostly carries their results faithfully. This is A3's central claim, and it is kept.
 2. **Test the engine through its facade.** Integration tests call `Engine` methods with a `MemoryRepository`. Repository-sensitive flows also run against `DexieRepository` on `fake-indexeddb`.
-3. **Test the UI against the real engine** (never a mock), with React Testing Library. Real dragging is covered by 3 Playwright smoke tests.
+3. **Test the UI against the real engine** (never a mock), with React Testing Library. Playwright covers real dragging, resizing, locking, panning and the main workflows (§6).
 4. **Regression discipline.** Every bug fix starts with a failing test, and the PR names the T-number it adds or changes.
 
 ### 1.2 Levels and tools
@@ -29,7 +29,7 @@
 | UI | Vitest + RTL + user-event | jsdom (`// @vitest-environment jsdom`) | `src/ui/**/*.test.tsx` | every PR |
 | End-to-end smoke | Playwright (Chromium) | built app via `vite preview`; `smoke.spec.ts` also on the StrictMode dev server (`vite`, project `chromium-dev`) | `e2e/*.spec.ts` | push to `main` + manual |
 | Performance | `vitest bench` + gated assertion | node | `bench/`, `tests/integration/perf.test.ts` | manual / before each milestone |
-| Manual | checklists §7, demos §8 | production URL | — | before each milestone |
+| Manual | single live-site smoke test §7 | production URL | — | after deployment |
 
 ### 1.3 Measurable targets
 
@@ -103,10 +103,10 @@ Unless a test says otherwise:
 | FR5 Best-time finder | T6, T7, T8, T9, T10, T11, T18, T19, T28, T33, T34, T51, E3 |
 | FR6 Priority sort / category filter | T30, T45, T49 |
 | FR7 Conflict resolution | T20, T21, T42, T46, T51 |
-| FR8 Task management + sync | T16, T31 |
+| FR8 Task management + sync/completion | T16, T31, T54 |
 | FR9 Scheduling queue | T17 |
-| FR10 Replan | T22, T23, T35 |
-| FR11 Settings | T11, T19, T29, T44, T49 |
+| FR10 Replan | T22, T23, T35, T52, T53, T55 |
+| FR11 Settings | T11, T19, T29, T44, T49, T53, T57 |
 | ER1 Invalid time / input | T5, T31 |
 | ER2 Task longer than window | T8, T19, T28 |
 | ER3 No slot found | T9, T11 |
@@ -116,12 +116,12 @@ Unless a test says otherwise:
 | ER7 Stale result | T27 |
 | ER8 Changed in another tab | T41 |
 | B1 Undo / redo | T24, T36 |
-| B2 Import / export / samples | T25 |
-| B3 Dark mode, B4 Shortcuts | T32 |
+| B2 Import / export / samples | T25, T48 |
+| B3 Dark mode/appearance, B4 Shortcuts | T32, T50, T57 |
 | NFR1 Responsiveness | T15 |
 | NFR3 Correctness | T12, T33, T34, T35, T36, T51, coverage thresholds |
 | NFR5 Modularity | `npm run lint` (boundary rules, TECH_SPEC §3.2) |
-| NFR8 Accessibility | §7 checklist, T14 (text labels), T32 |
+| NFR8 Accessibility | §7 smoke test, T14 (text labels), T32, T56–T58 |
 
 ---
 
@@ -173,7 +173,7 @@ All times are on Mon 2 Nov 2026 unless a day is given. Intervals are half-open.
 | **T29** | DST (`*.dst.test.ts`, `TZ=America/New_York`) | `now` = `2026-11-01 00:00` (otherwise the default `Mon 00:00` would clip the whole window). Settings `workDays` 0–6. `buildDayFrames` for Sun 2026-11-01 (DST ends 02:00 → 01:00). Task 540 min, window `atLocal('2026-11-01','00:00')` → `atLocal('2026-11-02','00:00')`. | Frame `dayEnd − dayStart` = 1500. `work.start − dayStart` = 600. `work` length = 540. `atLocal` / `localMinuteOfDay` round-trip at 09:00. The only option is local 09:00–18:00. | R3 time handling |
 | **T30** | unit selectors + UI | Tasks: A (Low, window end Fri), B (High, Thu), C (Medium, Wed), D (High, Wed). Calendar filter test: events of all priorities, including a conflicting Low one. | Sort by priority → D, B, C, A. Sort by window end → D, C, B, A. A Medium filter shows only C. A calendar filter of High: `fcEvents` contains only High events, `snapshot.events` is unchanged (same reference), and the ConflictPanel still lists the Low conflict with "(hidden by filter)". | FR6 |
 | **T31** | schema + facade + UI | `createTask` with: duration 0, −5, `NaN`, 1441, 2.5; window end ≤ start; name `"  "` | Durations give `InvalidInput`, path `durationMin`, with the messages in TECH_SPEC §6. The window gives `InvalidTime`, path `window.end`. The name gives `InvalidInput`, path `name`. All pass the unchanged-state check. **UI:** TaskDialog with an empty duration shows "Duration must be a number." under Duration. | ER1 for tasks |
-| **T32** | UI | (a) Press `N`. (b) Press `N` while focused in a text input. (c) Press Ctrl+Z after creating an event. (d) Press `?`. (e) Click the theme toggle ×3. | (a) The event dialog opens. (b) Nothing happens. (c) The event is removed and the toast reads "Undid: Create "…"". (d) The help overlay lists every key in PROJECT_SCHEMA §7.6. (e) `documentElement.dataset.theme` goes light → dark → absent (system), and `localStorage['fc-theme']` follows. | B3, B4 |
+| **T32** | UI | (a) Press `N`. (b) Type `N` in a text field. (c) Ctrl+Z after creating an event. (d) Press `?`. (e) Toggle the resolved theme Dark/Light, then choose System in Appearance. | (a) Event dialog opens. (b) Text input only; no shortcut. (c) Event removed with the existing Undo toast. (d) Help lists PROJECT_SCHEMA §7.6. (e) Dataset is dark → light → absent (System); localStorage follows. D-13 changes the old three-state toggle sequence while retaining all attribute/storage assertions. | B3, B4 |
 | **T33** | property `gaps` | Random disjoint segments in [0, 3000), random events (lengths 1–300), buffer 0–30 | The intervals of `freeGaps(segments, mergeBusy(sort(events), b))` equal `bitmapGaps(...)` | Gap search is exact (NFR3) |
 | **T34** | property `rank` | Random gaps, duration, criterion, priority, `originalStart` (or null), and day loads | Every option: length = d; inside its gap; ranks are 1..k with k ≤ 5; options are sorted by the BR-7 key; `leftoverMin = gapMin − d` | Option validity |
 | **T35** | property `replan` | Random static and flexible events within one week, random flex windows, random buffer 0–30 | For both plans: no fixed event and no event starting before `notBefore` is moved. Every `to` lies inside one allowed segment of `flexWindow ∩ range`. After applying, placed movable events overlap no static event, no unplaced event (which stays at its original interval, AUDIT A01) and no other placed movable event, even with each expanded by the buffer. `metrics.moved = moves.length`. | Replan safety |
@@ -284,10 +284,10 @@ T50 pan release regression: pointer down inside the grid, release on the window 
 | Dialog controls (WI-37) | Both forms show a Priority fieldset with [H] High / [M] Medium / [L] Low radios and save the selected value. Task Scheduling hours defaults to Working hours only; Any time saves `useWorkingHours = false`, editing restores it and switching back saves true. |
 | Replan remaining problems (WI-38) | T40: per-plan Not moved by Replan lists Fixed event / Already started / Outside its flex window / No free slot with problem names and Suggest alternatives. Includes zero-movable and zero-move cases, correct singular/plural message, and a healthy zero-move case. |
 | Shortcut state freshness (WI-39) | With a dialog committed open, close it and synchronously dispatch ? inside the same act (before another render/effect): help reopens. Repeat after stopping a picker and clearing busy. Opening a modal or starting busy immediately blocks shortcuts. Store changes do not register another keydown listener; unmount removes it. |
-| SlotPicker (task) | The summary line reads "3 free gaps in window (30 min, 1 h, 4 h) — 1 fits 1 h 30 min" (T6 data). The options are a radio group with an accessible name. Switching the criterion re-orders the options (T10 data). |
-| SlotPicker (alternatives) | Shows the target. The toggle switches the target and the options (T20 data). Each option states "N min earlier/later". |
+| SlotPicker (task) | Details reveals "3 free gaps in window (30 min, 1 h, 4 h) — 1 fits 1 h 30 min" (T6 data). One radio group spans distinct named picks and day chips. Rank by changes the selected pick; chips stay in date/time order. Details starts closed. See T51/T58. |
+| SlotPicker (alternatives) | Move radios switch target/options in conflict order. Distinct Closest/Same day/Lightest day picks carry short reasons; chips show times. Fixed targets require temporary consent/range; Details reveals full explanations. See T50/T51. |
 | ReplanDialog | It defaults to the visible week, shows two cards with their metrics, Apply calls `applyReplan`, and the empty case says "No flexible events in this range". Editing From, To or Buffer after computing hides the cards and their Apply buttons until Compute runs again (AUDIT A08). Opened from each view it defaults to a valid range: Day → that day, Week/List → that week, Month (Nov 2026, grid 26 Oct–6 Dec) → 2–8 Nov, with no range error on Compute (AUDIT A10). |
-| SettingsDialog | Rejects work end ≤ start inline. Adds and removes a barred slot. Export triggers a download (spy on `URL.createObjectURL`). **T47 (WI-46):** level-3 headings read exactly Working time, Scheduling defaults, Barred slots, Data; each region holds its fields; a barred slot is a `.barred-row` group with Label / From / To values, day chip checkboxes and a remove button whose text is × and name "Remove barred slot N"; Add barred slot appends slot 3 with focus on its Label. |
+| SettingsDialog / BarredSlotsPanel | Settings rejects work end ≤ start; Export downloads through URL.createObjectURL and Import exposes one styled button. Current T47 headings are Working time, Scheduling defaults, Categories, Appearance, Data (D-09/D-13). Barred rows live in their separate region, retaining labelled From/To/Days/remove controls and focus on the added Label. T53/T57/T58 retain and extend the original assertions. |
 | Modal (WI-35) | Inside `<StrictMode>` the dialog stays open after the double mount and `onClose` is not called; Esc (cancel, then close) still calls `onClose` exactly once. |
 | renderEventContent (WI-35) | A select-mirror event with empty `extendedProps` renders its time only (it used to throw in `barredLabels.map`); a drag mirror keeps its props; background and List cases. |
 | ErrorBoundary (WI-35) | A child that throws while rendering is replaced by "Something went wrong" with Reload and Export data, which call their callbacks; a failing export shows "The export failed too.". |
@@ -305,8 +305,8 @@ Each test does `page.clock.install({ time: new Date('2026-11-02T08:00:00') })` b
 | ID | Flow | Assertions |
 |---|---|---|
 | **E1** | + Event "A", Mon 10:00–11:30 → Save. + Event "B", Mon 11:00–12:00 → Save. | Both blocks contain the text "Conflict". The conflict panel shows "11:00–11:30 (30 min)". |
-| **E2** | Continuing E1: drag B's block to Mon 13:00, then drag its bottom edge to 14:30. B is a fixed meeting, so each gesture confirms **Move** in "B is fixed. Move it anyway?" (WI-42). | The conflict panel shows "No conflicts". B's block reads "13:00–14:30". After a reload the position persists (IndexedDB). |
-| **T43** (WI-42) | Create fixed Seminar Mon 10:00–11:00; drag it to 12:00 → Keep it; reload; drag again → Move; reload. | "Seminar is fixed. Move it anyway?" appears each time; after Keep it and reload it is still 10:00–11:00; after Move and reload it is 12:00–13:00; no page or console error. |
+| **E2** | Continuing E1: unlock; drag fixed B to Mon 13:00 and confirm Move, then resize its end to 14:30 and confirm Change. D-03 names the proposed destination/duration. | No conflicts; B reads 13:00–14:30 and reload preserves it. All original position/persistence assertions remain. |
+| **T43** (WI-42, updated D-03/D-04) | Create fixed Seminar Mon 10:00–11:00; unlock, drag to 12:00 → Keep it; reload/unlock, drag again → Move; reload. | The question quotes Seminar and the actual proposed date/range. Keep it retains 10:00–11:00; Move persists 12:00–13:00; no page/console error. Resize asks for duration/times with Change, not Move. T50 covers lock/confirmation details. |
 | **E3** | + Task "Report", 1 h 30 min, window this week → Save → Find time → Apply the first option. | The task row shows "Scheduled". A block "Report" with the tag "Task" appears at the slot shown in the picker. |
 | **T41** (WI-40) | Two pages in one context: tab 1 loads the sample and deletes Seminar while tab 2 edits it; tab 2 renames Tutorial; reload both. | Tab 2 shows "Calendar updated in another tab.", its edit dialog closes and Seminar disappears; tab 1 shows the rename; after reload Seminar is gone in both and the rename is kept; no page or console error. |
 | **E4** (WI-35) | Click empty time Mon 09:00 → Cancel. Drag-select Mon 10:00–11:30 → Cancel. | Each opens **New event** with Start/End prefilled: 09:00–09:30 (a click is one 30-minute row), then 10:00–11:30. No page or console error. |
@@ -323,84 +323,111 @@ WI-39 local repeat evidence (2026-10-26, Codex): warm **180/180 passed** and col
 
 ---
 
-## 7. Manual checklists (run on the production URL before each milestone)
+## 7. Live-site smoke test (20-30 minutes)
 
-### 7.1 Accessibility
+This is the single current manual acceptance run, replacing D1-D5, the separate accessibility/UX lists and the peer-fix checklist (D-19). Run it on https://int-calendarfeature-creatures.vercel.app after deploying the tested main. All boxes start unchecked: local automation and earlier production reports do not certify this deployment.
 
-Local automated evidence (WI-25/26): `src/ui/styles/tokens.test.ts` checks light/dark foreground pairs; `e2e/accessibility.spec.ts` checks desktop widths, drawer, minimum control targets, dialog keyboard/focus behavior and List event names/editing. Divyam reported on 2026-10-26 that production contrast is OK in both themes and the screen reader announces toasts; these are human-reported results, not a new agent-run production audit.
+Record tester, date, deployed commit, browser/locale, viewport and any failed S-number. Use one disposable browser profile, two tabs sharing that profile, a keyboard and a screen reader. Export any existing data before replacing it. If this profile holds pre-Round-2 data, first compare its events/tasks/settings with its backup after reload: the v3 upgrade must preserve them.
 
-- [ ] Every conflict is identifiable without colour: the ⚠ icon plus the word "Conflict".
-- [ ] Every priority is identifiable without colour: the [H] / [M] / [L] tag.
-- [x] Text contrast is OK in both themes (Divyam, production, 2026-10-26); local token tests also enforce at least 4.5:1:
-  - [x] event text on each priority background
-  - [x] muted text
-  - [x] toasts
-- [ ] Every dialog is fully operable with the keyboard alone. Focus is trapped, `Esc` closes the dialog, and focus returns to its trigger.
-- [ ] An event can be moved and resized through the event dialog, without a mouse.
-- [ ] The List view reads sensibly with a screen reader (VoiceOver or NVDA quick pass); local accessible-name/keyboard checks pass, but this specific human check was not reported.
-- [x] Toasts are announced by the screen reader (Divyam, production, 2026-10-26).
-- [ ] Click targets are at least 32 px. The layout works at 1280 px and 1024 px, and the drawer works below 1024 px.
+**Dates:** M is the next Monday strictly after today; W is M 00:00 through the following Saturday 00:00. Use local dates and times throughout. These future fixtures keep the run valid on weekends too; built-in samples use the current week and committed sample files use 2 November 2026 UTC. Approximate section times below total 29 minutes.
 
-### 7.2 UX sanity
+### S1. Start and navigation (1 minute; FR1, B2, D-14)
 
-- [ ] No action changes data without either a direct edit or an explicit *Apply* (BR-14).
-- [ ] Every error message says what went wrong **and** what to do next.
-- [ ] Loading the `stress` sample shows a spinner, and the week view stays responsive after it loads.
-- [ ] Dark mode has no unreadable FullCalendar parts (headers, now-indicator, list view).
+- [ ] Open a fresh profile: the empty state offers Load sample week. Load it: eight events, four tasks and Lunch appear. Reload: the data survives and Calendar lock starts Locked.
+- [ ] At 1440 and 1280 px, find Tasks, Calendar, Conflicts, Replan and Barred slots. Use Day/Week/Month, previous/next and Today: the period changes correctly. Navigate to M's week. There is one + Task in Tasks, one + Event in Calendar and one Plan... in Replan.
 
----
+### S2. Reusable fixtures and categories (3 minutes; FR1, FR6, FR11, D-01/D-11/D-16)
 
-## 8. Demonstration scripts (deliverables: calendar, conflict and best-time demos)
+- [ ] With + Event create **Smoke fixed**, High/Class, M 13:00-14:00. Fixed is the initial choice. The order is Title, Priority, Category, paired Start/End, Scheduling/window, Description. Try End before Start: an inline error keeps the draft and saves nothing; correct it and Save.
+- [ ] Create **Smoke flex**, Medium, M 13:30-14:30, Flexible with window W. Create **Smoke category** inline using an available swatch; the draft survives and changing categories does not change Flexible. Both events appear with neutral fills, priority/category tags and scheduling labels; their conflict is 13:30-14:00, 30 min.
+- [ ] In Settings > Categories, try the same name with different case and an occupied/reserved free colour: saving is rejected. Rename/recolour Smoke category with a free swatch: the existing tag changes immediately; Undo/Redo restores/reapplies it. Delete is blocked with usage counts. Return to the original name.
 
-Each demo starts from **Settings → Data → Load sample calendar**.
+### S3. Running/past time and gestures (3 minutes; FR2-FR4, B1, D-03/D-04/D-08)
 
-| ID | Sample | Script (≈ 1–2 min each) | Shows |
-|---|---|---|---|
-| **D1** Calendar | `sparseWeek` | Create an event by dragging on empty time. Edit its title and priority. Drag it to another day. Resize it. Delete it. Then Undo ×2 and Redo. | FR1–FR3, B1 |
-| **D2** Conflicts | `sparseWeek`, then `overlapCluster`, `midnight`, `backToBack` | Point at the Tue Lecture ↔ Meeting conflict: icon, label, overlap and minutes. Suggest alternatives → Apply. `overlapCluster` shows 15 pairs listed. `midnight` shows a conflict across midnight. `backToBack` shows touching events with 0 conflicts. | FR4, FR7, ER4 |
-| **D3** Best time | `sparseWeek`, then `fullyBooked` | Select the 45 min and 90 min tasks → Find time for 2 → the queue applies the first and skips the second. On a third task, switch the criterion between Earliest, Best fit and Priority-aware and show the order changing, then read one explanation aloud. Show the 10 h task (ER2). On `fullyBooked`, the 30 min Thursday task gives ER3 with "largest gap 15 min". | FR5, FR9, ER2, ER3 |
-| **D4** Replan | `sparseWeek`, then a clean week | Replan → set buffer 10 → Compute. Compare Minimal change vs Balanced week (moves, reasons, spread). Apply Balanced, then Undo. In a clean week add Lunch 13:00–14:00, a future flexible Study at 13:00–14:00 with window 09:00–18:00, and a fixed Class at 13:00–14:00. Minimal change moves Study with reason barred; Class remains under Not moved by Replan → Fixed event, Overlaps Lunch, Suggest alternatives. With a flexible event already started in Lunch, it instead says Already started. Zero moves still explain/count remaining overlaps; use an entry's alternatives action to resolve one. | FR10, BR-12, B1, T39/T40 |
-| **D5** Extras | any | Add Lunch 13:00–14:00 as a barred slot and show hatching and the "Lunch" boundary. With an event inside Lunch, show `In Lunch`, the separate overlap section, settings info toast/View and Suggest alternatives; conflict counts stay unchanged (WI-32). Show dark mode, then the toolbar `?` button and `?` key (WI-33), then Export, Clear all data, Import. | FR11, BR-15, B2–B4 |
+- [ ] Note local time T. Create **History fixed** and **History flex**, both T minus 15 minutes to T plus 10 minutes; make the latter Flexible with a window from midnight on its start date through midnight after its end date. In Replan for today, Compute: History flex is Already started and is never moved; its fixed counterpart is Fixed event. Cancel. Keep these records for S14.
+- [ ] While Locked, dragging/resizing/selecting empty time changes nothing, and dragging the time grid pans it. Clicking an event and + Event still open dialogs. Press K to unlock. Drag Smoke fixed: the question names the proposed date/range; Keep it, Escape and Close each revert. Confirm Move once, then Undo. Resize it: the question names the new duration/times and Change; confirm, Undo. Drag Smoke flex: no question; Undo.
+- [ ] Edit Smoke fixed's times using only the keyboard, then Undo; delete it with confirmation, Undo and Redo, then Undo to restore it. No cancellation adds a data/history change. Return to M's week with both Smoke events at their original times.
 
-**Sample inputs deliverable.** `src/data/samples/*` plus an exported JSON of each sample, committed to `docs/samples/` (WI-30).
+### S4. Barred warnings and keeps (2 minutes; FR11, D-09/D-20)
 
-**Rehearsal setup.** Use a fresh browser context on the production URL after the team deploys the tested `main`. Load samples through Settings for the current local week; committed JSON deliverables instead use 2 November 2026 UTC. For D3, the High-priority 90-minute report is offered before the Medium-priority 45-minute chapter task, regardless of checkbox selection order. Export anything you want to keep before a replacement operation.
+- [ ] Both Smoke events may stay in Lunch without a question. Their In Lunch tags/Overlaps rows are separate from the 30-minute event-pair conflict. Keep here on Smoke fixed hides its tag/row in collapsed Kept; Undo/Redo and Stop keeping reverse it.
+- [ ] Keep it again, change its end to 13:55: the keep clears. Undo restores the time and keep; Stop keeping restores the active warning. Keep it once more, rename Lunch and Save: the keep survives. Extend Lunch to 14:15 and Save: keeps clear, the overlap toast counts future/ongoing events and View focuses Overlaps. Restore the label Lunch and 13:00-14:00 before continuing.
+- [ ] Add a duplicate Lunch and Save: Same days and times as "Lunch" (13:00–14:00). Change it to 13:30-14:30 on Mon/Tue: Overlaps "Lunch" (13:00–14:00) on Mon, Tue. Messages never number the other slot. Nothing saves; Cancel restores the original rows. Time fields must be complete in the browser's locale, including AM/PM where used.
 
-**Production rehearsal record (reported by user).** Tester **Divyam**, **2026-10-26**, [production URL](https://int-calendarfeature-creatures.vercel.app): **D1–D5 all pass**. Accessibility: contrast OK in both themes; screen reader announces toasts. This run predates WI-32/33; the new D5 steps pass local tests before the human's planned redeploy, with post-deploy smoke checks still human-owned.
+### S5. Alternatives (2 minutes; FR7, D-02/D-06)
 
-| Demo | Local evidence | Production tester/date/outcome |
-|---|---|---|
-| D1 | E1/E2 create, real drag/resize and reload; CRUD/history integration cases | Divyam · 2026-10-26 · Pass |
-| D2 | E1 flags both events; alternatives integration/UI cases and sample conflict tests | Divyam · 2026-10-26 · Pass |
-| D3 | E3 schedules a linked task; queue, ranking, ER2/ER3 integration/UI cases | Divyam · 2026-10-26 · Pass |
-| D4 | Replan integration/UI cases, atomic apply/undo and T35 properties | Divyam · 2026-10-26 · Pass |
-| D5 | Settings/import/export/theme/shortcuts; WI-32/33 local regressions | Divyam · 2026-10-26 · Pass (pre-change version); new steps await planned redeploy |
+- [ ] Suggest alternatives for the Smoke conflict: Move radios keep event order and initially choose the flexible event. Top picks have distinct slots/short reasons; day chips stay in time order, Show N more expands a day, and arrow keys/Space leave exactly one slot selected.
+- [ ] Switch to Smoke fixed: no suggestions until Allow moving this event is on. Enable it: the temporary From/To defaults to M through Tuesday; try a reversed range (error, no write), then a valid future range. Toggle Search hours. Details starts closed; open it to inspect window, Buffer, gap boundaries, leftover and load. Apply a free chip: the event stays Fixed. Undo.
+- [ ] Reopen: fixed consent has reset. Choose Smoke flex, Apply a pick: its conflict/barred warning clears without changing Flexible; Undo restores both. Cancel never moves either event.
 
----
+### S6. Tasks, failures and the queue (3 minutes; FR5, FR8, FR9, D-06/D-16)
 
-## 9. Release checklist (definition of done for the whole project)
+- [ ] Create **Smoke report**, 1 h 30 min, High, and **Smoke chapter**, 45 min, Medium, both window W and Working hours only. The order is Name, paired Hours/Minutes, Priority, Category, paired Window from/to, Scheduling hours, Description. The task category defaults to the last chosen category; change both to Assignment.
+- [ ] On report, Find time: switch Earliest fit/Best fit/Priority-aware; selection follows the criterion while day chips keep their order. Inspect Details and change Buffer, then restore 0. Escape, Stop and Close each leave it unscheduled without Scheduled 0 of 1 task.
+- [ ] Temporarily edit report to 10 h in M 09:00-18:00: Find time explains ER2 (longest allowed stretch 4 h, split by Lunch). Edit to 30 min in M 14:00-14:45: Smoke flex occupies through 14:30, so ER3 shows largest gap 15 min and its boundaries. Restore report to 90 min and W.
+- [ ] Select chapter then report: Find time (2) appears only with a selection, and report is offered first. Apply report, Skip chapter: a multi-task summary remains (1 of 2 scheduled). Show/Sort change rows/order without changing data; calendar filters do not filter Tasks.
 
-WI-31 completes local release preparation. User-reported production outcomes are distinguished from local automated results. Unchecked human items below are retained for the user's planned push/redeploy and viva, not asserted as completed by the agent.
+### S7. Linked tasks and completion (2 minutes; FR2/FR3/FR8, B1, D-07)
 
-- [x] D1–D5 pass on production per Divyam, 2026-10-26; WI-32/33's new behavior passes T37/T38 and toolbar UI/browser regressions locally.
-- [x] Typecheck/lint/test gate passes; coverage thresholds met (98.30% overall lines / 93.12% branches; algorithms 99.67% / 95.85%). DST: 7 cases. Production build passes.
-- [x] After WI-35/36 (2026-10-26, local): 563 tests, coverage 98.50% lines / 93.82% branches (algorithms 99.70% / 95.93%), 7 DST, all five properties at 10,000 random-seed cases, build, and 11 browser checks (E1–E4, smoke on the build and on the StrictMode dev server, accessibility, warnings) green. Not yet on production: needs the human redeploy.
-- [x] After WI-37/38 (2026-10-26, local): 578 tests, coverage 98.55% lines / 93.98% branches, 7 DST, build and 18 browser checks green. Dialog geometry/keyboard checks cover both themes at 1440/1024/900 px; D4's barred-replan distinction and per-event alternatives pass locally. The scheduling heuristic is unchanged. Human push/redeploy and the new production D4 steps remain pending.
-- [x] After WI-39 (2026-10-26, local): typecheck/lint, 582 tests, coverage 98.60% lines / 94.08% branches, build, warm 180/180 and cold 180/180 browser executions green (each 10 repeats, 2 workers, no retries); no additional flakes found. Deterministic regression failed before the fix. CI retry/trace/HTML/failure-artifact configuration verified locally; the next remote CI run needs the human push.
-- [x] `npm run test:props:full`: all five properties pass 10,000 random-seed cases each; no failing seed found.
-- [x] `npm run e2e`: all 8 Chromium checks pass, including E1–E3 and the new warning/ER2/help workflows.
-- [x] `npm run test:perf`: N=5000, seed=7, k=183, eleven-run median 4.188 ms < 100 ms; recorded in README.
-- [x] Production URL recorded in README and used for Divyam's rehearsal; local fresh-context browser tests show the empty state and Load sample week.
-- [x] README covers setup, tests, deployment, architecture, limits, production URL and both change requests; six sample exports validate and regenerate identically.
-- [x] All three change logs synchronized and all work items in PROGRESS complete.
-- [ ] Human: push the finished main/branches/tags, redeploy, and smoke-check the new D5 warning/help steps plus fresh-browser behavior on production.
-- [ ] Viva prep: each member can explain, without notes:
-  - [ ] the heap sweep and why the running-max version fails T3
-  - [ ] merge, complement and gaps with the buffer
-  - [ ] the BR-7 ranking keys
-  - [ ] the greedy order in replan and its limitation
-  - [ ] the undo model (before- and after-images)
-  - [ ] why Dexie replaced SQLite
+- [ ] Edit report's duration/name: its linked Flexible event follows. Delete that event: report becomes unscheduled; Undo restores both. Delete the scheduled task: confirmation names the linked event, both disappear; Undo restores both.
+- [ ] Mark report done: its time becomes free in one change and it disappears from Open. Show Done: struck title, Done tag, Reopen/Edit/Delete and no Find time. Undo restores the linked pair; mark done from its dialog, Reopen: it returns unscheduled with no event. Find time again and Apply to reschedule.
+- [ ] Tasks menu > Mark done before...: choose W's end, Preview; report and chapter qualify by event end/window end respectively, including equality. Cancel writes nothing. Reopen, preview, edit cutoff: Apply requires a fresh preview. Apply the preview, Undo once: all task/event changes return together. Leave chapter done for the export check.
+
+### S8. Working time (1 minute; FR11, D-10)
+
+- [ ] Unschedule report through its dialog. Settings > Working time: turn Use working hours off and Save. Retained day/hour fields are disabled; non-working shading disappears. Task Scheduling hours and alternatives Search hours are hidden. Searches can use nights/weekends but never barred time.
+- [ ] With W as the window/range, preview Find time and Front-load Replan: whole-day options/moves are possible, including midnight. Cancel without applying. Switch working hours on: saved days/hours, task preference, controls and shading return. Invalid hours/buffer are rejected inline.
+
+### S9. Replan (3 minutes; FR10, D-15)
+
+- [ ] Plan... defaults to the visible M week. From/To/Strategy/Compute share a row; Buffer is behind Details. Compute each second-plan strategy: Balanced week, Cluster by category, Vary categories, Front-load and Fewer fragments. Minimal change stays first; changing any input removes old cards until Compute runs again.
+- [ ] Cards show compact day-grouped moves, tags, reason chips and before/after conflicts. Minimal change moves the unkept future Smoke flex out of Lunch. Not moved by Replan appears once, collapsed, with Smoke fixed and an alternatives action using the same fixed opt-in picker. Fixed and running events never move. Details reveals shift/spread/unplaced and long reasons.
+- [ ] Apply one nonempty plan: events move only after Apply, with no new conflicts/barred placement/out-of-window time. Undo once restores the entire plan. Compute again and Cancel: nothing changes.
+
+### S10. Both themes, layout and contrast (2 minutes; B3, D-05/D-12/D-13/D-14/D-16)
+
+- [ ] In Light and Dark, inspect Week, Month and List plus event/task/Settings dialogs at 1440, 1280 and 1024 px. Neutral blocks and independent tags remain readable; narrow warnings fit and out-of-month numbers are visible. App-written dates look like Mon 9 Nov and times are 24-hour ranges; native inputs follow locale. List has one compact date heading, readable hover and no overlay hiding a sticky header.
+- [ ] Scroll each overflowing desktop column: others stay put. At 1024, counted Tasks/Conflicts buttons open separate drawers at their titles; Tab/Shift+Tab stay inside, Escape returns focus. Event controls, paired fields and native barred times do not clip.
+- [ ] Settings > Appearance: try Neutral and a coloured accent, then System. The app-bar sun/moon matches the resolved theme and toggles Light/Dark. Reload: accent and last Calendar view persist; L toggles the week List and restores that Calendar view. Spot-check event/muted/tag/toast text with the browser contrast inspector (at least 4.5:1), focus/control marks (3:1), visible focus and 32 px targets in both themes.
+
+### S11. Keyboard and screen reader (1 minute; B4, accessibility)
+
+- [ ] Open help using its button and ?; check N, Shift+N, D/W/M, L, K, R, Today/previous/next and Undo/Redo against the help table. Typing N/K in a field types text only. Every opened dialog traps focus; Escape/Close/Cancel return it to the trigger.
+- [ ] In List with a screen reader, read an event's full title, priority/category, scheduling kind and conflict information; open/edit it from the keyboard. Conflict and priority remain identifiable by words/icons and H/M/L without colour. Save an edit, Undo: the toast is announced; read a validation error and its labelled field.
+
+### S12. Two tabs (1 minute; ER8)
+
+- [ ] Open a second tab in the same profile; both show the same data. Edit Smoke flex in tab 1: tab 2 announces Calendar updated in another tab. Open Smoke fixed in tab 2, delete it in tab 1: tab 2 closes the removed-record dialog. Undo in tab 1 to restore it; reload both. There is no resurrected deletion or lost accepted edit, and the receiving tab's old Undo history is cleared. Close tab 2.
+
+### S13. Data, legacy compatibility and samples (3 minutes; B2, D-17)
+
+- [ ] Export the smoke calendar as a v2 backup: JSON includes categories, a done task/doneAt, settings/useWorkingHours and event keptInBarred lists. In Settings > Data, Import JSON is a styled button opening the labelled chooser. Try a non-JSON file: an actionable error, no replacement. Cancel a valid import confirmation: no change. Clear all data, confirm, import the backup, confirm: all records/settings return; history is empty while local theme/accent stay.
+- [ ] Import [smoke-legacy-v1.json](extras/smoke-legacy-v1.json): v1 imports seed categories and preserve both overlapping Lunch/TT slots. Their calendar labels stack and a banner names both. An unrelated Settings save retains them. Remove TT in Barred slots and Save: the banner clears. With this empty legacy calendar, delete all unused categories: + Event requires inline category creation before Save; cancel the draft.
+- [ ] Load Back-to-back (0 pairs), Overlap cluster (15 pairs, possibly in Past), Midnight crossing (cross-date overlap) and Stress: loading feedback appears and the view stays responsive after 5,000 events load. Built-in samples replace data only after confirmation. Restore the v2 smoke backup; all six importable v2 samples remain in [samples/](samples/README.md).
+
+### S14. Past refresh and sign-off (2 minutes; D-08)
+
+- [ ] After the History events' end passes, focus the tab: their overlap is in collapsed Past, omitted from upcoming counts, with readable muted events/days. Expand Past: names/range/minutes remain, no Suggest action. Replan a range covering today: these entirely past problems are absent, never Already started. Create **Past lunch** on the most recent Mon-Fri date before today, 13:00-14:00: it has no In Lunch tag or active barred-overlap row and does not contribute to a future-overlap toast count.
+- [ ] Record each failure by S-number with expected/actual result, theme/width and deployed commit; do not mark an unrun check passed. Record screen-reader/browser names and the overall Pass/Fail. Restore the original user backup if one was saved; keep the smoke export as evidence.
+
+## 8. Demonstration and rehearsal history
+
+The former D1-D5 scripts, accessibility/UX checklists, release snapshots and reported production rehearsal are preserved in [manual verification history](extras/MANUAL_VERIFICATION_HISTORY.md). They describe older builds. Section 7 is the only current manual test; section 6 remains the automated browser catalogue.
+
+The six reproducible sample exports in [samples/](samples/README.md) remain the sample-input deliverable.
+
+## 9. Release checklist (Round 2)
+
+Local checks and live-site acceptance are separate records. Current automated evidence is in [PROGRESS.md](progress/PROGRESS.md) and the README results table; historical results are in section 8's archive.
+
+- [ ] WI-47 through WI-59 merged locally; retained branches and accurate handoff notes.
+- [ ] Full main gate: typecheck, lint, coverage, 9 DST cases, ten properties at 10,000 random-seed runs, production build and 64 browser checks repeated five times (320 runs), zero retries.
+- [ ] Baseline comparison: at least 639 passing tests plus the existing opt-in skip; no overall/algorithm coverage measure falls more than 0.5 percentage points. Exact final counts and all eight coverage values published in README.
+- [ ] D-21: run node scripts/checkTextDiagrams.mjs; all Markdown text diagrams in docs/, README.md and AGENTS.md use the allowed alphabet and aligned closed boxes.
+- [ ] Six v2 sample exports and the retained v1 compatibility fixture validate; local Markdown links resolve; main docs and change logs match the binding audit.
+- [ ] Human: push main, all retained branches and tags, inspect remote CI and deploy.
+- [ ] Human: run and record section 7 on the deployed live site in both themes, including keyboard/contrast/screen reader. Older production passes do not replace it.
+- [ ] Viva prep: each member can explain the heap sweep/T3, merge/complement/buffer, picker generation/ranking, every Replan strategy and greedy limitation, atomic task completion, before/after-image history and why IndexedDB replaced SQLite.
 
 ---
 
@@ -467,3 +494,4 @@ WI-31 completes local release preparation. User-reported production outcomes are
 | 2026-11-14 | WI-57 core checkpoint: 855 + 1 existing skipped, overall 98.56/94.37/98.14/98.78, algorithms 99.72/96.80/100/99.71, DST 9, all ten properties × 10,000, typecheck/lint/build and all eight targeted browser cases pass. Full 171 browsers and 106 refreshed capture scenes are in progress. |
 | 2026-11-14 | WI-57 final branch gate: 855 + 1 existing skip, overall 98.56/94.37/98.14/98.78, algorithms 99.72/96.80/100/99.71, DST 9, ten properties × 10,000, build, 171/171 browsers, zero retries. All 106 captures pass; 178 PNGs reviewed in both themes at all three widths, plus neutral List/Month. U9 short-block layout and U23 out-of-month numbers remain in WI-58's explicit scope. |
 | 2026-11-14 | v1.39 (WI-58 D-16): T58 field/order/format/Import/cancel tests and seven browser cases. Initial full unit 860 pass plus one expected old single-task-summary mismatch; its existing buffer/error/closed-picker assertions remain and the toast expectation is now empty. Fifteen focused cases and seven browsers pass before the final exact time-range assertion/fix. FullCalendar retains a natural-date accessible heading while its visible text is checked exactly. Month tests multiply ancestor opacity, and native Import has one exposed button with a hidden named file input. |
+| 2026-11-14 | v1.40 (WI-59 D-19/D-21): one 29-minute live S1–S14 run replaces the separate checklists/demos/peer smoke; old sections and reported rehearsal archived in extras/MANUAL_VERIFICATION_HISTORY.md. Future-date fixtures work on weekends; a validated blank v1 legacy-overlap input supports migration/repair checks. §9 tracks current automated evidence and pending human deployment/smoke. Traceability and stale T32/T47/picker/E2/T43 prose now describe implemented D-03/D-06/D-09/D-13, with no test code/assertion changes. |

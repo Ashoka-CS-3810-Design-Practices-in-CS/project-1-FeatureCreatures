@@ -45,11 +45,11 @@ Nothing changes without your say-so: suggestions and plans are previews until yo
 ## Try it in two minutes
 
 1. Open the [live app](https://int-calendarfeature-creatures.vercel.app) and click **Load sample week**.
-2. **Conflicts.** Look at Tuesday: _Lecture_ and _Meeting_ are flagged _Conflict 30 min_, and the right panel lists the overlap. Click **Suggest alternatives**, pick a slot and **Apply**. The conflict disappears.
-3. **Finding time.** In **Tasks**, click **Find time** on _Write report_. Switch Rank by between _Earliest fit_, _Best fit_ and _Priority-aware_ to change the selected pick. Choose a pick or a time chip, open **Details** for its explanation or buffer override, then **Apply selected**. Alternatives uses the same layout with Closest, Same day and Lightest day picks.
-4. **A task that can't fit.** Try **Find time** on _Thesis draft_, a 10-hour task. Lunch splits each day into four-hour stretches, so the app explains that the task can never fit, rather than just finding no slot.
-5. **Replan.** Click **Replan**, then **Compute plans**, and compare the two plans. Apply one and press **Undo** to revert it in a single step.
-6. **Your own events.** Drag across empty time to create an event, or drag an existing event onto another to create a conflict.
+2. **Conflicts.** Tuesday's _Lecture_ and _Meeting_ overlap for 30 minutes. Upcoming conflicts offer **Suggest alternatives**; ended overlaps are retained under **Past**. The sample uses the current week, so its tasks and conflicts may already be past when you open it.
+3. **Finding time.** Use **+ Task** in Tasks to make a task with a future window, then **Find time**. Switch _Earliest fit_, _Best fit_ and _Priority-aware_ to change the selected pick. Choose a pick or chip, open **Details**, then **Apply selected**. Alternatives shares the layout with Closest, Same day and Lightest day picks.
+4. **Your own events.** Use **+ Event** for future Fixed or Flexible events. Creating overlapping events immediately shows their exact conflict. Fixed alternatives require **Allow moving this event** and a temporary range.
+5. **Replan.** In the Replan region choose **Plan…**, set a range containing future flexible events, then **Compute plans**. Compare, Apply and **Undo** to revert the whole plan in one step.
+6. **Timeline gestures.** Press **K** to unlock before dragging to create/move/resize. Fixed moves/resizes ask for confirmation; while locked, dragging pans the grid. Event dialogs stay available.
 
 More presets (overlap cluster, midnight crossing, fully booked day, a 5,000-event stress test) are under **Settings → Data → Load sample calendar**. Loading a sample replaces your current data, so export first if you want to keep it.
 
@@ -84,7 +84,7 @@ The app is a static React + TypeScript site with three layers. Each layer may on
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **UI** (React, FullCalendar, zustand) | Draws the calendar and dialogs, and turns clicks and drags into commands. FullCalendar only renders; it makes no scheduling decisions.                                                           |
 | **Engine** (plain TypeScript)         | Validates every command, runs four pipelines (event changes, conflict resolution, task scheduling, replan) and keeps undo history. Its algorithms are pure functions with no UI or storage code. |
-| **Storage** (Dexie / IndexedDB)       | Saves events, tasks and settings in the browser, behind an interface that also has an in-memory version for tests.                                                                               |
+| **Storage** (Dexie / IndexedDB)       | Saves categories, events, tasks, settings and the multi-tab revision in the browser, behind an interface that also has an in-memory version for tests.                                           |
 
 **Key algorithms.** Here N is the number of events, n the number in the searched window, m the number of free gaps and k the number of conflicting pairs.
 
@@ -98,7 +98,7 @@ The app is a static React + TypeScript site with three layers. Each layer may on
   - This takes O(log N + n) once the store is sorted, with no re-sorting.
 - **Ranking: greedy choice over the gaps.**
   - Picker candidates include both fitting gap boundaries, every fitting half-hour start and the clamped original start for alternatives. Each retains its gap/boundaries, leftover, day load and distance. The selected criterion preselects a named pick. Replan keeps one candidate per gap and its original ranking.
-  - This costs O(m log m).
+  - For C generated picker candidates across D local days, generation/ranking costs O(C log(C+1) + C log(D+1)); Replan's one-candidate-per-gap ranking stays O(m log m).
 - **Replan: a one-pass greedy.**
   - Flexible events are placed in priority order. Each one either keeps a valid spot or takes the best candidate for that plan.
   - It is fast and every move is explainable, but it is not guaranteed to be globally optimal.
@@ -124,19 +124,28 @@ The algorithms are the core of the project, so they are tested hardest:
 
 Continuous integration runs these checks on every change to `main`.
 
-**Latest results** (12 November 2026, after the peer bug fixes):
+**Latest verified results** (14 November 2026, WI-58 on local main; the WI-59/five-repeat Finish gate follows):
 
-| Check                                      | Result                                                                                                                         |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
-| Unit, integration and UI tests             | 639 passing                                                                                                                    |
-| Randomised oracle tests                    | 5 properties × 10,000 random calendars each, all passing                                                                       |
-| Daylight-saving tests (New York time zone) | 7 passing                                                                                                                      |
-| Browser tests (Chromium)                   | 25 passing; 125 of 125 runs passed when the suite was repeated 5 times (no flaky tests)                                        |
-| Code coverage                              | 98.78% of lines and 94.23% of branches overall; 99.68% / 95.93% for the algorithms                                             |
-| Performance                                | Conflict detection plus a slot search on a 5,000-event calendar: median 1.3 ms (target: under 100 ms)                          |
-| Manual checks on the live site             | All five demo scripts passed; colour contrast and screen-reader announcements checked                                          |
-| Independent code audit                     | 10 findings re-checked, then fixed with tests or deferred with reasons ([AUDIT.md](docs/extras/AUDIT.md))                      |
-| Peer bug reports                           | 14 reports re-checked: 11 fixed with tests, 1 clarified, 1 by design, 1 invalid ([BUG_REPORTS.md](docs/extras/BUG_REPORTS.md)) |
+| Check                                      | Result                                                                                                                                                                                                              |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unit, integration and UI tests             | 861 passing + 1 existing opt-in performance skip                                                                                                                                                                    |
+| Randomised oracle tests                    | 10 property cases × 10,000 random calendars each, all passing                                                                                                                                                       |
+| Daylight-saving tests (New York time zone) | 9 passing                                                                                                                                                                                                           |
+| Browser tests (Chromium)                   | 64 checks × 3 repeats = 192/192, including the production and StrictMode smoke projects; zero retries                                                                                                               |
+| Code coverage                              | Overall 98.53 / 94.38 / 98.05 / 98.74; algorithms 99.72 / 96.80 / 100 / 99.71 (statements/branches/functions/lines, %)                                                                                              |
+| Performance                                | Previously measured on 12 November: 5,000-event conflict detection plus slot search, median 1.278 ms (target under 100 ms)                                                                                          |
+| Manual checks on the live site             | Round 2 deployment smoke remains human-owned: [TEST_PLAN §7](docs/TEST_PLAN.md#7-live-site-smoke-test-20-30-minutes). [Earlier reported results](docs/extras/MANUAL_VERIFICATION_HISTORY.md) describe older builds. |
+| Independent code audit                     | 10 findings re-checked, then fixed with tests or deferred with reasons ([AUDIT.md](docs/extras/AUDIT.md))                                                                                                           |
+| Peer bug reports                           | 14 reports re-checked: 11 fixed with tests, 1 clarified, 1 by design, 1 invalid ([BUG_REPORTS.md](docs/extras/BUG_REPORTS.md))                                                                                      |
+
+The Round 2 baseline is recorded in [PROGRESS.md](docs/progress/PROGRESS.md). The current comparison preserves the test count and every coverage measure within the allowed 0.5 percentage-point drop:
+
+| Coverage (%) | Baseline statements / branches / functions / lines | Current statements / branches / functions / lines | Change (percentage points)    |
+| ------------ | -------------------------------------------------- | ------------------------------------------------- | ----------------------------- |
+| Overall      | 98.71 / 94.23 / 98.23 / 98.78                      | 98.53 / 94.38 / 98.05 / 98.74                     | −0.18 / +0.15 / −0.18 / −0.04 |
+| Algorithms   | 99.70 / 95.93 / 100 / 99.68                        | 99.72 / 96.80 / 100 / 99.71                       | +0.02 / +0.87 / 0 / +0.03     |
+
+Passing tests grew from 639 to 861 (+222); DST cases from 7 to 9; full property cases from 5 to 10; browser checks from 25 to 64. Assertions, coverage thresholds, property runs, local retry settings and timeouts were not weakened.
 
 **Reproduce the results.** Install dependencies with `npm ci`, then:
 
@@ -146,16 +155,20 @@ npm run test:coverage     # the same, with a coverage report in coverage/index.h
 npm run test:dst          # daylight-saving tests
 npm run test:props:full   # randomised oracle tests at 10,000 cases each
 npx playwright install chromium
-npm run e2e               # browser tests (builds and serves the app itself)
+npm run typecheck
+npm run lint
+npm run build
+npx playwright test --repeat-each=5 --workers=2
+node scripts/checkTextDiagrams.mjs
 npm run test:perf         # the 5,000-event performance check
 ```
 
-Every test case, with its exact inputs and expected outputs, is listed in [TEST_PLAN.md](docs/TEST_PLAN.md). The file also has a table mapping each requirement to its tests, the manual checklists and the demo scripts with their recorded outcomes. Timings depend on hardware; coverage and test counts should match.
+Every test case and requirement mapping is in [TEST_PLAN.md](docs/TEST_PLAN.md). Its single [20–30 minute live-site smoke test](docs/TEST_PLAN.md#7-live-site-smoke-test-20-30-minutes) covers the Round 2 changes, FR1–FR11 and B1–B4 in both themes, including keyboard, contrast and screen-reader checks. Earlier rehearsals are archived as history. Timings depend on hardware; coverage and test counts should match.
 
 ## Samples and demonstrations
 
 - **Sample calendars.** [docs/samples/](docs/samples/README.md) has six importable sample calendars: sparse week, back-to-back, overlap cluster, fully booked day, midnight crossing, and a 5,000-event stress test. Import them via **Settings → Data → Import JSON**, or load the same presets directly from the app.
-- **Demo scripts.** Step-by-step scripts for event management, conflict detection, best-time finding, replanning and the extras are in [TEST_PLAN.md](docs/TEST_PLAN.md) §8, demos D1–D5.
+- **Live-site smoke test.** Follow [TEST_PLAN §7](docs/TEST_PLAN.md#7-live-site-smoke-test-20-30-minutes) after deploying. The old D1–D5 scripts and production reports are [archived](docs/extras/MANUAL_VERIFICATION_HISTORY.md).
 - **Screenshots** (in [docs/screenshots/](docs/screenshots/)):
 
 | View                     | Light                                                                                                                                                                                                                                                                  | Dark                                                                                                                                                                                                                                                               |
@@ -229,7 +242,7 @@ Our course permits AI for any task, on one condition: each student must be able 
 
 What these rules meant in practice:
 
-1. **The specification came first.** Agents built against the three documents above, not a chat history. The work was split into 39 small work items, each with a list of tests that must pass before it counts as done.
+1. **The specification came first.** Agents built against the three documents above, not a chat history. The work was split into 59 numbered work items, with explicit completion checks before each counts as done.
 2. **Every function carries a contract.** Our coding standard requires a written precondition and postcondition (`PRE` / `POST`) above every function and component, and an `INVARIANT` above every loop, before the code is written.
    - Open any file in `src/engine/algorithms/` to see them.
    - They make the reasoning reviewable, and they are what we study from for the oral exam.

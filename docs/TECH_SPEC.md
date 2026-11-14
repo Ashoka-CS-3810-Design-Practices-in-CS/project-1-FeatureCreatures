@@ -118,7 +118,7 @@ Every file listed here exists by the end of the project. The WI column says whic
 ├─ playwright.config.ts  playwright.screenshots.config.ts  eslint.config.js  tsconfig.json  .prettierrc  README.md
 ├─ scripts/                # exportSamples.mjs (WI-30), screenshots/screenshots.spec.ts (WI-34)
 ├─ public/favicon.svg
-├─ e2e/                    # Playwright E1–E3 (WI-27), E4 and smoke.spec.ts (WI-35)
+├─ e2e/                    # Playwright E1-E3 (WI-27), E4 and smoke.spec.ts (WI-35)
 ├─ bench/engine.bench.ts   # T15 (WI-28)
 ├─ tests/
 │  ├─ setup.ts             # jest-dom, <dialog> polyfill, ResizeObserver stub
@@ -129,20 +129,20 @@ Every file listed here exists by the end of the project. The WI column says whic
 └─ src/
    ├─ main.tsx             # COMPOSITION ROOT: picks repository, creates engine + store, renders <App/>
    ├─ shared/              # imported by every layer; imports nothing above it
-   │  ├─ types.ts          # all domain + result types (§5)
+   │  ├─ types.ts          # all domain + result types (section 5)
    │  ├─ result.ts         # Result<T,E>, ok(), err()
    │  ├─ errors.ts         # EngineError union, FieldIssue
    │  ├─ constants.ts      # MAX_EVENT_MIN, MAX_OPTIONS, HISTORY_LIMIT, SNAP_MIN, PRIORITY_RANK, DEFAULT_SETTINGS
-   │  ├─ schemas.ts        # Zod: eventInput, taskInput, settings, exportFile (§6)
-   │  └─ time.ts           # the ONLY non-UI module allowed to use date-fns (§8.6)
+   │  ├─ schemas.ts        # Zod: eventInput, taskInput, settings, exportFile (section 6)
+   │  └─ time.ts           # the ONLY non-UI module allowed to use date-fns (section 8.6)
    ├─ engine/
    │  ├─ index.ts          # export { createEngine, type Engine }
    │  ├─ facade.ts         # Engine implementation: command queue, version checks, dispatch
    │  ├─ state.ts          # EngineState, Change, applyChange, commit, history
    │  ├─ replanDiagnostics.ts # per-plan remaining problems (WI-38); no placement changes
-   │  ├─ search.ts         # shared "segments → busy → gaps → rank" helper used by 3 pipelines
+   │  ├─ search.ts         # shared "segments -> busy -> gaps -> rank" helper used by 3 pipelines
    │  ├─ pipelines/
-   │  │  ├─ eventCrud.ts           # FR1–FR3 (+ ER4 suggestion)
+   │  │  ├─ eventCrud.ts           # FR1-FR3 (+ ER4 suggestion)
    │  │  ├─ conflictResolution.ts  # FR4 wiring, FR7 alternatives
    │  │  ├─ taskScheduler.ts       # FR5, FR8, FR9
    │  │  └─ replan.ts              # FR10
@@ -169,7 +169,7 @@ Every file listed here exists by the end of the project. The WI column says whic
       │  hooks/download.ts     # downloadJson(): Settings export and the crash screen's Export data
       │  hooks/tabSync.ts      # WI-40: BroadcastChannel between tabs (announce / reload)
       ├─ format/time.ts  format/explain.ts  format/errors.ts   # all user-facing strings built here
-      ├─ forms/eventForm.ts  forms/taskForm.ts  forms/settingsForm.ts  # form ⇄ input converters + resolvers
+      ├─ forms/eventForm.ts  forms/taskForm.ts  forms/settingsForm.ts  # form <-> input converters + resolvers
       └─ styles/tokens.css  styles/global.css  styles/fullcalendar.css
 ```
 
@@ -1057,13 +1057,13 @@ export function detectConflicts(sorted: readonly CalendarEvent[]): Conflict[];
 ```
 
 ```text
-heap ← MinHeap keyed by end                       // the set of "open" events
-out ← []
+heap <- MinHeap keyed by end                       // the set of "open" events
+out <- []
 for e in sorted (by start, end, id):
-    while heap.size > 0 and heap.peek().end ≤ e.start:   // half-open: touching ≠ overlap
+    while heap.size > 0 and heap.peek().end <= e.start:   // half-open: touching != overlap
         heap.pop()
-    for h in heap.items():                         // every open h has h.start ≤ e.start < h.end
-        overlap ← [e.start, min(h.end, e.end))     // non-empty because e.end > e.start
+    for h in heap.items():                         // every open h has h.start <= e.start < h.end
+        overlap <- [e.start, min(h.end, e.end))     // non-empty because e.end > e.start
         out.push(conflict(h, e, overlap, targetId = chooseTarget(h, e)))
     heap.push(e)
 sort out by (overlap.start, key)                   // presentation order, BR-3
@@ -1101,11 +1101,11 @@ export function mergeBusy(sortedEvents: readonly CalendarEvent[], bufferMin: num
 ```
 
 ```text
-blocks ← []
+blocks <- []
 for e in sortedEvents:                      // expanding every interval by the same b keeps start-order
-    s ← e.start − b ; t ← e.end + b
-    if blocks nonempty and s ≤ last.end:    // overlapping OR touching → same block
-        if t > last.end: last.end ← t ; last.endEvent ← {e.id, e.title, end: e.end}
+    s <- e.start - b ; t <- e.end + b
+    if blocks nonempty and s <= last.end:    // overlapping OR touching -> same block
+        if t > last.end: last.end <- t ; last.endEvent <- {e.id, e.title, end: e.end}
     else: blocks.push({start: s, end: t, startEvent: {e.id, e.title, start: e.start}, endEvent: {e.id, e.title, end: e.end}})
 ```
 
@@ -1139,7 +1139,7 @@ export function startOfLocalWeek(m: Minute): Minute;                    // Monda
      weekday,
      work: !settings.useWorkingHours ? [d, addLocalDays(d, 1)] :
            workDays.includes(weekday) ? [set(d, workStart), set(d, workEnd)] : null,
-     barred: for each slot whose days include weekday, sorted by start → {label, [set(d, s), set(d, e)]} }
+     barred: for each slot whose days include weekday, sorted by start -> {label, [set(d, s), set(d, e)]} }
    ```
 
 3. If `workEndMin === 1440`, the work end is `dayEnd`.
@@ -1155,21 +1155,21 @@ export function allowedSegments(window: Interval, frames: readonly DayFrame[],
 
 ```text
 if useWorkingHours:
-    pieces ← []
-    for f in frames with f.work ≠ null:
-        seg ← intersect(f.work, window)            // skip if empty
+    pieces <- []
+    for f in frames with f.work != null:
+        seg <- intersect(f.work, window)            // skip if empty
         edges: workStart/workEnd, or windowStart/windowEnd where the window cuts strictly inside f.work
         pieces.push(subtractBarred(seg, f.barred))
 else:                                              // BR-5: the window minus barred slots, in one pass
-    pieces ← subtractBarred(window (edges windowStart/windowEnd), concat of every f.barred)
-clip every piece to start ≥ notBefore (edge 'now' where clipped); drop pieces ending at or before it
+    pieces <- subtractBarred(window (edges windowStart/windowEnd), concat of every f.barred)
+clip every piece to start >= notBefore (edge 'now' where clipped); drop pieces ending at or before it
 return pieces (sorted, disjoint)
 
 subtractBarred(seg, barred sorted by start; slots may overlap):
-    cursor ← seg.start with seg.startEdge
-    for b in barred, skipping those ending ≤ cursor or starting ≥ seg.end:
+    cursor <- seg.start with seg.startEdge
+    for b in barred, skipping those ending <= cursor or starting >= seg.end:
         if b.start > cursor: emit [cursor, b.start) with end edge barred {b.label, b.start}
-        cursor ← b.end with edge barred {b.label, b.end}
+        cursor <- b.end with edge barred {b.label, b.end}
     if cursor < seg.end: emit [cursor, seg.end) with seg.endEdge
 ```
 
@@ -1185,14 +1185,14 @@ export function largestGap(gaps: readonly FreeGap[]): FreeGap | null;   // first
 ```
 
 ```text
-gaps ← [] ; j ← 0
+gaps <- [] ; j <- 0
 for seg in segments:
-    while j < busy.length and busy[j].end ≤ seg.start: j++   // blocks entirely before this segment
-    cur ← seg.start ; curB ← seg.startEdge ; k ← j
+    while j < busy.length and busy[j].end <= seg.start: j++   // blocks entirely before this segment
+    cur <- seg.start ; curB <- seg.startEdge ; k <- j
     while k < busy.length and busy[k].start < seg.end:
-        b ← busy[k]
+        b <- busy[k]
         if b.start > cur: gaps.push({cur, b.start, before: curB, after: eventBoundary(b.startEvent, b.start)})
-        if b.end > cur:   cur ← b.end ; curB ← eventBoundary(b.endEvent, b.end)
+        if b.end > cur:   cur <- b.end ; curB <- eventBoundary(b.endEvent, b.end)
         k++
     if cur < seg.end: gaps.push({cur, seg.end, before: curB, after: seg.endEdge})
     // j is NOT advanced to k: a block may continue into the next segment
@@ -1211,7 +1211,7 @@ export function frameOf(frames: readonly DayFrame[], m: Minute): DayFrame | unde
 export function loadSpread(loads: Map<Minute, number>, frames: readonly DayFrame[]): number; // max−min over work days; 0 if none
 ```
 
-For each event, find the frames it touches by binary search (at most 3, since events are at most 24 h). Add the event's overlap with `frame.work` to that day's load.
+For each event, find the frames it touches by binary search (at most 3, since events are at most 24 h). Add the event's overlap with `frame.work` to that day's load; with global working hours off, `frame.work` is the whole local day (BR-5).
 
 This costs O(n log D + D) time.
 
@@ -1231,17 +1231,17 @@ export function rankCandidates(options: readonly Omit<SlotOption, 'rank'>[], key
 ```
 
 ```text
-eff ← effectiveCriterion(ctx.criterion, ctx.priority)
-cands ← for each gap g (index gi):
-    start ← ctx.originalStart ≠ null ? clamp(originalStart, g.start, g.end − d) : g.start
-    dist  ← originalStart ≠ null ? |start − originalStart| : null
-    load  ← dayLoads.get(frameOf(frames, start).dayStart) ?? 0
-    key   ← eff = earliest    → [start]
-            eff = bestFit     → [len(g) − d, start]
-            eff = leastLoaded → [load, dist ?? 0, start]
-            eff = nearest     → [dist, start]
-    → {slot: [start, start+d), gap: g, gapMin, leftoverMin, dayLoadMin: load, criterion, eff, dist, key, gi}
-sort cands lexicographically by (key…, gi)
+eff <- effectiveCriterion(ctx.criterion, ctx.priority)
+cands <- for each gap g (index gi):
+    start <- ctx.originalStart != null ? clamp(originalStart, g.start, g.end - d) : g.start
+    dist  <- originalStart != null ? |start - originalStart| : null
+    load  <- dayLoads.get(frameOf(frames, start).dayStart) ?? 0
+    key   <- eff = earliest    -> [start]
+            eff = bestFit     -> [len(g) - d, start]
+            eff = leastLoaded -> [load, dist ?? 0, start]
+            eff = nearest     -> [dist, start]
+    -> {slot: [start, start+d), gap: g, gapMin, leftoverMin, dayLoadMin: load, criterion, eff, dist, key, gi}
+sort cands lexicographically by (key..., gi)
 return first MAX_OPTIONS, with rank = 1..k
 ```
 
@@ -1300,58 +1300,58 @@ export function replanSortKey(option: Pick<SlotOption, 'slot' | 'distanceMin' | 
 ```
 
 ```text
-inRange  ← eventsIntersecting(events, range)
-movable  ← inRange.filter(e ⇒ e.flexible ∧ e.start ≥ notBefore)
+inRange  <- eventsIntersecting(events, range)
+movable  <- inRange.filter(e => e.flexible and e.start >= notBefore)
            sorted by PRIORITY_RANK desc, duration desc, start asc, id asc
-staticEv ← eventsIntersecting(events, expand(range, bufferMin)).filter(e ∉ movable)
+staticEv <- eventsIntersecting(events, expand(range, bufferMin)).filter(e not in movable)
 
-plans ← [run('minimalChange'), run('balanced')]
+plans <- [run('minimalChange'), run('balanced')]
 
 run(kind):                                             // AUDIT A01: repeat until no new event is unplaced
-  pinned ← {}                                          // id → unplaced entry; these stay where they are
+  pinned <- {}                                          // id -> unplaced entry; these stay where they are
   repeat:
-     (moves, newlyUnplaced) ← pass(kind, pinned)
+     (moves, newlyUnplaced) <- pass(kind, pinned)
      add newlyUnplaced to pinned
-  until newlyUnplaced is empty                         // ≤ c + 1 passes: pinned only grows
-  unplaced ← pinned entries in movable order
+  until newlyUnplaced is empty                         // <= c + 1 passes: pinned only grows
+  unplaced <- pinned entries in movable order
 
 pass(kind, pinned):
-  occupied ← staticEv ∪ pinned events, sorted ; moves ← [] ; unplaced ← []
+  occupied <- staticEv union pinned events, sorted ; moves <- [] ; unplaced <- []
   for e in movable, skipping pinned ones:
-     d   ← e.end − e.start
-     win ← e.flexWindow ∩ range                         // may be null
-     segs ← win ? segmentsFor(win) : []
-     busy ← mergeBusy(occupied, bufferMin)
-     gaps ← freeGaps(segs, busy) ; fitting ← gaps with length ≥ d
-     why  ← invalidReason(e, win, segs, occupied, bufferMin, frames)   // null ⇒ current spot is valid
-     if kind = minimalChange and why = null:            place ← e                       // keep
-     else if fitting empty:                             place ← e ; unplaced.push({e, why})
+     d   <- e.end - e.start
+     win <- e.flexWindow intersect range                         // may be null
+     segs <- win ? segmentsFor(win) : []
+     busy <- mergeBusy(occupied, bufferMin)
+     gaps <- freeGaps(segs, busy) ; fitting <- gaps with length >= d
+     why  <- invalidReason(e, win, segs, occupied, bufferMin, frames)   // null => current spot is valid
+     if kind = minimalChange and why = null:            place <- e                       // keep
+     else if fitting empty:                             place <- e ; unplaced.push({e, why})
      else:
-        crit ← kind = balanced ? 'leastLoaded' : 'nearest'
-        loads ← computeDayLoads(occupied, frames)
-        context ← {d, crit, e.priority, originalStart: e.start, loads, frames}
-        best ← kind = minimalChange ? rankOptions(fitting, context)[0]
+        crit <- kind = balanced ? 'leastLoaded' : 'nearest'
+        loads <- computeDayLoads(occupied, frames)
+        context <- {d, crit, e.priority, originalStart: e.start, loads, frames}
+        best <- kind = minimalChange ? rankOptions(fitting, context)[0]
                                     : rankReplanOptions(fitting, context, strategy, occupied, e.categoryId)[0]
-        place ← {...e, start: best.slot.start, end: best.slot.end}
-        if place.start ≠ e.start:
+        place <- {...e, start: best.slot.start, end: best.slot.end}
+        if place.start != e.start:
            moves.push({e, from: e, to: place,
                        reason: why ?? (strategy = balanced
                          ? {balance, fromDayLoad: load(day(e)), toDayLoad: best.dayLoadMin}
                          : {strategy, strategy})})
-     occupied ← insertSorted(occupied, place)
-  after ← inRange with moved events replaced, re-sorted
-  metrics ← moved = |moves|, totalShiftMin = Σ|to.start − from.start|,
-            conflictsBefore = |{c ∈ conflicts : overlaps(c.overlap, range)}|,
-            conflictsAfter  = |{c ∈ detectConflicts(after) : overlaps(c.overlap, range)}|,
+     occupied <- insertSorted(occupied, place)
+  after <- inRange with moved events replaced, re-sorted
+  metrics <- moved = |moves|, totalShiftMin = sum|to.start - from.start|,
+            conflictsBefore = |{c in conflicts : overlaps(c.overlap, range)}|,
+            conflictsAfter  = |{c in detectConflicts(after) : overlaps(c.overlap, range)}|,
             loadSpreadBefore/After = loadSpread(computeDayLoads(inRange | after, frames), frames),
             unplaced = |unplaced|
 
 invalidReason(e, win, segs, occupied, b, frames):   // first failing check, in this order
-  win null or ¬contains(win, e)                          → outsideFlexWindow
-  useWorkingHours and no frame f with f.work containing e → outsideWorkingHours
-  e overlaps some barred interval of its frame(s)        → barred{label}
-  e overlaps some o ∈ occupied (raw)                     → conflict{o}
-  e overlaps some o ∈ occupied expanded by b             → buffer{o}
+  win null or not contains(win, e)                          -> outsideFlexWindow
+  useWorkingHours and no frame f with f.work containing e -> outsideWorkingHours
+  e overlaps some barred interval of its frame(s)        -> barred{label}
+  e overlaps some o in occupied (raw)                     -> conflict{o}
+  e overlaps some o in occupied expanded by b             -> buffer{o}
   else null
 ```
 
@@ -1435,7 +1435,7 @@ The export file is the `ExportFile` type in §5. It is pretty-printed JSON. The 
 
 WI-48 / D-17: export format version 2 contains categories. Import accepts v1 via `legacyExportSchema` and v2 via `exportFileSchema`, discriminated by version. `shared/legacy.ts` holds typed pure mappings after `legacyStoredDataSchema` validation. V1 enum ids map to the same stable seed ids; missing fields get the new defaults. The v3 Dexie upgrade bulk-writes mapped records and seeded categories in its upgrade transaction without touching the meta revision; fresh databases populate categories too. MemoryRepository seeds the same independent records. `replaceAll` atomically replaces categories with events/tasks/settings, including rollback and revision checking.
 
-`storedSettingsSchema` validates individual slots and working-time bounds while preserving legacy overlaps/duplicates. The new-settings and v2-import schemas still apply the current duplicate rule; v1 imports use the legacy settings schema. `storedTaskSchema` requires `doneAt != null` exactly for `done`, and the existing event-link check still requires an event id exactly for `scheduled`.
+`storedSettingsSchema` validates individual slots and working-time bounds while preserving legacy overlaps/duplicates. New barred edits and v2 imports reject positive overlaps on shared weekdays, including exact duplicates, with D-20 label/time messages. Unrelated settings saves may retain legacy rows; v1 imports use the legacy settings schema. `storedTaskSchema` requires `doneAt != null` exactly for `done`, and the existing event-link check still requires an event id exactly for `scheduled`.
 
 The UI downloads it via `Blob` + `URL.createObjectURL`. It reads imports via `<input type="file" accept="application/json">` and `file.text()`.
 
@@ -1600,7 +1600,7 @@ WI-53 / D-10: Settings registers the native `Use working hours` switch. `useWatc
 | `AppBar` | Brand, Undo/Redo, resolved theme icon, help, Settings, counted drawer triggers below 1280 | snapshot history/counts, theme/resolved theme, drawer state | history, theme toggle, dialogs/drawers |
 | `Toolbar` | Calendar navigation/title, Day/Week/Month, Calendar/List, priority/category filters/reset, lock and + Event | view, calendar lock/filters | view/filter/lock/dialog actions |
 | `CalendarView` | FullCalendar wrapper (§11.3) | `snapshot.events`, `conflicts`, `settings`, `eventPriorityFilter`, `emphasisIds` | `moveEvent`, open dialogs |
-| `EventContent` | Renders an event block: title, time, `[H]/[M]/[L]` tag, `Fixed`/`Task` tag, `⚠ Conflict N min` | props | — |
+| `EventContent` | Neutral block with title/time, priority/category/scheduling/task/barred tags and conflict warning; narrow icons retain the complete accessible name/tooltip | props | — |
 | `TaskPanel` | Show/Sort/menu, + Task, compact priority/category/window/status rows and actions; conditional Find time (N) | `snapshot.tasks`, `taskPanel` | task/picker/dialog actions |
 | `ConflictPanel` | Upcoming and collapsed Past groups (first 50 + "and N more" in each), overlap/date/minutes and hidden-filter notes; only Upcoming offers Suggest alternatives; upcoming-empty text "No conflicts" | `snapshot.conflicts`, `events`, `currentMinute` | `openAlternatives` |
 | `EventDialog` | RHF form with `eventResolver`, shared priority radios and CategorySelect/inline creation; new events Fixed independent of category; full-width flex-window group below End, delete with confirm | `dialog`, event | `createEvent/updateEvent/deleteEvent` |
@@ -1616,7 +1616,7 @@ WI-55 / D-15: `computeReplan(range, bufferMin, strategy?)` forwards the validate
 WI-51 / D-06: `SlotPicker` uses a wide scrollable native Modal. `SuggestionOptions` renders one Available slots fieldset and native radio name spanning Top picks and All options by day. `picks.ts` derives named picks from complete options, omits duplicate slots in pick order, and groups remaining slots by local start day/time. Rank by refreshes the criterion-ranked result and selects index 0, without changing chip order. Pick radios/chips select `option.rank - 1`, so `pickerApply` still applies the correct result option. `DayOptions` initially shows `SUGGESTION_CHIPS_PER_DAY`, then expands the rest. Cross-midnight chip names include both days. Local Details state starts false and is never persisted; it conditionally renders the summary, search window, buffer, task window and selected gap/boundary/leftover/load. ER2/ER3 explanations remain outside Details. Task header/Rank by, alternatives Move/consent/range/Search hours, and all apply/queue/version/history behaviour remain in their existing store paths. Picks/chips reuse tested text/surface/muted and accent/focus tokens; no dependency is added.
 
 
-**WI-53 / D-09 UI.** BarredSlotsPanel is a separate named region containing the editor and BarredOverlapPanel; it is currently mounted beside the conflict groups pending WI-56 layout. BarredSlotRow and WeekdayCheckboxes are extracted from Settings, retaining all labels/controls. The editor uses the existing SettingsFormValues/settingsResolver for nested errors, with saved settings as defaults; pending edits expose Save barred slots and Cancel barred slot changes, and Add focuses Label. Save passes only edited barred rows on the current settings. Settings keeps four sections and uses settingsDefaultsResolver (shape/time without editing legacy bars). Shared unkeptBarredOverlaps filters tags, warnings and settings-toast counts; raw snapshots retain every overlap. BarredRows offers Keep here/Stop keeping through actions.setBarredKept and the engine command; Kept starts collapsed, with past records excluded. Legacy clash banners use compact Monday-first day ranges. Calendar backgrounds merge only positive overlaps, retaining all titles in stackedLabels rendered as vertical labelled spans; touching slots remain separate. This grouping is presentation-only and never changes stored slots or search intervals. Token nonwork-pattern has ≥ 3:1 contrast against working/past/non-working backgrounds in both themes; CSS dots make enabled non-working time distinct, with whole shading removed when off. Every time input in the region has a fixed 8.5rem width for 12-hour locales.
+**WI-53 / D-09 UI.** BarredSlotsPanel is a separate named region containing the editor and BarredOverlapPanel; WI-56 mounts it as a sibling of Conflicts and Replan in the Planning column/drawer. BarredSlotRow and WeekdayCheckboxes are extracted from Settings, retaining all labels/controls. The editor uses the existing SettingsFormValues/settingsResolver for nested errors, with saved settings as defaults; pending edits expose Save barred slots and Cancel barred slot changes, and Add focuses Label. Save passes only edited barred rows on the current settings. Settings keeps five sections including Appearance and uses settingsDefaultsResolver (shape/time without editing legacy bars). Shared unkeptBarredOverlaps filters tags, warnings and settings-toast counts; raw snapshots retain every overlap. BarredRows offers Keep here/Stop keeping through actions.setBarredKept and the engine command; Kept starts collapsed, with past records excluded. Legacy clash banners use compact Monday-first day ranges. Calendar backgrounds merge only positive overlaps, retaining all titles in stackedLabels rendered as vertical labelled spans; touching slots remain separate. This grouping is presentation-only and never changes stored slots or search intervals. Token nonwork-pattern has ≥ 3:1 contrast against working/past/non-working backgrounds in both themes; CSS dots make enabled non-working time distinct, with whole shading removed when off. Every time input in the region has a fixed 8.5rem width for 12-hour locales.
 
 **Done task UI (WI-54).** The default Show filter is Open (unscheduled + scheduled); other choices are Unscheduled, Scheduled, Done and All. Rows and the task dialog expose ✓ Mark done for open tasks and Reopen for done. Done rows use a struck title and existing tested muted text, show ✓ Done, and offer only Reopen/Edit/Delete (no Find time). Row/dialog deletion shares `confirmDeleteTask`. Store completion actions use `runMutation`; `previewDoneBefore` is read-only. The Tasks ⋯ disclosure menu opens `DoneBeforeDialog`: date/time Before, Preview, count/list, Apply, Cancel. Apply is disabled before a nonempty preview, after cutoff edits, while pending or when snapshot.version changes; the changed-snapshot message asks for a new preview. Errors leave the dialog open. App mounts it through the `doneBefore` dialog kind. Broader five-region layout stays in WI-56.
 
@@ -1925,7 +1925,7 @@ Phases match A3 §7. Owners follow A3: **S** = Samar, **Dv** = Divyam. Each WI i
 | 27 | 5 | Playwright E1–E3 | Dv | `e2e/*` | 26 | `npm run e2e` green |
 | 28 | 5 | Benchmarks | S | `bench/engine.bench.ts` | 17 | T15 median < 100 ms |
 | 29 | 5 | Coverage & bug bash | S + Dv | — | 27, 28 | Thresholds met; `test:props:full` green |
-| 30 | 6 | README & demo scripts | S + Dv | `README.md`, TEST_PLAN §8 | 29, 32, 33 | D1–D5 production results recorded; change requests pass locally; humans redeploy afterwards |
+| 30 | 6 | README & demo scripts (historical) | S + Dv | `README.md`, archived TEST_PLAN §8 | 29, 32, 33 | D1–D5 results archived in `docs/extras/MANUAL_VERIFICATION_HISTORY.md`; current acceptance uses TEST_PLAN §7 |
 | 31 | 6 | Final docs sync | S + Dv | these three docs | 30 | Change logs synchronized; release checklist accurately records verified checks and remaining human push/redeploy/viva steps |
 | 32 | Change | Barred-slot overlap warnings | S + Dv | `shared/types`, `algorithms/barred`, state/facade, store, calendar/panel | 29 | T37 algorithm/snapshot and T38 UI pass; BR-3 conflicts and replan metrics unchanged |
 | 33 | Change | Shortcuts button | S + Dv | `Toolbar` | 29 | Toolbar `?` button labelled Keyboard shortcuts opens the existing help; `?` key still works |
@@ -1933,7 +1933,7 @@ Phases match A3 §7. Owners follow A3: **S** = Samar, **Dv** = Divyam. Each WI i
 | 35 | Change | Crash fixes (mirror events, StrictMode dialogs, error boundary) | S + Dv | `CalendarView/*`, `Modal`, `ErrorBoundary`, `main.tsx`, `e2e/*`, `playwright.config.ts` | 34 | A select-mirror event without extendedProps renders (regression test); Modal stays open under `<StrictMode>` and Esc still closes it; the error boundary shows "Something went wrong" with Reload / Export data (UI test); E4 (click and drag-select open New event with times prefilled) and the smoke flow fail on any uncaught page error, on both the built app and the StrictMode dev server |
 | 36 | Change | Audit findings A01–A10 | S + Dv | per finding, see `docs/extras/AUDIT.md` | 35 | `docs/extras/AUDIT.md` committed; every finding re-verified against `main` with a failing test first and a resolution line (fixed in <commit> / not reproducible / deferred with reason); full gate incl. `npm run e2e` green |
 | 37 | Change | Dialog form polish | S + Dv | EventDialog, TaskDialog, shared PriorityRadioGroup, styles, RTL, e2e, dialog screenshots | 36 | Flex window is a full-width group below End; browser geometry checks at 1440, 1024 and drawer width in both themes; shared tagged/coloured native priority radios support arrow keys; task Working hours only (default) / Any time radios preserve useWorkingHours; schemas/engine unchanged; §7.1 and screenshots refreshed |
-| 38 | Change | Replan vs barred-slot overlaps | S + Dv | replan diagnostics, ReplanDialog, ConflictPanel, engine/UI tests, TEST_PLAN D4 | 37 | T39/T40: Minimal change moves future flexible barred events with reason barred and leaves fixed/started events static; classify unresolved conflicts/barred overlaps with per-event reasons and reused alternatives; no bare No changes needed when problems remain; fixed/flexible panel tags; FR10/BR-12 UX wording and D4 updated; full gate and browser suite green |
+| 38 | Change | Replan vs barred-slot overlaps | S + Dv | replan diagnostics, ReplanDialog, ConflictPanel, engine/UI tests, archived TEST_PLAN D4 | 37 | T39/T40: future flexible barred events move with reason barred; fixed/started events remain static; unresolved issues have per-event reasons and alternatives. Historical D4 is archived; current manual coverage is TEST_PLAN §7 S9/S14 |
 | 39 | Change | Fix intermittent CI failures | S + Dv | useShortcuts, store context hook, RTL, Playwright config, ci.yml, test documentation | 38 | A deterministic close-then-immediate-shortcut regression fails on the old closure; one listener reads current dialog/picker/busy/actions at keypress time; 10 repeats with 2 workers pass warm and after deleting node_modules/.vite and restarting dev; CI has one retry, retained failure traces, HTML report and failure artifact; results recorded in PROGRESS/TEST_PLAN; gate and local merge green |
 | 40 | Peer bugs (A) | Multi-tab integrity (#14) | S + Dv | Dexie v2 revision, `Repository` §9.1, MemoryRepository, engine facade (ER8, reload), BroadcastChannel, store toasts, e2e two pages | 39 | Two engines on one repository: delete in A then move in B → ER8, event stays deleted and repository unchanged by B; undo is empty after a cross-tab reload; v1 → v2 upgrade keeps events, tasks and settings (fake-indexeddb); Playwright two-page reproduction green; single-tab undo/redo, import/export and ER5 rollback unchanged |
 | 41 | Peer bugs (B) | Alternatives outside working hours (#3, #4, #9) | S + Dv | `conflictResolution` request field, SlotPicker radio, `forms/eventForm.ts` `defaultFlexWindow`, empty-result causes, fixed-target note | 40 | Working-hours events give identical alternatives; night / non-working-day events default to Any time and a 00:00–24:00 flex window; empty results name the cause; BR-5, FR7 and PROJECT_SCHEMA §3.2 updated |
@@ -1961,7 +1961,7 @@ Binding design: `extras/AUDIT_2.md` §7. Each WI depends on the previous one; up
 | 56 | Round 2 | Layout | S + Dv | App regions/drawers, controls, e2e (D-14, D-05) | 55 | Five regions at 1440, 1280 and 1024 (drawers) in both themes; no duplicate controls; e2e updated |
 | 57 | Round 2 | Visual system | S + Dv | Appearance/preferences, tags/fills/tokens, screenshots (D-12, D-13) | 56 | `tokens.test.ts` covers fills, tags, accents and shading; screenshots refreshed and reviewed |
 | 58 | Round 2 | Dialog and format polish | S + Dv | Dialogs, formatting/List/Month, cancellation (D-16) | 57 | Field-order and format tests; U9/U19/U20/U23 checks |
-| 59 | Round 2 | Docs, smoke test and final gate | S + Dv | Main docs, smoke test/history, README (D-19) | 58 | Full gate against the baseline; smoke test written; human steps listed |
+| 59 | Round 2 | Docs, smoke test and final gate | S + Dv | Main docs, smoke/history/legacy input, README, `scripts/checkTextDiagrams.mjs` (D-19/D-21) | 58 | Full gate against the baseline; one TEST_PLAN §7 smoke; archived history; allowed/aligned text diagrams; human steps listed |
 
 **`docs/progress/PROGRESS.md` format** (already created during repo setup):
 
@@ -2061,3 +2061,4 @@ Production URL: https://…vercel.app
 | 2026-11-13 | WI-56 compact-row review: TaskRow uses both window dates with fmtRange as its tooltip; its action row spans both grid columns and removes obsolete ribbon indentation. T56 first fails for the missing window start and a wrapped Edit button, then checks all three actions align. |
 | 2026-11-14 | v1.57 (WI-57 D-12/D-13): neutral event/tag and curated accent tokens, AppState UI preferences/setters, shared live media-query subscription, resolved theme SVG and Appearance controls. CSS container compaction keeps full button names/tooltips. Old T32 cycle and T47 heading expectations follow D-13; T14 keeps both exact warning texts after icon/text wrapping. |
 | 2026-11-14 | v1.58 (WI-58 D-16): form order/shared pairs, hidden native file control behind styled Import, quiet single-task pickerStop, configured compact List dates/ranges, restored Month ancestor opacity and tight narrow icon rows. Existing buffer/error/closed-picker assertions remain with the changed quiet Stop expectation. |
+| 2026-11-14 | v1.59 (WI-59 D-19/D-21): added scripts/checkTextDiagrams.mjs for every Markdown document in docs/, README and AGENTS; text blocks use allowed notation and closed boxes have equal widths. Converted mathematical pseudocode operators/tree annotations to ASCII equivalents; prose prompt fences are labelled Markdown with their content preserved. Current component/settings/import/day-load descriptions and historical demo references reconciled; no code contract or algorithm behavior changes. |

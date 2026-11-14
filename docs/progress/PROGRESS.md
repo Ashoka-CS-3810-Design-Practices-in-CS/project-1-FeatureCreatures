@@ -7,7 +7,7 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 ## Current state
 
 - **Active WI:** WI-59 Docs, smoke test and final gate, claimed; branch `feat/wi-59-docs-smoke`.
-- **Last session:** 2026-11-14 · Codex · WI-58 merged at a4a055b and its full main gate passed. WI-59: consolidate the live-site smoke test, archive old rehearsal/checklists, reconcile current docs/README, audit D-21 text blocks, then full branch gate and merge followed by the five-repeat main Finish gate.
+- **Last session:** 2026-11-14 · Codex · WI-59 S1–S14 live smoke drafted (29 minutes), old test/rehearsal/release/peer checklists archived, current requirements/test descriptions/README reconciled. D-21 checker observed red for old notation, then green across 13 documents/13 blocks; both v1 fixtures and six v2 samples validate, 195 local links resolve, Prettier/lint/diff checks pass. Next: full WI-59 branch gate, merge, five-repeat main gate and final baseline/results report.
 - **Gate status:** 2026-11-14 on `main` at `a4a055b`: full gate green, 861 + 1 existing skipped, overall 98.53/94.38/98.05/98.74, algorithms 99.72/96.80/100/99.71, DST 9, ten properties × 10,000, build, 192/192 browsers, zero retries.
 
 ## Work items
@@ -194,18 +194,11 @@ Fourteen peer bug reports, each verified against `main` and the live build. One 
 - [x] Finish: full gate vs baseline (e2e `--repeat-each=5`), README test results, smoke checklist for the deployed site.
   - 2026-11-12 · Claude Code · `main` at 222e3bf · final gate vs baseline: typecheck + lint clean; `test:coverage` 639 passed + 1 skipped (baseline 582 + 1; no test removed), coverage 98.71% statements / 94.23% branches / 98.23% functions / 98.78% lines (baseline 98.57 / 94.08 / 98.08 / 98.6), algorithms 99.68% lines / 95.93% branches; `test:dst` 7/7; `test:props:full` 5/5 at 10,000 cases; `build` OK; `npx playwright test --repeat-each=5 --workers=2` 125/125 (25 checks × 5, both projects, zero failures or retries; baseline 18 checks); `test:perf` T15 median 1.278 ms. README results updated.
 
-**Smoke checklist for the deployed site** (human, after `npx vercel --prod`; tick each line):
-
-- [ ] **Two tabs (#14).** Open the site in two tabs of one browser. In tab 1 click *Load sample week*, then reload tab 2 so it shows the week. In tab 2 open *Seminar* (Thu 10:00), then in tab 1 delete Seminar (Delete → Delete). Tab 2 shows "Calendar updated in another tab.", its dialog closes and Seminar disappears. Rename *Tutorial* in tab 2 and check tab 1 shows the new name. Reload both tabs: Seminar is still gone and the rename is kept.
-- [ ] **Fixed event drag, cancel then confirm (#1).** Drag *Algorithms lecture* (Mon 09:00, Fixed) down an hour → "Algorithms lecture is fixed. Move it anyway?" → **Keep it**: it snaps back, and Undo stays as it was. Drag it again → **Move**: it moves, and Ctrl+Z moves it back. Hover its *Fixed* tag: the tooltip explains it. Drag a flexible event (*Study*, Wed 15:00): it moves with no question.
-- [ ] **Alternatives for a night event (#3, #4, #9).** Create *Night A* Mon 21:00–22:00 and *Night B* Mon 21:30–22:30. In the conflict panel click *Suggest alternatives*: *Search hours* shows **Any time**, and the options lie near 21:00 (e.g. 20:30–21:30). The picker says the event is fixed. Switch to **Working hours only**: the options move into working hours. Also create a new *Personal* event Sat 10:00–11:00 with Flexible on: its default flex window is Sat 00:00–Sun 00:00.
-- [ ] **Duplicate barred slot (#6).** Settings → *Add barred slot* twice (two default Lunch rows) → Save: "Duplicate of barred slot 1." appears under slot 2, the dialog stays open and nothing is saved. Remove slot 2 → Save works.
-- [ ] **All priorities off (#10, #12, #13).** With the sample loaded, turn off H, M and L: the status line reads "0 events (8 hidden by filter) · 4 tasks · 1 conflict". Switch to **List**: "All events in this range are hidden by the priority filter" with **Show all**, which brings every event back. Scroll List: day headers stay above the conflict outlines. On a phone (or a 420 px wide window) List rows wrap instead of being cut off.
-- [ ] **Settings in both themes (G, #11).** Set the theme to Light, open Settings: four sections (Working time, Scheduling defaults, Barred slots, Data), barred slots as one-line rows with day chips, text readable, × closes the dialog. Repeat in Dark. Also check that × closes the event dialog and Keyboard shortcuts, and that an ER2 task (e.g. 45 min in a 12:30–14:30 window with Lunch) lists "Available: … — Lunch 13:00–14:00 is barred.".
+The former peer-fix smoke checklist is archived in [manual verification history](../extras/MANUAL_VERIFICATION_HISTORY.md). The current live-site acceptance run is [TEST_PLAN section 7](../TEST_PLAN.md#7-live-site-smoke-test-20-30-minutes).
 
 ### Round 2 overhaul (batch)
 
-Binding design: `docs/extras/AUDIT_2.md` (D-01–D-19, C-01–C-08). Work in order, one branch per WI; the full Round 2 gate runs on the branch and again on main. Planning inputs were committed unchanged in `2cc3824`.
+Binding design: `docs/extras/AUDIT_2.md` (D-01–D-21, C-01–C-08). Work in order, one branch per WI; the full Round 2 gate runs on the branch and again on main. Planning inputs were committed unchanged in `2cc3824`.
 
 - **BASELINE** (2026-11-12, Codex, `main` at `2cc3824`): typecheck and lint clean; `test:coverage` **639 passed + 1 skipped** (T15 opt-in), 83 passed files + 1 skipped; overall coverage **98.71% statements / 94.23% branches / 98.23% functions / 98.78% lines**; algorithms **99.70% statements / 95.93% branches / 100% functions / 99.68% lines**; `test:dst` **7/7**; `test:props:full` **5/5 × 10,000 cases**, random seeds; `build` **OK**; `npx playwright test --repeat-each=3 --workers=2` **75/75** (25 checks × 3, both projects, zero retries, exit 0). Spot-check: WI-46's three Settings layout/focus tests exist and passed within the coverage run.
 
@@ -337,6 +330,7 @@ Binding design: `docs/extras/AUDIT_2.md` (D-01–D-19, C-01–C-08). Work in ord
 - [~] **WI-59** Docs, smoke test and final gate — owner S + Dv — depends on 58
   - Done when: Full gate against the baseline; smoke test written; human steps listed.
   - 2026-11-14 · Codex · branch `feat/wi-59-docs-smoke` · done: claimed after WI-58 full main gate; D-19/D-21 and remaining docs inconsistencies inventoried · next: one future-date-safe S1–Sn live smoke, archive old records, current requirement/test/README references, repeatable text-diagram audit, full branch gate/merge and five-repeat main Finish · note: no application behavior or existing test assertions change; human push/deploy/live testing remain pending.
+  - 2026-11-14 · Codex · branch `feat/wi-59-docs-smoke` · done: single 29-minute S1–S14 smoke covers Round 2, FR1–FR11/B1–B4, both themes, keyboard/contrast/reader and two tabs; future fixtures avoid expired sample windows. Old §7–9/rehearsal/peer lists archived; README/current requirements and stale test prose reconciled. D-21 checker first failed existing notation, then passes 13 documents/13 text/diagram blocks; closed boxes already aligned. Validated both v1 inputs and six v2 samples; 195 local links resolve; format/lint/diff checks green · next: full branch gate, merge, five-repeat main Finish gate and final result ticks/report · note: prompt prose content preserved under Markdown fences; no application source or existing test code/assertions changed. README currently labels its verified WI-58 checkpoint; final numbers follow the main Finish run.
 - [ ] **Finish** — depends on 59: full main gate with five browser repeats; compare test count and all coverage measures against BASELINE (no test-count drop, no coverage drop > 0.5 points); publish results in README.
 - [ ] **Human: push, deploy, run the smoke test** — push main, all branches and tags; `npx vercel --prod`; run TEST_PLAN §7 on the live site.
 
@@ -351,7 +345,7 @@ Binding design: `docs/extras/AUDIT_2.md` (D-01–D-19, C-01–C-08). Work in ord
 
 ## Human-only steps
 
-- [ ] Push the peer bug fixes batch (`main`, branches `feat/wi-40-multi-tab` … `feat/wi-46-settings-redesign`), redeploy with `npx vercel --prod`, then run the smoke checklist under "Peer bug fixes (batch)" on the live site before answering the bug reports.
+- [ ] Push the completed Round 2 batch (`main`, all retained branches including WI-40–59, and tags), inspect remote CI, deploy with `npx vercel --prod` (`npx.cmd` on blocked PowerShell), then run and record [TEST_PLAN §7](../TEST_PLAN.md#7-live-site-smoke-test-20-30-minutes) on the live site. This includes the peer-fix checks; the old checklist/rehearsal is archived, not current acceptance evidence.
 
 - [x] Push WI-39 (`main` and `fix/wi-39-shortcut-race`), inspect the next CI run and deploy the shortcut fix; failed e2e jobs now upload Playwright traces and the HTML report.
 
@@ -365,6 +359,8 @@ Binding design: `docs/extras/AUDIT_2.md` (D-01–D-19, C-01–C-08). Work in ord
 - [ ] Turn on branch protection for `main` on GitHub (optional).
 
 ## Decisions log (append-only)
+
+- 2026-11-14 · WI-59 · The smoke test uses next-Monday fixtures so current-week samples do not make scheduling checks fail late in the week. Its blank v1 input exercises preserved legacy overlaps without replacing the six v2 sample deliverables. D-21 checks all text fences and fenced diagrams; mathematical pseudocode uses equivalent ASCII operators, prose prompts are correctly labelled Markdown, and closed box rows are checked separately from open tree/connector lines. No application behavior changes.
 
 - 2026-11-14 · WI-57 · D-12 requires one neutral event fill while D-08 requires muted past blocks. Past blocks keep the common fill and independent tag colours, using contrast-tested muted event ink plus regular title weight; past-day shading remains. This preserves both decisions without opacity reducing tag contrast. Theme/accent live in the existing UI store; both theme and responsive layout share one media-query subscription helper.
 

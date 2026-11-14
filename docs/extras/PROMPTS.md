@@ -20,7 +20,7 @@ These prompts produced Assignment 1 and the first presentation. Assignments 2 an
 
 ### 1.1 Assignment 1 (project specification)
 
-```text
+```markdown
 You are an expert software development engineer assistant. For my Design Practises in CS course I and a teammate have been tasked to develop an intelligent calendar and time planner. The specification for the project can be found in Project 1 Spec. The project is split up into documentation assignments and the actual app that we need to code up. The first documentation assignment can be found in P1 A1 Spec. In accordance me and my teammate sat down and came up with a basic, rough first draft found in A1 Draft (the sections 4.4, 5, and 6 are especially very basic and need to be rethought and improved by incorporating more ideas from the P1 A1 Spec). Ruminate on the given material and come up with a better documentation version of Assignment 1 in Latex and PDF, eliminating redundancies, incorporating better algos, etc. The course is open AI, and all students are encouraged to use AI for all tasks only that every assignment submission is followed by a rigorous in-person viva to guage wether students understood the output of AI before submitting or not. So don't hold back and give me as perfect an output as you can I will read through it and let you know any changes that I want.
 
 Important pointers:
@@ -35,7 +35,7 @@ Important pointers:
 
 ### 1.2 First presentation
 
-```text
+```markdown
 You are an expert software development engineer assistant. For my Design Practises in CS course I and a teammate have been tasked to develop an intelligent calendar and time planner. [...] We now have to give a brief presentation on the same [...] The instructors' instructions for the presentation are: We want to hear from you on what you want to implement, how you're planning to, and your early design and technology choices. [...] Each presentation should not go over 3-5 minutes maximum. This is a hard stop.
 
 Ruminate on the given material and come up with a better presentation in Latex and PDF and also a script; make sure to eliminate repetition. [...]
@@ -53,13 +53,13 @@ Important pointers:
 
 This prompt produced `docs/PROJECT_SCHEMA.md`, `docs/TECH_SPEC.md` and `docs/TEST_PLAN.md`.
 
-```text
+```markdown
 So I have to code up a mini-project for my design practises in computer science course. AI assisted development is completely allowed with even the allowance to generate everything with AI, only with the caveat that I should be able to explain every single line of code that I submit so there is no honor code problems that ways. I have attached the basic description markdown file (that was shared by teaching staff) along side 3 documentation markdown assignments (project specification, technical design, and test plan prepared by me and a partner) pertaining to the mini-project. I will be graded on the overall implementation and consistency and not necessarily how great the project or app turned out to be (ofc quality is still a plus point). The thing is that the three documentation files were created in a sort of isolated manner you know just to submit for assignment completions sake which means there are discrepancies and inconsistecies across the three documentations. but I want a unified source of truth that I will actually use to guide the development of the mini-project. [...] Go through them ask me any doubts you have, brainstorm things with me if you need, then generate three consistent markdown files one after the other starting with the project schema, then the technical specification, then the test plan with the aim that I or any other dev or any agent reads them and instantly understands what to build, how to build, where to begin and where to end. So no handwaving or loose idea, just straightforward and consistent architectural specification. This does not mean that you stray too far away from the original documentations as the grading will involve consistency between them and the actual project that we build but then again at times in them I have been very ambitious or vague or whatever so there is a decent amount of wiggle room for you to deviate from the material that I provided [...] Essentially I will be using 2 codex agents and one claude code agent [...] I wanted this unified source of truth lets just say. [...] In terms of the scope of the project as in the features we'll implement, be rather modest, so all core features as outlined by the teaching team for sure with a handful of quick and easy to implement bonus features, since we are on a bit of a time crunch. One last thing, I thought I would make this as a locally hosted thing, but we are required to submitted a online hosted url so think of whatever is the simplest, cheapest, easiest, plug and play thing that works and gets the job done whether thats vercel or github pages or whatever.
 ```
 
 Before writing anything, Claude asked three design questions. These are Divyam's answers, which fixed the scope:
 
-```text
+```markdown
 Storage: Plain IndexedDB (Dexie) as that would make sense since sqlite was considered for local hosting not online hosting. [...] for things that make sense deviations are fine even if it means abandoning something that was mentioned in the assignment docs, just that the final version of whatever has been built should be documented.
 
 Replan: the replan pipeline is to be similar to your solution in 1. lean range replan; also on adjacent note the task scheduler should schedule tasks one after the other even if the user selects multiple tasks to schedule at once, giving recommended slots for one then the user accepts from one of the options and repeat till all tasks are scheduled.
@@ -73,7 +73,7 @@ Bonus: Dark mode + keyboard shortcuts, JSON import/export, Undo/redo.
 
 This prompt produced `AGENTS.md`, `CLAUDE.md`, the two skill copies, `.claude/settings.json`, `.gitattributes` and `docs/progress/PROGRESS.md`. The `disciplined-coding` skill itself was written by Divyam with a separate AI assistant.
 
-```text
+```markdown
 [...] give me the steps I need to follow to basically be in a condition from where I can prompt an codex or claude code agent open within vscode inside the project folder to work and it begins working. [...] So I wanted any agent that works on this to use a skill that I have attached disciplined-coding while working on the project. So again give me the exact steps that I need to follow, things that I need to ensure are installed and available on my windows PATH, the agents.md and claude.md files, etc so that I can prompt an agent to begin. Aslo after the steps give me a concise reusable prompt that I can give any agent that has limit to work on the directory - something along the lines of: You are one of several agents working on this project one at a time, go through the docs to understand what's going on, another agent or you could previously have worked on this and halted because of usage limit, figure out where the work was halted and resume, don't try to force resume on whatever you were previously working on before halting as another agent may already have picked it up and completed that work so do a quick review and then work. Use the disciplined-coding skill. [...]
 ```
 
@@ -83,7 +83,7 @@ This prompt produced `AGENTS.md`, `CLAUDE.md`, the two skill copies, `.claude/se
 
 This prompt was pasted at the start of every agent session, whether Codex or Claude Code. It built WI-01 to WI-31. Every later prompt in this file was appended to it.
 
-```text
+```markdown
 You are one of several AI coding agents (Codex and Claude Code) that take turns on this repository, one at a time. Any of us — including you in an earlier session — may have been cut off mid-task by a usage limit.
 
 1. Read AGENTS.md and follow its session protocol exactly. Load the disciplined-coding skill ($disciplined-coding in Codex, /disciplined-coding in Claude Code) and apply it to every line of code you write or change.
@@ -105,7 +105,7 @@ These followed Divyam's production rehearsal of demos D1–D5. His feedback:
 
 The agent prompt:
 
-```text
+```markdown
 Production rehearsal results (tester: Divyam, 2026-10-26, production URL): D1–D5 all pass. Accessibility checks (TEST_PLAN §7): contrast OK in both themes, screen reader announces toasts. Record these in TEST_PLAN §8 and PROGRESS.md. Also confirm the 10 h task in sparseWeek shows the TaskLongerThanWindow (ER2) message, not NoSlotFound.
 
 Before finishing WI-30, add and complete two small change requests as WI-32 and WI-33 (make WI-30 depend on them in TECH_SPEC §14 and PROGRESS.md). Update all three docs first (requirements, contracts, tests, change logs), then implement test-first:
@@ -125,7 +125,7 @@ Then finish WI-30 and WI-31. I will redeploy and push afterwards.
 
 ## 6. Visual refresh: WI-34
 
-```text
+```markdown
 New change request: WI-34 — visual refresh (a little more colour, a lot more space). All functionality is done and verified on production; this WI changes appearance only.
 
 Setup
@@ -167,7 +167,7 @@ Divyam's bug report:
 
 Claude reproduced both bugs in a headless browser before writing this prompt. An independent Codex audit (`AUDIT.md`) was folded in.
 
-```text
+```markdown
 I reviewed WI-34 and approve the design: merge it into main as usual. Then do two new work items, in order, following the normal protocol (add them to TECH_SPEC §14 and PROGRESS.md, test-first, update all three docs and change logs).
 
 WI-35 — Crash fixes (production is affected, so this comes first).
@@ -191,7 +191,7 @@ Divyam's feedback:
 
 The agent prompt:
 
-```text
+```markdown
 Two new work items, normal protocol (add to TECH_SPEC §14 and PROGRESS.md, test-first, update docs and change logs, merge when green).
 
 WI-37 — Dialog form polish.
@@ -216,6 +216,6 @@ Observed: after adding a barred slot, the "Barred-slot overlaps" panel lists sev
 
 This prompt produced this file and the README's team and AI-assisted development sections.
 
-```text
+```markdown
 Now, for the github repo's readme, add my team's credentials there. Next add something or if it has to be done manually tell me something to add for the description under the About label on the repo home page. Next create a prompts markdown and add all relevant prompts from this conversation that directly contributed to development in it. Then update the readme to add a AI assisted development section that first outlines that relevant files such as claude md agents md my skill the prompts md audit md etc (make a small markdown file tree of sorts for this) and then very briefly outlines the usage of AI and the whole contracts system TDD that I designed with your help and intended for the AI agents to use while coding. In the same readme md, under the documentation section add a line/paragraph about we deviated a bit to fit the needs to the app given the constraints blah blah blah the deviations are documented under where ever they are.
 ```
