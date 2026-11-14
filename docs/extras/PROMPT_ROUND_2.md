@@ -20,7 +20,7 @@ You are a coding agent on int-calendar (CS-3810, team Feature Creatures). This i
 ## 0. Rules you follow throughout
 - AGENTS.md is the law for this repo, and CLAUDE.md applies too if you are Claude Code. Follow its session protocol (§3–§5), its human-only list (§7) and its rules for asking (§8).
 - Load the disciplined-coding skill before writing any code. Use .agents/skills/disciplined-coding/SKILL.md (Codex) or /disciplined-coding (Claude Code). Every line you write or modify follows it: PRE/POST on every function and component, INVARIANT/POST on every loop, no magic numbers, Facade and Strategy as the only patterns.
-- The binding design is docs/extras/AUDIT_2.md. It contains the answers to the three questions (§2), findings U1–U25 (§3), decisions D-01–D-19 (§4), business-rule changes (§5), scope (§6), the work plan WI-47–59 (§7) and Claude's calls C-01–C-08 (§8). Do not reopen a decision that file settles. If code or the main docs disagree with AUDIT_2, change them to match it, with change-log lines, in the WI that touches that behaviour.
+- The binding design is docs/extras/AUDIT_2.md. It contains the answers to the three questions (§2), findings U1–U25 (§3), decisions D-01–D-21 (§4), business-rule changes (§5), scope (§6), the work plan WI-47–59 (§7) and Claude's calls C-01–C-08 (§8). Do not reopen a decision that file settles. If code or the main docs disagree with AUDIT_2, change them to match it, with change-log lines, in the WI that touches that behaviour.
 - Verify against the code and a running build, never from memory or screenshots.
 - Never push, deploy, create PRs, change remotes, delete branches or rewrite history. Those steps are human-only.
 
@@ -74,6 +74,7 @@ Smoke test (WI-59; D-19):
 - It covers every new and changed feature in AUDIT_2, plus the core FRs and B1–B4.
 - It is ordered sections S1…Sn of short tickable steps, each step saying what to do and what you should see. It runs on the live site, in both themes, with keyboard and contrast checks woven into the steps, and is doable in 20–30 minutes.
 - Point TEST_PLAN §9 and README at it. Move the old rehearsal record to docs/extras/ as history.
+- Audit text diagrams under D-21 with node scripts/checkTextDiagrams.mjs: ASCII plus the allowed box-drawing characters and ▲/▼, with equal-width closed box lines. Preserve prose prompts as Markdown fences, not text diagrams.
 
 ## 5. Finishing the batch
 - When WI-59 is merged, run the full gate on main with --repeat-each=5. Compare it with the baseline in the progress file: the test count must not drop, and coverage must not fall by more than 0.5 points.
