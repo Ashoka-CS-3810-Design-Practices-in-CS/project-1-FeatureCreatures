@@ -1963,6 +1963,20 @@ Binding design: `extras/AUDIT_2.md` §7. Each WI depends on the previous one; up
 | 58 | Round 2 | Dialog and format polish | S + Dv | Dialogs, formatting/List/Month, cancellation (D-16) | 57 | Field-order and format tests; U9/U19/U20/U23 checks |
 | 59 | Round 2 | Docs, smoke test and final gate | S + Dv | Main docs, smoke/history/legacy input, README, `scripts/checkTextDiagrams.mjs` (D-19/D-21) | 58 | Full gate against the baseline; one TEST_PLAN §7 smoke; archived history; allowed/aligned text diagrams; human steps listed |
 
+### Round 3 polish (WI-60–66)
+
+Binding spec: `extras/PROMPT_ROUND_3.md`; Round 2 D-01–D-21 remain binding. Each WI has its own branch, depends on the previous one and requires the full Round 3 gate on the branch and main. UI review uses both themes, a weekday-morning sample clock and 1440×900, 1280×800, 1024×768. Finish uses five browser repeats and compares every coverage measure/test count to the progress-file BASELINE.
+
+| WI | Phase | Title | Owner | Files | Depends | Done when |
+|---|---|---|---|---|---|---|
+| 60 | Round 3 | Event blocks are readable at desktop widths | S + Dv | EventContent, calendar CSS/tokens, RTL/browser tests, §11/schema §7.5, captures | 59 | Container-based Full/Compact/Narrow/short tiers; padding, time, complete priority/category, bounded tags and <=20-character titles; accessible metadata/past contrast retained; both-theme three-size review |
+| 61 | Round 3 | The filter row never overflows | S + Dv | Calendar filters, disclosure, RTL/browser tests, captures | 60 | H/M/L plus accessible Categories checkbox popover/Show all/conditional Reset; keyboard/Esc focus; 5/12 categories fit all widths/themes; counts/FR6 unchanged |
+| 62 | Round 3 | The built-in samples are never a dead week | S + Dv | Sample anchoring/loading/navigation/toast, unit/DST/browser tests, docs | 61 | Weekend next Monday, weekdays current week; calendar navigates and toast names week; Saturday conflict/task search works; fixed fixtures/exports unchanged |
+| 63 | Round 3 | Settings has one clear saving model | S + Dv | Settings tabs/footer, RTL/browser selectors, captures | 62 | Keyboard Scheduling/Categories/Appearance/Data tabs; only Scheduling staged; immediate notes; drafts survive switching; Cancel/close discard; all tabs reviewed both themes |
+| 64 | Round 3 | Right and left columns are compact | S + Dv | Barred summary/editor, task rows/menu, RTL/browser tests, captures | 63 | Per-slot editors preserve validation/legacy semantics; two-line task rows/actions preserve queue/done; four tasks and whole barred region visible at 1440×900 |
+| 65 | Round 3 | Small consistency fixes | S + Dv | View controls, Replan tags/header, lock/history icons, pick cards, tests/captures | 64 | List Week selected/aria-disabled with restoration; coloured tags/explanatory movable count; line icons/contrast; nowrap picker times; every item tested/reviewed |
+| 66 | Round 3 | Docs, smoke test and final gate | S + Dv | Main docs/change logs, figures, README, D-21 checker | 65 | Continued T-numbers, current UX/screenshots/Try it and existing smoke steps cover WI-60–65 in 20–30 min; diagram check and branch/main full gates pass |
+
 **`docs/progress/PROGRESS.md` format** (already created during repo setup):
 
 ```markdown
@@ -1997,6 +2011,8 @@ Production URL: https://…vercel.app
 ---
 
 ## 16. Change log
+
+- 2026-11-14 · Round 3 plan: §14 adds WI-60–66, their sequential dependencies, acceptance checks, required review sizes and baseline/final gate comparison; binding prompt saved in `extras/PROMPT_ROUND_3.md`.
 
 | Date | Change |
 |---|---|

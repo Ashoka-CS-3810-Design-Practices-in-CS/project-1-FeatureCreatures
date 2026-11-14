@@ -6,9 +6,9 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** None. Round 2 WI-47–59 and Finish are complete locally on `main`; retained branches are ready for the human push/deploy/live smoke.
-- **Last session:** 2026-11-14 · Codex · finished WI-58 and WI-59, merged as a4a055b and ce3a3c9, branches retained. One initial Finish run exposed a T53 query-cost timeout; 35a214f scopes positive queries to named regions without weakening any assertion or setting. Fresh full main gate passes all checks, including 320/320 browsers, zero retries. README has exact baseline comparison; TEST_PLAN §7 is the single S1–S14 live smoke, old records archived, local §9 release checks complete. Human push/CI/deploy/live smoke and Round 2 viva remain pending.
-- **Gate status:** 2026-11-14 on `main` at `35a214f`: typecheck/lint, 861 + 1 existing skipped, overall 98.53/94.38/98.05/98.74, algorithms 99.72/96.80/100/99.71, DST 9, ten properties × 10,000, build, 320/320 browsers (64 × 5), zero retries, exit 0. All eight coverage measures and test counts pass BASELINE limits. Final reporting edits are documentation only.
+- **Active WI:** None; Round 3 baseline verified and WI-60 is next. Round 2 and its Finish remain complete locally; human push/deploy/live smoke are pending.
+- **Last session:** 2026-11-14 · Codex · saved the binding Round 3 request, reconstructed clean main/history, spot-checked WI-59's documentation/smoke/checker deliverables and all existing tests, and recorded the fresh full baseline below. No leftover work or lockfile changes; node_modules already present. Round 3 plan is WI-60–66 in order.
+- **Gate status:** 2026-11-14 Round 3 BASELINE on `main` at `26aafa0`: typecheck/lint, 861 + 1 existing skipped, overall 98.53/94.38/98.05/98.74, algorithms 99.72/96.80/100/99.71, DST 9, ten properties × 10,000, build, 192/192 browsers (64 × 3), zero retries, exit 0. Evidence: .tmp-round3-baseline-core.log and .tmp-round3-baseline-browsers.log.
 
 ## Work items
 
@@ -347,6 +347,29 @@ Binding design: `docs/extras/AUDIT_2.md` (D-01–D-21, C-01–C-08). Work in ord
 - **m1** (2026-10-25) — Phase 1 Setup: Vite/React/TS scaffold, ESLint layer boundaries, Vitest (UTC + DST), Playwright config, CI workflow; first Vercel deploy done by the humans.
 - **m3** (2026-10-26) — Phase 3 Algorithms and engine: conflict sweep (min-heap), busy merge, allowed segments, free gaps, day loads, BR-7 ranking, BR-10 target, BR-11 queue order, BR-12 replan heuristics; engine state with reversible changes and bounded history; the facade with its command queue and all four pipelines; undo/redo, export/import with cross-record checks, six samples. 296 unit/integration/property tests + 6 DST tests, 99.5% line coverage; T1–T13, T16–T36 engine parts green.
 - **m2** (2026-10-25) — Phase 2 Core types and data: frozen shared types/constants/result/errors, Zod schemas with `parseInput`, DST-safe local-time module, interval/sortedArray/minHeap, Memory + Dexie repositories (atomic), test helpers and brute-force oracles. 105 unit tests + 4 DST tests, 100% coverage of `src/`.
+
+### Round 3 polish (batch)
+
+Binding spec: [PROMPT_ROUND_3.md](../extras/PROMPT_ROUND_3.md). D-01–D-21 remain binding. Each WI depends on the previous one; one branch per WI; full coverage/DST/10,000-case properties/build/three-repeat browser gate on the branch and after merging. Review both themes at 1440×900, 1280×800 and 1024×768 with the sample week and a weekday-morning clock.
+
+**BASELINE (2026-11-14, main at 26aafa0):** typecheck/lint pass; **861 passed + 1 existing skipped** (113 files pass + 1 skipped); overall statements/branches/functions/lines **98.53/94.38/98.05/98.74%**; algorithms **99.72/96.80/100/99.71%**; **DST 9/9**; **10 property cases × 10,000 random-seed runs**, pass; **build pass**; **192/192 browser checks (64 × 3 repeats, 2 workers), zero retries**, exit 0. Exact evidence: `.tmp-round3-baseline-core.log`, `.tmp-round3-baseline-browsers.log`. Matches Round 2 Finish's unit/DST/coverage counts.
+
+- [ ] **WI-60** Event blocks are readable at desktop widths — owner S + Dv — depends on 59
+  - Done when: size/height-aware Full/Compact/Narrow blocks retain padding, time, complete priority and category markers; no crossing tags or truncated titles up to 20 characters at 1440/1280 in both themes; full 1024 blocks, complete accessible labels/tooltips and past contrast retained; §7.5/§11 updated; screenshots reviewed.
+- [ ] **WI-61** The filter row never overflows — owner S + Dv — depends on 60
+  - Done when: Categories checkbox disclosure, Show all, conditional Reset and Esc/focus work; 5/12 categories fit all three widths in both themes; filtering/counts/FR6 remain tested.
+- [ ] **WI-62** The built-in samples are never a dead week — owner S + Dv — depends on 61
+  - Done when: weekend clocks anchor next Monday, weekdays current Monday, DST retained; load navigates/names the sample week; Saturday browser offers upcoming conflict/task slots; fixed exports/fixtures unchanged; TEST_PLAN/schema/README updated.
+- [ ] **WI-63** Settings has one clear saving model — owner S + Dv — depends on 62
+  - Done when: Scheduling/Categories/Appearance/Data keyboard tabs; Scheduling alone staged with sticky Save/Cancel; immediate explanatory lines elsewhere; drafts survive tab switches and discard on Cancel/close; RTL/existing tests and every-tab both-theme screenshots pass.
+- [ ] **WI-64** Right and left columns are compact — owner S + Dv — depends on 63
+  - Done when: barred summary rows and per-slot inline editors retain validation/legacy semantics; compact two-line tasks with Find time/action menu/name editing retain queue/done behavior; all four tasks and whole barred region visible at 1440×900; RTL and existing tests pass.
+- [ ] **WI-65** Small consistency fixes — owner S + Dv — depends on 64
+  - Done when: List selects/aria-disables Week and restores Calendar view; Replan uses coloured priority tags and explanatory movable counts; line lock/undo/redo icons retain accessible names/contrast; picker times nowrap; every item tested and captures reviewed.
+- [ ] **WI-66** Docs, smoke test and final gate — owner S + Dv — depends on 65
+  - Done when: main docs/change logs, continuing T-numbers, figures/README screenshots/Try it and existing S-steps cover WI-60–65 in 20–30 minutes; D-21 audit passes; full branch/main gates green.
+- [ ] **Finish** — depends on 66: full main gate with five browser repeats; no test-count drop or coverage measure dropping >0.5 points versus BASELINE; README results and human handoff recorded.
+- [ ] **Human: push, deploy, run the smoke test** — human-owned; never blocks local work.
 
 ## Human-only steps
 
