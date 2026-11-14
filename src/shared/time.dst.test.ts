@@ -6,6 +6,7 @@ import {
   localMinuteOfDay,
   onLocalDay,
   startOfLocalDay,
+  startOfSampleWeek,
 } from './time';
 import type { Settings } from './types';
 
@@ -16,6 +17,15 @@ import type { Settings } from './types';
 const HOUR = 60;
 const DST_END_DAY_MIN = 25 * HOUR;
 const everyDay: Settings = { ...DEFAULT_SETTINGS, workDays: [0, 1, 2, 3, 4, 5, 6] };
+
+it.each([
+  ['2026-03-07', '2026-03-09'],
+  ['2026-03-08', '2026-03-09'],
+  ['2026-10-31', '2026-11-02'],
+  ['2026-11-01', '2026-11-02'],
+])('T61: weekend %s anchors at local Monday %s across DST', (today, monday) => {
+  expect(startOfSampleWeek(atLocal(today, '08:00'))).toBe(atLocal(monday, '00:00'));
+});
 
 it('T53: globally disabled working hours makes the fall-back load frame a whole 25-hour day', () => {
   const start = atLocal('2026-11-01', '00:00');

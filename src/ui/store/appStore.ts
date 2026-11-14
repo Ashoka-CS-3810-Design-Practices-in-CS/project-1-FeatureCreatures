@@ -24,7 +24,7 @@ import {
   fromMinute,
   overlapsWorkingHours,
   startOfLocalDay,
-  startOfLocalWeek,
+  startOfSampleWeek,
 } from '@/shared/time';
 import type {
   Conflict,
@@ -199,6 +199,7 @@ export interface AppState {
   busy: string | null;
   snapshot: Snapshot;
   view: { type: ViewType; date: Minute; activeRange: Interval | null };
+  sampleNavigation: { date: Minute } | null;
   lastCalendarView: CalendarViewType;
   calendarLocked: boolean;
   theme: ThemeChoice;
@@ -1169,14 +1170,21 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
       },
 
       // PRE:  id names a sample
-      // POST: replaces all data with that sample built for the current week; shows a toast
-      loadSample(id) {
+      // POST: loads a weekday-current/weekend-next sample, requests navigation and names its week in the toast
+      async loadSample(id) {
         const sample = SAMPLES[id];
-        return replaceAll(
-          () => JSON.stringify(sample.build(startOfLocalWeek(options.now()))),
-          () => sampleLoadedText(sample.label),
+        const weekMonday = startOfSampleWeek(options.now());
+        const result = await replaceAll(
+          () => JSON.stringify(sample.build(weekMonday)),
+          () => sampleLoadedText(sample.label, weekMonday),
           'Loading sample calendar…',
         );
+        if (result.ok)
+          set({
+            view: { ...get().view, date: weekMonday },
+            sampleNavigation: { date: weekMonday },
+          });
+        return result;
       },
 
       // PRE:  settings come from the settings dialog (validated by the engine)
@@ -1298,6 +1306,7 @@ export function createAppStore(engine: Engine, options: AppStoreOptions): AppSto
       busy: null,
       snapshot: options.init.ok ? options.init.value : engine.snapshot(),
       view: { type: options.initialView ?? 'timeGridWeek', date: now, activeRange: null },
+      sampleNavigation: null,
       lastCalendarView:
         options.initialView !== undefined && options.initialView !== 'listWeek'
           ? options.initialView

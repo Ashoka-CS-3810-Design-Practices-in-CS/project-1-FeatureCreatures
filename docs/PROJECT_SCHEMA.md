@@ -348,7 +348,7 @@ Every engine command returns either success or a typed error (§5). Errors never
 **B2 — Export / import / samples.**
 - **Export:** downloads `calendar-export-YYYY-MM-DD.json`, version 2 including categories (format in TECH_SPEC §9.4); version 1 imports remain supported.
 - **Import:** validates the whole file first (ER6), asks for confirmation ("This replaces all your events, tasks and settings"), then replaces everything.
-- **Sample calendars:** the "Load sample calendar" menu loads presets dated relative to the current week:
+- **Sample calendars:** the "Load sample calendar" menu loads presets anchored to the current Monday on weekdays, or next Monday on Saturday/Sunday; loading navigates there and the toast names the week:
   - sparse week
   - back-to-back
   - overlap cluster
@@ -635,7 +635,7 @@ Twelve curated colours include the five seeds. Free colours are normalised six-d
 | W7 | Configure | ⚙ → edit working hours/buffer → Save; Barred slots region → edit rows → Save. The shading updates, and later searches use the new rules. |
 | W8 | Undo a mistake | ↶ or Ctrl+Z → the toast reads "Undid: Delete "Gym"" → ↷ redoes it. |
 | W9 | Back up or restore | ⚙ → Data → Export (file downloads), or Import → confirm → everything is replaced. |
-| W10 | First visit (grader) | Empty calendar → *Load sample week* → a populated week with conflicts and tasks ready to demo. |
+| W10 | First visit (grader) | Empty calendar → *Load sample week* → calendar navigates to the sample week with conflicts/tasks ready to demo. Mon–Fri uses the current Monday; Sat/Sun uses next Monday. The toast names the sample and week, e.g. Loaded sample: Sparse week (week of 16 Nov). Settings → Data uses the same rule; fixed JSON exports stay dated 2 November 2026. |
 
 ### 7.4 Feedback
 
@@ -740,6 +740,8 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 ---
 
 ## 10. Change log
+
+- 2026-11-14 · WI-62: W10/built-in samples use next Monday on weekends, current Monday on weekdays, navigate after load and name the week in the toast. Fixed exports/fixtures remain unchanged.
 
 - 2026-11-14 · WI-60: §7.5 specifies own-size event tiers, short-block presentation, complete metadata/contrasted markers and responsive desktop Tasks width; domain behavior is unchanged.
 
