@@ -155,6 +155,17 @@ All times are on Mon 2 Nov 2026 unless a day is given. Intervals are half-open.
 
 ### 4.2 Added tests (T16–T36)
 
+Round 3 continues the catalogue with T59–T64 (T58 was the last previous number):
+
+| Test | Exact acceptance and files |
+|---|---|
+| T59 — own-size event blocks (WI-60) | `e2e/eventBlocks.spec.ts`: 1440×900, 1280×800, 1024×768 in both themes, sample Monday 2 November 2026 at 08:00. Normal >=90 px blocks show separate time/category and complete priority; titles <=20 characters fit two lines. Narrow overlaps keep one-line title/priority/conflict; short <44 px blocks keep title/time on one line. Every visible tag lies inside its block; padding >=4 px. Day verifies full tags. Event-content/mapper/token units cover named category tooltip, Flexible + Task and query constants/contrast. |
+| T60 — category disclosure (WI-61) | Toolbar/category-filter RTL and `e2e/filters.spec.ts`: five and twelve valid categories at all six viewports; visible toolbar controls fit their region and scrollWidth <= clientWidth (one-pixel rounding only). Named Category filter, Categories / Categories (N of M), checkboxes, Show all, conditional Reset, Escape focus and Enter/Space; original FR6 counts/intersection/List behavior retained. |
+| T61 — live sample week (WI-62) | Store clocks 2–6 November anchor Monday 2 November; Saturday 7 and Sunday 8 anchor Monday 9 November. Calendar date changes to Monday midnight; toast includes week of 2 Nov / 9 Nov. Browser Saturday loads Upcoming (1) and Write report slots. Four NY DST cases: 7/8 March -> 9 March; 31 October/1 November -> 2 November, local midnight. Fixed sample exports remain 2 November. |
+| T62 — Settings saving model (WI-63) | Settings RTL: Scheduling/Categories/Appearance/Data tabs, ArrowLeft/Right/Home/End, first-tab focus, Scheduling draft 15 survives switching and Cancel/reopen restores 0; category rename/appearance persist while unsaved buffer 10 is discarded on close. Moved Settings/Appearance/Import controls retain original assertions; captures cover every tab at all six viewports. |
+| T63 — compact columns (WI-64) | Task/menu/barred RTL and `e2e/compactColumns.spec.ts`: four sample rows <=72 px, whole Barred/Overlaps/Kept region visible at 1440×900 in both themes; saved Lunch · 13:00–14:00 · Mon–Fri summary opens a single-line label/from/to editor with no input clipping. Menu completion/reopen/edit/unschedule/delete, full window tooltips, compact dates across month/year and original D-09/D-20 validation are retained. |
+| T64 — consistency (WI-65) | Toolbar units: List Week selected/aria-disabled with tooltip, Calendar returns to Month, original names/line SVGs, Replan zero/one/two exact explanatory counts. T55 adds coloured priority assertions for moves and Not moved. `e2e/consistency.spec.ts`: both task/alternatives picker ranges use nowrap and fit their cards at all six viewports. Token tests retain >=3:1 icon ink and existing text/tag contrast. |
+
 | Test | Layer | Input / scenario | Expected output | Purpose |
 |---|---|---|---|---|
 | **T16** | integration | Task R "Write report", 90 min, High, window Mon 09:00–Fri 18:00. Steps: (1) `scheduleTask` at Mon 14:00–15:30; (2) `updateEvent` title "Final report", end 16:00; (3) `updateTask` duration 60; (4) `deleteEvent`; (5) schedule again at Tue 09:00–10:00 (60 min, the duration since step 3), then `deleteTask` | (1) The event has `taskId` R, `flexible` true, `flexWindow` = R's window and priority High. R is `scheduled` with `scheduledEventId` = the event's ID.<br>(2) R's name is "Final report" and its `durationMin` is 120.<br>(3) The event is 14:00–15:00, with its start kept.<br>(4) The event is gone, R is `unscheduled` with `scheduledEventId` null, and R still exists.<br>(5) Both the task and its event are gone.<br>Each step adds exactly one undo entry. | BR-9 sync (FR8) |
@@ -329,11 +340,11 @@ This is the single current manual acceptance run, replacing D1-D5, the separate 
 
 Record tester, date, deployed commit, browser/locale, viewport and any failed S-number. Use one disposable browser profile, two tabs sharing that profile, a keyboard and a screen reader. Export any existing data before replacing it. If this profile holds pre-Round-2 data, first compare its events/tasks/settings with its backup after reload: the v3 upgrade must preserve them.
 
-**Dates:** M is the next Monday strictly after today; W is M 00:00 through the following Saturday 00:00. Use local dates and times throughout. These future fixtures keep the run valid on weekends too; built-in samples use the current week and committed sample files use 2 November 2026 UTC. Approximate section times below total 29 minutes.
+**Dates:** M is the next Monday strictly after today; W is M 00:00 through the following Saturday 00:00. Use local dates and times throughout. Built-in samples use the current Monday on weekdays and next Monday on weekends, navigate there and name the week in their toast. Committed sample files stay dated 2 November 2026 UTC. Approximate section times below still total 29 minutes.
 
 ### S1. Start and navigation (1 minute; FR1, B2, D-14)
 
-- [ ] Open a fresh profile: the empty state offers Load sample week. Load it: eight events, four tasks and Lunch appear. Reload: the data survives and Calendar lock starts Locked.
+- [ ] Open a fresh profile: Load sample week shows eight events, four tasks and Lunch, navigates to its week and names that week in the toast (next Monday on weekends). At 1440×900 all four compact task rows and the Barred/Overlaps/Kept region fit. Reload: data survives and Calendar lock starts Locked.
 - [ ] At 1440 and 1280 px, find Tasks, Calendar, Conflicts, Replan and Barred slots. Use Day/Week/Month, previous/next and Today: the period changes correctly. Navigate to M's week. There is one + Task in Tasks, one + Event in Calendar and one Plan... in Replan.
 
 ### S2. Reusable fixtures and categories (3 minutes; FR1, FR6, FR11, D-01/D-11/D-16)
@@ -352,7 +363,7 @@ Record tester, date, deployed commit, browser/locale, viewport and any failed S-
 
 - [ ] Both Smoke events may stay in Lunch without a question. Their In Lunch tags/Overlaps rows are separate from the 30-minute event-pair conflict. Keep here on Smoke fixed hides its tag/row in collapsed Kept; Undo/Redo and Stop keeping reverse it.
 - [ ] Keep it again, change its end to 13:55: the keep clears. Undo restores the time and keep; Stop keeping restores the active warning. Keep it once more, rename Lunch and Save: the keep survives. Extend Lunch to 14:15 and Save: keeps clear, the overlap toast counts future/ongoing events and View focuses Overlaps. Restore the label Lunch and 13:00-14:00 before continuing.
-- [ ] Add a duplicate Lunch and Save: Same days and times as "Lunch" (13:00–14:00). Change it to 13:30-14:30 on Mon/Tue: Overlaps "Lunch" (13:00–14:00) on Mon, Tue. Messages never number the other slot. Nothing saves; Cancel restores the original rows. Time fields must be complete in the browser's locale, including AM/PM where used.
+- [ ] Saved Lunch is a compact read-only summary. Its pencil Edit opens label/from–to on one line, days below and Save/Cancel beside the editor; Cancel restores saved content. Add a duplicate Lunch and Save: Same days and times as "Lunch" (13:00–14:00). Change it to 13:30-14:30 on Mon/Tue: Overlaps "Lunch" (13:00–14:00) on Mon, Tue. Messages never number slots; nothing saves. Time text stays complete in the browser's locale, including AM/PM.
 
 ### S5. Alternatives (2 minutes; FR7, D-02/D-06)
 
@@ -370,26 +381,26 @@ Record tester, date, deployed commit, browser/locale, viewport and any failed S-
 ### S7. Linked tasks and completion (2 minutes; FR2/FR3/FR8, B1, D-07)
 
 - [ ] Edit report's duration/name: its linked Flexible event follows. Delete that event: report becomes unscheduled; Undo restores both. Delete the scheduled task: confirmation names the linked event, both disappear; Undo restores both.
-- [ ] Mark report done: its time becomes free in one change and it disappears from Open. Show Done: struck title, Done tag, Reopen/Edit/Delete and no Find time. Undo restores the linked pair; mark done from its dialog, Reopen: it returns unscheduled with no event. Find time again and Apply to reschedule.
+- [ ] Click report's name to Edit, then cancel. More actions for report contains Mark done/Edit/Unschedule/Delete; Unschedule frees its linked event, Undo restores it. Mark done from that menu frees time in one change and hides it from Open. Show Done: struck title, Done tag, menu Reopen/Edit/Delete and no Find time. Undo restores the pair; mark done from its dialog, Reopen, Find time and Apply to reschedule.
 - [ ] Tasks menu > Mark done before...: choose W's end, Preview; report and chapter qualify by event end/window end respectively, including equality. Cancel writes nothing. Reopen, preview, edit cutoff: Apply requires a fresh preview. Apply the preview, Undo once: all task/event changes return together. Leave chapter done for the export check.
 
 ### S8. Working time (1 minute; FR11, D-10)
 
-- [ ] Unschedule report through its dialog. Settings > Working time: turn Use working hours off and Save. Retained day/hour fields are disabled; non-working shading disappears. Task Scheduling hours and alternatives Search hours are hidden. Searches can use nights/weekends but never barred time.
+- [ ] Unschedule report through its dialog. Settings opens focused on Scheduling. Stage a buffer edit, switch tabs with arrow keys and return: the draft survives. Cancel/close discards it; Categories/Appearance explain immediate changes. In Scheduling > Working time, turn Use working hours off and Save using its sticky footer. Retained day/hour fields are disabled; shading and Task Scheduling hours / alternatives Search hours disappear. Searches can use nights/weekends, never barred time.
 - [ ] With W as the window/range, preview Find time and Front-load Replan: whole-day options/moves are possible, including midnight. Cancel without applying. Switch working hours on: saved days/hours, task preference, controls and shading return. Invalid hours/buffer are rejected inline.
 
 ### S9. Replan (3 minutes; FR10, D-15)
 
-- [ ] Plan... defaults to the visible M week. From/To/Strategy/Compute share a row; Buffer is behind Details. Compute each second-plan strategy: Balanced week, Cluster by category, Vary categories, Front-load and Fewer fragments. Minimal change stays first; changing any input removes old cards until Compute runs again.
+- [ ] The plain Replan heading has a separate flexible-events-can-move count (including singular/none). Plan... defaults to M's week. From/To/Strategy/Compute share a row; Buffer is behind Details. Compute Balanced week, Cluster by category, Vary categories, Front-load and Fewer fragments. Minimal change stays first; changing inputs removes old cards until Compute runs again. Moves/Not moved use the same coloured priority tags as events/tasks.
 - [ ] Cards show compact day-grouped moves, tags, reason chips and before/after conflicts. Minimal change moves the unkept future Smoke flex out of Lunch. Not moved by Replan appears once, collapsed, with Smoke fixed and an alternatives action using the same fixed opt-in picker. Fixed and running events never move. Details reveals shift/spread/unplaced and long reasons.
 - [ ] Apply one nonempty plan: events move only after Apply, with no new conflicts/barred placement/out-of-window time. Undo once restores the entire plan. Compute again and Cancel: nothing changes.
 
 ### S10. Both themes, layout and contrast (2 minutes; B3, D-05/D-12/D-13/D-14/D-16)
 
-- [ ] Toggle H/M/L and category chips: calendar visibility/hidden counts change, while Tasks and unfiltered conflict counts stay intact. Hide every event in List: the appropriate priority/calendar-filter message appears; Show all restores both filters. Briefly narrow List to 420 px: rows wrap without horizontal clipping (phone support remains best effort).
-- [ ] In Light and Dark, inspect Week, Month and List plus event/task/Settings dialogs at 1440, 1280 and 1024 px. Neutral blocks and independent tags remain readable; narrow warnings fit and out-of-month numbers are visible. App-written dates look like Mon 9 Nov and times are 24-hour ranges; native inputs follow locale. List has one compact date heading, readable hover and no overlay hiding a sticky header.
+- [ ] Toggle H/M/L and Categories disclosure checkboxes; counts/hidden labels change while Tasks/conflicts stay intact. The disclosure reports Categories (N of M), Show all restores categories, Reset appears only for active filters, and Escape restores trigger focus. The toolbar fits all three desktop widths (T60 additionally automates twelve categories). Hide every event in List: its message/Show all still work. At 420 px List wraps without clipping.
+- [ ] In both themes at 1440×900, 1280×800 and 1024×768 inspect Week/Month/List and all four Settings tabs. Normal >=90 px event blocks have padded two-line titles, time and complete priority/category marker; narrow overlaps keep priority/conflict without crossing edges. Find time/alternatives pick ranges stay on one line. Month dates, List hover/sticky headings and app-written dates remain readable. Native inputs follow locale.
 - [ ] Scroll each overflowing desktop column: others stay put. At 1024, counted Tasks/Conflicts buttons open separate drawers at their titles; Tab/Shift+Tab stay inside, Escape returns focus. Event controls, paired fields and native barred times do not clip.
-- [ ] Settings > Appearance: try Neutral and a coloured accent, then System. The app-bar sun/moon matches the resolved theme and toggles Light/Dark. Reload: accent and last Calendar view persist; L toggles the week List and restores that Calendar view. Spot-check event/muted/tag/toast text with the browser contrast inspector (at least 4.5:1), focus/control marks (3:1), visible focus and 32 px targets in both themes.
+- [ ] Settings > Appearance: try Neutral/colour/System; changes apply immediately. Sun/moon matches the resolved theme. Reload preserves accent/Calendar view; List shows Week selected/aria-disabled with its tooltip, and Calendar restores the previous Day/Week/Month. Lock and Undo/Redo use matching line icons. Spot-check text >=4.5:1, icons/focus >=3:1, visible focus and 32 px targets in both themes.
 
 ### S11. Keyboard and screen reader (1 minute; B4, accessibility)
 
@@ -433,6 +444,8 @@ Local checks and live-site acceptance are separate records. Current automated ev
 ---
 
 ## 10. Change log
+
+- 2026-11-14 · WI-66: §4 adds the exact T59–T64 catalogue; existing S1/S4/S7–S10 steps cover all six polish groups without creating a second smoke list or extending the 29-minute estimate. Date guidance distinguishes weekday/weekend built-ins from fixed exports. D-21 treats the mandatory saved prose prompt as prose, still validating any embedded box diagram.
 
 - 2026-11-14 · WI-65 / T64: five new Toolbar cases first fail on List Week state, missing SVGs and Replan heading/count copy; existing T55 moved/Not moved assertions gain coloured-tag checks and first fail. Six new both-theme/three-size browser scenes first fail on absent nowrap ranges, then check task and alternatives pick ranges and card bounds. tokens.test.ts checks line-icon ink >=3:1 including disabled history. Existing control names, selection/history/lock behavior and view restoration stay covered; no tests weakened.
 

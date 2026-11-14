@@ -1977,7 +1977,7 @@ Binding design: `extras/AUDIT_2.md` §7. Each WI depends on the previous one; up
 
 ### Round 3 polish (WI-60–66)
 
-Binding spec: `extras/PROMPT_ROUND_3.md`; Round 2 D-01–D-21 remain binding. Each WI has its own branch, depends on the previous one and requires the full Round 3 gate on the branch and main. UI review uses both themes, a weekday-morning sample clock and 1440×900, 1280×800, 1024×768. Finish uses five browser repeats and compares every coverage measure/test count to the progress-file BASELINE.
+Binding spec: `extras/PROMPT_ROUND_3.md`, with the 2026-11-14 user steer recorded under Round 3 in PROGRESS. D-01–D-21 remain binding. Each WI has its own sequential branch. Before each merge run typecheck/lint and changed/added Vitest files and Playwright specs once. **Full gate deferred to the round-3 final gate**: after WI-66 merge, run typecheck/lint/coverage/DST/ten 10,000-case properties/build/five browser repeats on main, then screenshots. Fix failures in new `fix/round3-*` branches, rerun the failed commands then the full gate from the top. Review both themes with a weekday-morning sample clock at 1440×900, 1280×800, 1024×768 before comparing every count/coverage measure with BASELINE and ticking Finish.
 
 | WI | Phase | Title | Owner | Files | Depends | Done when |
 |---|---|---|---|---|---|---|
@@ -2023,6 +2023,8 @@ Production URL: https://…vercel.app
 ---
 
 ## 16. Change log
+
+- 2026-11-14 · WI-66: §14 reflects the user's gate-once steer; §11 and file descriptions reflect the final presentation changes. D-21 keeps the required verbatim prose prompt while continuing to validate any embedded diagram and every other text/diagram block.
 
 - 2026-11-14 · WI-65: §11.2 records shared priority rendering, List state/restoration, Replan count text, line icons and whole-card picker wrapping; no engine behavior changes.
 
