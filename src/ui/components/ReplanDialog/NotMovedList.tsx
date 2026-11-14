@@ -48,7 +48,11 @@ export function NotMovedList({
             return (
               <li key={entry.eventId}>
                 <strong>&quot;{entry.title}&quot;</strong> —{' '}
-                {priority !== undefined && <PriorityTag priority={priority} />}
+                {priority !== undefined && (
+                  <>
+                    <PriorityTag priority={priority} />{' '}
+                  </>
+                )}
                 <span className="tag">{REASON_TEXT[entry.reason]}</span>
                 {entry.planNames.length === 1 && (
                   <span className="muted"> ({entry.planNames[0]})</span>

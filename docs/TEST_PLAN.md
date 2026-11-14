@@ -445,6 +445,8 @@ Local checks and live-site acceptance are separate records. Current automated ev
 
 ## 10. Change log
 
+- 2026-11-14 · Round 3 final-gate fix: App's existing sample toast adds the WI-62 week, Clear-all navigates to WI-63 Data, and Replan's exact unresolved-conflict text retains WI-65 [H] alongside No free slot. A new App regression first fails on observed FullCalendar flushSync warnings; sample navigation now runs in a microtask after React's lifecycle, with the same destination/data. Diagnostic tags gain separating whitespace. Existing assertions and all gate settings remain intact.
+
 - 2026-11-14 · WI-66: §4 adds the exact T59–T64 catalogue; existing S1/S4/S7–S10 steps cover all six polish groups without creating a second smoke list or extending the 29-minute estimate. Date guidance distinguishes weekday/weekend built-ins from fixed exports. D-21 treats the mandatory saved prose prompt as prose, still validating any embedded box diagram.
 
 - 2026-11-14 · WI-65 / T64: five new Toolbar cases first fail on List Week state, missing SVGs and Replan heading/count copy; existing T55 moved/Not moved assertions gain coloured-tag checks and first fail. Six new both-theme/three-size browser scenes first fail on absent nowrap ranges, then check task and alternatives pick ranges and card bounds. tokens.test.ts checks line-icon ink >=3:1 including disabled history. Existing control names, selection/history/lock behavior and view restoration stay covered; no tests weakened.

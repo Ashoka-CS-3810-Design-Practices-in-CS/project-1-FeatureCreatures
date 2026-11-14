@@ -9,6 +9,16 @@ import { App } from './App';
 describe('App', () => {
   afterEach(() => vi.restoreAllMocks());
 
+  it('T61: sample navigation runs after the React lifecycle without a FullCalendar flushSync warning', async () => {
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const store = storeFor((await makeEngine()).engine);
+    renderWithStore(<App />, store);
+    await userEvent.click(screen.getByRole('button', { name: 'Load sample week' }));
+    expect(await screen.findByText(/8 events · 4 tasks/)).toBeInTheDocument();
+    await act(async () => Promise.resolve());
+    expect(errors.mock.calls.filter((call) => String(call[0]).includes('flushSync'))).toEqual([]);
+  });
+
   it('below 1280 px opens one copy of the panels in a drawer and returns focus when closed', async () => {
     const media = window.matchMedia('(max-width: 1279px)');
     vi.spyOn(window, 'matchMedia').mockReturnValue({ ...media, matches: true });
@@ -62,7 +72,7 @@ describe('App', () => {
     expect(await screen.findByText(/1 conflict\b/)).toBeInTheDocument();
     expect(screen.getByText(/8 events · 4 tasks/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Load sample week' })).not.toBeInTheDocument();
-    expect(screen.getByText('Loaded sample: Sparse week.')).toBeInTheDocument();
+    expect(screen.getByText('Loaded sample: Sparse week (week of 2 Nov).')).toBeInTheDocument();
   });
 
   it('mounts the settings dialog: Clear all data, confirmed, empties the calendar', async () => {
@@ -72,6 +82,7 @@ describe('App', () => {
     renderWithStore(<App />, store);
 
     act(() => store.getState().actions.openDialog({ kind: 'settings' }));
+    await userEvent.click(screen.getByRole('tab', { name: 'Data' }));
     await userEvent.click(screen.getByRole('button', { name: 'Clear all data' }));
     await userEvent.click(screen.getByRole('button', { name: 'Clear all data' }));
 

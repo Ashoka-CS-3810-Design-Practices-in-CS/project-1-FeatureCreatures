@@ -155,7 +155,7 @@ describe('ReplanDialog', () => {
 
     const minimal = screen.getByRole('region', { name: 'Minimal change' });
     const diagnostics = await showDiagnostics();
-    expect(diagnostics).toHaveTextContent('"X" — No free slot');
+    expect(diagnostics).toHaveTextContent('"X" — [H] No free slot');
     expect(diagnostics).toHaveTextContent('Conflicts with "S".');
     expect(minimal).toHaveTextContent('No moves in this plan — 2 events still need attention.');
     expect(
