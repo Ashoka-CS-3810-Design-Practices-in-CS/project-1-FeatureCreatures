@@ -6,7 +6,7 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** None. WI-60–66 and Round 3 Finish are complete on `main`; all implementation/fix branches retained. Human push, deployment and the live-site smoke remain pending under Human-only steps.
+- **Active WI:** Round 3 CI repair on `fix/round3-compact-wide-font`: reproduce wide-font Compact metadata clipping test-first, apply the human's <150 px / <80 px time-hiding rule, then full three-repeat branch/main gates and reviewed captures. WI-60–66 and the earlier Finish remain complete; human push/deploy/live smoke remain pending.
 - **Last session:** 2026-11-14 · Codex · implemented/merged WI-60–66 test-first with focused checks, fixed full-gate regressions and two visual-review defects on separate retained fix branches, then completed one clean final gate and all 126 screenshot scenes plus 54 supplemental exact-size captures. Reviewed both themes at 1440×900, 1280×800 and 1024×768; README/main docs/T59–T64/29-minute smoke/results are current. No product or test changes after verified code/tests merge a24526d; later commits contain documentation and capture artifacts.
 - **Gate status:** 2026-11-14 final full main gate at `a24526d`: typecheck/lint, 884 + 1 existing skipped, overall 98.45/94.33/98.03/98.71, algorithms 99.72/96.80/100/99.71, DST 13, ten properties ×10,000, build, 435/435 browsers (87 ×5, two workers, zero retries), exit 0. All 126 screenshot scenes and 54 supplemental captures pass, exit 0; D-21 14 docs/13 blocks and all 270 local Markdown links pass. Versus Round 3 BASELINE at 26aafa0: tests +23, DST +4, browser checks +23; overall coverage deltas −0.08/−0.05/−0.02/−0.03 points, algorithms unchanged. Archived evidence (relative to the archive below): logs/round3-layout-final-{gate,captures}.log/.exit and logs/round3-review-captures.log/.exit (ignored runtime evidence).
 
@@ -342,6 +342,11 @@ Binding design: `docs/extras/AUDIT_2.md` (D-01–D-21, C-01–C-08). Work in ord
 - [ ] **Human: push, deploy, run the smoke test** — push main, all branches and tags; `npx vercel --prod`; run TEST_PLAN §7 on the live site.
 
 ### Round 3 polish (batch)
+
+2026-11-15 CI repair steer: use one retained fix branch, with the full §3 gate on the branch and on main, each with three browser repeats. Wide fonts wrap "Office hours" in ~91×63 px Compact blocks and push tags 8–10 px below the clipped block. The human refines WI-60: containers narrower than 150 px and shorter than 80 px hide time, retaining title/tags and the complete accessible name/tooltip. Full blocks and Compact blocks >=80 px remain unchanged. T59 runs both default and Verdana/DejaVu Sans fonts at all six sizes/themes; only Compact time visibility changes. Run the remaining e2e once with the wide font, retain all tolerances, and review 1280 captures.
+
+- [~] **Round 3 CI repair — WI-60 / T59 wide-font Compact blocks**
+  - 2026-11-15 · Codex · branch `fix/round3-compact-wide-font` · done: clean main reconstructed, mandatory skill and Round 3 rules loaded; startup typecheck/lint pass, unit gate running · next: dual-font T59 red, named 80 px token/equality check and container rule, docs, wide-font suite, full branch/main gates and captures · note: Linux DejaVu Sans exposes real clipped priority/category tags; preserve every other T59 assertion and name the authorized time expectation change in the commit.
 
 2026-11-14 user steer: build WI-60–66 back to back. Before each merge run typecheck, lint and only changed/added Vitest/Playwright files (single browser run). **Full gate deferred to the round-3 final gate** on main after WI-66: coverage/DST/full properties/build/five browser repeats, then all screenshots. Fix failures on separate `fix/round3-*` branches and rerun the failing command followed by a fresh complete gate. Review final screenshots before Finish. This overrides the earlier per-WI full-gate/screenshot instructions.
 
