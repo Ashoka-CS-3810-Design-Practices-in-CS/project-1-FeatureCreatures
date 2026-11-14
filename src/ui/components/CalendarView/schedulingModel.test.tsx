@@ -41,14 +41,17 @@ describe('T50: scheduling model and calendar lock (D-01–D-05)', () => {
   it('K toggles the session lock; + Event still opens while locked and typing K does not toggle it', async () => {
     const { engine, repo } = await renderCalendar();
     const before = await capture(engine, repo);
-    const lock = screen.getByRole('button', { name: 'Calendar lock' });
+    const calendar = within(screen.getByRole('region', { name: 'Calendar' }));
+    const lock = calendar.getByRole('button', { name: 'Calendar lock' });
     await userEvent.keyboard('k');
     expect(lock).toHaveAttribute('aria-pressed', 'true');
-    await userEvent.click(screen.getByRole('button', { name: '+ Event' }));
-    expect(screen.getByRole('dialog', { name: 'New event' })).toBeInTheDocument();
-    await userEvent.type(screen.getByLabelText('Title'), 'Keyboard draft k');
+    await userEvent.click(calendar.getByRole('button', { name: '+ Event' }));
+    const dialog = screen.getByRole('dialog', { name: 'New event' });
+    expect(dialog).toBeInTheDocument();
+    const eventDialog = within(dialog);
+    await userEvent.type(eventDialog.getByLabelText('Title'), 'Keyboard draft k');
     expect(lock).toHaveAttribute('aria-pressed', 'true');
-    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    await userEvent.click(eventDialog.getByRole('button', { name: 'Cancel' }));
     await userEvent.keyboard('k');
     expect(lock).toHaveAttribute('aria-pressed', 'false');
     expect(await capture(engine, repo)).toEqual(before);
