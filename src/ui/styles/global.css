@@ -235,6 +235,28 @@ th {
   gap: var(--space-3);
 }
 
+.settings-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-tabs [aria-selected='true'] {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: var(--weight-bold);
+}
+
+.settings-save-footer {
+  position: sticky;
+  bottom: 0;
+  padding-block: var(--space-3);
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
 .toolbar-period,
 .toolbar-controls,
 .toolbar-utilities {

@@ -34,9 +34,17 @@ describe('T47: Settings layout', () => {
   it('T53 D-09, D-13: keeps separate barred editing and adds Appearance to Settings', async () => {
     await renderSettings();
 
-    const headings = within(screen.getByRole('dialog', { name: 'Settings' }))
-      .getAllByRole('heading', { level: 3 })
-      .map((heading) => heading.textContent);
+    const headings: (string | null)[] = [];
+    // INVARIANT: headings contains every section heading of each visited tab, in tab order
+    for (const tab of ['Scheduling', 'Categories', 'Appearance', 'Data']) {
+      await userEvent.click(screen.getByRole('tab', { name: tab }));
+      headings.push(
+        ...within(screen.getByRole('tabpanel', { name: tab }))
+          .getAllByRole('heading', { level: 3 })
+          .map((heading) => heading.textContent),
+      );
+    }
+    // POST: all five original section headings are retained across the four tabs
     expect(headings).toEqual([
       'Working time',
       'Scheduling defaults',
@@ -45,6 +53,7 @@ describe('T47: Settings layout', () => {
       'Data',
     ]);
 
+    await userEvent.click(screen.getByRole('tab', { name: 'Scheduling' }));
     const workingTime = screen.getByRole('region', { name: 'Working time' });
     expect(within(workingTime).getByRole('group', { name: 'Working days' })).toBeInTheDocument();
     expect(within(workingTime).getByLabelText('Working hours from')).toBeInTheDocument();
@@ -54,7 +63,9 @@ describe('T47: Settings layout', () => {
     expect(within(defaults).getByLabelText('Default ranking')).toBeInTheDocument();
     const barred = screen.getByRole('region', { name: /^Barred slots \(/ });
     expect(within(barred).getAllByRole('group', { name: /^Barred slot \d$/ })).toHaveLength(2);
+    await userEvent.click(screen.getByRole('tab', { name: 'Data' }));
     expect(screen.getByRole('region', { name: 'Data' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('tab', { name: 'Categories' }));
     expect(screen.getByRole('region', { name: 'Categories' })).toBeInTheDocument();
   });
 

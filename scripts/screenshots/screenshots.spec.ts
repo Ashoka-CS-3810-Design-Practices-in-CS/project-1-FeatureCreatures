@@ -46,6 +46,18 @@ for (const theme of THEMES) {
       await loadSampleWeek(page);
       await capture(page, `wi60-${CAPTURE_PHASE}-${theme}-${size.width}`);
     });
+    test(`settings tabs ${theme} ${size.width}`, async ({ page }) => {
+      await openApp(page, theme, size.width, new Date('2026-11-02T08:00:00'));
+      await page.setViewportSize(size);
+      await loadSampleWeek(page);
+      await page.getByRole('button', { name: 'Settings', exact: true }).click();
+      // INVARIANT: every visited Settings tab has an exact-size capture with the sample loaded
+      for (const tab of ['Scheduling', 'Categories', 'Appearance', 'Data']) {
+        await page.getByRole('tab', { name: tab, exact: true }).click();
+        await capture(page, `settings-${tab.toLowerCase()}-${theme}-${size.width}`);
+      }
+      // POST: all four Settings tabs have both-theme review evidence at this size
+    });
   }
   // POST: every required size is captured for this theme
 }
@@ -130,6 +142,7 @@ for (const theme of THEMES) {
       await loadSampleWeek(page);
       await page.getByRole('button', { name: 'Settings', exact: true }).click();
       const appearance = page.getByRole('region', { name: 'Appearance', exact: true });
+      await page.getByRole('tab', { name: 'Appearance', exact: true }).click();
       await appearance.screenshot({
         path: `${OUTPUT_DIR}/appearance-${theme}-${width}.png`,
         animations: 'disabled',
@@ -283,6 +296,7 @@ for (const theme of THEMES) {
       await openApp(page, theme, width);
       await page.getByRole('button', { name: 'Settings', exact: true }).click();
       const settings = page.getByRole('dialog', { name: 'Settings', exact: true });
+      await settings.getByRole('tab', { name: 'Categories', exact: true }).click();
       await settings.getByRole('button', { name: 'New category…', exact: true }).click();
       await settings.getByLabel('Category name', { exact: true }).fill('Research');
       await settings
@@ -306,6 +320,7 @@ for (const theme of THEMES) {
       await page.getByRole('button', { name: 'Settings', exact: true }).click();
       const settings = page.getByRole('dialog', { name: 'Settings', exact: true });
       await capture(page, `settings-${theme}-${width}`);
+      await settings.getByRole('tab', { name: 'Data', exact: true }).click();
       await settings
         .getByRole('button', { name: 'Clear all data', exact: true })
         .scrollIntoViewIfNeeded();

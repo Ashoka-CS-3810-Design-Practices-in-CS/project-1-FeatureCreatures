@@ -31,6 +31,7 @@ for (const theme of ['light', 'dark'] as const) {
           createdAt: SAMPLE.categories[0].createdAt,
         }));
         await page.getByRole('button', { name: 'Settings', exact: true }).click();
+        await page.getByRole('tab', { name: 'Data', exact: true }).click();
         await page.getByLabel('Import JSON', { exact: true }).setInputFiles({
           name: 'filters.json',
           mimeType: 'application/json',

@@ -39,6 +39,7 @@ for (const theme of ['light', 'dark'] as const) {
           .getByRole('img', { name: `${theme === 'light' ? 'Light' : 'Dark'} theme` }),
       ).toBeVisible();
       await page.getByRole('button', { name: 'Settings', exact: true }).click();
+      await page.getByRole('tab', { name: 'Appearance', exact: true }).click();
       const appearance = page.getByRole('region', { name: 'Appearance', exact: true });
       const accents = appearance.getByRole('radiogroup', { name: 'Accent', exact: true });
       await expect(accents.getByRole('radio')).toHaveCount(ACCENTS.length);

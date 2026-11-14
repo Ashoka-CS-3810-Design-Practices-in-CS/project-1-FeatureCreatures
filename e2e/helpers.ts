@@ -69,6 +69,7 @@ export async function importLegacyBarredSlots(page: Page): Promise<void> {
   };
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
   const settings = page.getByRole('dialog', { name: 'Settings', exact: true });
+  await settings.getByRole('tab', { name: 'Data', exact: true }).click();
   await settings.getByLabel('Import JSON', { exact: true }).setInputFiles({
     name: 'legacy-bars.json',
     mimeType: 'application/json',

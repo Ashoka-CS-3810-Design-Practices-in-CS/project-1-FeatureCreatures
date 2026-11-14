@@ -37,6 +37,7 @@ for (const theme of THEMES) {
 
     await page.getByRole('button', { name: 'Settings', exact: true }).click();
     const settings = page.getByRole('dialog', { name: 'Settings', exact: true });
+    await settings.getByRole('tab', { name: 'Categories', exact: true }).click();
     await settings.getByRole('button', { name: 'Delete Research', exact: true }).click();
     await expect(
       settings.getByText('Used by 1 event and 1 task. Change their category or delete them first.'),

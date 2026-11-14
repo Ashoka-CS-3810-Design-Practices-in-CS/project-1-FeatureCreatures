@@ -1592,6 +1592,8 @@ WI-56 / D-14: AppBar owns brand/history/theme/help/settings and counted Tasks/Co
 
 ### 11.2 Components
 
+WI-63: SettingsDialog mounts SettingsTabs fresh per opening. A roving native-button tablist selects four labelled tabpanels via ArrowLeft/Right/Home/End. Hidden panels stay mounted so React Hook Form retains Scheduling drafts across switches; unmounting on close discards them. Only SettingsForm has the sticky Save/Cancel footer. Categories/Appearance retain their immediate store actions and start with explicit saving-model text; Data is unchanged. Final capture script records every tab at all three exact sizes in both themes.
+
 WI-61: Toolbar uses CategoryFilter's named disclosure and native checkbox list, focused first on opening, with Escape/trigger focus and outside-pointer dismissal. Show all restores categories only; conditional Reset restores both filters. Toolbar/filter rows wrap, with no horizontal overflow container hiding controls. Existing category-filter button selectors become disclosure + checkbox selectors.
 
 WI-53 / D-10: Settings registers the native `Use working hours` switch. `useWatch` disables the retained Working days and hours fieldset while off; RHF keeps its values for Save and re-enabling. TaskForm omits Scheduling hours while globally off, preserving the stored task preference. Alternatives omits Search hours; its initial UI choice is false while globally off. Task-picker Details describes the effective rule as any time. CalendarView sets FullCalendar `businessHours` to false while off, removing non-working shading without changing barred backgrounds or now guides. D-09 uses the separate BarredSlotsPanel editor described below; enabled-hours shading uses a tested nonwork-pattern dot texture.
@@ -2017,6 +2019,8 @@ Production URL: https://…vercel.app
 ---
 
 ## 16. Change log
+
+- 2026-11-14 · WI-63: §11.2 documents tab ownership, keyboard focus and retained Scheduling drafts; the main docs and tests name the staged/immediate model.
 
 - 2026-11-14 · WI-62: §9.5 records weekend-safe local sample anchors, navigation requests and named-week toast; the local-time module adds `startOfSampleWeek(minute): Minute`, preserving all existing contracts.
 
