@@ -1,5 +1,5 @@
 import { expect, test, type Locator } from '@playwright/test';
-import { collectPageErrors, createEvent, openCalendar } from './helpers';
+import { collectPageErrors, createEvent, openCalendar, useWideFont } from './helpers';
 
 const VIEWPORTS = [
   { width: 1440, height: 900 },
@@ -8,6 +8,7 @@ const VIEWPORTS = [
 ];
 const COMPACT_MIN_WIDTH_PX = 90;
 const FULL_MIN_WIDTH_PX = 150;
+const COMPACT_TIME_MIN_HEIGHT_PX = 80;
 const HOUR_HEIGHT_PX = 60;
 const SHORT_TITLE_LIMIT = 20;
 const GEOMETRY_TOLERANCE_PX = 1;
@@ -52,8 +53,12 @@ async function expectReadableBlock(block: Locator): Promise<void> {
   const titleBounds = await boundsOf(title);
   expect(titleBounds.x - bounds.x).toBeGreaterThanOrEqual(MIN_INNER_PADDING_PX);
   if (bounds.width >= COMPACT_MIN_WIDTH_PX) {
-    await expect(block.locator('.event-time')).toBeVisible();
-    await expectInside(block.locator('.event-time'), block);
+    if (bounds.width >= FULL_MIN_WIDTH_PX || bounds.height >= COMPACT_TIME_MIN_HEIGHT_PX) {
+      await expect(block.locator('.event-time')).toBeVisible();
+      await expectInside(block.locator('.event-time'), block);
+    } else {
+      await expect(block.locator('.event-time')).toBeHidden();
+    }
     const category = block.getByLabel(/^Category:/);
     await expect(category).toBeVisible();
     await expectInside(category, block);
@@ -78,48 +83,53 @@ async function expectReadableBlock(block: Locator): Promise<void> {
   await expect(block).toHaveAttribute('title', (await block.getAttribute('aria-label')) ?? '');
 }
 
-// INVARIANT: readability checks cover all themes visited so far
-for (const theme of ['light', 'dark'] as const) {
-  // INVARIANT: checks cover every visited viewport in this theme
-  for (const viewport of VIEWPORTS) {
-    test(`T59: readable event tiers and short blocks, ${theme} ${viewport.width}`, async ({
-      page,
-    }) => {
-      const errors = collectPageErrors(page);
-      await page.setViewportSize(viewport);
-      await page.emulateMedia({ colorScheme: theme });
-      await openCalendar(page);
-      await page.getByRole('button', { name: 'Load sample week', exact: true }).click();
-      const blocks = page.locator('.fc-timegrid-event.ev');
-      await expect(blocks).toHaveCount(8);
-      // INVARIANT: every visited >=1-hour sample block satisfies its content tier
-      for (const block of await blocks.all()) {
-        expect((await boundsOf(block)).height).toBeGreaterThanOrEqual(HOUR_HEIGHT_PX);
-        const title = await block.locator('strong').textContent();
-        if (title !== 'Lecture' && title !== 'Meeting') {
-          expect((await boundsOf(block.locator('.event-content'))).width).toBeGreaterThanOrEqual(
-            COMPACT_MIN_WIDTH_PX,
-          );
+// INVARIANT: readability checks cover every visited font in all themes and viewports
+for (const font of ['default', 'wide'] as const) {
+  // INVARIANT: readability checks cover all themes visited so far for this font
+  for (const theme of ['light', 'dark'] as const) {
+    // INVARIANT: checks cover every visited viewport in this theme
+    for (const viewport of VIEWPORTS) {
+      test(`T59: readable event tiers and short blocks, ${font} font ${theme} ${viewport.width}`, async ({
+        page,
+      }) => {
+        const errors = collectPageErrors(page);
+        await page.setViewportSize(viewport);
+        await page.emulateMedia({ colorScheme: theme });
+        await openCalendar(page);
+        if (font === 'wide') await useWideFont(page);
+        await page.getByRole('button', { name: 'Load sample week', exact: true }).click();
+        const blocks = page.locator('.fc-timegrid-event.ev');
+        await expect(blocks).toHaveCount(8);
+        // INVARIANT: every visited >=1-hour sample block satisfies its content tier
+        for (const block of await blocks.all()) {
+          expect((await boundsOf(block)).height).toBeGreaterThanOrEqual(HOUR_HEIGHT_PX);
+          const title = await block.locator('strong').textContent();
+          if (title !== 'Lecture' && title !== 'Meeting') {
+            expect((await boundsOf(block.locator('.event-content'))).width).toBeGreaterThanOrEqual(
+              COMPACT_MIN_WIDTH_PX,
+            );
+          }
+          await expectReadableBlock(block);
         }
-        await expectReadableBlock(block);
-      }
-      // POST: all eight sample events keep bounded priority/tier metadata
-      await page.getByRole('button', { name: 'Day', exact: true }).click();
-      const full = page.getByRole('button', { name: /^Algorithms lecture,/ });
-      expect((await boundsOf(full)).width).toBeGreaterThanOrEqual(FULL_MIN_WIDTH_PX);
-      await expectReadableBlock(full);
-      await expect(full.getByText('Class', { exact: true })).toBeVisible();
-      await expect(full.getByText('Fixed', { exact: true })).toBeVisible();
-      await createEvent(page, 'Short block', '2026-11-02T11:00', '2026-11-02T11:30');
-      const short = page.getByRole('button', { name: /^Short block,/ });
-      const title = short.getByText('Short block', { exact: true });
-      const time = short.getByText('11:00–11:30', { exact: true });
-      await expectInside(title, short);
-      await expectInside(time, short);
-      expect((await boundsOf(title)).y).toBe((await boundsOf(time)).y);
-      expect(errors).toEqual([]);
-    });
+        // POST: all eight sample events keep bounded priority/tier metadata
+        await page.getByRole('button', { name: 'Day', exact: true }).click();
+        const full = page.getByRole('button', { name: /^Algorithms lecture,/ });
+        expect((await boundsOf(full)).width).toBeGreaterThanOrEqual(FULL_MIN_WIDTH_PX);
+        await expectReadableBlock(full);
+        await expect(full.getByText('Class', { exact: true })).toBeVisible();
+        await expect(full.getByText('Fixed', { exact: true })).toBeVisible();
+        await createEvent(page, 'Short block', '2026-11-02T11:00', '2026-11-02T11:30');
+        const short = page.getByRole('button', { name: /^Short block,/ });
+        const title = short.getByText('Short block', { exact: true });
+        const time = short.getByText('11:00–11:30', { exact: true });
+        await expectInside(title, short);
+        await expectInside(time, short);
+        expect((await boundsOf(title)).y).toBe((await boundsOf(time)).y);
+        expect(errors).toEqual([]);
+      });
+    }
+    // POST: this theme is checked at all three required sizes
   }
-  // POST: this theme is checked at all three required sizes
+  // POST: both themes cover narrow/compact/full/short event presentation for this font
 }
-// POST: both themes cover narrow/compact/full/short event presentation
+// POST: default and wide fonts cover every tier in both themes at all three sizes
