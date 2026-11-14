@@ -128,6 +128,8 @@ Continuous integration runs these checks on every change to `main`.
 
 **Final Round 3 results** (14 November 2026, full main gate at `a24526d`; later commits update documentation and captures):
 
+Screenshot validation: **126/126** capture scenes and **54** supplemental captures passed. Reviewed both themes at 1440×900, 1280×800 and 1024×768, including every Settings tab, filters, compact columns and both pickers. The screenshot review found two 1280 px defects; both were fixed test-first before the final complete gate and capture run.
+
 | Check                                      | Result                                                                                                                                                                                                              |
 | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Typecheck, lint and production build       | All passing                                                                                                                                                                                                         |
@@ -166,7 +168,7 @@ node scripts/checkTextDiagrams.mjs
 npm run test:perf         # the 5,000-event performance check
 ```
 
-Every test case and requirement mapping is in [TEST_PLAN.md](docs/TEST_PLAN.md), including Round 3 T59–T64. Its single [20–30 minute live-site smoke test](docs/TEST_PLAN.md#7-live-site-smoke-test-20-30-minutes) covers Round 2 plus WI-60–65, FR1–FR11 and B1–B4 in both themes, including keyboard, contrast and screen-reader checks. Earlier rehearsals are archived as history. Round 3's final results and refreshed capture links are recorded after its full main gate and visual review.
+Every test case and requirement mapping is in [TEST_PLAN.md](docs/TEST_PLAN.md), including Round 3 T59–T64. Its single [20–30 minute live-site smoke test](docs/TEST_PLAN.md#7-live-site-smoke-test-20-30-minutes) covers Round 2 plus WI-60–65, FR1–FR11 and B1–B4 in both themes, including keyboard, contrast and screen-reader checks. Earlier rehearsals are archived as history. Round 3's full main gate and visual review are complete; the gallery below links the refreshed captures. Deployment and the live-site smoke remain human-owned.
 
 ## Samples and demonstrations
 

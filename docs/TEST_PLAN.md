@@ -428,15 +428,16 @@ The former D1-D5 scripts, accessibility/UX checklists, release snapshots and rep
 
 The six reproducible sample exports in [samples/](samples/README.md) remain the sample-input deliverable.
 
-## 9. Release checklist (Round 2)
+## 9. Release checklist (Round 3)
 
 Local checks and live-site acceptance are separate records. Current automated evidence is in [PROGRESS.md](progress/PROGRESS.md) and the README results table; historical results are in section 8's archive.
 
-- [x] WI-47 through WI-59 merged locally; retained branches and accurate handoff notes.
-- [x] Full main gate at 35a214f: typecheck, lint, coverage (861 passed + 1 existing opt-in skip), 9 DST cases, ten properties at 10,000 random-seed runs, production build and 64 browser checks repeated five times (320/320), zero retries.
-- [x] Baseline comparison: passing tests 639 → 861; overall 98.53/94.38/98.05/98.74 and algorithms 99.72/96.80/100/99.71 (statements/branches/functions/lines). All eight measures stay within the allowed 0.5-point drop; exact values/deltas are in README.
-- [x] D-21: node scripts/checkTextDiagrams.mjs passes 13 documents/13 text or diagram blocks, including docs/, README.md and AGENTS.md; allowed alphabet and aligned closed boxes.
-- [x] Six v2 sample exports and both v1 compatibility inputs validate; all 215 local Markdown links resolve; main docs and change logs match the binding audit.
+- [x] WI-60 through WI-66 and all Round 3 fixes merged locally; retained branches and accurate handoff notes. Round 2 release evidence remains in PROGRESS and section 8's archive.
+- [x] Full main gate at a24526d: typecheck, lint, coverage (884 passed + 1 existing opt-in skip), 13 DST cases, ten properties at 10,000 random-seed runs, production build and 87 browser checks repeated five times (435/435), two workers, zero retries; one complete run, exit 0.
+- [x] Round 3 baseline comparison: passing tests 861 → 884; overall 98.45/94.33/98.03/98.71 and algorithms 99.72/96.80/100/99.71 (statements/branches/functions/lines). All eight measures stay within the allowed 0.5-point drop; exact values/deltas are in README.
+- [x] D-21: node scripts/checkTextDiagrams.mjs passes 14 documents/13 text or diagram blocks, including docs/, README.md and AGENTS.md; allowed alphabet and aligned closed boxes.
+- [x] Six v2 sample exports and both v1 compatibility inputs remain unchanged and validated; all 270 local Markdown links resolve; main docs, T59–T64 and change logs cover Round 3.
+- [x] Fresh screenshot suite 126/126 and 54/54 supplemental exact-size captures, exit 0; reviewed against WI-60–65 at 1440×900, 1280×800 and 1024×768 in both themes. The review exposed two 1280 px defects, fixed test-first before the final complete gate and capture run.
 - [ ] Human: push main, all retained branches and tags, inspect remote CI and deploy.
 - [ ] Human: run and record section 7 on the deployed live site in both themes, including keyboard/contrast/screen reader. Older production passes do not replace it.
 - [ ] Viva prep: each member can explain the heap sweep/T3, merge/complement/buffer, picker generation/ranking, every Replan strategy and greedy limitation, atomic task completion, before/after-image history and why IndexedDB replaced SQLite.
@@ -444,6 +445,8 @@ Local checks and live-site acceptance are separate records. Current automated ev
 ---
 
 ## 10. Change log
+
+- 2026-11-14 · Round 3 Finish: one complete main gate at a24526d passes 884 + 1 existing skip, DST 13, ten ×10,000 properties, build and 435/435 browser instances (87 ×5, two workers, zero retries). All 126 capture scenes and 54 supplemental views pass and are reviewed in both themes/all required sizes. README publishes every count/coverage comparison; D-21 14 docs/13 blocks and 270 links pass. Section 9 is current; human push/deploy/section-7 smoke and viva remain unchecked.
 
 - 2026-11-14 · Round 3 visual-review fix (WI-60/WI-64): T59 now requires non-overlapping sample content to reach >=90 px at all required sizes; T63 adds two 1280 px checkbox/name geometry cases. All four relevant browser cases fail first (ordinary content 89.234375 px; overlapping checkbox/name), then pass after CSS gutter/grid corrections. Existing tests and all assertions, timeouts, repeats, retries and thresholds remain intact.
 
