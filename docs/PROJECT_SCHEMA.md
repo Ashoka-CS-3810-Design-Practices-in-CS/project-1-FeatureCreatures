@@ -2,7 +2,7 @@
 
 **Doc 1 of 3.** This file defines *what* we build: the scope, the vocabulary, the domain model, the requirements, the business rules, and the UX.
 **Doc 2:** `TECH_SPEC.md` defines *how* to build it: the stack, architecture, file layout, contracts, algorithms, the build plan, and deployment.
-**Doc 3:** `TEST_PLAN.md` defines *how we prove it works*: the test catalogue, oracles, benchmarks, CI, and demo scripts.
+**Doc 3:** `TEST_PLAN.md` defines *how we prove it works*: the test catalogue, oracles, benchmarks, CI, and the single live-site smoke test (§7).
 
 ---
 
@@ -35,7 +35,8 @@ For Round 2 (WI-47–59), [AUDIT_2.md](extras/AUDIT_2.md) is binding on the rede
 | `NFR` | Non-functional requirement | §8 |
 | `T` | Test case (T1–T15 kept from A3) | TEST_PLAN |
 | `WI` | Work item in the build plan | TECH_SPEC §14 |
-| `D` | Demonstration script | TEST_PLAN |
+| `S` | Current manual smoke-test section | TEST_PLAN §7 |
+| `D` | Historical demonstration script | docs/extras/MANUAL_VERIFICATION_HISTORY.md |
 
 ---
 
@@ -62,12 +63,12 @@ The app is a static site (Vite + React + TypeScript) hosted on Vercel. All data 
 | Event lifecycle | Create, edit, move (drag), resize, delete; categories; priorities; fixed vs. flexible events | FR1, FR2, FR3 |
 | Conflict detection | Automatic after every change; all pairs; overlap interval + minutes; visual highlighting (icon + label + colour) | FR4 |
 | Conflict resolution | For a conflict, suggest alternative slots for the better event to move, ranked by closeness to the original time; one-click apply | FR7 |
-| Priority system | High / Medium / Low on events and tasks; sort and filter in task panel; filter on calendar; visible on both | FR6 |
-| Task management | Create, edit and delete tasks. Scheduled tasks become linked events, kept in sync both ways. | FR8 |
+| Priority system | High / Medium / Low on events and tasks; task sorting/status filters; priority/category filters on the calendar; tags visible on both | FR6 |
+| Task management | Create, edit, delete, schedule, unschedule, mark done and reopen; bulk completion with preview. Scheduled tasks have linked events kept in sync both ways. | FR8 |
 | Best-time finder | For one task: free gaps in its window, filtered by duration, ranked by a selectable criterion, each option explained. Gives a clear reason when nothing fits. | FR5 |
 | Scheduling queue | Select several tasks, then the app offers options for one task at a time in priority order. The user applies or skips each, and every search sees the earlier placements. | FR9 |
-| Replan | For a date range: two alternative plans (Minimal change, Balanced week) for flexible events; preview with metrics; apply as one step | FR10 |
-| Settings | Working days and hours, default buffer, barred slots (e.g. lunch), default ranking criterion | FR11 |
+| Replan | Minimal change plus a selected strategy for flexible events; preview with metrics; apply as one step | FR10 |
+| Settings | Optional working hours, default buffer/ranking, categories and appearance; barred slots edited in their own region | FR11 |
 | Error handling | Typed errors, inline messages, nothing partially saved | ER1–ER8 |
 | Sample data | "Load sample calendar" presets so a grader opening the hosted URL sees something immediately | part of B2 |
 
@@ -76,7 +77,7 @@ The app is a static site (Vite + React + TypeScript) hosted on Vercel. All data 
 | ID | Feature |
 |---|---|
 | B1 | Undo / redo of every data change (except settings and import), at most 50 steps, in memory only |
-| B2 | JSON export / import (replace-all) of events, tasks and settings, plus built-in sample calendars |
+| B2 | JSON export / import (replace-all) of categories, events, tasks and settings, plus built-in sample calendars |
 | B3 | Dark mode (System / Light / Dark) |
 | B4 | Keyboard shortcuts with a help overlay |
 
@@ -94,7 +95,7 @@ These optional features from the project description are also covered by the cor
 - Multiple calendars
 - Accounts, multi-user use, sharing, or server sync
 - ICS import/export
-- Task dependencies
+- Task dependencies and multi-level prerequisites (planned future work; not implemented this round)
 - Multiple categories per item, or events/tasks without a category (Round 2)
 - Splitting a task across several gaps
 - Jointly optimal multi-task scheduling (dynamic programming)
@@ -103,6 +104,7 @@ These optional features from the project description are also covered by the cor
 - Productivity statistics
 - A tested phone layout (best effort only)
 - Offline-first sync across devices
+- Per-day working hours and resizing from an event's start edge (not planned)
 
 ---
 
@@ -264,13 +266,13 @@ Each requirement lists its acceptance criteria. The tests that prove it are in `
 **FR6 — Priority sort and category filter.**
 - **Task panel:**
   - Sort by priority (High → Medium → Low, then window end ascending, then name) or by window end (ascending, then priority, then name).
-  - Filter by any subset of priorities and by status (unscheduled, scheduled, all).
+  - **Show:** Open (unscheduled + scheduled, default), Unscheduled, Scheduled, Done or All. The internal priority subset remains available to selectors, but the Tasks UI has no duplicate priority checkboxes (D-14).
 - **Calendar toolbar:** priority and category chips combine; Reset filters and List's Show all restore both. Categories are shown by default, including newly created categories. Task rows and conflict detection ignore the calendar filters.
 - **Acceptance:**
   - Sorting and filtering never change stored data.
   - Conflicts are still computed on all events. A hidden event still appears in the conflict panel, tagged "(hidden by filter)".
   - The status line above the calendar counts the events the filter shows, plus "(N hidden by filter)" when it hides any, e.g. "5 events (3 hidden by filter) · 4 tasks · 1 conflict"; the conflict count still covers every event (WI-44, report #10).
-  - When the filter hides every event of List's range, List says "All events in this range are hidden by the priority filter" with a **Show all** button that shows every priority again. A range with no events keeps "No events to display".
+  - When filters hide every event of List's range, List says "All events in this range are hidden by the priority filter" with a **Show all** button that restores both priority and category filters. The existing accessible wording is retained. A range with no events keeps "No events to display".
   - List layout (WI-44, reports #12, #13): the sticky day header stays above conflict and tag outlines with an opaque background in both themes; each row's time, dot, title and tags share one centre line; rows and day headers wrap rather than overflow on a narrow screen (phone layout stays best effort).
 
 **FR7 — Conflict resolution (alternatives).**
@@ -289,7 +291,7 @@ Each requirement lists its acceptance criteria. The tests that prove it are in `
   - Any new conflicts caused elsewhere are reported immediately.
 
 **FR8 — Task management.**
-- **Actions:** create, edit, delete, and unschedule tasks.
+- **Actions:** create, edit, delete, unschedule, mark done and reopen tasks; preview/apply bulk completion (BR-18).
 - **Scheduling:** applying an option creates a linked flexible event and marks the task scheduled (BR-9).
 - **Acceptance:**
   - A task and its event never disagree on name/title, priority or duration.
@@ -336,13 +338,13 @@ Every engine command returns either success or a typed error (§5). Errors never
 ### 4.3 Bonus
 
 **B1 — Undo / redo.**
-- **Coverage:** every data-changing command (event and task CRUD, schedule, unschedule, alternatives apply, replan apply) is one undo step.
+- **Coverage:** every data-changing command (event/task/category CRUD, schedule, unschedule, completion/reopen/bulk completion, Keep here/Stop keeping, alternatives apply and replan apply) is one undo step.
 - **Not covered:** settings changes and imports. An import clears the history.
 - **Limits:** at most 50 steps. A new change clears the redo stack. The history is lost on page reload.
 - **UI:** toolbar buttons, Ctrl/Cmd+Z, and Ctrl/Cmd+Shift+Z (or Ctrl+Y). The toast says what was undone, e.g. "Undid: Move "Gym"".
 
 **B2 — Export / import / samples.**
-- **Export:** downloads `calendar-export-YYYY-MM-DD.json` (format in TECH_SPEC §9.4).
+- **Export:** downloads `calendar-export-YYYY-MM-DD.json`, version 2 including categories (format in TECH_SPEC §9.4); version 1 imports remain supported.
 - **Import:** validates the whole file first (ER6), asks for confirmation ("This replaces all your events, tasks and settings"), then replaces everything.
 - **Sample calendars:** the "Load sample calendar" menu loads presets dated relative to the current week:
   - sparse week
@@ -772,3 +774,4 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 | 2026-11-13 | WI-56 final layout review: compact task rows show both window dates with a full-time tooltip and aligned actions. Keyboard order follows Show/Sort/menu, and drawers reopen at their titles. |
 | 2026-11-14 | v1.31 (WI-57 D-12/D-13): neutral event fills and independent readable tags, compact icons on narrow blocks, shared task priority tags; persisted neutral-plus-seven accent choices and System/Light/Dark in Appearance; resolved sun/moon toggle switches Light/Dark. Past events retain the neutral fill with muted ink/weight. |
 | 2026-11-14 | v1.32 (WI-58 D-16): explicit shared field order and paired event/task times, compact List dates/ranges, styled Import JSON, quiet single-task cancellation, readable out-of-month numbers and tighter short-block icon layout. Settings's main-screen description now includes its D-13 Appearance section. Native date/time locale remains a known limitation. |
+| 2026-11-14 | v1.33 (WI-59 D-19/D-21): TEST_PLAN §7 is the single live-site acceptance run; old demos/rehearsals are archived. Reconciled scope/core summaries, task Show filters, category-aware Show all, completion/history/export coverage and planned future prerequisites with already-implemented Round 2 rules. No behavior change. Figures 1/2 pass the text-diagram audit. |

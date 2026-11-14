@@ -1,0 +1,30 @@
+{
+  "format": "feature-creatures-calendar",
+  "version": 1,
+  "exportedAt": "2026-11-02T00:00:00.000Z",
+  "events": [],
+  "tasks": [],
+  "settings": {
+    "workDays": [1, 2, 3, 4, 5],
+    "workStartMin": 540,
+    "workEndMin": 1080,
+    "bufferMin": 0,
+    "defaultCriterion": "earliest",
+    "barredSlots": [
+      {
+        "id": "lunch",
+        "label": "Lunch",
+        "startMin": 780,
+        "endMin": 840,
+        "days": [1, 2, 3, 4, 5]
+      },
+      {
+        "id": "tt",
+        "label": "TT",
+        "startMin": 810,
+        "endMin": 870,
+        "days": [1, 2, 3, 4, 5]
+      }
+    ]
+  }
+}
