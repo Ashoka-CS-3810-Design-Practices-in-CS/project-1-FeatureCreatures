@@ -13,7 +13,7 @@ The single source of truth is in `docs/`:
 | `docs/progress/PROGRESS.md` | What is done, what is in progress, handoff notes | **First, every session** |
 | `docs/PROJECT_SCHEMA.md` | Behaviour: scope, domain model, requirements (FR/ER), business rules (BR), UX | §2, §3 and §6 in your first session; then the parts your WI touches |
 | `docs/TECH_SPEC.md` | Structure: stack, file layout, frozen contracts, algorithms, build plan (§14) | §0 and §14 every session; then the sections your WI touches |
-| `docs/TEST_PLAN.md` | Exact expected values (T1–T36), helpers, CI, demos | The tests your WI lists |
+| `docs/TEST_PLAN.md` | Exact expected values, helpers, CI, single live-site smoke (§7) | The tests your WI lists |
 | `docs/extras/AUDIT_2.md` | Binding Round 2 decisions and WI-47–59 plan | Every Round 2 session; the decisions your WI implements |
 
 **Precedence:**
