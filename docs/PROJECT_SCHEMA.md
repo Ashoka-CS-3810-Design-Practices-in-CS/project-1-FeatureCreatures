@@ -746,6 +746,8 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 
 ## 10. Change log
 
+- 2026-11-14 · Round 3 visual review: WI-60 uses a small fixed time-grid gutter so ordinary 1280 px blocks actually reach Compact; WI-64 reserves the full checkbox click target before each task name. New failing browser regressions verify both themes before the fixes.
+
 - 2026-11-14 · WI-66: current UX/figure, Round 3 test catalogue and the single 29-minute live smoke are reconciled with WI-60–65; historical decision records remain unchanged.
 
 - 2026-11-14 · WI-65: §7.5 defines consistent List selection, shared Replan priority tags/explanatory counts, line lock/history icons and nonwrapping pick ranges.

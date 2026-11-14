@@ -686,7 +686,7 @@ dialog .category-editor input[type='color'] {
   padding-left: 0;
   height: var(--task-row-height);
   padding-block: var(--space-1);
-  grid-template-columns: var(--check-size) minmax(0, 1fr) auto;
+  grid-template-columns: var(--target-min) minmax(0, 1fr) auto;
   grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
   grid-template-areas:
     'select heading heading'
@@ -777,6 +777,7 @@ label.task-selection {
   color: inherit;
   font-size: var(--text-sm);
   text-align: left;
+  justify-content: flex-start;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

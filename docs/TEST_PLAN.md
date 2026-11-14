@@ -445,6 +445,8 @@ Local checks and live-site acceptance are separate records. Current automated ev
 
 ## 10. Change log
 
+- 2026-11-14 · Round 3 visual-review fix (WI-60/WI-64): T59 now requires non-overlapping sample content to reach >=90 px at all required sizes; T63 adds two 1280 px checkbox/name geometry cases. All four relevant browser cases fail first (ordinary content 89.234375 px; overlapping checkbox/name), then pass after CSS gutter/grid corrections. Existing tests and all assertions, timeouts, repeats, retries and thresholds remain intact.
+
 - 2026-11-14 · Final browser expectation fix: T38's compact barred icon is hidden per WI-60, while its hidden text/full accessible name/tooltip and entire warning/apply flow remain asserted. E3's task status uses WI-64 Scheduled Mon 09:00, and its exact event label adds WI-60 Flexible beside Task while retaining the exact selected interval. T40's fixed diagnostic includes WI-65 [M] alongside Fixed event; every other assertion remains. The full gate's core is green; 19/425 browsers failed, including five Chromium/network setup failures (ERR_NETWORK_IO_SUSPENDED/page fixture/input timeout), with no timeout/retry/skip/threshold changes.
 
 - 2026-11-14 · Final-gate query-cost fix: T49 category intersection/counts/reset, T50 K/+ Event/typing-K safety and T57 persisted Appearance tests keep the full App and every assertion/gesture, with positive role queries scoped to existing Calendar/Conflicts/Tasks/banner/Settings/event-dialog regions. All three previously hit 5000 ms in the full coverage run; coverage rerun passes 884 + 1 existing skip. No timeout, assertion, retry, parallelism or threshold changes.

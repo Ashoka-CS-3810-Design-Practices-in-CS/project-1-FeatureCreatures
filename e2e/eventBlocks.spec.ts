@@ -95,6 +95,12 @@ for (const theme of ['light', 'dark'] as const) {
       // INVARIANT: every visited >=1-hour sample block satisfies its content tier
       for (const block of await blocks.all()) {
         expect((await boundsOf(block)).height).toBeGreaterThanOrEqual(HOUR_HEIGHT_PX);
+        const title = await block.locator('strong').textContent();
+        if (title !== 'Lecture' && title !== 'Meeting') {
+          expect((await boundsOf(block.locator('.event-content'))).width).toBeGreaterThanOrEqual(
+            COMPACT_MIN_WIDTH_PX,
+          );
+        }
         await expectReadableBlock(block);
       }
       // POST: all eight sample events keep bounded priority/tier metadata
