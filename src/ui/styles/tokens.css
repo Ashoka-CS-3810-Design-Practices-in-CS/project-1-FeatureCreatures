@@ -90,6 +90,13 @@
   --control-height: 36px; /* buttons and fields: roomier than the minimum target */
   --check-size: 18px; /* checkboxes and radios */
   --slot-height: 32px; /* one half-hour row of the time grid */
+  --event-compact-width: 90px;
+  --event-full-width: 150px;
+  --event-short-height: 44px;
+  --event-narrow-stack-width: 56px;
+  --tasks-min-width: 216px;
+  --tasks-max-width: 288px;
+  --tasks-width-offset: 1152px;
   --barred-time-width: 8.5rem;
   --side-width: 384px;
 }

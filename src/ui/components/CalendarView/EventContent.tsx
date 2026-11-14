@@ -27,7 +27,7 @@ export function EventContent({
 }: EventBlockProps & { title: string; timeText: string; onOpen?: () => void }) {
   const contentRef = useRef<HTMLDivElement>(null);
   const hintId = useId();
-  const kind = isTask ? 'Task' : flexible ? 'Flexible' : 'Fixed';
+  const kind = flexible ? 'Flexible' : 'Fixed';
   useEffect(() => {
     const eventElement = contentRef.current?.closest<HTMLElement>('.ev');
     if (eventElement !== null && eventElement !== undefined) {
@@ -42,37 +42,39 @@ export function EventContent({
     }
   }, [label, kind, hintId]);
   const content = (
-    <>
-      {conflictMinutes > 0 && (
-        <span className="tag tag-conflict">
-          <span aria-hidden="true">⚠</span>
-          <span className="tag-text"> Conflict {fmtDuration(conflictMinutes)}</span>
-        </span>
-      )}{' '}
-      {barredLabels.map((label) => (
-        <span key={label} className="tag tag-barred">
-          <Icon name="barred" />
-          <span className="tag-text">In {label}</span>
-        </span>
-      ))}{' '}
-      <span className="event-time">{timeText}</span>{' '}
+    <div className="event-details">
       <strong className="event-title">{title}</strong>{' '}
-      <span className={`tag prio-${priority}`}>{PRIORITY_TAGS[priority]}</span>
-      {category !== undefined && <CategoryTag category={category} />}
-      {kind === 'Task' && (
-        <span className="tag">
-          <Icon name="task" />
-          <span className="tag-text">Task</span>
-        </span>
-      )}
-      {kind === 'Flexible' && (
-        <span className="tag">
-          <Icon name="flexible" />
-          <span className="tag-text">Flexible</span>
-        </span>
-      )}
-      {kind === 'Fixed' && <FixedTag descriptionId={hintId} />}
-    </>
+      <span className="event-time">{timeText}</span>{' '}
+      <span className="event-tags">
+        <span className={`tag event-priority prio-${priority}`}>{PRIORITY_TAGS[priority]}</span>
+        {category !== undefined && <CategoryTag category={category} />}
+        {kind === 'Flexible' && (
+          <span className="tag event-kind">
+            <Icon name="flexible" />
+            <span className="tag-text">Flexible</span>
+          </span>
+        )}
+        {kind === 'Fixed' && <FixedTag descriptionId={hintId} />}
+        {conflictMinutes > 0 && (
+          <span className="tag tag-conflict">
+            <span aria-hidden="true">⚠</span>
+            <span className="tag-text"> Conflict {fmtDuration(conflictMinutes)}</span>
+          </span>
+        )}{' '}
+        {barredLabels.map((label) => (
+          <span key={label} className="tag tag-barred">
+            <Icon name="barred" />
+            <span className="tag-text">In {label}</span>
+          </span>
+        ))}{' '}
+        {isTask && (
+          <span className="tag event-task">
+            <Icon name="task" />
+            <span className="tag-text">Task</span>
+          </span>
+        )}
+      </span>
+    </div>
   );
   // FullCalendar's List default contains the keyboard anchor; custom content replaces it.
   return onOpen === undefined ? (
