@@ -97,6 +97,8 @@
   --tasks-min-width: 216px;
   --tasks-max-width: 288px;
   --tasks-width-offset: 1152px;
+  --task-row-height: 72px;
+  --barred-compact-time-width: 6rem;
   --barred-time-width: 8.5rem;
   --side-width: 384px;
 }

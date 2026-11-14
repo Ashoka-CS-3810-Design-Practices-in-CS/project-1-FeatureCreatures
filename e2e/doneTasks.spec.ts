@@ -22,7 +22,8 @@ test('T54: completion frees scheduled time, undoes atomically, persists, reopens
   await createCompletionTasks(page);
   const event = page.getByRole('button', { name: /^Report, Mon 2 Nov 09:00–10:00,.*Task/ });
   await expect(event).toBeVisible();
-  await page.getByRole('button', { name: 'Mark Report done', exact: true }).click();
+  await page.getByRole('button', { name: 'More actions for Report', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Mark Report done', exact: true }).click();
   await expect(event).toHaveCount(0);
   await expect(page.getByText('Report', { exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Undo', exact: true }).click();

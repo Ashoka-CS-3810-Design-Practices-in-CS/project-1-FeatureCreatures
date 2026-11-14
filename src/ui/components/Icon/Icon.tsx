@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 
 const ICONS = {
+  edit: <path d="m15 4 5 5M4 20l4-1L21 6l-5-5L3 14l-1 7Z" />,
   sun: (
     <>
       <circle cx="12" cy="12" r="4" />

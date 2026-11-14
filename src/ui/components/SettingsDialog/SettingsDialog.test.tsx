@@ -159,7 +159,9 @@ describe('SettingsDialog', () => {
     const slot = screen.getByRole('group', { name: 'Barred slot 1' });
     expect(within(slot).getByLabelText('Label')).toHaveValue('Lunch');
     expect(within(slot).getByRole('checkbox', { name: 'Fri' })).toBeChecked();
-    await userEvent.click(screen.getByRole('button', { name: 'Save barred slots' }));
+    await userEvent.click(
+      screen.getAllByRole('button', { name: 'Save barred slots' })[0] as HTMLElement,
+    );
     await waitFor(() => expect(engine.snapshot().settings.barredSlots).toHaveLength(1));
     await waitFor(() => expect(store.getState().dialog).toBeNull());
     expect(engine.snapshot().settings.barredSlots).toMatchObject([
@@ -168,7 +170,9 @@ describe('SettingsDialog', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Remove barred slot 1' }));
     expect(screen.queryByRole('group', { name: 'Barred slot 1' })).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Save barred slots' }));
+    await userEvent.click(
+      screen.getAllByRole('button', { name: 'Save barred slots' })[0] as HTMLElement,
+    );
     await waitFor(() => expect(engine.snapshot().settings.barredSlots).toEqual([]));
   });
 
@@ -178,7 +182,9 @@ describe('SettingsDialog', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Add barred slot' }));
     const slot = screen.getByRole('group', { name: 'Barred slot 1' });
     await userEvent.clear(within(slot).getByLabelText('Label'));
-    await userEvent.click(screen.getByRole('button', { name: 'Save barred slots' }));
+    await userEvent.click(
+      screen.getAllByRole('button', { name: 'Save barred slots' })[0] as HTMLElement,
+    );
 
     expect(await within(slot).findByText('Label is required.')).toBeInTheDocument();
   });
@@ -196,7 +202,9 @@ describe('SettingsDialog', () => {
       within(screen.getByRole('group', { name: 'Barred slot 2' })).getByLabelText('Label'),
       'Break',
     );
-    await userEvent.click(screen.getByRole('button', { name: 'Save barred slots' }));
+    await userEvent.click(
+      screen.getAllByRole('button', { name: 'Save barred slots' })[0] as HTMLElement,
+    );
 
     const second = screen.getByRole('group', { name: 'Barred slot 2' });
     expect(

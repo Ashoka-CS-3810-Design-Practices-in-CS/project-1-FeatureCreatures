@@ -674,11 +674,14 @@ dialog .category-editor input[type='color'] {
 
 .task-row {
   padding-left: 0;
-  grid-template-columns: auto minmax(0, 1fr);
+  height: var(--task-row-height);
+  padding-block: var(--space-1);
+  grid-template-columns: var(--check-size) minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
   grid-template-areas:
-    'select heading'
-    '. meta'
-    'actions actions';
+    'select heading heading'
+    'meta meta actions';
+  gap: 0 var(--space-1);
   align-items: center;
 }
 
@@ -707,16 +710,22 @@ label.task-selection {
 .task-heading {
   grid-area: heading;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  min-width: 0;
   align-items: center;
-  gap: var(--space-1) var(--space-2);
+  gap: var(--space-1);
   font-weight: var(--weight-bold);
 }
 
 .task-meta {
   grid-area: meta;
   color: var(--muted);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
+  line-height: var(--leading-tight);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 .task-meta > span + span::before {
@@ -730,9 +739,10 @@ label.task-selection {
 .task-actions {
   grid-area: actions;
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-top: var(--space-1);
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: 0;
 }
 
 .task-actions button {
@@ -746,6 +756,46 @@ label.task-selection {
 .task-done .task-heading strong {
   color: var(--muted);
   text-decoration: line-through;
+}
+
+.task-heading .task-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.task-heading .category-tag {
+  max-width: 42%;
+  overflow: hidden;
+}
+
+.task-heading .category-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.task-menu.task-row-menu summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--target-min);
+  min-width: var(--target-min);
+  font-size: var(--text-sm);
+  padding: var(--space-1) var(--space-2);
+}
+
+.task-row-menu [role='menu'] {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
 }
 
 .task-menu {
@@ -1103,7 +1153,7 @@ dialog .barred-row > .barred-remove:hover {
 }
 
 .barred-editor .barred-row {
-  grid-template-columns: minmax(0, 1fr) var(--target-min);
+  grid-template-columns: minmax(0, 1fr) auto;
 }
 
 .barred-editor .barred-label-input {
@@ -1112,32 +1162,66 @@ dialog .barred-row > .barred-remove:hover {
 }
 
 .barred-editor .barred-remove {
-  grid-column: 2;
-  grid-row: 1;
+  grid-column: 1;
+  grid-row: 3;
+  justify-self: start;
   padding: 0;
 }
 
-.barred-editor .barred-times,
 .barred-editor .day-chips {
   grid-column: 1 / -1;
 }
 
 .barred-editor .barred-times {
-  flex-wrap: wrap;
+  grid-column: 2;
+  grid-row: 1;
+  flex-wrap: nowrap;
+  gap: calc(var(--space-1) / 2);
 }
 
 .barred-editor input[type='time'] {
-  width: var(--barred-time-width);
+  width: var(--barred-compact-time-width);
+  padding-inline: var(--space-1);
+  min-width: 0;
   flex: none;
 }
 
+/* Text entry and native time keyboard controls remain; the picker glyph would consume the compact pair's text width. */
+.barred-editor input[type='time']::-webkit-calendar-picker-indicator {
+  display: none;
+}
+
+.barred-editor .barred-summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-block: var(--space-2);
+}
+
+.barred-summary > span {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-xs);
+}
+
+.barred-summary > button {
+  flex: none;
+  padding-inline: var(--space-2);
+}
+
 .barred-editor-actions {
+  grid-column: 2;
+  grid-row: 3;
   display: flex;
   gap: var(--space-2);
   margin-top: var(--space-2);
 }
 
 .barred-slots-panel {
+  margin-top: var(--space-5);
+}
+
+.barred-slots-panel .barred-overlaps {
   margin-top: var(--space-5);
 }
 

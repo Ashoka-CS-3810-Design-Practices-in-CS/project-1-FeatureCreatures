@@ -9,6 +9,8 @@ import type { ViewType } from '../store/appStore';
 const TIME_FORMAT = 'HH:mm';
 const DAY_FORMAT = 'EEE d MMM';
 const SHORT_DATE_FORMAT = 'd MMM';
+const SHORT_DAY_FORMAT = 'EEE d';
+const WEEKDAY_TIME_FORMAT = 'EEE HH:mm';
 const DAY_TITLE_FORMAT = 'EEE d MMM yyyy';
 const WEEK_TITLE_FORMAT = "'Week of' d MMM yyyy";
 const MONTH_TITLE_FORMAT = 'MMMM yyyy';
@@ -36,6 +38,22 @@ export function fmtDay(minute: Minute): string {
 // POST: returns its local date as "d MMM", e.g. "16 Nov"
 export function fmtShortDate(minute: Minute): string {
   return format(fromMinute(minute), SHORT_DATE_FORMAT);
+}
+
+// PRE: window is a valid task window
+// POST: returns compact day dates, retaining both months when they differ; the row tooltip keeps full times
+export function fmtTaskWindow(window: Interval): string {
+  const start = fromMinute(window.start);
+  const end = fromMinute(window.end);
+  const sameMonth =
+    start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear();
+  return `${sameMonth ? format(start, SHORT_DAY_FORMAT) : fmtDay(window.start)}–${fmtDay(window.end)}`;
+}
+
+// PRE: minute is an integer Minute
+// POST: returns its local weekday and 24-hour time, e.g. "Tue 14:00"
+export function fmtWeekdayTime(minute: Minute): string {
+  return format(fromMinute(minute), WEEKDAY_TIME_FORMAT);
 }
 
 // PRE:  interval has start < end

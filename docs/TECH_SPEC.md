@@ -1592,6 +1592,8 @@ WI-56 / D-14: AppBar owns brand/history/theme/help/settings and counted Tasks/Co
 
 ### 11.2 Components
 
+WI-64: TaskRow uses a 72 px two-row grid; the name remains an Edit button and native details exposes the existing completion/edit commands plus Unschedule/Delete. Compact date helpers retain both months across boundaries and full ranges stay in tooltips. BarredSlotsEditor retains its shared RHF/Zod settings form and atomic pending-row semantics, rendering summaries until Edit/Add activates row ids. Save/Cancel move beside active editors; removal-only pending changes retain their action row. A 6 rem native time input hides only its picker glyph so label/from/to fit at 320 px with locale text intact. Legacy overlap banners, errors, non-undoable settings and overlap/Kept groups are unchanged.
+
 WI-63: SettingsDialog mounts SettingsTabs fresh per opening. A roving native-button tablist selects four labelled tabpanels via ArrowLeft/Right/Home/End. Hidden panels stay mounted so React Hook Form retains Scheduling drafts across switches; unmounting on close discards them. Only SettingsForm has the sticky Save/Cancel footer. Categories/Appearance retain their immediate store actions and start with explicit saving-model text; Data is unchanged. Final capture script records every tab at all three exact sizes in both themes.
 
 WI-61: Toolbar uses CategoryFilter's named disclosure and native checkbox list, focused first on opening, with Escape/trigger focus and outside-pointer dismissal. Show all restores categories only; conditional Reset restores both filters. Toolbar/filter rows wrap, with no horizontal overflow container hiding controls. Existing category-filter button selectors become disclosure + checkbox selectors.
@@ -2019,6 +2021,8 @@ Production URL: https://…vercel.app
 ---
 
 ## 16. Change log
+
+- 2026-11-14 · WI-64: §11.2 records compact rows, native action disclosures, date formatting and read-only barred summaries/inline fields; existing region-level settings staging remains intact.
 
 - 2026-11-14 · WI-63: §11.2 documents tab ownership, keyboard focus and retained Scheduling drafts; the main docs and tests name the staged/immediate model.
 

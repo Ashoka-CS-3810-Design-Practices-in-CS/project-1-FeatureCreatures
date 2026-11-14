@@ -31,6 +31,18 @@ async function renderSettings(showDialog = true) {
 }
 
 describe('T47: Settings layout', () => {
+  it('T63: saved barred rows are summaries and Edit/Cancel restore the saved slot', async () => {
+    await renderSettings(false);
+    expect(screen.getByText('Lunch · 13:00–14:00 · Mon–Fri')).toBeInTheDocument();
+    expect(screen.queryByLabelText('From')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Edit barred slot Lunch' }));
+    const row = screen.getByRole('group', { name: 'Barred slot 1' });
+    expect(within(row).getByLabelText('Label')).toHaveValue('Lunch');
+    await userEvent.clear(within(row).getByLabelText('Label'));
+    await userEvent.type(within(row).getByLabelText('Label'), 'Draft');
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel barred slot changes' }));
+    expect(screen.getByText('Lunch · 13:00–14:00 · Mon–Fri')).toBeInTheDocument();
+  });
   it('T53 D-09, D-13: keeps separate barred editing and adds Appearance to Settings', async () => {
     await renderSettings();
 
@@ -71,6 +83,7 @@ describe('T47: Settings layout', () => {
 
   it('shows each barred slot as one compact row: label, from–to, day chips and a remove ×', async () => {
     await renderSettings(false);
+    await userEvent.click(screen.getByRole('button', { name: 'Edit barred slot Gym' }));
 
     const gym = screen.getByRole('group', { name: 'Barred slot 2' });
     expect(gym).toHaveClass('barred-row');
@@ -90,6 +103,7 @@ describe('T47: Settings layout', () => {
 
     const added = screen.getByRole('group', { name: 'Barred slot 3' });
     expect(within(added).getByLabelText('Label')).toHaveFocus();
+    await userEvent.click(screen.getByRole('button', { name: 'Edit barred slot Lunch' }));
     expect(
       within(screen.getByRole('group', { name: 'Barred slot 1' })).getByLabelText('Label'),
     ).toHaveValue('Lunch');

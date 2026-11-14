@@ -1,16 +1,77 @@
 import { useMemo } from 'react';
 import { PRIORITY_TAGS } from '@/shared/constants';
 import type { CalendarEvent, Task } from '@/shared/types';
-import { fmtDay, fmtDuration, fmtRange } from '../../format/time';
+import { fmtDuration, fmtRange, fmtTaskWindow, fmtWeekdayTime } from '../../format/time';
 import { useAppStore, type AppActions, type AppState } from '../../store/appStore';
 import { visibleTasks } from '../../store/selectors';
 import { CategoryTag } from '../Categories/CategoryTag';
 
 type PanelState = AppState['taskPanel'];
 
+// PRE: task is a stored task; actions supplies its existing completion/edit/unschedule/delete commands
+// POST: exposes task actions in a native disclosure, closing it before acting and returning focus on Escape
+function TaskActionsMenu({ task, actions }: { task: Task; actions: AppActions }) {
+  const items = [
+    task.status === 'done'
+      ? { text: 'Reopen', name: `Reopen ${task.name}`, run: () => actions.reopenTask(task.id) }
+      : {
+          text: 'Mark done',
+          name: `Mark ${task.name} done`,
+          run: () => actions.markTaskDone(task.id),
+        },
+    {
+      text: 'Edit',
+      name: `Edit ${task.name}`,
+      run: () => actions.openDialog({ kind: 'task', mode: 'edit', id: task.id }),
+    },
+    ...(task.status === 'scheduled'
+      ? [
+          {
+            text: 'Unschedule',
+            name: `Unschedule ${task.name}`,
+            run: () => actions.unscheduleTask(task.id),
+          },
+        ]
+      : []),
+    { text: 'Delete', name: `Delete ${task.name}`, run: () => actions.confirmDeleteTask(task.id) },
+  ];
+  return (
+    <details
+      className="task-menu task-row-menu"
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          event.currentTarget.open = false;
+          event.currentTarget.querySelector('summary')?.focus();
+        }
+      }}
+    >
+      <summary role="button" aria-label={`More actions for ${task.name}`} aria-haspopup="menu">
+        ⋯
+      </summary>
+      <div role="menu" aria-label={`Actions for ${task.name}`}>
+        {items.map((item) => (
+          <button
+            key={item.text}
+            type="button"
+            role="menuitem"
+            aria-label={item.name}
+            onClick={(event) => {
+              event.currentTarget.closest('details')?.removeAttribute('open');
+              void item.run();
+            }}
+          >
+            {item.text}
+          </button>
+        ))}
+      </div>
+    </details>
+  );
+}
+
 // PRE:  task is a task; event is its scheduled event, if any; selected says whether it is ticked;
 //       actions are the store's actions; reads snapshot.categories under StoreProvider
-//       + additional props from: CategoryTag
+//       + additional props from: CategoryTag, TaskActionsMenu
 // POST: renders one task row: a selection box (unscheduled tasks only), name, priority tag,
 //       category tag, duration, window dates, status and applicable scheduling/completion/edit/delete actions
 function TaskRow({
@@ -41,58 +102,35 @@ function TaskRow({
         />
       </label>{' '}
       <span className="task-heading">
-        <strong>{task.name}</strong>{' '}
+        <button
+          type="button"
+          className="task-name"
+          aria-label={`Edit ${task.name}`}
+          onClick={() => actions.openDialog({ kind: 'task', mode: 'edit', id: task.id })}
+        >
+          <strong>{task.name}</strong>
+        </button>{' '}
         <span className={`tag prio-${task.priority}`}>{PRIORITY_TAGS[task.priority]}</span>
         {category !== undefined && <CategoryTag category={category} />}
       </span>{' '}
       <span className="task-meta">
         <span>{fmtDuration(task.durationMin)}</span>{' '}
-        <span title={fmtRange(task.window)}>
-          {fmtDay(task.window.start)}–{fmtDay(task.window.end)}
-        </span>{' '}
+        <span title={fmtRange(task.window)}>{fmtTaskWindow(task.window)}</span>{' '}
         <span className={`task-status${isDone ? ' tag' : ''}`}>
-          {isDone ? '✓ Done' : event === undefined ? 'Unscheduled' : `Scheduled ${fmtRange(event)}`}
+          {isDone
+            ? '✓ Done'
+            : event === undefined
+              ? 'Unscheduled'
+              : `Scheduled ${fmtWeekdayTime(event.start)}`}
         </span>
       </span>{' '}
       <span className="task-actions">
-        {isDone ? (
-          <button
-            type="button"
-            aria-label={`Reopen ${task.name}`}
-            onClick={() => void actions.reopenTask(task.id)}
-          >
-            Reopen
-          </button>
-        ) : (
-          <button
-            type="button"
-            aria-label={`Mark ${task.name} done`}
-            onClick={() => void actions.markTaskDone(task.id)}
-          >
-            <span aria-hidden="true">✓</span> Mark done
-          </button>
-        )}
         {isUnscheduled && (
           <button type="button" onClick={() => actions.openTaskPicker([task.id])}>
             Find time
           </button>
         )}
-        <button
-          type="button"
-          aria-label={`Edit ${task.name}`}
-          onClick={() => actions.openDialog({ kind: 'task', mode: 'edit', id: task.id })}
-        >
-          Edit
-        </button>
-        {isDone && (
-          <button
-            type="button"
-            aria-label={`Delete ${task.name}`}
-            onClick={() => actions.confirmDeleteTask(task.id)}
-          >
-            Delete
-          </button>
-        )}
+        <TaskActionsMenu task={task} actions={actions} />
       </span>
     </li>
   );
