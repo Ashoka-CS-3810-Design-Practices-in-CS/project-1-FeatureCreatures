@@ -445,6 +445,8 @@ Local checks and live-site acceptance are separate records. Current automated ev
 
 ## 10. Change log
 
+- 2026-11-14 · Final browser expectation fix: T38's compact barred icon is hidden per WI-60, while its hidden text/full accessible name/tooltip and entire warning/apply flow remain asserted. E3's task status uses WI-64 Scheduled Mon 09:00, and its exact event label adds WI-60 Flexible beside Task while retaining the exact selected interval. T40's fixed diagnostic includes WI-65 [M] alongside Fixed event; every other assertion remains. The full gate's core is green; 19/425 browsers failed, including five Chromium/network setup failures (ERR_NETWORK_IO_SUSPENDED/page fixture/input timeout), with no timeout/retry/skip/threshold changes.
+
 - 2026-11-14 · Final-gate query-cost fix: T49 category intersection/counts/reset, T50 K/+ Event/typing-K safety and T57 persisted Appearance tests keep the full App and every assertion/gesture, with positive role queries scoped to existing Calendar/Conflicts/Tasks/banner/Settings/event-dialog regions. All three previously hit 5000 ms in the full coverage run; coverage rerun passes 884 + 1 existing skip. No timeout, assertion, retry, parallelism or threshold changes.
 
 - 2026-11-14 · Round 3 final-gate fix: App's existing sample toast adds the WI-62 week, Clear-all navigates to WI-63 Data, and Replan's exact unresolved-conflict text retains WI-65 [H] alongside No free slot. A new App regression first fails on observed FullCalendar flushSync warnings; sample navigation now runs in a microtask after React's lifecycle, with the same destination/data. Diagnostic tags gain separating whitespace. Existing assertions and all gate settings remain intact.

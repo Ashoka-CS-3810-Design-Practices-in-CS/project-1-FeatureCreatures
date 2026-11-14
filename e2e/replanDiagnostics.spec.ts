@@ -31,7 +31,7 @@ test('T40: Replan explains fixed Lunch overlaps while moving flexible events and
   const diagnostics = replan.getByRole('region', { name: 'Not moved by Replan', exact: true });
   await expect(diagnostics.getByRole('heading', { name: 'Not moved by Replan (1)' })).toBeVisible();
   await expect(diagnostics.getByRole('list', { name: 'Replan not moved' })).toContainText(
-    '"Class" — Fixed event',
+    '"Class" — [M] Fixed event',
   );
   await expect(diagnostics).toContainText('Overlaps Lunch.');
   await diagnostics

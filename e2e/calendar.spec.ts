@@ -110,9 +110,9 @@ test('E3: scheduling Report applies the offered slot and creates a linked Task e
   await expect(firstOption).toBeChecked();
   await expect(firstOption).toHaveAccessibleName(new RegExp(EXPECTED_REPORT_SLOT));
   await picker.getByRole('button', { name: 'Apply selected', exact: true }).click();
-  await expect(row).toContainText(`Scheduled ${EXPECTED_REPORT_SLOT}`);
+  await expect(row).toContainText('Scheduled Mon 09:00');
   const placed = page.getByRole('button', {
-    name: `Report, ${EXPECTED_REPORT_SLOT}, Medium priority, Task, Appointment`,
+    name: `Report, ${EXPECTED_REPORT_SLOT}, Medium priority, Flexible, Task, Appointment`,
     exact: true,
   });
   await expect(placed).toBeVisible();

@@ -12,7 +12,7 @@ test('T38: settings warns separately, View opens the drawer, and alternatives cl
   await expect(page.getByText('1 event overlaps barred slots', { exact: true })).toBeVisible();
   const block = page.getByRole('button', { name: /^Lunch event,.*In Lunch, Appointment$/ });
   await expect(block.getByText('In Lunch', { exact: true })).toBeHidden();
-  await expect(block.getByText('In Lunch', { exact: true }).locator('..')).toBeVisible();
+  await expect(block.getByText('In Lunch', { exact: true }).locator('..')).toBeHidden();
   await expect(block).toHaveAccessibleName(/In Lunch/);
   await expect(block).toHaveAttribute('title', /In Lunch/);
   await expect(page.getByRole('heading', { name: 'Conflicts (0)', exact: true })).toBeVisible();
