@@ -6,7 +6,7 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** None; WI-63 complete with targeted checks, WI-64 next. Full gate deferred to the round-3 final gate per user steer.
+- **Active WI:** WI-64, compact side columns, branch `feat/wi-64-compact-columns`. Full gate deferred to the round-3 final gate per user steer.
 - **Last session:** 2026-11-14 · Codex · saved the binding Round 3 request, reconstructed clean main/history, spot-checked WI-59's documentation/smoke/checker deliverables and all existing tests, and recorded the fresh full baseline below. No leftover work or lockfile changes; node_modules already present. Round 3 plan is WI-60–66 in order.
 - **Gate status:** 2026-11-14 Round 3 BASELINE on `main` at `26aafa0`: typecheck/lint, 861 + 1 existing skipped, overall 98.53/94.38/98.05/98.74, algorithms 99.72/96.80/100/99.71, DST 9, ten properties × 10,000, build, 192/192 browsers (64 × 3), zero retries, exit 0. Evidence: .tmp-round3-baseline-core.log and .tmp-round3-baseline-browsers.log.
 
@@ -373,7 +373,8 @@ Binding spec: [PROMPT_ROUND_3.md](../extras/PROMPT_ROUND_3.md). D-01–D-21 rema
   - 2026-11-14 · Codex · branch `feat/wi-63-settings-tabs` · done: keyboard/focused four-tab Settings, mounted Scheduling draft with sticky footer, immediate category/appearance explanations and preserved data actions; 27 targeted units and 24 changed-spec browsers pass, typecheck/lint green; final capture script includes every tab/both themes/exact sizes · next: WI-64 and final capture review; full gate deferred to the round-3 final gate · note: initial two T62 tests red; old Settings data actions/T47 headings/T57 Appearance/T58 Import and browser selectors move to accessible tabs with original assertions retained. Three new RTL cases cover staged/immediate behavior, switching and discard. No weakened checks.
   - 2026-11-14 · Codex · branch `feat/wi-63-settings-tabs` · done: claimed after WI-62 merge · next: red tab/keyboard/draft/immediate tests, tabbed Settings and moved selectors; full gate deferred to the round-3 final gate · note: keep Scheduling mounted while switching, discard on close, preserve existing control names.
   - Done when: Scheduling/Categories/Appearance/Data keyboard tabs; Scheduling alone staged with sticky Save/Cancel; immediate explanatory lines elsewhere; drafts survive tab switches and discard on Cancel/close; RTL/existing tests and every-tab both-theme screenshots pass.
-- [ ] **WI-64** Right and left columns are compact — owner S + Dv — depends on 63
+- [~] **WI-64** Right and left columns are compact — owner S + Dv — depends on 63
+  - 2026-11-14 · Codex · branch `feat/wi-64-compact-columns` · done: claimed after WI-63 merge · next: red menu/barred-summary/editor and column-fit tests, compact task rows and per-row barred controls with preserved validation; full gate deferred to the round-3 final gate · note: preserve queue, D-07, D-09/D-20 and existing accessible action names except the specified new menu/edit triggers.
   - Done when: barred summary rows and per-slot inline editors retain validation/legacy semantics; compact two-line tasks with Find time/action menu/name editing retain queue/done behavior; all four tasks and whole barred region visible at 1440×900; RTL and existing tests pass.
 - [ ] **WI-65** Small consistency fixes — owner S + Dv — depends on 64
   - Done when: List selects/aria-disables Week and restores Calendar view; Replan uses coloured priority tags and explanatory movable counts; line lock/undo/redo icons retain accessible names/contrast; picker times nowrap; every item tested and captures reviewed.
