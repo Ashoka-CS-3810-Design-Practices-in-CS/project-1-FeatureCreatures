@@ -124,14 +124,14 @@ The algorithms are the core of the project, so they are tested hardest:
 
 Continuous integration runs these checks on every change to `main`.
 
-**Latest verified results** (14 November 2026, WI-58 on local main; the WI-59/five-repeat Finish gate follows):
+**Final Round 2 results** (14 November 2026, full main gate at `35a214f`):
 
 | Check                                      | Result                                                                                                                                                                                                              |
 | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Unit, integration and UI tests             | 861 passing + 1 existing opt-in performance skip                                                                                                                                                                    |
 | Randomised oracle tests                    | 10 property cases × 10,000 random calendars each, all passing                                                                                                                                                       |
 | Daylight-saving tests (New York time zone) | 9 passing                                                                                                                                                                                                           |
-| Browser tests (Chromium)                   | 64 checks × 3 repeats = 192/192, including the production and StrictMode smoke projects; zero retries                                                                                                               |
+| Browser tests (Chromium)                   | 64 checks × 5 repeats = 320/320, including the production and StrictMode smoke projects; zero retries                                                                                                               |
 | Code coverage                              | Overall 98.53 / 94.38 / 98.05 / 98.74; algorithms 99.72 / 96.80 / 100 / 99.71 (statements/branches/functions/lines, %)                                                                                              |
 | Performance                                | Previously measured on 12 November: 5,000-event conflict detection plus slot search, median 1.278 ms (target under 100 ms)                                                                                          |
 | Manual checks on the live site             | Round 2 deployment smoke remains human-owned: [TEST_PLAN §7](docs/TEST_PLAN.md#7-live-site-smoke-test-20-30-minutes). [Earlier reported results](docs/extras/MANUAL_VERIFICATION_HISTORY.md) describe older builds. |
