@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, screen, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { flexEv, task } from '../../../../tests/helpers/builders';
 import { makeEngine } from '../../../../tests/helpers/engine';
@@ -19,11 +19,36 @@ const rowNames = () =>
     .map((row) => row.querySelector('strong')?.textContent);
 
 describe('TaskPanel (T30 UI, FR6)', () => {
+  it('T63: task names edit and the action menu exposes completion, reopen, edit and delete', async () => {
+    const store = storeFor((await makeEngine({ tasks: tasks.slice(0, 1) })).engine);
+    renderWithStore(<TaskPanel />, store);
+    await userEvent.click(screen.getByRole('button', { name: 'Edit A' }));
+    expect(store.getState().dialog).toEqual({ kind: 'task', mode: 'edit', id: 'A' });
+    await userEvent.click(screen.getByRole('button', { name: 'More actions for A' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Edit A' }));
+    expect(store.getState().dialog).toEqual({ kind: 'task', mode: 'edit', id: 'A' });
+    await userEvent.click(screen.getByRole('button', { name: 'More actions for A' }));
+    await userEvent.keyboard('{Escape}');
+    expect(screen.getByRole('button', { name: 'More actions for A' })).toHaveFocus();
+    await userEvent.click(screen.getByRole('button', { name: 'More actions for A' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Mark A done' }));
+    await waitFor(() => expect(store.getState().snapshot.tasks[0]?.status).toBe('done'));
+    await userEvent.selectOptions(screen.getByLabelText('Show'), 'done');
+    await userEvent.click(screen.getByRole('button', { name: 'More actions for A' }));
+    expect(screen.getByRole('menuitem', { name: 'Edit A' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Delete A' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Reopen A' }));
+    await waitFor(() => expect(store.getState().snapshot.tasks[0]?.status).toBe('unscheduled'));
+    await userEvent.selectOptions(screen.getByLabelText('Show'), 'open');
+    await userEvent.click(screen.getByRole('button', { name: 'More actions for A' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Delete A' }));
+    expect(store.getState().dialog).toMatchObject({ kind: 'confirm', title: 'Delete task?' });
+  });
   it('T56: shows both window dates with the full time range available on the row', async () => {
     const store = storeFor((await makeEngine({ tasks: tasks.slice(0, 1) })).engine);
     renderWithStore(<TaskPanel />, store);
 
-    expect(screen.getByText('Mon 2 Nov–Fri 6 Nov')).toHaveAttribute(
+    expect(screen.getByText('Mon 2–Fri 6 Nov')).toHaveAttribute(
       'title',
       'Mon 2 Nov 09:00 – Fri 6 Nov 18:00',
     );
@@ -60,10 +85,18 @@ describe('TaskPanel (T30 UI, FR6)', () => {
     await userEvent.selectOptions(screen.getByLabelText('Show'), 'unscheduled');
     expect(rowNames()).toEqual(['U']);
     await userEvent.selectOptions(screen.getByLabelText('Show'), 'all');
-    expect(screen.getByText('Scheduled Tue 3 Nov 10:00–11:00')).toBeInTheDocument();
+    expect(screen.getByText('Scheduled Tue 10:00')).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: 'Select S' })).toBeDisabled();
     await userEvent.selectOptions(screen.getByLabelText('Show'), 'scheduled');
     expect(rowNames()).toEqual(['S']);
+    await userEvent.click(screen.getByRole('button', { name: 'More actions for S' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Unschedule S' }));
+    await waitFor(() =>
+      expect(store.getState().snapshot.tasks.find((task) => task.id === 'S')?.status).toBe(
+        'unscheduled',
+      ),
+    );
+    expect(store.getState().snapshot.events).toEqual([]);
   });
 
   it('"Find time (N)" opens the picker for the ticked tasks', async () => {

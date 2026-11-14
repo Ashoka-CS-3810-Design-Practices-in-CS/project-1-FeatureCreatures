@@ -554,6 +554,8 @@ Twelve curated colours include the five seeds. Free colours are normalised six-d
 
 ### 7.1 Screens and views
 
+WI-64: task rows are compact (72 px) with checkbox/name/priority/category on the first line, muted duration/compact window/status beneath, and Find time plus a disclosure named More actions for <name> at the right. The name opens Edit. The menu retains Mark done/Reopen/Edit and adds Unschedule for scheduled tasks and Delete for every task; done styling and queue selection stay unchanged. Saved barred slots are read-only summaries such as Lunch · 13:00–14:00 · Mon–Fri, with a pencil Edit barred slot Lunch and remove ×. Edit/Add opens label/from–to on one line, weekday chips beneath and colocated Save/Cancel. Pending barred rows retain the region's atomic settings validation/save/cancel semantics and exact D-09/D-20 messages; settings remain non-undoable. Overlaps and Kept retain standard section spacing.
+
 WI-63: Settings has a keyboard tablist in the order Scheduling, Categories, Appearance, Data, with Scheduling focused on open. Arrow keys wrap; Home/End select endpoints. Scheduling alone stages Working time/Scheduling defaults and has a sticky Save/Cancel footer. Its draft survives tab changes; Cancel, Escape or × discards it. Categories starts “Changes apply immediately. You can undo them.” and Appearance starts “Changes apply immediately.”; those actions retain immediate behavior. Data retains its existing actions. All existing control names remain unchanged inside their tabs.
 
 1. **Main screen** (Figure 1):
@@ -742,6 +744,8 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 ---
 
 ## 10. Change log
+
+- 2026-11-14 · WI-64: §7.1 specifies compact task/meta/action rows, named menus and saved barred summaries/inline editors; existing atomic settings validation and task lifecycle rules remain unchanged.
 
 - 2026-11-14 · WI-63: §7.1 defines Settings tabs, keyboard/focus, Scheduling-only staged edits/footer and explicit immediate category/appearance behavior.
 

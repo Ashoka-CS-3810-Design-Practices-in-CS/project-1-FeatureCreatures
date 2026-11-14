@@ -91,19 +91,21 @@ describe('T54: task completion controls', () => {
     expect(screen.getByLabelText('Show')).toHaveValue('open');
     expect(screen.getByText('Scheduled', { selector: 'strong' })).toBeInTheDocument();
     expect(screen.queryByText('Finished', { selector: 'strong' })).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Mark Scheduled done' }));
+    await userEvent.click(screen.getByRole('button', { name: 'More actions for Scheduled' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Mark Scheduled done' }));
     await waitFor(() => expect(store.getState().snapshot.events).toEqual([]));
     expect(screen.queryByText('Scheduled', { selector: 'strong' })).not.toBeInTheDocument();
     await userEvent.selectOptions(screen.getByLabelText('Show'), 'done');
     const row = screen.getByText('Scheduled', { selector: 'strong' }).closest('li') as HTMLElement;
     expect(row).toHaveClass('task-done');
     expect(within(row).getByText('✓ Done')).toBeInTheDocument();
+    await userEvent.click(within(row).getByRole('button', { name: 'More actions for Scheduled' }));
     expect(
       within(row)
-        .getAllByRole('button')
+        .getAllByRole('menuitem')
         .map((button) => button.textContent),
     ).toEqual(['Reopen', 'Edit', 'Delete']);
-    await userEvent.click(within(row).getByRole('button', { name: 'Reopen Scheduled' }));
+    await userEvent.click(within(row).getByRole('menuitem', { name: 'Reopen Scheduled' }));
     await waitFor(() =>
       expect(store.getState().snapshot.tasks[0]).toMatchObject({
         status: 'unscheduled',
@@ -111,7 +113,8 @@ describe('T54: task completion controls', () => {
       }),
     );
     expect(store.getState().snapshot.events).toEqual([]);
-    await userEvent.click(screen.getByRole('button', { name: 'Delete Finished' }));
+    await userEvent.click(screen.getByRole('button', { name: 'More actions for Finished' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Delete Finished' }));
     await userEvent.click(
       within(screen.getByRole('dialog', { name: 'Delete task?' })).getByRole('button', {
         name: 'Delete',

@@ -1,8 +1,23 @@
 import { iv } from '../../../tests/helpers/builders';
 import { t } from '../../../tests/helpers/time';
-import { fmtDay, fmtDuration, fmtRange, fmtTime, fmtViewTitle, toClockTime } from './time';
+import {
+  fmtDay,
+  fmtDuration,
+  fmtRange,
+  fmtTime,
+  fmtViewTitle,
+  toClockTime,
+  fmtTaskWindow,
+  fmtWeekdayTime,
+} from './time';
 
 describe('format/time', () => {
+  it('T63: compact task dates retain differing months/years and a scheduled start keeps its weekday/time', () => {
+    expect(fmtTaskWindow(iv('Mon 09:00', 'Fri 18:00'))).toBe('Mon 2–Fri 6 Nov');
+    expect(fmtTaskWindow(iv('2026-11-30 09:00', '2026-12-01 18:00'))).toBe('Mon 30 Nov–Tue 1 Dec');
+    expect(fmtTaskWindow(iv('2026-12-31 09:00', '2027-01-01 18:00'))).toBe('Thu 31 Dec–Fri 1 Jan');
+    expect(fmtWeekdayTime(t('Tue 14:00'))).toBe('Tue 14:00');
+  });
   it.each([
     [45, '45 min'],
     [60, '1 h'],

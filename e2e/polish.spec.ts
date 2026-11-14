@@ -82,6 +82,7 @@ for (const theme of ['light', 'dark'] as const) {
       expect(warning.bottom).toBeLessThanOrEqual(warning.limit + POSITION_TOLERANCE_PX);
       await showPlanning(page);
       const barred = page.getByRole('region', { name: /^Barred slots \(/ });
+      await barred.getByRole('button', { name: 'Edit barred slot Lunch', exact: true }).click();
       const from = barred.getByLabel('From', { exact: true }).first();
       await expect(from).toHaveValue('13:00');
       const timeWidth = await from.evaluate((input) => ({

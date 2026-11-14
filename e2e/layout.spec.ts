@@ -69,7 +69,7 @@ for (const theme of ['light', 'dark'] as const) {
         await expect(tasks.getByRole('button', { name: '+ Task', exact: true })).toHaveCount(1);
         const firstTask = tasks.getByRole('listitem').first();
         const doneBounds = await firstTask
-          .getByRole('button', { name: /^Mark .+ done$/ })
+          .getByRole('button', { name: /^More actions for / })
           .boundingBox();
         const findBounds = await firstTask
           .getByRole('button', { name: 'Find time', exact: true })
@@ -77,7 +77,7 @@ for (const theme of ['light', 'dark'] as const) {
         const editBounds = await firstTask.getByRole('button', { name: /^Edit / }).boundingBox();
         expect(doneBounds).not.toBeNull();
         expect(findBounds?.y).toBe(doneBounds?.y);
-        expect(editBounds?.y).toBe(doneBounds?.y);
+        expect(editBounds?.y).toBeLessThan(doneBounds?.y ?? 0);
       } else {
         await expect(tasks).toBeHidden();
         await expect(conflicts).toBeHidden();

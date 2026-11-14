@@ -170,7 +170,8 @@ for (const theme of THEMES) {
       await createTask(page, 'Read', '2026-11-02T09:00', '2026-11-02T10:00');
       await createTask(page, 'Later', '2026-11-02T09:00', '2026-11-02T10:01');
       await showTasks(page);
-      await page.getByRole('button', { name: 'Mark Report done', exact: true }).click();
+      await page.getByRole('button', { name: 'More actions for Report', exact: true }).click();
+      await page.getByRole('menuitem', { name: 'Mark Report done', exact: true }).click();
       await page.getByRole('combobox', { name: 'Show', exact: true }).selectOption('all');
       await page.setViewportSize({ width, height: TALL_HEIGHT });
       await page.getByRole('region', { name: /^Tasks \(/ }).evaluate((panel) => {
@@ -391,6 +392,7 @@ test.describe('barred times in a 12-hour browser locale', () => {
     test(`barred US locale ${theme}`, async ({ page }) => {
       await openApp(page, theme, MEDIUM_DESKTOP_WIDTH);
       await loadSampleWeek(page);
+      await page.getByRole('button', { name: 'Edit barred slot Lunch', exact: true }).click();
       await page
         .getByRole('region', { name: /^Barred slots \(/ })
         .screenshot({ path: `${OUTPUT_DIR}/barred-us-${theme}-1280.png`, animations: 'disabled' });

@@ -89,13 +89,17 @@ describe('T53: soft barred slots UI (D-09)', () => {
     await userEvent.type(within(second).getByLabelText('From'), '13:30');
     await userEvent.clear(within(second).getByLabelText('To'));
     await userEvent.type(within(second).getByLabelText('To'), '14:30');
-    await userEvent.click(within(region).getByRole('button', { name: 'Save barred slots' }));
+    await userEvent.click(
+      within(region).getAllByRole('button', { name: 'Save barred slots' })[0] as HTMLElement,
+    );
     expect(
       await within(second).findByText('Overlaps "Lunch" (13:00–14:00) on Mon, Tue, Wed, Thu, Fri.'),
     ).toBeInTheDocument();
     expect(engine.snapshot().settings.barredSlots).toEqual([]);
     await userEvent.click(
-      within(region).getByRole('button', { name: 'Cancel barred slot changes' }),
+      within(region).getAllByRole('button', {
+        name: 'Cancel barred slot changes',
+      })[0] as HTMLElement,
     );
     expect(within(region).queryByRole('group', { name: 'Barred slot 1' })).not.toBeInTheDocument();
     expect(engine.snapshot().settings.barredSlots).toEqual([]);

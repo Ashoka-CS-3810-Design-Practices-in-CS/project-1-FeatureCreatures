@@ -61,6 +61,7 @@ test('T53: older imported overlaps have a repair banner and labels stack without
   expect(tt.y).toBeGreaterThanOrEqual(lunch.y + lunch.height);
   const region = page.getByRole('region', { name: /^Barred slots \(/ });
   const second = region.getByRole('group', { name: 'Barred slot 2', exact: true });
+  await region.getByRole('button', { name: 'Edit barred slot TT', exact: true }).click();
   await second.getByLabel('From', { exact: true }).fill('14:00');
   await region.getByRole('button', { name: 'Save barred slots', exact: true }).click();
   await expect(region.getByRole('button', { name: 'Save barred slots', exact: true })).toHaveCount(

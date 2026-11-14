@@ -1,26 +1,27 @@
-import { useId } from 'react';
+import { useId, type ReactNode } from 'react';
 import type { FieldError, UseFormRegister } from 'react-hook-form';
 import type { SettingsFormValues } from '../../forms/settingsForm';
 import { WeekdayCheckboxes } from '../WeekdayCheckboxes/WeekdayCheckboxes';
 import { ErrorText } from '../Modal/ErrorText';
 
 // PRE:  index is the row's position in barredSlots; register is the settings form's; errors are
-//       this row's field errors, if any; onRemove deletes the row
+//       this row's field errors, if any; onRemove deletes the row; footer contains the form's Save/Cancel actions
 //       + additional props from: WeekdayCheckboxes, ErrorText
-// POST: shows one barred slot as a compact one-line group "Barred slot N" (WI-46): label, from–to,
-//       day chips and a remove ×, with the field labels kept for assistive technology and any
-//       errors on a line below
+// POST: shows one inline editor "Barred slot N": label/from–to, day chips, remove and footer;
+//       field labels and exact validation messages stay available on that editor
 export function BarredSlotRow({
   index,
   register,
   errors,
   onRemove,
+  footer,
 }: {
   index: number;
   register: UseFormRegister<SettingsFormValues>;
   errors:
     Partial<Record<'label' | 'start' | 'end' | 'days', Pick<FieldError, 'message'>>> | undefined;
   onRemove: () => void;
+  footer?: ReactNode;
 }) {
   const idPrefix = useId();
   const name = `Barred slot ${index + 1}`;
@@ -85,6 +86,7 @@ export function BarredSlotRow({
         <ErrorText id={errorId('start')} error={errors?.start} />
         <ErrorText id={errorId('end')} error={errors?.end} />
       </span>
+      {footer}
     </fieldset>
   );
 }
