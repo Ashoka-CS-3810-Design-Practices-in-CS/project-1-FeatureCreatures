@@ -434,6 +434,8 @@ Local checks and live-site acceptance are separate records. Current automated ev
 
 ## 10. Change log
 
+- 2026-11-14 · WI-61 / T60: Toolbar RTL covers disclosure counts, checkboxes, Show all, conditional Reset and Escape/Enter focus. Six `e2e/filters.spec.ts` scenes cover both themes/all exact desktop sizes with five/twelve valid categories, toolbar bounds/scroll widths and mouse/keyboard selection. Existing T49 category intersection/List/rename and browser category lifecycle assertions move from chip buttons to disclosure checkboxes; List's Show all is reached after Escape. No assertion, timeout, skip, coverage or property weakening.
+
 - 2026-11-14 · WI-60 / T59: `renderEventContent.test.tsx` checks named category tooltips and separate Flexible/Task tags; `toFullCalendar.test.ts` retains complete linked-event metadata; `tokens.test.ts` checks query/token equality and compact-marker contrast. `e2e/eventBlocks.spec.ts` checks six exact viewports (1440×900, 1280×800, 1024×768, both themes) with Monday 08:00 sample clock, complete/bounded priority, padding, Compact time/category and <=20-character titles, Narrow exceptions and bounded tags, full Day tags and short one-line title/time. Initial RTL and six browser cases failed before the implementation. No prior assertion/timeout/skip/property/coverage threshold weakened.
 
 | Date | Change |

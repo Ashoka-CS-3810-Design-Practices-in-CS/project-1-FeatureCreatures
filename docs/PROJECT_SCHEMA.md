@@ -264,6 +264,8 @@ Each requirement lists its acceptance criteria. The tests that prove it are in `
   - If nothing fits, the user gets ER3, including the largest gap found.
 
 **FR6 — Priority sort and category filter.**
+
+WI-61: H/M/L remain toggles. A disclosure named **Category filter** shows Categories when all are shown, otherwise Categories (N of M). Its popover contains named category checkboxes with colour/name and Show all; Escape closes it and restores trigger focus. Reset filters appears only while any category or priority is hidden. Toolbar controls wrap within their region without horizontal clipping, regardless of category count; filtering/counts remain unchanged.
 - **Task panel:**
   - Sort by priority (High → Medium → Low, then window end ascending, then name) or by window end (ascending, then priority, then name).
   - **Show:** Open (unscheduled + scheduled, default), Unscheduled, Scheduled, Done or All. The internal priority subset remains available to selectors, but the Tasks UI has no duplicate priority checkboxes (D-14).

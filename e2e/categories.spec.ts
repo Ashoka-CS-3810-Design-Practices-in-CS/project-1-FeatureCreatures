@@ -54,7 +54,8 @@ for (const theme of THEMES) {
       page.getByRole('list', { name: 'Task list' }).getByText('Projects', { exact: true }),
     ).toBeVisible();
     const filters = page.getByRole('group', { name: 'Category filter' });
-    await filters.getByRole('button', { name: 'Projects', exact: true }).click();
+    await filters.getByRole('button', { name: 'Category filter', exact: true }).click();
+    await filters.getByRole('checkbox', { name: 'Projects', exact: true }).uncheck();
     await expect(page.getByRole('button', { name: /^Research meeting,/ })).toHaveCount(0);
     await expect(
       page.getByRole('list', { name: 'Task list' }).getByText('Read paper', { exact: true }),
