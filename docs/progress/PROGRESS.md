@@ -6,7 +6,7 @@ Production URL: https://int-calendarfeature-creatures.vercel.app
 
 ## Current state
 
-- **Active WI:** None; WI-61 complete with targeted checks, WI-62 next. Full gate deferred to the round-3 final gate per user steer.
+- **Active WI:** WI-62, weekend-safe samples, branch `feat/wi-62-sample-week`. Full gate deferred to the round-3 final gate per user steer.
 - **Last session:** 2026-11-14 · Codex · saved the binding Round 3 request, reconstructed clean main/history, spot-checked WI-59's documentation/smoke/checker deliverables and all existing tests, and recorded the fresh full baseline below. No leftover work or lockfile changes; node_modules already present. Round 3 plan is WI-60–66 in order.
 - **Gate status:** 2026-11-14 Round 3 BASELINE on `main` at `26aafa0`: typecheck/lint, 861 + 1 existing skipped, overall 98.53/94.38/98.05/98.74, algorithms 99.72/96.80/100/99.71, DST 9, ten properties × 10,000, build, 192/192 browsers (64 × 3), zero retries, exit 0. Evidence: .tmp-round3-baseline-core.log and .tmp-round3-baseline-browsers.log.
 
@@ -365,7 +365,8 @@ Binding spec: [PROMPT_ROUND_3.md](../extras/PROMPT_ROUND_3.md). D-01–D-21 rema
   - 2026-11-14 · Codex · branch `feat/wi-61-category-filter` · done: named Categories disclosure/counts, native checkboxes/Show all, Escape focus, outside dismissal, conditional Reset and wrapping toolbar; typecheck/lint, ten targeted units and eight targeted browsers pass; six new browsers/RTL were red first · next: WI-62 and final visual review; full gate deferred to the round-3 final gate · note: T49 category intersection/List/rename and both-theme lifecycle keep every behavior assertion using disclosure/checkbox selectors; List Show all follows Escape to disambiguate the new popover action. New tests' initial RTL API typos were corrected before browser red runs.
   - 2026-11-14 · Codex · branch `feat/wi-61-category-filter` · done: claimed after WI-60 targeted checks/merge · next: red disclosure/overflow tests, checkbox popover, conditional Reset and selector updates; full gate deferred to the round-3 final gate · note: preserve FR6/counts and every existing assertion's behavior.
   - Done when: Categories checkbox disclosure, Show all, conditional Reset and Esc/focus work; 5/12 categories fit all three widths in both themes; filtering/counts/FR6 remain tested.
-- [ ] **WI-62** The built-in samples are never a dead week — owner S + Dv — depends on 61
+- [~] **WI-62** The built-in samples are never a dead week — owner S + Dv — depends on 61
+  - 2026-11-14 · Codex · branch `feat/wi-62-sample-week` · done: claimed after WI-61 merge · next: red weekday/weekend/navigation/toast and Saturday-browser tests, DST-safe sample anchor and shared load path; full gate deferred to the round-3 final gate · note: fixed sample exports/builders/fixtures stay at 2 November 2026.
   - Done when: weekend clocks anchor next Monday, weekdays current Monday, DST retained; load navigates/names the sample week; Saturday browser offers upcoming conflict/task slots; fixed exports/fixtures unchanged; TEST_PLAN/schema/README updated.
 - [ ] **WI-63** Settings has one clear saving model — owner S + Dv — depends on 62
   - Done when: Scheduling/Categories/Appearance/Data keyboard tabs; Scheduling alone staged with sticky Save/Cancel; immediate explanatory lines elsewhere; drafts survive tab switches and discard on Cancel/close; RTL/existing tests and every-tab both-theme screenshots pass.
