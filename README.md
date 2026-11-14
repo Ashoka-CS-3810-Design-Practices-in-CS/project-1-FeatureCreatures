@@ -44,9 +44,9 @@ Nothing changes without your say-so: suggestions and plans are previews until yo
 
 ## Try it in two minutes
 
-1. Open the [live app](https://int-calendarfeature-creatures.vercel.app) and click **Load sample week**.
+1. Open the [live app](https://int-calendarfeature-creatures.vercel.app) and click **Load sample week**. At 1440×900 the four task rows and saved Lunch summary fit beside the calendar. Categories opens the checkbox filter; Reset appears when a filter is active.
 2. **Conflicts.** Tuesday's _Lecture_ and _Meeting_ overlap for 30 minutes. Upcoming conflicts offer **Suggest alternatives**; ended overlaps remain under **Past**. Built-in samples use the current week Mon–Fri and the next Monday on weekends. The calendar navigates there and the toast names the week. Fixed downloadable JSON samples remain dated 2 November 2026.
-3. **Finding time.** Use **+ Task** in Tasks to make a task with a future window, then **Find time**. Switch _Earliest fit_, _Best fit_ and _Priority-aware_ to change the selected pick. Choose a pick or chip, open **Details**, then **Apply selected**. Alternatives shares the layout with Closest, Same day and Lightest day picks.
+3. **Finding time.** Use the sample Write report task's **Find time**, or create a future task with **+ Task**. Switch _Earliest fit_, _Best fit_ and _Priority-aware_ to select a pick. Pick-card time ranges stay on one line; choose a pick/chip, inspect **Details**, then **Apply selected**. The task name opens Edit; its **⋯** menu has completion/edit/unschedule/delete actions.
 4. **Your own events.** Use **+ Event** for future Fixed or Flexible events. Creating overlapping events immediately shows their exact conflict. Fixed alternatives require **Allow moving this event** and a temporary range.
 5. **Replan.** In the Replan region choose **Plan…**, set a range containing future flexible events, then **Compute plans**. Compare, Apply and **Undo** to revert the whole plan in one step.
 6. **Timeline gestures.** Press **K** to unlock before dragging to create/move/resize. Fixed moves/resizes ask for confirmation; while locked, dragging pans the grid. Event dialogs stay available.
@@ -56,6 +56,8 @@ More presets (overlap cluster, midnight crossing, fully booked day, a 5,000-even
 Existing browser data upgrades automatically to database v3 with events, tasks, settings and the multi-tab revision preserved. New JSON exports use version 2 and include categories; version 1 backups still import.
 
 **Layout.** Tasks, Calendar and Planning use separate scrolling columns at 1280 px and wider. Below that, use the counted Tasks and Conflicts buttons in the app bar to open their drawers. **+ Task** lives in Tasks, **+ Event** in Calendar, and **Plan…** in Replan. Task rows show both window dates; hover them for the full time range. Barred-slot validation names the overlapping slot and its times.
+
+**Settings.** Scheduling is the only staged tab, with sticky Save/Cancel; its draft survives tab switches and is discarded on Cancel/close. Categories and Appearance apply immediately; Data holds export/import/samples/clear. Edit a saved barred summary using its pencil to reveal the compact label/time/day editor. List selects Week with its explanatory tooltip, then restores your previous Calendar view when you switch back.
 
 **Replan strategies.** Keep Minimal change as the first plan, and choose Balanced week, Cluster by category, Vary categories, Front-load or Fewer fragments for the second. Cards show compact moves by day; **Details** reveals full metrics, explanations and Buffer. **Not moved by Replan** appears once below the cards with alternatives for unresolved events.
 
@@ -163,7 +165,7 @@ node scripts/checkTextDiagrams.mjs
 npm run test:perf         # the 5,000-event performance check
 ```
 
-Every test case and requirement mapping is in [TEST_PLAN.md](docs/TEST_PLAN.md). Its single [20–30 minute live-site smoke test](docs/TEST_PLAN.md#7-live-site-smoke-test-20-30-minutes) covers the Round 2 changes, FR1–FR11 and B1–B4 in both themes, including keyboard, contrast and screen-reader checks. Earlier rehearsals are archived as history. Timings depend on hardware; coverage and test counts should match.
+Every test case and requirement mapping is in [TEST_PLAN.md](docs/TEST_PLAN.md), including Round 3 T59–T64. Its single [20–30 minute live-site smoke test](docs/TEST_PLAN.md#7-live-site-smoke-test-20-30-minutes) covers Round 2 plus WI-60–65, FR1–FR11 and B1–B4 in both themes, including keyboard, contrast and screen-reader checks. Earlier rehearsals are archived as history. Round 3's final results and refreshed capture links are recorded after its full main gate and visual review.
 
 ## Samples and demonstrations
 

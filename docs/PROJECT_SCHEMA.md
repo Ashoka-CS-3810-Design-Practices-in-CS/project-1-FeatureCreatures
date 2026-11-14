@@ -571,28 +571,27 @@ WI-63: Settings has a keyboard tablist in the order Scheduling, Categories, Appe
    - **Alternatives mode:** the header shows the target/length, Move radios, fixed opt-in/temporary range and Search hours. The same picks/day chips/Details layout uses the alternatives picks in BR-7. Apply and Cancel retain their behaviour.
 5. **Replan dialog:** range from/to (default the visible week; from Month, whose grid exceeds 14 days, the first full week of the month, AUDIT A10), Strategy and a *Compute plans* button on one row. Details reveals Buffer and full metrics/explanations. Compact cards group moves by day, with one collapsed Not moved list below them. Changing the range, strategy or buffer removes the cards until *Compute plans* runs again, so a plan is only applied for the inputs shown (AUDIT A08). Cancel closes the dialog.
 6. **Settings dialog:**
-   - Five headed sections: **Working time** (Use working hours switch, retained working days/hours disabled while off), **Scheduling defaults** (default buffer, default ranking), **Categories** (BR-16), **Appearance** (B3) and **Data**. Settings Save / Cancel stay in their sticky footer; category changes save independently as undo steps and Appearance preferences apply immediately. The dialog has the × of §7.7.
+   - Four keyboard tabs: **Scheduling** contains Working time (global switch, retained days/hours disabled while off) and Scheduling defaults (buffer/ranking), with its sole staged Save/Cancel footer. **Categories** (BR-16) and **Appearance** (B3) explain that changes apply immediately; categories remain undoable. **Data** contains the existing data actions. The dialog retains ×; switching tabs preserves the Scheduling draft, while Cancel/close discards it.
    - A **Data** section: Export JSON, a styled **Import JSON** button opening the file chooser, Load sample calendar (menu), Clear all data (with confirmation).
 7. **Confirm dialog:** used for delete, import and clear.
 8. **Shortcut help overlay:** lists the shortcuts in §7.6.
-9. **Barred slots region (D-09):** inline label/from–to/day-chip/remove rows, Add barred slot (focuses its label), and Save/Cancel while edits are pending. Fixed-width time inputs remain readable in 12-hour locales. Saving touches only barred content; errors stay on their rows and Cancel restores saved slots. Older overlaps show an actionable banner; positively overlapping calendar backgrounds group their labels in a vertical stack. Upcoming unkept overlaps retain Suggest alternatives and add Keep here; kept records live under a collapsed Kept (N) group with Stop keeping. Past overlaps stay out of both groups.
+9. **Barred slots region (D-09, WI-64):** saved label/time/day summaries with pencil Edit and remove ×. Edit/Add opens inline label/from–to, day chips and Save/Cancel; added labels receive focus. Native time text stays readable in 12-hour locales. Saving touches only barred content with the existing pending-row validation; Cancel restores saved slots. Older overlaps retain their banner and stacked calendar labels. Upcoming unkept overlaps retain Suggest alternatives/Keep here; kept rows stay in collapsed Kept (N) with Stop keeping. Past overlaps remain excluded.
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────────────────────────────┐
-│ Interactive Calendar                                          Undo  Redo  Theme  ?  Settings │
+│Interactive Calendar                                     Undo Redo Theme ? Settings           │
 ├──────────────────────┬──────────────────────────────────────────────┬────────────────────────┤
-│ Tasks (4)    [+ Task]│ < Today >  Week of 9 Nov  [Day|Week|Month]   │ Conflicts (1)          │
-│ [Show v][Sort v][...]│ [Calendar|List]  [H][M][L]  (o)Class ...     │ ! Lecture <> Meeting   │
-│                      │ [Lock: on]                        [+ Event]  │   Tue 11:00 - 30 min   │
-│ [ ] Write report     │ +----------------------------------------+   │   [Suggest]            │
-│     [H] (o)Assignment│ |                                        |   │ > Past (2)             │
-│     1 h 30 - Mon-Fri │ |               week grid                |   ├────────────────────────┤
-│ [ ] Read ch. 4       │ |                                        |   │ Replan                 │
-│     [M] (o)Study     │ |                                        |   │ This week  [Plan...]   │
-│ ...                  │ |                                        |   ├────────────────────────┤
-│ [Find time (2)]      │ +----------------------------------------+   │ Barred slots (2)       │
-│                      │ 8 events - 1 conflict (2 past)               │ Lunch 13-14 Mon-Fri    │
-│                      │                                              │ Overlaps (1) - Kept (0)│
+│Tasks (4) [+ Task]    │< Today > Week of 9 Nov [Day|Week|Month]      │Conflicts (1)           │
+│[Show v][Sort v][...] │[Calendar|List] [H][M][L] [Categories]        │! Lecture <> Meeting    │
+│[ ] Report [H] Class  │[Lock: on] [+ Event]                          │Tue 11:00 - 30 min      │
+│1 h 30 - Mon 9-Fri 13 │+----------------------------------------+    │[Suggest]               │
+│[Find time] [...]     │|               week grid                |    │Past (2)                │
+│[ ] Read [M] Study    │|                                        |    │Replan                  │
+│45 min - Unscheduled  │|                                        |    │This week [Plan...]     │
+│...                   │|                                        |    │2 flexible events move  │
+│[Find time (2)]       │+----------------------------------------+    │Barred slots (1)        │
+│                      │8 events - 1 conflict (2 past)                │Lunch 13-14 Mon-Fri     │
+│                      │                                              │Overlaps (0) - Kept (0) │
 └──────────────────────┴──────────────────────────────────────────────┴────────────────────────┘
 ```
 
@@ -746,6 +745,8 @@ Shortcuts are disabled while focus is in an `input`, `textarea`, `select` or `[c
 ---
 
 ## 10. Change log
+
+- 2026-11-14 · WI-66: current UX/figure, Round 3 test catalogue and the single 29-minute live smoke are reconciled with WI-60–65; historical decision records remain unchanged.
 
 - 2026-11-14 · WI-65: §7.5 defines consistent List selection, shared Replan priority tags/explanatory counts, line lock/history icons and nonwrapping pick ranges.
 

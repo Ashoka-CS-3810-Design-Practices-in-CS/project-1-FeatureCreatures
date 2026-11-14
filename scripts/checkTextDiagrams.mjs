@@ -22,7 +22,7 @@ function documentPaths() {
 }
 
 // PRE: markdown is the UTF-8 contents of a document
-// POST: returns every text block or fenced diagram, with its first content line and unindented lines
+// POST: returns text/diagram candidates with line numbers and unindented lines, excluding prose-only saved prompts
 function diagramBlocks(markdown) {
   return [...markdown.matchAll(FENCED_BLOCK)]
     .map((match) => ({
@@ -30,7 +30,12 @@ function diagramBlocks(markdown) {
       line: markdown.slice(0, match.index).split('\n').length + 1,
       lines: match[3].split(/\r?\n/).map((line) => line.slice(match[1].length).trimEnd()),
     }))
-    .filter((block) => block.kind === 'text' || block.lines.some((line) => BOX_LINE.test(line)));
+    .filter((block) => {
+      const containsBox = block.lines.some((line) => BOX_LINE.test(line));
+      // The Round 3 request must be saved verbatim in a text fence; its prose is not a diagram.
+      const savedProsePrompt = block.lines[0]?.startsWith('You are a coding agent on int-calendar');
+      return containsBox || (block.kind === 'text' && !savedProsePrompt);
+    });
 }
 
 // PRE: path identifies a document; block comes from diagramBlocks
