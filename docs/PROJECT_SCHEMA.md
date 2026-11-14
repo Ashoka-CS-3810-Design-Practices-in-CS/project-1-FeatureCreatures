@@ -588,7 +588,7 @@ WI-63: Settings has a keyboard tablist in the order Scheduling, Categories, Appe
 │[Find time] [...]     │|               week grid                |    │Past (2)                │
 │[ ] Read [M] Study    │|                                        |    │Replan                  │
 │45 min - Unscheduled  │|                                        |    │This week [Plan...]     │
-│...                   │|                                        |    │2 flexible events move  │
+│...                   │|                                        |    │2 flex events can move  │
 │[Find time (2)]       │+----------------------------------------+    │Barred slots (1)        │
 │                      │8 events - 1 conflict (2 past)                │Lunch 13-14 Mon-Fri     │
 │                      │                                              │Overlaps (0) - Kept (0) │
