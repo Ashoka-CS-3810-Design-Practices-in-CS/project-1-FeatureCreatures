@@ -26,20 +26,24 @@ describe('T53: soft barred slots UI (D-09)', () => {
     const store = storeFor(engine);
     store.setState({ view: { ...store.getState().view, type: 'listWeek' } });
     renderWithStore(<App />, store);
-    const block = screen.getByRole('button', { name: /^A, Mon 2 Nov/ });
+    const calendarQueries = within(screen.getByRole('region', { name: 'Calendar' }));
+    const barredQueries = within(screen.getByRole('region', { name: 'Barred slots (1)' }));
+    const block = calendarQueries.getByRole('button', { name: /^A, Mon 2 Nov/ });
     expect(block).toHaveAccessibleName(/In Lunch/);
-    await userEvent.click(screen.getByRole('button', { name: /^Keep here: A in Lunch/ }));
+    await userEvent.click(barredQueries.getByRole('button', { name: /^Keep here: A in Lunch/ }));
     await waitFor(() =>
-      expect(screen.getByRole('heading', { name: 'Barred-slot overlaps (0)' })).toBeInTheDocument(),
+      expect(
+        barredQueries.getByRole('heading', { name: 'Barred-slot overlaps (0)' }),
+      ).toBeInTheDocument(),
     );
     expect(block).not.toHaveAccessibleName(/In Lunch/);
-    const kept = screen.getByRole('button', { name: 'Kept (1)' });
+    const kept = barredQueries.getByRole('button', { name: 'Kept (1)' });
     expect(kept).toHaveAttribute('aria-expanded', 'false');
     expect(screen.queryByRole('button', { name: /^Stop keeping:/ })).not.toBeInTheDocument();
     await userEvent.click(kept);
-    expect(screen.getByRole('list', { name: 'Kept barred-slot overlap list' })).toHaveTextContent(
-      'A · Lunch',
-    );
+    expect(
+      barredQueries.getByRole('list', { name: 'Kept barred-slot overlap list' }),
+    ).toHaveTextContent('A · Lunch');
     await act(async () => {
       await store.getState().actions.undo();
     });
@@ -48,7 +52,7 @@ describe('T53: soft barred slots UI (D-09)', () => {
       await store.getState().actions.redo();
     });
     expect(block).not.toHaveAccessibleName(/In Lunch/);
-    await userEvent.click(screen.getByRole('button', { name: /^Stop keeping: A in Lunch/ }));
+    await userEvent.click(barredQueries.getByRole('button', { name: /^Stop keeping: A in Lunch/ }));
     await waitFor(() => expect(block).toHaveAccessibleName(/In Lunch/));
     expect(engine.snapshot().barredOverlaps).toHaveLength(1);
   });
